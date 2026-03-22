@@ -1,5 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
+import { SignOutButton } from "@/modules/auth/ui/SignOutButton"
 
 type AppHeaderProps = {
   title?: string
@@ -61,7 +62,7 @@ export function AppHeader({
           >
             Notifications
           </Link>
-          {action}
+          {action ?? <SignOutButton />}
         </div>
       </div>
     </header>
