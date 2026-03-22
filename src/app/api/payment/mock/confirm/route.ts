@@ -4,7 +4,7 @@ import { requireUser } from "@/modules/auth/server/require-user"
 import { getCreatorById } from "@/modules/creator/server/get-creator-by-id"
 import createPayment from "@/modules/payment/server/create-payment"
 import { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"
-import { createSubscription } from "@/modules/subscription/server/create-subscription"
+import { upsertSubscription } from "@/modules/subscription/server/upsert-subscription"
 
 function addMonths(date: Date, months: number) {
   const next = new Date(date)
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       provider: "mock",
     })
 
-    const subscription = await createSubscription({
+    const subscription = await upsertSubscription({
       userId: user.id,
       creatorId: creator.id,
       status: "active",
