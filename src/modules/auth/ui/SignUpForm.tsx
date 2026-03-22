@@ -1,0 +1,88 @@
+"use client";
+
+import { useState } from "react";
+
+export function SignUpForm() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+
+    if (loading) return;
+    setLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/sign-up", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      console.log("SIGN UP RESPONSE >>>", data);
+
+      if (!response.ok) {
+        alert(data.error || "Sign up failed");
+        return;
+      }
+
+      // ✅ 성공 → 로그인 페이지로
+      window.location.href = "/sign-in";
+    } catch (error) {
+      console.error("SIGN UP ERROR >>>", error);
+      alert("Unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-zinc-200">
+          Email
+        </label>
+
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          required
+          className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/20"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-zinc-200">
+          Password
+        </label>
+
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Enter your password"
+          required
+          className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/20"
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full rounded-full bg-[#C2185B] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#D81B60] disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {loading ? "Creating account..." : "Sign up"}
+      </button>
+    </form>
+  );
+}

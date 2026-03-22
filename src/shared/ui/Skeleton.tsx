@@ -1,0 +1,30 @@
+import type { CSSProperties } from "react"
+
+export type SkeletonProps = {
+  width?: number | string
+  height?: number | string
+  className?: string
+  rounded?: string
+}
+
+export function Skeleton({
+  width = "100%",
+  height = 16,
+  className = "",
+  rounded = "rounded-sm",
+}: SkeletonProps) {
+  const style: CSSProperties = {
+    width,
+    height,
+  }
+
+  return (
+    <div
+      className={`relative overflow-hidden bg-zinc-200 ${rounded} ${className}`}
+      style={style}
+      aria-hidden="true"
+    >
+      <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+    </div>
+  )
+}
