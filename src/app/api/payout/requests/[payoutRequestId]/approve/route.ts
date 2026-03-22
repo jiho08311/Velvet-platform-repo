@@ -3,19 +3,19 @@ import { requireUser } from "@/modules/auth/server/require-user"
 import { approvePayoutRequest } from "@/modules/payout/server/approve-payout-request"
 
 type RouteParams = {
-  params: {
+  params: Promise<{
     payoutRequestId: string
-  }
+  }>
 }
 
 export async function POST(
-  request: Request,
+  _request: Request,
   { params }: RouteParams
 ) {
   try {
     await requireUser()
 
-    const payoutRequestId = params.payoutRequestId
+    const { payoutRequestId } = await params
 
     if (!payoutRequestId) {
       return NextResponse.json(
