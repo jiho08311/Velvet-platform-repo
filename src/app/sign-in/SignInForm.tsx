@@ -46,9 +46,9 @@ export default function SignInForm({ nextPath }: SignInFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <label htmlFor="email" className="text-sm font-medium text-zinc-300">
+        <label htmlFor="email" className="text-sm font-medium text-zinc-700">
           Email
         </label>
         <input
@@ -57,7 +57,7 @@ export default function SignInForm({ nextPath }: SignInFormProps) {
           autoComplete="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white outline-none ring-0 placeholder:text-zinc-500"
+          className="rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base text-zinc-900 outline-none focus:border-zinc-900"
           placeholder="testuser@example.com"
           required
         />
@@ -66,7 +66,7 @@ export default function SignInForm({ nextPath }: SignInFormProps) {
       <div className="flex flex-col gap-2">
         <label
           htmlFor="password"
-          className="text-sm font-medium text-zinc-300"
+          className="text-sm font-medium text-zinc-700"
         >
           Password
         </label>
@@ -76,14 +76,14 @@ export default function SignInForm({ nextPath }: SignInFormProps) {
           autoComplete="current-password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          className="rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white outline-none ring-0 placeholder:text-zinc-500"
+          className="rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base text-zinc-900 outline-none focus:border-zinc-900"
           placeholder="••••••••"
           required
         />
       </div>
 
       {errorMessage ? (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-600">
           {errorMessage}
         </div>
       ) : null}
@@ -91,7 +91,7 @@ export default function SignInForm({ nextPath }: SignInFormProps) {
       <button
         type="submit"
         disabled={loading}
-        className="rounded-xl bg-white px-4 py-3 font-medium text-black disabled:opacity-50"
+        className="mt-2 rounded-2xl bg-[#C2185B] px-5 py-4 text-base font-semibold text-white transition hover:bg-[#D81B60] disabled:opacity-50"
       >
         {loading ? "Signing in..." : "Sign in"}
       </button>

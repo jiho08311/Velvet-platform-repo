@@ -51,11 +51,11 @@ export function SignInForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
         <label
           htmlFor="email"
-          className="block text-sm font-medium text-zinc-200"
+          className="block text-sm font-medium text-zinc-700"
         >
           Email
         </label>
@@ -66,7 +66,7 @@ export function SignInForm() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder="you@example.com"
-          className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/20"
+          className="w-full rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/10"
           disabled={isPending}
           required
         />
@@ -75,7 +75,7 @@ export function SignInForm() {
       <div className="space-y-2">
         <label
           htmlFor="password"
-          className="block text-sm font-medium text-zinc-200"
+          className="block text-sm font-medium text-zinc-700"
         >
           Password
         </label>
@@ -86,22 +86,31 @@ export function SignInForm() {
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Enter your password"
-          className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/20"
+          className="w-full rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/10"
           disabled={isPending}
           required
         />
       </div>
 
       {errorMessage ? (
-        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3">
-          <p className="text-sm text-red-400">{errorMessage}</p>
+        <div className="rounded-2xl border border-red-300 bg-red-50 px-4 py-3">
+          <p className="text-sm text-red-600">{errorMessage}</p>
         </div>
       ) : null}
+
+      <div className="flex justify-end">
+        <a
+          href="/forgot-password"
+          className="text-sm text-zinc-500 transition hover:text-zinc-900"
+        >
+          비밀번호를 잊으셨나요?
+        </a>
+      </div>
 
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-full bg-[#C2185B] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#D81B60] disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-2xl bg-[#C2185B] px-5 py-4 text-base font-semibold text-white transition hover:bg-[#D81B60] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isPending ? "Signing in..." : "Sign in"}
       </button>
