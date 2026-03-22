@@ -10,34 +10,7 @@ export default async function FeedPage() {
   const session = await getSession()
 
   if (!session) {
-    return (
-      <main className="min-h-screen bg-zinc-50 text-zinc-900">
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
-          <Card className="overflow-hidden p-0">
-            <div className="border-b border-zinc-200 bg-gradient-to-r from-[#C2185B]/10 via-white to-white px-6 py-6">
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#C2185B]">
-                  Feed
-                </p>
-                <h1 className="text-3xl font-semibold text-zinc-900">
-                  Home feed
-                </h1>
-                <p className="text-sm leading-6 text-zinc-500">
-                  See the latest posts from creators you follow.
-                </p>
-              </div>
-            </div>
-
-            <div className="p-6">
-              <EmptyState
-                title="Sign in to view your feed"
-                description="Sign in to see the latest posts from creators you follow."
-              />
-            </div>
-          </Card>
-        </div>
-      </main>
-    )
+    redirect("/sign-in?next=/feed")
   }
 
   const feed = await getHomeFeed({
@@ -47,33 +20,149 @@ export default async function FeedPage() {
 
   return (
     <main className="min-h-screen bg-zinc-50 text-zinc-900">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
-        <Card className="overflow-hidden p-0">
-          <div className="border-b border-zinc-200 bg-gradient-to-r from-[#C2185B]/10 via-white to-white px-6 py-6">
-            <div className="flex flex-col gap-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#C2185B]">
-                Feed
-              </p>
-              <h1 className="text-3xl font-semibold text-zinc-900">
-                Home feed
-              </h1>
-              <p className="text-sm leading-6 text-zinc-500">
-                Discover the latest creator posts and updates.
-              </p>
-            </div>
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[220px_minmax(0,1fr)_320px]">
+        {/* LEFT SIDEBAR */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-24 space-y-3">
+            <Card className="p-3">
+              <nav className="flex flex-col gap-2">
+                <a
+                  href="/feed"
+                  className="rounded-xl bg-[#C2185B] px-4 py-3 text-sm font-medium text-white"
+                >
+                  Home
+                </a>
+                <a
+                  href="/search"
+                  className="rounded-xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                >
+                  Search
+                </a>
+                <a
+                  href="/messages"
+                  className="rounded-xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                >
+                  Messages
+                </a>
+                <a
+                  href="/notifications"
+                  className="rounded-xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                >
+                  Notifications
+                </a>
+                <a
+                  href="/dashboard"
+                  className="rounded-xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                >
+                  Dashboard
+                </a>
+                <a
+                  href="/become-creator"
+                  className="rounded-xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                >
+                  Become a creator
+                </a>
+              </nav>
+            </Card>
           </div>
+        </aside>
 
-          <div className="p-6">
-            <FeedList
-              posts={feed.items.map((item) => ({
-                id: item.id,
-                text: item.text,
-                createdAt: item.createdAt,
-              }))}
-              emptyMessage="No posts yet from creators you subscribe to."
-            />
+        {/* CENTER FEED */}
+        <section className="min-w-0">
+          <Card className="overflow-hidden p-0">
+            <div className="border-b border-zinc-200 bg-white px-6 py-5">
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#C2185B]">
+                  Feed
+                </p>
+                <h1 className="text-2xl font-semibold text-zinc-900">
+                  Home feed
+                </h1>
+                <p className="text-sm leading-6 text-zinc-500">
+                  Discover the latest creator posts and updates.
+                </p>
+              </div>
+            </div>
+
+            <div className="border-b border-zinc-200 bg-zinc-50/70 px-6 py-4">
+              <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-400">
+                Share something with your subscribers...
+              </div>
+            </div>
+
+            <div className="p-6">
+              {feed.items.length === 0 ? (
+                <EmptyState
+                  title="No posts yet"
+                  description="Posts from creators you follow will appear here."
+                />
+              ) : (
+                <FeedList
+                  posts={feed.items.map((item) => ({
+                    id: item.id,
+                    text: item.text,
+                    createdAt: item.createdAt,
+                  }))}
+                  emptyMessage="No posts yet from creators you subscribe to."
+                />
+              )}
+            </div>
+          </Card>
+        </section>
+
+        {/* RIGHT SIDEBAR */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-24 space-y-4">
+            <Card>
+              <div className="space-y-3">
+                <h2 className="text-sm font-semibold text-zinc-900">
+                  Search posts
+                </h2>
+                <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-400">
+                  Search creator posts...
+                </div>
+              </div>
+            </Card>
+
+            <Card>
+              <div className="space-y-4">
+                <h2 className="text-sm font-semibold text-zinc-900">
+                  Recommended for you
+                </h2>
+
+                <div className="space-y-3">
+                  {["Luna Velvet", "Mina Rose", "Ari Night"].map((name) => (
+                    <div
+                      key={name}
+                      className="flex items-center justify-between gap-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-200 text-sm font-semibold text-zinc-700">
+                          {name.slice(0, 1)}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-zinc-900">
+                            {name}
+                          </p>
+                          <p className="text-xs text-zinc-500">
+                            Recommended creator
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100"
+                      >
+                        View
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Card>
           </div>
-        </Card>
+        </aside>
       </div>
     </main>
   )
