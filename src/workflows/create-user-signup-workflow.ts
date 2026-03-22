@@ -1,13 +1,13 @@
-import { signUp } from "@/modules/auth/server/sign-up";
-import { createUser } from "@/modules/user/server/create-user";
-import { createProfile } from "@/modules/profile/server/create-profile";
+import { signUp } from "@/modules/auth/server/sign-up"
+import { createUser } from "@/modules/user/server/create-user"
+import { createProfile } from "@/modules/profile/server/create-profile"
 
 type CreateUserSignupWorkflowInput = {
-  email: string;
-  password: string;
-  username: string;
-  displayName: string;
-};
+  email: string
+  password: string
+  username: string
+  displayName: string
+}
 
 export async function createUserSignupWorkflow({
   email,
@@ -15,34 +15,35 @@ export async function createUserSignupWorkflow({
   username,
   displayName,
 }: CreateUserSignupWorkflowInput) {
-  const authResult = await signUp({ email, password });
+  const authResult = await signUp({ email, password })
 
   if (authResult.error) {
-    throw authResult.error;
+    throw authResult.error
   }
 
-  const authUser = authResult.data.user;
+  const authUser = authResult.data.user
 
   if (!authUser) {
-    throw new Error("Failed to create auth user");
+    throw new Error("Failed to create auth user")
   }
 
   const user = await createUser({
     id: authUser.id,
     email: authUser.email ?? email,
+    username,
     role: "fan",
     status: "active",
-  });
+  })
 
   const profile = await createProfile({
     userId: user.id,
     username,
     displayName,
-  });
+  })
 
   return {
     auth: authResult.data,
     user,
     profile,
-  };
+  }
 }
