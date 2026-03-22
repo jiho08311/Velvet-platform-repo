@@ -3,9 +3,9 @@ import { requireUser } from "@/modules/auth/server/require-user"
 import { getCreator } from "@/modules/admin/server/get-creator"
 
 type RouteParams = {
-  params: {
+  params: Promise<{
     creatorId: string
-  }
+  }>
 }
 
 export async function GET(
@@ -15,7 +15,8 @@ export async function GET(
   try {
     await requireUser()
 
-    const creator = await getCreator(params.creatorId)
+    const { creatorId } = await params
+    const creator = await getCreator(creatorId)
 
     if (!creator) {
       return NextResponse.json(
