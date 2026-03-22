@@ -2,15 +2,17 @@ import Link from "next/link"
 import { searchCreators } from "@/modules/search/server/search-creators"
 
 type ExplorePageProps = {
-  searchParams?: {
+  searchParams: Promise<{
     q?: string
-  }
+  }>
 }
 
 export default async function ExplorePage({
   searchParams,
 }: ExplorePageProps) {
-  const query = searchParams?.q?.trim() ?? ""
+  const { q = "" } = await searchParams
+  const query = q.trim()
+
   const creators = query
     ? await searchCreators({
         query,
@@ -44,6 +46,8 @@ export default async function ExplorePage({
           </div>
         </form>
       </section>
+
+      <div className="text-red-500">RESULT COUNT: {creators.length}</div>
 
       {!query ? (
         <section className="rounded-2xl border border-white/10 bg-neutral-950 p-8 text-center text-sm text-white/60">

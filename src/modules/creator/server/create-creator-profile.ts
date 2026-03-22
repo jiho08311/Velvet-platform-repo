@@ -1,54 +1,52 @@
-import { createClient } from "@/infrastructure/supabase/server"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 type CreateCreatorProfileInput = {
   userId: string
 }
 
-function buildDefaultUsername(userId: string) {
-  return `creator_${userId.slice(0, 8)}`
-}
-
 export async function createCreatorProfile({
   userId,
 }: CreateCreatorProfileInput) {
-  const supabase = await createClient()
-
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile, error: profileError } = await supabaseAdmin
     .from("profiles")
-    .select("username, display_name")
+    .select("id, username, display_name")
     .eq("id", userId)
-    .single()
+    .maybeSingle()
 
-  if (profileError || !profile) {
+  if (profileError) {
     console.error("createCreatorProfile profile lookup error:", profileError)
-    throw profileError ?? new Error("Profile not found")
+    throw profileError
   }
 
-  const username = buildDefaultUsername(userId)
+  if (!profile) {
+    throw new Error("Profile not found")
+  }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("creators")
     .insert({
       user_id: userId,
-      username,
-      display_name: profile.display_name ?? profile.username ?? username,
+      username: profile.username,
+      display_name: profile.display_name ?? profile.username,
     })
     .select()
     .single()
 
   if (error) {
     if (error.code === "23505") {
-      const { data: existing, error: fetchError } = await supabase
+      const { data: existing, error: fetchError } = await supabaseAdmin
         .from("creators")
         .select("*")
         .eq("user_id", userId)
-        .single()
+        .maybeSingle()
 
       if (fetchError) {
         throw fetchError
       }
 
-      return existing
+      if (existing) {
+        return existing
+      }
     }
 
     console.error("createCreatorProfile error:", error)

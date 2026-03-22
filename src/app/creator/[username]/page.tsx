@@ -6,11 +6,10 @@ import { getCreatorDashboardSummary } from "@/modules/analytics/server/get-creat
 import { getCreatorFeed } from "@/modules/post/server/get-creator-feed"
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 
-
 type CreatorPageProps = {
-  params: {
+  params: Promise<{
     username: string
-  }
+  }>
 }
 
 function formatPrice(amountCents: number, currency: string) {
@@ -22,7 +21,12 @@ function formatPrice(amountCents: number, currency: string) {
 }
 
 export default async function CreatorPage({ params }: CreatorPageProps) {
-  const { username } = params
+  const { username } = await params
+
+  if (!username) {
+    notFound()
+  }
+
   const creator = await getCreatorByUsername(username)
 
   if (!creator) {
@@ -30,18 +34,16 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
   }
 
   const summary = await getCreatorDashboardSummary(creator.id)
-const user = await getCurrentUser()
-const userId = user?.id
+  const user = await getCurrentUser()
+  const userId = user?.id
 
-const posts = await getCreatorFeed({
-  creatorId: creator.id,
-  userId,
-})
+  const posts = await getCreatorFeed({
+    creatorId: creator.id,
+    userId,
+  })
 
   return (
     <main className="min-h-screen bg-white text-zinc-900">
-  
-
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
         <section className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
           <div className="h-32 bg-gradient-to-r from-[#FCE4EC] via-white to-[#FFF1F5] sm:h-40" />
@@ -172,26 +174,26 @@ const posts = await getCreatorFeed({
                   </div>
 
                   {post.isLocked ? (
-  <div className="px-5 py-10">
-    <div className="rounded-2xl border border-[#C2185B]/15 bg-[#FFF1F5] p-6 text-center">
-      <p className="text-lg font-semibold text-zinc-900">
-        Locked content
-      </p>
+                    <div className="px-5 py-10">
+                      <div className="rounded-2xl border border-[#C2185B]/15 bg-[#FFF1F5] p-6 text-center">
+                        <p className="text-lg font-semibold text-zinc-900">
+                          Locked content
+                        </p>
 
-      <p className="mt-2 text-sm text-zinc-600">
-        {post.price_cents !== null
-          ? `Purchase this post for ${formatPrice(post.price_cents, "USD")}.`
-          : "Subscribe to unlock this post."}
-      </p>
+                        <p className="mt-2 text-sm text-zinc-600">
+                          {post.price_cents !== null
+                            ? `Purchase this post for ${formatPrice(post.price_cents, "USD")}.`
+                            : "Subscribe to unlock this post."}
+                        </p>
 
-      {post.price_cents !== null ? (
-        <div className="mt-4 flex justify-center">
-          <PostPurchaseButton postId={post.id} />
-        </div>
-      ) : null}
-    </div>
-  </div>
-) : (
+                        {post.price_cents !== null ? (
+                          <div className="mt-4 flex justify-center">
+                            <PostPurchaseButton postId={post.id} />
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : (
                     <>
                       {post.media_thumbnail_urls &&
                       post.media_thumbnail_urls.length > 0 ? (

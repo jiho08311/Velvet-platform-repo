@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 export type CreatorSearchResult = {
   id: string
@@ -17,24 +17,20 @@ export type SearchCreatorsInput = {
 
 type CreatorRow = {
   id: string
-  profile_id: string
-  is_verified: boolean
-  profiles:
-    | {
-        username: string
-        display_name: string | null
-        avatar_url: string | null
-      }[]
-    | null
+  user_id: string
+  username: string
+}
+
+type ProfileRow = {
+  id: string
+  username: string
+  display_name: string | null
 }
 
 export async function searchCreators(
   input: SearchCreatorsInput
 ): Promise<CreatorSearchResult[]> {
-  const supabase = await createSupabaseServerClient()
-
   const query = input.query.trim()
-  console.log("SEARCH_QUERY", query)
 
   if (!query) {
     return []
@@ -42,52 +38,50 @@ export async function searchCreators(
 
   const limit = Math.max(1, Math.min(input.limit ?? 10, 50))
 
-  const searchFilter = `username.ilike.%${query}%,display_name.ilike.%${query}%`
-  console.log("SEARCH_FILTER", searchFilter)
-
-  const { data, error } = await supabase
-    .from("creators")
-    .select(
-      `
-        id,
-        profile_id,
-        is_verified,
-        profiles!inner (
-          username,
-          display_name,
-          avatar_url
-        )
-      `
-    )
-    .or(searchFilter, {
-      foreignTable: "profiles",
-    })
+  const { data: profileRows, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select("id, username, display_name")
+    .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
     .limit(limit)
 
-  console.log("SEARCH_CREATORS_RAW_DATA", data)
-  console.log("SEARCH_CREATORS_RAW_ERROR", error)
-
-  if (error) {
-    throw error
+  if (profileError) {
+    throw profileError
   }
 
-  const result = ((data ?? []) as CreatorRow[])
-    .filter((row) => row.profiles && row.profiles.length > 0)
-    .map((row) => {
-      const profile = row.profiles![0]
+  const matchedProfiles = (profileRows ?? []) as ProfileRow[]
+
+  if (matchedProfiles.length === 0) {
+    return []
+  }
+
+  const profileIds = matchedProfiles.map((profile) => profile.id)
+
+  const { data: creatorRows, error: creatorError } = await supabaseAdmin
+    .from("creators")
+    .select("id, user_id, username")
+    .in("user_id", profileIds)
+
+  if (creatorError) {
+    throw creatorError
+  }
+
+  const creatorMap = new Map(
+    ((creatorRows ?? []) as CreatorRow[]).map((creator) => [creator.user_id, creator])
+  )
+
+  return matchedProfiles
+    .filter((profile) => creatorMap.has(profile.id))
+    .map((profile) => {
+      const creator = creatorMap.get(profile.id)!
 
       return {
-        id: row.id,
-        profileId: row.profile_id,
-        username: profile.username,
+        id: creator.id,
+        profileId: profile.id,
+        username: creator.username,
         displayName: profile.display_name ?? profile.username,
         headline: "",
-        avatarUrl: profile.avatar_url,
-        isVerified: row.is_verified,
+        avatarUrl: null,
+        isVerified: false,
       }
     })
-
-  console.log("SEARCH_CREATORS_RESULT", result)
-
-  return result
 }

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 
 import { getSession } from "@/modules/auth/server/get-session"
+import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { getHomeFeed } from "@/modules/feed/server/get-home-feed"
 import { FeedList } from "@/modules/feed/ui/FeedList"
 import { Card } from "@/shared/ui/Card"
@@ -12,6 +13,8 @@ export default async function FeedPage() {
   if (!session) {
     redirect("/sign-in?next=/feed")
   }
+
+  const creator = await getCreatorByUserId(session.userId)
 
   const feed = await getHomeFeed({
     viewerUserId: session.userId,
@@ -81,6 +84,15 @@ export default async function FeedPage() {
                 >
                   Settings
                 </a>
+
+                {!creator ? (
+                  <a
+                    href="/become-creator"
+                    className="mt-2 rounded-2xl bg-[#C2185B] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#D81B60]"
+                  >
+                    Become creator
+                  </a>
+                ) : null}
               </nav>
             </Card>
           </div>
