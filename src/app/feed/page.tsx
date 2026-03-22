@@ -20,7 +20,7 @@ export default async function FeedPage() {
 
   return (
     <main className="min-h-screen bg-zinc-50 text-zinc-900">
-      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[220px_minmax(0,1fr)_320px]">
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[240px_minmax(0,1fr)_320px]">
         {/* LEFT SIDEBAR */}
         <aside className="hidden lg:block">
           <div className="sticky top-24 space-y-3">
@@ -28,39 +28,58 @@ export default async function FeedPage() {
               <nav className="flex flex-col gap-2">
                 <a
                   href="/feed"
-                  className="rounded-xl bg-[#C2185B] px-4 py-3 text-sm font-medium text-white"
+                  className="rounded-2xl bg-[#C2185B] px-4 py-3 text-sm font-semibold text-white"
                 >
                   Home
                 </a>
-                <a
-                  href="/search"
-                  className="rounded-xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
-                >
-                  Search
-                </a>
+
                 <a
                   href="/messages"
-                  className="rounded-xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                  className="rounded-2xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
                 >
-                  Messages
+                  Message
                 </a>
+
+                <a
+                  href="/explore"
+                  className="rounded-2xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                >
+                  Explore
+                </a>
+
+                <a
+                  href="/explore-tab"
+                  className="rounded-2xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                >
+                  Explore Tab
+                </a>
+
                 <a
                   href="/notifications"
-                  className="rounded-xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                  className="rounded-2xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
                 >
-                  Notifications
+                  Notification
                 </a>
-                <a
-                  href="/dashboard"
-                  className="rounded-xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+
+                <button
+                  type="button"
+                  className="rounded-2xl bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
                 >
-                  Dashboard
+                  Post
+                </button>
+
+                <a
+                  href="/profile"
+                  className="rounded-2xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                >
+                  Profile
                 </a>
+
                 <a
-                  href="/become-creator"
-                  className="rounded-xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                  href="/settings"
+                  className="rounded-2xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
                 >
-                  Become a creator
+                  Settings
                 </a>
               </nav>
             </Card>
