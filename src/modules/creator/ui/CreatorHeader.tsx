@@ -3,7 +3,7 @@ type CreatorHeaderProps = {
   displayName: string
   username: string
   bio: string
-  headline: string
+  headline?: string
   subscriptionPrice: number
   isVerified: boolean
 }
@@ -48,7 +48,9 @@ export function CreatorHeader({
 
           <p className="mt-1 text-sm text-white/60">@{username}</p>
 
-          <p className="mt-3 text-sm font-medium text-white/90">{headline}</p>
+          <p className="mt-3 text-sm font-medium text-white/90">
+            {headline ?? ""}
+          </p>
 
           <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/75">
             {bio}

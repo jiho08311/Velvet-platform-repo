@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation"
-import { CreatorHeader } from "@/modules/creator/ui/CreatorHead"
+import { CreatorHeader } from "@/modules/creator/ui/CreatorHeader"
 import { getCreatorByUsername } from "@/modules/creator/server/get-creator-by-username"
-
 import { LockedPostCard } from "@/modules/post/ui/LockedPostCard"
 import { PostCard } from "@/modules/post/ui/PostCard"
+import { listCreatorPosts } from "@/modules/post/server/list-creator-posts"
 import { getProfileByUsername } from "@/modules/profile/server/get-profile-by-username"
 
 type CreatorProfilePageProps = {
@@ -26,7 +26,7 @@ export default async function CreatorProfilePage({
     notFound()
   }
 
-  const { items: posts } = await getCreatorPosts({
+  const posts = await listCreatorPosts({
     creatorId: creator.id,
     limit: 20,
   })
@@ -34,29 +34,28 @@ export default async function CreatorProfilePage({
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6">
       <CreatorHeader
-        avatarUrl={profile.avatarUrl}
-        displayName={profile.displayName}
-        username={profile.username}
-        bio={profile.bio}
-        headline={creator.headline}
-        subscriptionPrice={creator.subscriptionPrice}
-        isVerified={creator.isVerified}
-      />
+  avatarUrl={profile.avatarUrl ?? ""}
+  displayName={profile.displayName}
+  username={profile.username}
+  bio={profile.bio ?? ""}
+  subscriptionPrice={creator.subscriptionPriceCents ?? 0}
+  isVerified={false}
+/>
 
       <section className="grid gap-4">
         {posts.map((post) =>
           post.isLocked ? (
             <LockedPostCard
               key={post.id}
-              previewText={post.caption}
-              createdAt={post.publishedAt ?? ""}
+              previewText={post.title ?? ""}
+              createdAt=""
               unlockLabel="Subscribe to unlock"
             />
           ) : (
             <PostCard
               key={post.id}
-              text={post.caption}
-              createdAt={post.publishedAt ?? ""}
+              text={post.title ?? ""}
+              createdAt=""
             />
           )
         )}
