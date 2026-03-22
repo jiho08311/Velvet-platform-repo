@@ -1,4 +1,5 @@
-import { SignInForm } from "@/modules/auth/ui/SignInForm";
+import { Suspense } from "react"
+import { SignInForm } from "@/modules/auth/ui/SignInForm"
 
 export default function SignInPage() {
   return (
@@ -14,9 +15,11 @@ export default function SignInPage() {
         </div>
 
         <div className="px-8 py-6">
-          <SignInForm />
+          <Suspense fallback={null}>
+            <SignInForm />
+          </Suspense>
         </div>
       </div>
     </main>
-  );
+  )
 }
