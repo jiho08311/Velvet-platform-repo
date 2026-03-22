@@ -1,21 +1,15 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { requireUser } from "@/modules/auth/server/require-user"
 import { approvePayoutRequest } from "@/modules/payout/server/approve-payout-request"
 
-type RouteParams = {
-  params: Promise<{
-    payoutRequestId: string
-  }>
-}
-
 export async function POST(
-  _request: Request,
-  { params }: RouteParams
+  _request: NextRequest,
+  context: { params: Promise<{ payoutRequestId: string }> }
 ) {
   try {
     await requireUser()
 
-    const { payoutRequestId } = await params
+    const { payoutRequestId } = await context.params
 
     if (!payoutRequestId) {
       return NextResponse.json(
