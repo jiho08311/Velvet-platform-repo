@@ -3,9 +3,9 @@ import { requireUser } from "@/modules/auth/server/require-user"
 import { getUser } from "@/modules/admin/server/get-user"
 
 type RouteParams = {
-  params: {
+  params: Promise<{
     userId: string
-  }
+  }>
 }
 
 export async function GET(
@@ -15,7 +15,8 @@ export async function GET(
   try {
     await requireUser()
 
-    const user = await getUser(params.userId)
+    const { userId } = await params
+    const user = await getUser(userId)
 
     if (!user) {
       return NextResponse.json(
