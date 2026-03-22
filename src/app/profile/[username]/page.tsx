@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-
+import { CreatorHeader } from "@/modules/creator/ui/CreatorHead"
 import { getCreatorByUsername } from "@/modules/creator/server/get-creator-by-username"
 
 import { LockedPostCard } from "@/modules/post/ui/LockedPostCard"
