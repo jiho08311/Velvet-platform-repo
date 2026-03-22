@@ -1,22 +1,18 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { requireUser } from "@/modules/auth/server/require-user"
 import { resolveReport } from "@/modules/report/server/resolve-report"
 
-type RouteParams = {
-  params: {
-    reportId: string
-  }
-}
-
 export async function POST(
-  request: Request,
-  { params }: RouteParams
+  _request: NextRequest,
+  context: { params: Promise<{ reportId: string }> }
 ) {
   try {
     await requireUser()
 
+    const { reportId } = await context.params
+
     const result = await resolveReport({
-      reportId: params.reportId,
+      reportId,
     })
 
     return NextResponse.json(
