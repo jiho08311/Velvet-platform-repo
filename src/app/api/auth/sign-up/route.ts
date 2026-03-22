@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies()
     const response = NextResponse.json({ success: true });
 
     const supabase = createServerClient(
