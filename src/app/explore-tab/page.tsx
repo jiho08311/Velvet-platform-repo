@@ -1,0 +1,70 @@
+import { ExploreCreatorGrid } from "@/modules/search/ui/ExploreCreatorGrid"
+import { searchCreators } from "@/modules/search/server/search-creators"
+import { getExploreCreators } from "@/modules/search/server/get-explore-creators"
+
+type ExplorePageProps = {
+  searchParams: Promise<{
+    q?: string
+  }>
+}
+
+export default async function ExplorePage({
+  searchParams,
+}: ExplorePageProps) {
+  const { q = "" } = await searchParams
+  const query = q.trim()
+
+  const isSearching = query.length > 0
+
+  const creators = isSearching
+    ? await searchCreators({
+        query,
+        limit: 20,
+      })
+    : await getExploreCreators(20)
+
+  return (
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
+      <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5">
+        <h1 className="text-xl font-semibold text-white">Explore</h1>
+        <p className="mt-1 text-sm text-zinc-400">
+          Discover creators you may want to follow.
+        </p>
+
+        <form action="/explore" className="mt-4">
+          <div className="flex gap-3">
+            <input
+              type="text"
+              name="q"
+              defaultValue={query}
+              placeholder="Search creators"
+              className="h-12 flex-1 rounded-full border border-zinc-800 bg-zinc-900 px-4 text-sm text-white outline-none placeholder:text-zinc-500"
+            />
+            <button
+              type="submit"
+              className="inline-flex h-12 items-center justify-center rounded-full bg-pink-600 px-5 text-sm font-medium text-white transition hover:bg-pink-500 active:bg-pink-700"
+            >
+              Search
+            </button>
+          </div>
+        </form>
+      </section>
+
+      {isSearching && creators.length === 0 ? (
+        <section className="flex flex-col items-center justify-center rounded-3xl border border-zinc-800 bg-zinc-900/70 p-10 text-center">
+          <div className="text-4xl">🔍</div>
+
+          <p className="mt-4 text-base font-semibold text-white">
+            No results found
+          </p>
+
+          <p className="mt-1 text-sm text-zinc-400">
+            Try a different keyword.
+          </p>
+        </section>
+      ) : (
+        <ExploreCreatorGrid creators={creators} />
+      )}
+    </main>
+  )
+}

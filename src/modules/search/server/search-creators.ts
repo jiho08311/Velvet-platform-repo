@@ -1,14 +1,6 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
-export type CreatorSearchResult = {
-  id: string
-  profileId: string
-  username: string
-  displayName: string
-  headline: string
-  avatarUrl: string | null
-  isVerified: boolean
-}
+import type { CreatorSearchResult } from "../types"
 
 export type SearchCreatorsInput = {
   query: string
@@ -66,7 +58,10 @@ export async function searchCreators(
   }
 
   const creatorMap = new Map(
-    ((creatorRows ?? []) as CreatorRow[]).map((creator) => [creator.user_id, creator])
+    ((creatorRows ?? []) as CreatorRow[]).map((creator) => [
+      creator.user_id,
+      creator,
+    ])
   )
 
   return matchedProfiles
@@ -76,11 +71,10 @@ export async function searchCreators(
 
       return {
         id: creator.id,
-        profileId: profile.id,
         username: creator.username,
         displayName: profile.display_name ?? profile.username,
-        headline: "",
         avatarUrl: null,
+        headline: null,
         isVerified: false,
       }
     })
