@@ -18,11 +18,14 @@ export type SearchCreatorsInput = {
 type CreatorRow = {
   id: string
   profile_id: string
-  username: string
-  display_name: string
-  headline: string
-  avatar_url: string | null
   is_verified: boolean
+  profiles:
+    | {
+        username: string
+        display_name: string | null
+        avatar_url: string | null
+      }[]
+    | null
 }
 
 export async function searchCreators(
@@ -41,22 +44,38 @@ export async function searchCreators(
   const { data, error } = await supabase
     .from("creators")
     .select(
-      "id, profile_id, username, display_name, headline, avatar_url, is_verified"
+      `
+        id,
+        profile_id,
+        is_verified,
+        profiles!inner (
+          username,
+          display_name,
+          avatar_url
+        )
+      `
     )
-    .ilike("username", `%${query}%`)
+    .or("username.ilike.%,display_name.ilike.%".replace("%", `%${query}%`), {
+      foreignTable: "profiles",
+    })
     .limit(limit)
 
   if (error) {
     throw error
   }
 
-  return (data ?? []).map((row: CreatorRow) => ({
-    id: row.id,
-    profileId: row.profile_id,
-    username: row.username,
-    displayName: row.display_name,
-    headline: row.headline,
-    avatarUrl: row.avatar_url,
-    isVerified: row.is_verified,
-  }))
-}
+  return ((data ?? []) as CreatorRow[])
+  .filter((row) => row.profiles && row.profiles.length > 0)
+  .map((row) => {
+    const profile = row.profiles![0]
+
+    return {
+      id: row.id,
+      profileId: row.profile_id,
+      username: profile.username,
+      displayName: profile.display_name ?? profile.username,
+      headline: "",
+      avatarUrl: profile.avatar_url,
+      isVerified: row.is_verified,
+    }
+  })}

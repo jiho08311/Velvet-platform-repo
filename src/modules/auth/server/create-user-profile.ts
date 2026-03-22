@@ -1,17 +1,17 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin";
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 type CreateUserProfileInput = {
-  id: string;
-  email: string;
-  displayName: string;
-  username: string;
-};
+  id: string
+  email: string
+  displayName: string
+  username: string
+}
 
 export function buildDefaultUsername(email: string, userId: string) {
   const base =
-    email.split("@")[0]?.toLowerCase().replace(/[^a-z0-9_]/g, "") || "user";
+    email.split("@")[0]?.toLowerCase().replace(/[^a-z0-9_]/g, "") || "user"
 
-  return `${base}_${userId.slice(0, 8)}`;
+  return `${base}_${userId.slice(0, 8)}`
 }
 
 export async function createUserProfile({
@@ -32,12 +32,12 @@ export async function createUserProfile({
       { onConflict: "id" }
     )
     .select()
-    .single();
+    .single()
 
   if (error) {
-    console.error("createUserProfile error:", error);
-    throw error;
+    console.error("createUserProfile error:", error)
+    throw error
   }
 
-  return data;
+  return data
 }
