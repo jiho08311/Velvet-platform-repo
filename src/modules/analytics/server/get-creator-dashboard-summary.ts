@@ -35,6 +35,7 @@ export async function getCreatorDashboardSummary(
     payments?.reduce((sum, p) => sum + (p.amount_cents ?? 0), 0) ?? 0
 
   return {
+    creatorId, // ✅ 이거 추가
     subscriberCount: totalCount ?? 0,
     activeSubscriberCount: activeCount ?? 0,
     monthlyRevenueCents,
