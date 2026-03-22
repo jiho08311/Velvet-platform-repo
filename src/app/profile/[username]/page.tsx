@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation"
 
 import { getCreatorByUsername } from "@/modules/creator/server/get-creator-by-username"
-import { CreatorHeader } from "@/modules/creator/ui/CreatorHeader"
-import { getCreatorPosts } from "@/modules/post/server/get-creator-posts"
+
 import { LockedPostCard } from "@/modules/post/ui/LockedPostCard"
 import { PostCard } from "@/modules/post/ui/PostCard"
 import { getProfileByUsername } from "@/modules/profile/server/get-profile-by-username"
