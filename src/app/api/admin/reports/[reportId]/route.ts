@@ -1,42 +1,34 @@
 import { NextResponse } from "next/server"
 import { requireUser } from "@/modules/auth/server/require-user"
-import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
+import { getReports } from "@/modules/admin/server/get-reports"
 
 type RouteParams = {
-  params: {
+  params: Promise<{
     reportId: string
-  }
+  }>
 }
 
 export async function GET(
   _request: Request,
-  { params }: RouteParams
+  { params }: RouteParams,
 ) {
   try {
     await requireUser()
 
-    const supabase = await createSupabaseServerClient()
+    const { reportId } = await params
+    const reports = await getReports()
+    const report = reports.items.find((item) => item.id === reportId)
 
-    const { data, error } = await supabase
-      .from("reports")
-      .select("*")
-      .eq("id", params.reportId)
-      .maybeSingle()
-
-    if (error) {
-      throw error
-    }
-
-    if (!data) {
+    if (!report) {
       return NextResponse.json(
         { error: "Report not found" },
-        { status: 404 }
+        { status: 404 },
       )
     }
 
     return NextResponse.json(
-      { report: data },
-      { status: 200 }
+      { report },
+      { status: 200 },
     )
   } catch (error) {
     const message =
@@ -44,7 +36,7 @@ export async function GET(
 
     return NextResponse.json(
       { error: message },
-      { status: 400 }
+      { status: 400 },
     )
   }
 }
