@@ -1,4 +1,5 @@
- import { searchCreators } from "@/modules/search/server/search-creators"
+import Link from "next/link"
+import { searchCreators } from "@/modules/search/server/search-creators"
 
 type ExplorePageProps = {
   searchParams?: {
@@ -55,9 +56,10 @@ export default async function ExplorePage({
       ) : (
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {creators.map((creator) => (
-            <article
+            <Link
               key={creator.id}
-              className="rounded-2xl border border-white/10 bg-neutral-950 p-5"
+              href={`/creator/${creator.username}`}
+              className="block rounded-2xl border border-white/10 bg-neutral-950 p-5 transition hover:border-white/20 hover:bg-neutral-900"
             >
               <div className="flex items-start gap-4">
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10">
@@ -89,12 +91,15 @@ export default async function ExplorePage({
                   <p className="mt-1 text-sm text-white/50">
                     @{creator.username}
                   </p>
-                  <p className="mt-3 line-clamp-2 text-sm leading-6 text-white/70">
-                    {creator.headline}
-                  </p>
+
+                  {creator.headline ? (
+                    <p className="mt-3 line-clamp-2 text-sm leading-6 text-white/70">
+                      {creator.headline}
+                    </p>
+                  ) : null}
                 </div>
               </div>
-            </article>
+            </Link>
           ))}
         </section>
       )}
