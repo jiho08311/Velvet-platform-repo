@@ -1,31 +1,35 @@
 import type { Post } from "../types"
 
-export type CanPurchasePostInput = {
-  viewerUserId: string | null
-  creatorId: string
+type CanPurchasePostParams = {
   post: Post
-  hasPurchased?: boolean
+  isOwner: boolean
+  hasPurchased: boolean
+  isSubscribed: boolean
 }
 
-export function canPurchasePost(input: CanPurchasePostInput): boolean {
-  const { viewerUserId, creatorId, post, hasPurchased = false } = input
-
-  if (!viewerUserId) {
+export function canPurchasePost({
+  post,
+  isOwner,
+  hasPurchased,
+  isSubscribed,
+}: CanPurchasePostParams): boolean {
+  if (isOwner) {
     return false
   }
 
-  // Creator cannot purchase their own post
-  if (viewerUserId === creatorId) {
-    return false
-  }
-
-  // Already purchased
   if (hasPurchased) {
     return false
   }
 
-  // Only locked posts can be purchased
-  if (!post.isLocked) {
+  if (post.visibility !== "paid") {
+    return false
+  }
+
+  if (post.priceCents <= 0) {
+    return false
+  }
+
+  if (isSubscribed) {
     return false
   }
 
