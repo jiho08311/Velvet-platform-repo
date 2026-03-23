@@ -19,7 +19,7 @@ export function canViewPost({
     return true
   }
 
-  if (post.visibility === "public" && post.price === null) {
+  if (post.visibility === "public" && post.priceCents === 0) {
     return true
   }
 
@@ -27,7 +27,7 @@ export function canViewPost({
     return true
   }
 
-  if (post.price !== null && hasPurchased) {
+  if (post.visibility === "paid" && hasPurchased) {
     return true
   }
 

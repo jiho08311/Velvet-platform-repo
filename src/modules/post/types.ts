@@ -1,16 +1,26 @@
-export type PostId = string
-export type PostCreatorId = string
+export type PostStatus = "draft" | "published" | "archived"
 
-export type PostVisibility =
-  | "public"
-  | "subscribers"
+export type PostVisibility = "public" | "subscribers" | "paid"
 
 export type Post = {
-  id: PostId
-  creatorId: PostCreatorId
-  text: string
+  id: string
+  creatorId: string
+  title?: string
+  content?: string
+  status: PostStatus
   visibility: PostVisibility
-  isLocked: boolean
-  price: number | null
+  priceCents: number
+  publishedAt?: string
   createdAt: string
+  updatedAt: string
+}
+
+export type CreatePostInput = {
+  creatorId: string
+  title?: string | null
+  content?: string | null
+  status?: PostStatus
+  visibility?: PostVisibility
+  priceCents?: number
+  publishedAt?: string | null
 }

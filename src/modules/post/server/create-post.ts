@@ -1,27 +1,31 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin";
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 type CreatePostInput = {
-  creatorId: string;
-  title?: string | null;
-  content?: string | null;
-  status?: "draft" | "published" | "archived";
-  visibility?: "public" | "subscribers" | "paid";
-  priceCents?: number;
-  publishedAt?: string | null;
-};
+  creatorId: string
+  title?: string | null
+  content?: string | null
+  status?: "draft" | "published" | "archived"
+  visibility?: "public" | "subscribers" | "paid"
+  priceCents?: number
+  publishedAt?: string | null
+}
+
+type CreatorRow = {
+  id: string
+}
 
 type PostRow = {
-  id: string;
-  creator_id: string;
-  title: string | null;
-  content: string | null;
-  status: "draft" | "published" | "archived";
-  visibility: "public" | "subscribers" | "paid";
-  price_cents: number;
-  published_at: string | null;
-  created_at: string;
-  updated_at: string;
-};
+  id: string
+  creator_id: string
+  title: string | null
+  content: string | null
+  status: "draft" | "published" | "archived"
+  visibility: "public" | "subscribers" | "paid"
+  price_cents: number
+  published_at: string | null
+  created_at: string
+  updated_at: string
+}
 
 export async function createPost({
   creatorId,
@@ -32,39 +36,53 @@ export async function createPost({
   priceCents = 0,
   publishedAt,
 }: CreatePostInput): Promise<{
-  id: string;
-  creatorId: string;
-  title?: string;
-  content?: string;
-  status: "draft" | "published" | "archived";
-  visibility: "public" | "subscribers" | "paid";
-  priceCents: number;
-  publishedAt?: string;
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  creatorId: string
+  title?: string
+  content?: string
+  status: "draft" | "published" | "archived"
+  visibility: "public" | "subscribers" | "paid"
+  priceCents: number
+  publishedAt?: string
+  createdAt: string
+  updatedAt: string
 }> {
   if (!["draft", "published", "archived"].includes(status)) {
-    throw new Error("Invalid post status");
+    throw new Error("Invalid post status")
   }
 
   if (!["public", "subscribers", "paid"].includes(visibility)) {
-    throw new Error("Invalid post visibility");
+    throw new Error("Invalid post visibility")
   }
 
-  const resolvedPriceCents = visibility === "paid" ? priceCents : 0;
+  const { data: creator, error: creatorError } = await supabaseAdmin
+    .from("creators")
+    .select("id")
+    .eq("id", creatorId)
+    .maybeSingle<CreatorRow>()
+
+  if (creatorError) {
+    throw creatorError
+  }
+
+  if (!creator) {
+    throw new Error("Only creators can create posts")
+  }
+
+  const resolvedPriceCents = visibility === "paid" ? priceCents : 0
 
   if (visibility === "paid" && resolvedPriceCents <= 0) {
-    throw new Error("Paid post price must be greater than 0");
+    throw new Error("Paid post price must be greater than 0")
   }
 
-  const now = new Date().toISOString();
+  const now = new Date().toISOString()
 
   const resolvedPublishedAt =
     publishedAt !== undefined
       ? publishedAt
       : status === "published"
-      ? now
-      : null;
+        ? now
+        : null
 
   const { data, error } = await supabaseAdmin
     .from("posts")
@@ -82,10 +100,10 @@ export async function createPost({
     .select(
       "id, creator_id, title, content, status, visibility, price_cents, published_at, created_at, updated_at"
     )
-    .single<PostRow>();
+    .single<PostRow>()
 
   if (error) {
-    throw error;
+    throw error
   }
 
   return {
@@ -99,5 +117,5 @@ export async function createPost({
     publishedAt: data.published_at ?? undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
-  };
+  }
 }

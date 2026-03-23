@@ -1,4 +1,4 @@
-type PostComposerVisibility = "public" | "subscribers"
+type PostComposerVisibility = "public" | "subscribers" | "paid"
 
 type PostComposerProps = {
   text: string
@@ -59,6 +59,7 @@ export function PostComposer({
             >
               <option value="public">Public</option>
               <option value="subscribers">Subscribers</option>
+              <option value="paid">Paid</option>
             </select>
           </label>
 
