@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 import { PostPurchaseButton } from "./PostPurchaseButton"
 
 type PostCardProps = {
@@ -17,7 +19,7 @@ export function PostCard({
 }: PostCardProps) {
   const thumbnails = mediaThumbnailUrls ?? []
 
-  return (
+  const content = (
     <article className="overflow-hidden rounded-md border border-zinc-200 bg-white shadow-sm transition-colors duration-200 hover:border-[#C2185B]/40">
       {thumbnails.length > 0 ? (
         <div className="grid grid-cols-2 gap-px border-b border-zinc-200 bg-zinc-200 sm:grid-cols-3">
@@ -60,5 +62,15 @@ export function PostCard({
         <p className="mt-4 text-xs text-zinc-500">{createdAt}</p>
       </div>
     </article>
+  )
+
+  if (!postId) {
+    return content
+  }
+
+  return (
+    <Link href={`/post/${postId}`} className="block">
+      {content}
+    </Link>
   )
 }

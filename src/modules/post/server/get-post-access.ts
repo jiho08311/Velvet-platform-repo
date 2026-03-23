@@ -28,17 +28,8 @@ export async function getPostAccess({
 }> {
   const canView = canViewPost({
     viewerUserId: viewerUserId ?? null,
-    post: {
-      id: post.id,
-      creatorId: post.creatorId,
-      content: post.content ?? "",
-      visibility: post.visibility,
-      priceCents: post.priceCents,
-      status: "published",
-      createdAt: post.createdAt,
-      updatedAt: post.createdAt,
-    },
-    creatorUserId: creator.userId,
+    creatorId: creator.userId,
+    visibility: post.visibility,
     isSubscribed: isSubscribedResult,
     hasPurchased: hasPurchasedResult,
   })

@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 import { checkSubscription } from "@/modules/subscription/server/check-subscription"
 
 type PostRow = {
@@ -81,7 +82,7 @@ export async function listCreatorPosts({
   for (const post of posts) {
     let isLocked = false
 
-    if (post.visibility === "subscribers" || post.visibility === "paid") {
+    if (post.visibility === "subscribers") {
       if (!userId) {
         isLocked = true
       } else {
@@ -91,6 +92,21 @@ export async function listCreatorPosts({
         })
 
         if (!isSubscribed) {
+          isLocked = true
+        }
+      }
+    }
+
+    if (post.visibility === "paid") {
+      if (!userId) {
+        isLocked = true
+      } else {
+        const hasPurchased = await hasPurchasedPost({
+          userId,
+          postId: post.id,
+        })
+
+        if (!hasPurchased) {
           isLocked = true
         }
       }
@@ -129,7 +145,9 @@ export async function listCreatorPosts({
 
   return Promise.all(
     filteredPosts.map(async (post) => {
-      const media = post.isLocked ? [] : (mediaMap.get(post.id) ?? []).slice(0, 3)
+      const media = post.isLocked
+        ? []
+        : (mediaMap.get(post.id) ?? []).slice(0, 3)
 
       const mediaThumbnailUrls = await Promise.all(
         media.map((item) =>

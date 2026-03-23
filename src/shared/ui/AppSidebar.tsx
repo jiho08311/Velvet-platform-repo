@@ -12,6 +12,7 @@ const primaryItems: SidebarItem[] = [
   { href: "/search", label: "Search" },
   { href: "/messages", label: "Messages" },
   { href: "/notifications", label: "Notifications" },
+   { href: "/post/new", label: "Post" },
   { href: "/subscriptions", label: "Subscriptions" },
   { href: "/bookmarks", label: "Bookmarks" },
   { href: "/likes", label: "Likes" },

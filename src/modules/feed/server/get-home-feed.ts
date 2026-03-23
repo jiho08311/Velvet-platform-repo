@@ -156,31 +156,19 @@ export async function getHomeFeed(
       const creatorUserId = creatorUserIdMap.get(post.creator_id) ?? ""
 
       const hasPurchased =
-        post.price_cents !== null
+        post.visibility === "paid" && post.price_cents !== null
           ? await hasPurchasedPost({
               userId: viewerUserId,
               postId: post.id,
             })
           : false
 
-      const normalizedVisibility =
-        post.visibility === "paid" ? "public" : post.visibility
-
       const hasAccess = canViewPost({
         viewerUserId,
-        creatorUserId,
+        creatorId: creatorUserId,
+        visibility: post.visibility,
         isSubscribed: true,
         hasPurchased,
-      post: {
-  id: post.id,
-  creatorId: post.creator_id,
-  content: post.content ?? post.title ?? "",
-  visibility: normalizedVisibility,
-  priceCents: post.price_cents ?? 0,
-  status: "published",
-  createdAt: post.created_at,
-  updatedAt: post.created_at,
-},
       })
 
       const media = hasAccess ? (mediaMap.get(post.id) ?? []).slice(0, 3) : []

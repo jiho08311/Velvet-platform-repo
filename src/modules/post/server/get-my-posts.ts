@@ -3,7 +3,7 @@ export type MyPostListItem = {
   creatorId: string
   text: string
   status: "draft" | "published"
-  visibility: "public" | "subscribers"
+  visibility: "public" | "subscribers" | "paid"
   isLocked: boolean
   createdAt: string
   publishedAt: string | null

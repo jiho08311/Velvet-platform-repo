@@ -49,7 +49,8 @@ export default async function CreatorContentPage() {
           id: post.id,
           text: post.text,
           createdAt: post.publishedAt ?? post.createdAt,
-          isLocked: post.isLocked,
+          // ✅ isLocked 제거 → visibility 기반으로 변환
+          isLocked: post.visibility !== "public",
           previewText: post.text,
         }))}
         isSubscribed

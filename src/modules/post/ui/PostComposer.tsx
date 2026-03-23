@@ -3,24 +3,20 @@ type PostComposerVisibility = "public" | "subscribers" | "paid"
 type PostComposerProps = {
   text: string
   visibility: PostComposerVisibility
-  isLocked: boolean
   disabled?: boolean
   placeholder?: string
   onTextChange: (value: string) => void
   onVisibilityChange: (value: PostComposerVisibility) => void
-  onLockedChange: (value: boolean) => void
   onSubmit?: () => void
 }
 
 export function PostComposer({
   text,
   visibility,
-  isLocked,
   disabled = false,
   placeholder = "Write something for your audience...",
   onTextChange,
   onVisibilityChange,
-  onLockedChange,
   onSubmit,
 }: PostComposerProps) {
   return (
@@ -61,23 +57,15 @@ export function PostComposer({
               <option value="subscribers">Subscribers</option>
               <option value="paid">Paid</option>
             </select>
-          </label>
 
-          <label className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-            <div>
-              <p className="text-sm font-medium text-white/80">Locked post</p>
-              <p className="mt-1 text-xs text-white/45">
-                Require subscription or payment to unlock.
-              </p>
-            </div>
-
-            <input
-              type="checkbox"
-              checked={isLocked}
-              disabled={disabled}
-              onChange={(event) => onLockedChange(event.target.checked)}
-              className="h-4 w-4 accent-white disabled:cursor-not-allowed disabled:opacity-60"
-            />
+            {/* ✅ 설명만 추가 (UX 개선) */}
+            <p className="text-xs text-white/40">
+              {visibility === "public" && "Anyone can view this post."}
+              {visibility === "subscribers" &&
+                "Only your subscribers can view this post."}
+              {visibility === "paid" &&
+                "Users must purchase this post to view it."}
+            </p>
           </label>
         </div>
 

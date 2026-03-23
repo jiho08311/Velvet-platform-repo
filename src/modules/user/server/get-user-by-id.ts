@@ -1,36 +1,31 @@
-import type { User, UserId, UserRole, UserStatus } from "../types"
+// src/modules/user/server/get-user-by-id.ts
+
+import type { User, UserId } from "@/modules/user"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
-type UserRow = {
+type ProfileUserRow = {
   id: string
-  email: string
+  email: string | null
   username: string
-  role: UserRole
-  status: UserStatus
   created_at: string
 }
 
 export async function getUserById(userId: UserId): Promise<User | null> {
   const { data, error } = await supabaseAdmin
-    .from("users")
-    .select("id, email, username, role, status, created_at")
+    .from("profiles")
+    .select("id, email, username, created_at")
     .eq("id", userId)
-    .maybeSingle<UserRow>()
+    .maybeSingle<ProfileUserRow>()
 
-  if (error) {
-    throw error
-  }
-
-  if (!data) {
-    return null
-  }
+  if (error) throw error
+  if (!data) return null
 
   return {
     id: data.id,
-    email: data.email,
+    email: data.email ?? "",
     username: data.username,
-    role: data.role,
-    status: data.status,
+    role: "fan",
+    status: "active",
     createdAt: data.created_at,
   }
 }

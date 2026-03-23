@@ -1,3 +1,6 @@
+// src/app/feed/page.tsx
+
+import Link from "next/link"
 import { redirect } from "next/navigation"
 
 import { getSession } from "@/modules/auth/server/get-session"
@@ -64,12 +67,13 @@ export default async function FeedPage() {
                   Notification
                 </a>
 
-                <button
-                  type="button"
+                {/* ✅ 여기 수정 */}
+                <Link
+                  href="/post/new"
                   className="rounded-2xl bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
                 >
                   Post
-                </button>
+                </Link>
 
                 <a
                   href="/profile"

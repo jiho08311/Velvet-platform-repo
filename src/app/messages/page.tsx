@@ -1,6 +1,6 @@
 import { getSession } from "@/modules/auth/server/get-session"
-import { getThreads } from "@/modules/message/server/get-threads"
-import { ThreadList } from "@/modules/message/ui/ThreadList"
+import { listConversations } from "@/modules/message/server/list-conversations"
+import { ConversationList } from "@/modules/message/ui/ConversationList"
 
 export default async function MessagesPage() {
   const session = await getSession()
@@ -15,14 +15,16 @@ export default async function MessagesPage() {
           </p>
         </section>
 
-        <ThreadList threads={[]} emptyMessage="Sign in to view your messages." />
+        <ConversationList
+          conversations={[]}
+          emptyMessage="Sign in to view your messages."
+        />
       </main>
     )
   }
 
-  const threads = await getThreads({
-    viewerUserId: session.userId,
-    limit: 20,
+  const conversations = await listConversations({
+    userId: session.userId,
   })
 
   return (
@@ -34,14 +36,15 @@ export default async function MessagesPage() {
         </p>
       </section>
 
-      <ThreadList
-        threads={threads.items.map((thread) => ({
-          id: thread.id,
-          participantName: thread.participant.displayName,
-          participantAvatarUrl: thread.participant.avatarUrl,
-          lastMessage: thread.lastMessage?.content ?? "",
-          lastMessageAt: thread.lastMessage?.createdAt ?? thread.updatedAt,
-          participantUsername: thread.participant.username,
+      <ConversationList
+        conversations={conversations.map((conversation) => ({
+          id: conversation.id,
+          participantName: conversation.participant.displayName,
+          participantAvatarUrl: conversation.participant.avatarUrl,
+          lastMessage: conversation.lastMessage?.content ?? "",
+          lastMessageAt:
+            conversation.lastMessage?.createdAt ?? conversation.updatedAt,
+          participantUsername: conversation.participant.username,
         }))}
         emptyMessage="No conversations yet."
       />

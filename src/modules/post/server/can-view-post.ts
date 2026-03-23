@@ -1,34 +1,31 @@
-import type { Post } from "../types"
-
-type CanViewPostParams = {
-  viewerUserId: string | null
-  post: Post
-  creatorUserId: string
+export type CanViewPostInput = {
+  visibility: "public" | "subscribers" | "paid"
+  viewerUserId: string | null | undefined
+  creatorId: string
   isSubscribed: boolean
-  hasPurchased: boolean
+  hasPurchased?: boolean
 }
 
-export function canViewPost({
-  viewerUserId,
-  post,
-  creatorUserId,
-  isSubscribed,
-  hasPurchased,
-}: CanViewPostParams): boolean {
-  if (viewerUserId === creatorUserId) {
+export function canViewPost(input: CanViewPostInput): boolean {
+  const viewerUserId = input.viewerUserId?.trim() ?? ""
+  const creatorId = input.creatorId.trim()
+
+  if (!creatorId) return false
+
+  if (viewerUserId && viewerUserId === creatorId) {
     return true
   }
 
-  if (post.visibility === "public" && post.priceCents === 0) {
+  if (input.visibility === "public") {
     return true
   }
 
-  if (post.visibility === "subscribers" && isSubscribed) {
-    return true
+  if (input.visibility === "subscribers") {
+    return input.isSubscribed
   }
 
-  if (post.visibility === "paid" && hasPurchased) {
-    return true
+  if (input.visibility === "paid") {
+    return input.hasPurchased === true
   }
 
   return false
