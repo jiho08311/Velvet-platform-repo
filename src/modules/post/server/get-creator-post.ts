@@ -1,11 +1,11 @@
-import type { Post, PostCreatorId } from "../types" 
+import type { Post } from "../types"
 
 export type CreatorPostListItem = Post & {
   isLocked: boolean
 }
 
 export type GetCreatorPostsInput = {
-  creatorId: PostCreatorId
+  creatorId: string
   limit?: number
   cursor?: string | null
 }
@@ -16,16 +16,10 @@ export type GetCreatorPostsResult = {
 }
 
 export async function getCreatorPosts(
-  input: GetCreatorPostsInput
+  _input: GetCreatorPostsInput
 ): Promise<GetCreatorPostsResult> {
-  if (!input.creatorId) {
-    throw new Error("Creator id is required")
-  }
-
-  const limit = Math.max(1, Math.min(input.limit ?? 20, 100))
-
   return {
     items: [],
-    nextCursor: input.cursor ? null : null,
+    nextCursor: null,
   }
 }

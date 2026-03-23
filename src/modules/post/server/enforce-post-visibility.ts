@@ -1,52 +1,33 @@
 import type { Post } from "../types"
 
-export type EnforcePostVisibilityInput = {
-  viewerUserId: string | null
+type EnforcePostVisibilityParams = {
   post: Post
-  creatorId: string
-  isSubscribed?: boolean
+  isOwner: boolean
+  isSubscribed: boolean
+  hasPurchased: boolean
 }
 
-export function enforcePostVisibility(
-  input: EnforcePostVisibilityInput
-): true {
-  const { viewerUserId, post, creatorId, isSubscribed = false } = input
-
-  // Creator always has access to their own post
-  if (viewerUserId && viewerUserId === creatorId) {
+export function enforcePostVisibility({
+  post,
+  isOwner,
+  isSubscribed,
+  hasPurchased,
+}: EnforcePostVisibilityParams): boolean {
+  if (isOwner) {
     return true
   }
 
-  // Public posts are always accessible
-  if (post.visibility === "public" && !post.isLocked) {
+  if (post.visibility === "public") {
     return true
   }
 
-  // Subscriber-only posts
   if (post.visibility === "subscribers") {
-    if (!viewerUserId) {
-      throw new Error("Authentication required to view this post")
-    }
-
-    if (!isSubscribed) {
-      throw new Error("Subscription required to view this post")
-    }
-
-    return true
+    return isSubscribed
   }
 
-  // Locked content requires subscription
-  if (post.isLocked) {
-    if (!viewerUserId) {
-      throw new Error("Authentication required to view locked content")
-    }
-
-    if (!isSubscribed) {
-      throw new Error("Subscription required to unlock this post")
-    }
-
-    return true
+  if (post.visibility === "paid") {
+    return hasPurchased
   }
 
-  throw new Error("Access denied")
+  return false
 }
