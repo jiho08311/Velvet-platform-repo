@@ -171,15 +171,16 @@ export async function getHomeFeed(
         creatorUserId,
         isSubscribed: true,
         hasPurchased,
-        post: {
-          id: post.id,
-          creatorId: post.creator_id,
-          text: post.content ?? post.title ?? "",
-          visibility: normalizedVisibility,
-          isLocked: false,
-          price: post.price_cents,
-          createdAt: post.created_at,
-        },
+      post: {
+  id: post.id,
+  creatorId: post.creator_id,
+  content: post.content ?? post.title ?? "",
+  visibility: normalizedVisibility,
+  priceCents: post.price_cents ?? 0,
+  status: "published",
+  createdAt: post.created_at,
+  updatedAt: post.created_at,
+},
       })
 
       const media = hasAccess ? (mediaMap.get(post.id) ?? []).slice(0, 3) : []
