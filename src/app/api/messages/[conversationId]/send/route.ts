@@ -1,5 +1,3 @@
-// src/app/api/messages/[conversationId]/send/route.ts
-
 import { NextResponse } from "next/server"
 
 import { getSession } from "@/modules/auth/server/get-session"
@@ -36,7 +34,7 @@ export async function POST(request: Request, context: RouteContext) {
   const userId = getSessionUserId(session)
 
   if (!userId) {
-    return NextResponse.redirect(new URL("/sign-in", request.url))
+    return NextResponse.redirect(new URL("/sign-in", request.url), 303)
   }
 
   const { conversationId } = await context.params
@@ -45,7 +43,8 @@ export async function POST(request: Request, context: RouteContext) {
 
   if (!content) {
     return NextResponse.redirect(
-      new URL(`/messages/${conversationId}`, request.url)
+      new URL(`/messages/${conversationId}`, request.url),
+      303
     )
   }
 
@@ -56,6 +55,7 @@ export async function POST(request: Request, context: RouteContext) {
   })
 
   return NextResponse.redirect(
-    new URL(`/messages/${conversationId}`, request.url)
+    new URL(`/messages/${conversationId}`, request.url),
+    303
   )
 }

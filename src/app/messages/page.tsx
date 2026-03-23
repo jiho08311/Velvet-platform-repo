@@ -1,3 +1,5 @@
+// src/app/messages/page.tsx
+
 import { getSession } from "@/modules/auth/server/get-session"
 import { listConversations } from "@/modules/message/server/list-conversations"
 import { ConversationList } from "@/modules/message/ui/ConversationList"

@@ -1,3 +1,7 @@
+// src/modules/message/ui/ConversationList.tsx
+
+import Link from "next/link"
+
 type ConversationListItem = {
   id: string
   participantName: string
@@ -11,13 +15,11 @@ type ConversationListItem = {
 type ConversationListProps = {
   conversations: ConversationListItem[]
   emptyMessage?: string
-  onSelectConversation?: (conversationId: string) => void
 }
 
 export function ConversationList({
   conversations,
   emptyMessage = "No conversations yet.",
-  onSelectConversation,
 }: ConversationListProps) {
   if (conversations.length === 0) {
     return (
@@ -31,10 +33,9 @@ export function ConversationList({
     <section className="overflow-hidden rounded-2xl border border-white/10 bg-neutral-950">
       <div className="divide-y divide-white/10">
         {conversations.map((conversation) => (
-          <button
+          <Link
             key={conversation.id}
-            type="button"
-            onClick={() => onSelectConversation?.(conversation.id)}
+            href={`/messages/${conversation.id}`}
             className={`flex w-full items-center gap-4 px-4 py-4 text-left transition ${
               conversation.isSelected
                 ? "bg-white/10"
@@ -69,7 +70,7 @@ export function ConversationList({
                 {conversation.lastMessage}
               </p>
             </div>
-          </button>
+          </Link>
         ))}
       </div>
     </section>

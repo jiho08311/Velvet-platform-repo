@@ -55,28 +55,36 @@ export async function sendMessage(input: SendMessageInput) {
     throw new Error("Other participant not found")
   }
 
-  const { data: senderCreator } = await supabase
+  const { data: senderCreator, error: senderCreatorError } = await supabase
     .from("creators")
     .select("id, user_id")
     .eq("user_id", input.senderId)
     .maybeSingle<CreatorRow>()
 
-  const { data: otherCreator } = await supabase
+  if (senderCreatorError) {
+    throw senderCreatorError
+  }
+
+  const { data: otherCreator, error: otherCreatorError } = await supabase
     .from("creators")
     .select("id, user_id")
     .eq("user_id", otherUserId)
     .maybeSingle<CreatorRow>()
 
+  if (otherCreatorError) {
+    throw otherCreatorError
+  }
+
   const senderIsCreator = Boolean(senderCreator)
   const otherIsCreator = Boolean(otherCreator)
 
-  if (!senderIsCreator && otherIsCreator) {
-    const { data: subscription, error: subscriptionError } = await supabase
-      .from("subscriptions")
-      .select("status")
-      .eq("creator_id", otherUserId)
-      .eq("subscriber_id", input.senderId)
-      .maybeSingle()
+  if (!senderIsCreator && otherCreator) {
+  const { data: subscription, error: subscriptionError } = await supabase
+    .from("subscriptions")
+    .select("status")
+    .eq("creator_id", otherCreator.id)
+    .eq("user_id", input.senderId)
+    .maybeSingle()
 
     if (subscriptionError) {
       throw subscriptionError

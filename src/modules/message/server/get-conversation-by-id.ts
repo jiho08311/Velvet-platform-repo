@@ -1,6 +1,5 @@
-// src/modules/message/server/get-conversation-by-id.ts
-
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 type GetConversationByIdInput = {
   conversationId: string
@@ -21,6 +20,14 @@ type ParticipantRow = {
 
 type ProfileRow = {
   id: string
+  username: string
+  display_name: string | null
+  avatar_url: string | null
+}
+
+type CreatorRow = {
+  id: string
+  user_id: string
   username: string
   display_name: string | null
   avatar_url: string | null
@@ -56,7 +63,6 @@ export async function getConversationById({
   }
 
   const participantRows = (participants ?? []) as ParticipantRow[]
-
   const isParticipant = participantRows.some((row) => row.user_id === userId)
 
   if (!isParticipant) {
@@ -69,7 +75,7 @@ export async function getConversationById({
   let participant = null
 
   if (otherUserId) {
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
       .select("id, username, display_name, avatar_url")
       .eq("id", otherUserId)
@@ -79,14 +85,33 @@ export async function getConversationById({
       throw profileError
     }
 
-    participant = profile
-      ? {
-          userId: profile.id,
-          username: profile.username,
-          displayName: profile.display_name ?? profile.username,
-          avatarUrl: profile.avatar_url,
-        }
-      : null
+    if (profile) {
+      participant = {
+        userId: profile.id,
+        username: profile.username,
+        displayName: profile.display_name ?? profile.username,
+        avatarUrl: profile.avatar_url,
+      }
+    } else {
+      const { data: creator, error: creatorError } = await supabaseAdmin
+        .from("creators")
+        .select("id, user_id, username, display_name, avatar_url")
+        .eq("user_id", otherUserId)
+        .maybeSingle<CreatorRow>()
+
+      if (creatorError) {
+        throw creatorError
+      }
+
+      participant = creator
+        ? {
+            userId: creator.user_id,
+            username: creator.username,
+            displayName: creator.display_name ?? creator.username,
+            avatarUrl: creator.avatar_url,
+          }
+        : null
+    }
   }
 
   return {

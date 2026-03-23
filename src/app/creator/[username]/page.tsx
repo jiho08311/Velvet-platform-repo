@@ -93,7 +93,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                 ) : (
                   <>
                     <Link
-                      href={`/messages/new?creatorId=${creator.userId}`}
+  href={`/messages/new?creatorUsername=${creator.username}`}
                       className="inline-flex h-11 items-center justify-center rounded-full border border-zinc-300 px-5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
                     >
                       Send message
