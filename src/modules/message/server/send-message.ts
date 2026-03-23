@@ -1,83 +1,117 @@
+// src/modules/message/server/send-message.ts
+
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 
-type SendMessageParams = {
+type SendMessageInput = {
   conversationId: string
   senderId: string
   content: string
 }
 
-type MessageRow = {
-  id: string
+type ParticipantRow = {
   conversation_id: string
-  sender_id: string
-  content: string
-  created_at: string
+  user_id: string
 }
 
-export type Message = {
+type CreatorRow = {
   id: string
-  conversationId: string
-  senderId: string
-  content: string
-  createdAt: string
+  user_id: string
 }
 
-export async function sendMessage({
-  conversationId,
-  senderId,
-  content,
-}: SendMessageParams): Promise<Message> {
+export async function sendMessage(input: SendMessageInput) {
   const supabase = await createSupabaseServerClient()
 
-  const { data: participant, error: participantError } = await supabase
+  const trimmedContent = input.content.trim()
+
+  if (!trimmedContent) {
+    throw new Error("Message content is required")
+  }
+
+  const { data: participants, error: participantsError } = await supabase
     .from("conversation_participants")
-    .select("conversation_id")
-    .eq("conversation_id", conversationId)
-    .eq("user_id", senderId)
-    .maybeSingle()
+    .select("conversation_id, user_id")
+    .eq("conversation_id", input.conversationId)
 
-  if (participantError) {
-    throw participantError
+  if (participantsError) {
+    throw participantsError
   }
 
-  if (!participant) {
-    throw new Error("User is not a participant in this conversation")
+  const participantRows = (participants ?? []) as ParticipantRow[]
+
+  if (participantRows.length < 2) {
+    throw new Error("Conversation participants not found")
   }
 
-  const now = new Date().toISOString()
+  const participantUserIds = participantRows.map((row) => row.user_id)
 
-  const { data, error } = await supabase
+  if (!participantUserIds.includes(input.senderId)) {
+    throw new Error("Not allowed")
+  }
+
+  const otherUserId =
+    participantUserIds.find((userId) => userId !== input.senderId) ?? null
+
+  if (!otherUserId) {
+    throw new Error("Other participant not found")
+  }
+
+  const { data: senderCreator } = await supabase
+    .from("creators")
+    .select("id, user_id")
+    .eq("user_id", input.senderId)
+    .maybeSingle<CreatorRow>()
+
+  const { data: otherCreator } = await supabase
+    .from("creators")
+    .select("id, user_id")
+    .eq("user_id", otherUserId)
+    .maybeSingle<CreatorRow>()
+
+  const senderIsCreator = Boolean(senderCreator)
+  const otherIsCreator = Boolean(otherCreator)
+
+  if (!senderIsCreator && otherIsCreator) {
+    const { data: subscription, error: subscriptionError } = await supabase
+      .from("subscriptions")
+      .select("status")
+      .eq("creator_id", otherUserId)
+      .eq("subscriber_id", input.senderId)
+      .maybeSingle()
+
+    if (subscriptionError) {
+      throw subscriptionError
+    }
+
+    if (!subscription || subscription.status !== "active") {
+      throw new Error("Subscription required")
+    }
+  }
+
+  const { data: message, error: messageError } = await supabase
     .from("messages")
     .insert({
-      conversation_id: conversationId,
-      sender_id: senderId,
-      content,
-      created_at: now,
+      conversation_id: input.conversationId,
+      sender_id: input.senderId,
+      content: trimmedContent,
     })
     .select("id, conversation_id, sender_id, content, created_at")
-    .single<MessageRow>()
+    .single()
 
-  if (error) {
-    throw error
+  if (messageError) {
+    throw messageError
   }
 
-  const { error: updateError } = await supabase
+  const { error: conversationUpdateError } = await supabase
     .from("conversations")
     .update({
-      last_message_at: now,
-      updated_at: now,
+      updated_at: new Date().toISOString(),
+      last_message_at: message.created_at,
     })
-    .eq("id", conversationId)
+    .eq("id", input.conversationId)
 
-  if (updateError) {
-    throw updateError
+  if (conversationUpdateError) {
+    throw conversationUpdateError
   }
 
-  return {
-    id: data.id,
-    conversationId: data.conversation_id,
-    senderId: data.sender_id,
-    content: data.content,
-    createdAt: data.created_at,
-  }
+  return message
 }
