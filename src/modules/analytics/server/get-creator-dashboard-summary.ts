@@ -6,20 +6,17 @@ export async function getCreatorDashboardSummary(
 ): Promise<CreatorDashboardSummary> {
   const supabase = await createClient()
 
-  // 전체 구독자 수
   const { count: totalCount } = await supabase
     .from("subscriptions")
     .select("*", { count: "exact", head: true })
     .eq("creator_id", creatorId)
 
-  // 활성 구독자 수
   const { count: activeCount } = await supabase
     .from("subscriptions")
     .select("*", { count: "exact", head: true })
     .eq("creator_id", creatorId)
     .eq("status", "active")
 
-  // 월 수익
   const startOfMonth = new Date()
   startOfMonth.setDate(1)
   startOfMonth.setHours(0, 0, 0, 0)
@@ -31,13 +28,14 @@ export async function getCreatorDashboardSummary(
     .eq("status", "succeeded")
     .gte("created_at", startOfMonth.toISOString())
 
-  const monthlyRevenueCents =
-    payments?.reduce((sum, p) => sum + (p.amount_cents ?? 0), 0) ?? 0
+  const monthlyRevenue =
+    payments?.reduce((sum, payment) => sum + (payment.amount_cents ?? 0), 0) ??
+    0
 
   return {
-    creatorId, // ✅ 이거 추가
     subscriberCount: totalCount ?? 0,
-    activeSubscriberCount: activeCount ?? 0,
-    monthlyRevenueCents,
+    activeSubscriptionCount: activeCount ?? 0,
+    monthlyRevenue,
+    recentPayments: [],
   }
 }
