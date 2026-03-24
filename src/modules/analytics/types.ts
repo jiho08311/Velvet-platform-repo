@@ -1,6 +1,6 @@
-export type CreatorDashboardSummary = {
+export type FeedItem = {
+  id: string
+  postId: string
   creatorId: string
-  subscriberCount: number
-  activeSubscriberCount: number
-  monthlyRevenueCents: number
+  createdAt: string
 }

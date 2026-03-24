@@ -1,5 +1,3 @@
-// src/modules/user/types.ts
-
 export type UserId = string
 
 export type UserRole = "fan" | "creator" | "admin"
