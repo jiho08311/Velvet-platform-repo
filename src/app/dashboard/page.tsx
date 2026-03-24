@@ -119,14 +119,14 @@ export default async function DashboardPage() {
           <Card>
             <p className="text-sm text-zinc-500">Active subscribers</p>
             <p className="mt-3 text-3xl font-semibold tabular-nums">
-              {summary?.activeSubscriberCount ?? 0}
+              {summary?.activeSubscriptionCount ?? 0}
             </p>
           </Card>
 
           <Card>
             <p className="text-sm text-zinc-500">Monthly revenue</p>
             <p className="mt-3 text-3xl font-semibold tabular-nums">
-              {formatPrice(summary?.monthlyRevenueCents ?? 0)}
+              {formatPrice(summary?.monthlyRevenue ?? 0)}
             </p>
           </Card>
 
