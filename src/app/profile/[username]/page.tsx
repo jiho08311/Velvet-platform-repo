@@ -60,9 +60,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
             </div>
           </div>
 
-          {isOwner ? (
-            <CreatePostComposer creatorId={creator.id} />
-          ) : null}
+          {isOwner ? <CreatePostComposer creatorId={creator.id} /> : null}
 
           {posts.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-zinc-200 bg-zinc-50 p-10 text-center">
@@ -88,7 +86,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                     </span>
                   </div>
 
-                  {post.visibility !== "public" ? (
+                  {post.isLocked ? (
                     <div className="px-5 py-10">
                       <div className="rounded-2xl border border-[#C2185B]/15 bg-[#FFF1F5] p-6 text-center">
                         <p className="text-lg font-semibold text-zinc-900">

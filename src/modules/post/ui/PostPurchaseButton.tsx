@@ -51,14 +51,13 @@ export function PostPurchaseButton({ postId }: PostPurchaseButtonProps) {
         throw new Error("Missing paymentId")
       }
 
-      const confirmRes = await fetch("/api/payment/mock/confirm-post", {
+      const confirmRes = await fetch("/api/payment/confirm", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           paymentId,
-          postId,
         }),
       })
 

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import { requireUser } from "@/modules/auth/server/require-user"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createPaymentCheckout } from "@/modules/payment/server/create-payment-checkout"
+import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 
 type PurchaseRequestBody = {
   postId?: string
@@ -32,6 +33,18 @@ export async function POST(request: Request) {
     if (!post.price_cents || post.price_cents <= 0) {
       return NextResponse.json(
         { error: "Invalid post price" },
+        { status: 400 }
+      )
+    }
+
+    const alreadyPurchased = await hasPurchasedPost({
+      userId: user.id,
+      postId: post.id,
+    })
+
+    if (alreadyPurchased) {
+      return NextResponse.json(
+        { error: "POST_ALREADY_PURCHASED" },
         { status: 400 }
       )
     }

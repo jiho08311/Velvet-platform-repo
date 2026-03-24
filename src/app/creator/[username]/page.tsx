@@ -14,24 +14,16 @@ type CreatorPageProps = {
   }>
 }
 
-function formatPrice(amount: number, currency: string) {
+function formatPrice(amountCents: number, currency: string) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: currency.toUpperCase(),
     maximumFractionDigits: 2,
-  }).format(amount)
+  }).format(amountCents / 100)
 }
 
 function formatCount(value: number | null | undefined) {
   return new Intl.NumberFormat("en-US").format(value ?? 0)
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(value))
 }
 
 export default async function CreatorPage({ params }: CreatorPageProps) {
@@ -143,78 +135,81 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                   Revenue
                 </p>
                 <p className="mt-2 text-2xl font-semibold text-zinc-900">
-                  {formatPrice(summary?.monthlyRevenue ?? 0, "USD")}
+                  {formatPrice((summary?.monthlyRevenue ?? 0) * 100, "USD")}
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-       {isOwner ? (
-  <section className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
-    <CreatePostComposer creatorId={creator.id} />
-  </section>
-) : null}
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#C2185B]">
+                Posts
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold text-zinc-900">
+                Creator posts
+              </h2>
+            </div>
+          </div>
 
-        <section className="flex flex-col gap-4">
+          {isOwner ? <CreatePostComposer creatorId={creator.id} /> : null}
+
           {posts.length === 0 ? (
-            <div className="rounded-3xl border border-zinc-200 bg-white px-6 py-10 text-center shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
-              <p className="text-base font-medium text-zinc-900">No posts yet</p>
+            <div className="rounded-3xl border border-dashed border-zinc-200 bg-zinc-50 p-10 text-center">
+              <p className="text-lg font-semibold text-zinc-900">No posts yet</p>
               <p className="mt-2 text-sm text-zinc-500">
                 This creator has not published any posts yet.
               </p>
             </div>
           ) : (
-            posts.map((post) => {
-              const isPaidPost = post.visibility === "paid" && post.price_cents > 0
-
-              return (
+            <div className="grid gap-4">
+              {posts.map((post) => (
                 <article
                   key={post.id}
-                  className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-[0_8px_24px_rgba(0,0,0,0.04)]"
+                  className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.04)]"
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-zinc-900">
-                        {creator.displayName ?? creator.username}
-                      </p>
-                      <p className="mt-1 text-xs text-zinc-500">
-                        {formatDate(post.created_at)}
-                      </p>
-                    </div>
+                  <div className="flex flex-col gap-3 border-b border-zinc-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm text-zinc-500">
+                      {new Date(post.created_at).toLocaleString()}
+                    </p>
 
-                    <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium capitalize text-zinc-600">
+                    <span className="inline-flex w-fit items-center rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-xs font-medium capitalize text-zinc-700">
                       {post.visibility}
                     </span>
                   </div>
 
                   {post.isLocked ? (
-                    <div className="mt-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-5">
-                      <p className="text-sm font-medium text-zinc-900">
-                        {isPaidPost ? "This post is paid content." : "Subscriber-only post."}
-                      </p>
-                      <p className="mt-2 text-sm text-zinc-500">
-                        {isPaidPost
-                          ? "Unlock this post to view the full content."
-                          : "Subscribe to this creator to view the full content."}
-                      </p>
+                    <div className="px-5 py-10">
+                      <div className="rounded-2xl border border-[#C2185B]/15 bg-[#FFF1F5] p-6 text-center">
+                        <p className="text-lg font-semibold text-zinc-900">
+                          Locked content
+                        </p>
 
-                     {isPaidPost ? (
-  <div className="mt-4">
-    <PostPurchaseButton postId={post.id} />
-  </div>
-) : null}
+                        <p className="mt-2 text-sm text-zinc-600">
+                          {post.visibility === "paid"
+                            ? `Purchase this post for ${formatPrice(post.price_cents ?? 0, "USD")}.`
+                            : "Subscribe to unlock this post."}
+                        </p>
+
+                        {post.visibility === "paid" ? (
+                          <div className="mt-4 flex justify-center">
+                            <PostPurchaseButton postId={post.id} />
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                   ) : (
-                    <div className="mt-4">
+                    <div className="px-5 pb-5 pt-4">
                       <p className="whitespace-pre-wrap text-sm leading-7 text-zinc-700">
-                        {post.content}
+                        {post.content ?? ""}
                       </p>
                     </div>
                   )}
                 </article>
-              )
-            })
+              ))}
+            </div>
           )}
         </section>
       </div>
