@@ -3,32 +3,36 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin";
 
 type CreateProfileInput = {
   userId: string;
+  email: string;
   username: string;
   displayName: string;
 };
 
 type ProfileRow = {
   id: string;
-  user_id: string;
+  email: string;
   username: string;
   display_name: string;
   avatar_url: string | null;
   bio: string | null;
+  created_at: string;
 };
 
 export async function createProfile({
   userId,
+  email,
   username,
   displayName,
 }: CreateProfileInput): Promise<Profile> {
   const { data, error } = await supabaseAdmin
     .from("profiles")
     .insert({
-      user_id: userId,
+      id: userId,
+      email,
       username,
       display_name: displayName,
     })
-    .select("id, user_id, username, display_name, avatar_url, bio")
+    .select("id, email, username, display_name, avatar_url, bio, created_at")
     .single<ProfileRow>();
 
   if (error) {
@@ -37,10 +41,11 @@ export async function createProfile({
 
   return {
     id: data.id as ProfileId,
-    userId: data.user_id,
+    email: data.email,
     username: data.username,
     displayName: data.display_name,
-    avatarUrl: data.avatar_url ?? "",
-    bio: data.bio ?? "",
+    avatarUrl: data.avatar_url,
+    bio: data.bio,
+    createdAt: data.created_at,
   };
 }

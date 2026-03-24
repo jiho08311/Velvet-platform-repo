@@ -1,10 +1,20 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
-import { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"
+import { checkSubscription } from "@/modules/subscription/server/check-subscription"
 
 type GetCreatorFeedInput = {
   creatorId: string
   userId?: string | null
+}
+
+type PostRow = {
+  id: string
+  creator_id: string
+  content: string | null
+  visibility: "public" | "subscribers" | "paid"
+  price_cents: number
+  status: string
+  created_at: string
 }
 
 export async function getCreatorFeed({
@@ -16,14 +26,13 @@ export async function getCreatorFeed({
       ? userId.trim()
       : null
 
-  const subscription = safeUserId
-    ? await getActiveSubscription({
-        userId: safeUserId,
-        creatorId,
-      })
-    : null
-
-  const hasSubscriptionAccess = Boolean(subscription)
+  const hasSubscriptionAccess =
+    safeUserId
+      ? await checkSubscription({
+          userId: safeUserId,
+          creatorId,
+        })
+      : false
 
   const { data: posts, error } = await supabaseAdmin
     .from("posts")
@@ -31,6 +40,7 @@ export async function getCreatorFeed({
     .eq("creator_id", creatorId)
     .eq("status", "published")
     .order("created_at", { ascending: false })
+    .returns<PostRow[]>()
 
   if (error) {
     throw error
@@ -41,7 +51,6 @@ export async function getCreatorFeed({
       const isSubscribersOnly = post.visibility === "subscribers"
       const isPaidPost =
         post.visibility === "paid" &&
-        typeof post.price_cents === "number" &&
         post.price_cents > 0
 
       let hasPurchased = false

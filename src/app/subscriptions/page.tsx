@@ -16,7 +16,9 @@ type SubscriptionListItem = {
   }
 }
 
-function formatDate(value: string) {
+function formatDate(value?: string | null) {
+  if (!value) return "N/A"
+
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
   }).format(new Date(value))
@@ -90,7 +92,9 @@ function normalizeSubscription(
 
   const source = item as Record<string, unknown>
 
-  const id = getStringValue(source, ["id", "subscriptionId"]) ?? `subscription_${index + 1}`
+  const id =
+    getStringValue(source, ["id", "subscriptionId"]) ??
+    `subscription_${index + 1}`
 
   const status = normalizeStatus(
     getStringValue(source, ["status", "subscriptionStatus"])
@@ -103,7 +107,7 @@ function normalizeSubscription(
       "createdAt",
       "created_at",
       "currentPeriodStartAt",
-      "current_period_start_at",
+      "current_period_start",
     ]) ?? new Date().toISOString()
 
   const creatorId =
@@ -177,7 +181,9 @@ export default async function SubscriptionsPage() {
           <p className="text-sm uppercase tracking-[0.24em] text-zinc-500">
             Subscription
           </p>
-          <h1 className="text-3xl font-semibold text-white">My subscriptions</h1>
+          <h1 className="text-3xl font-semibold text-white">
+            My subscriptions
+          </h1>
           <p className="text-sm text-zinc-400">
             Manage creators you are currently subscribed to.
           </p>
@@ -209,14 +215,15 @@ export default async function SubscriptionsPage() {
                   <div className="flex min-w-0 items-start gap-4 sm:items-center">
                     <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-800 text-base font-semibold text-white sm:h-16 sm:w-16 sm:text-lg">
                       {subscription.creator.avatarUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={subscription.creator.avatarUrl}
                           alt={subscription.creator.displayName}
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        subscription.creator.displayName.slice(0, 1).toUpperCase()
+                        subscription.creator.displayName
+                          .slice(0, 1)
+                          .toUpperCase()
                       )}
                     </div>
 

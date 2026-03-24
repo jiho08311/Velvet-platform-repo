@@ -1,6 +1,6 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 
-type UserRow = {
+type ProfileRow = {
   id: string
   email: string | null
   created_at: string
@@ -16,7 +16,7 @@ export async function listUsers(): Promise<AdminUser[]> {
   const supabase = await createSupabaseServerClient()
 
   const { data, error } = await supabase
-    .from("users")
+    .from("profiles")
     .select("id, email, created_at")
     .order("created_at", { ascending: false })
 
@@ -24,7 +24,7 @@ export async function listUsers(): Promise<AdminUser[]> {
     throw error
   }
 
-  return (data ?? []).map((row: UserRow) => ({
+  return (data ?? []).map((row: ProfileRow) => ({
     id: row.id,
     email: row.email,
     createdAt: row.created_at,

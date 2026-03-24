@@ -10,6 +10,7 @@ type SubscriptionRow = {
   current_period_start: string | null;
   current_period_end: string | null;
   canceled_at: string | null;
+  cancel_at_period_end: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -23,21 +24,23 @@ export async function cancelSubscription(subscriptionId: string): Promise<{
   providerSubscriptionId?: string;
   currentPeriodStart?: string;
   currentPeriodEnd?: string;
-  canceledAt?: string;
+  cancelledAt?: string;
+  cancelAtPeriodEnd: boolean;
   createdAt: string;
   updatedAt: string;
 }> {
-  const canceledAt = new Date().toISOString();
+  const cancelledAt = new Date().toISOString();
 
   const { data, error } = await supabaseAdmin
     .from("subscriptions")
     .update({
       status: "canceled",
-      canceled_at: canceledAt,
+      canceled_at: cancelledAt,
+      cancel_at_period_end: false,
     })
     .eq("id", subscriptionId)
     .select(
-      "id, user_id, creator_id, status, provider, provider_subscription_id, current_period_start, current_period_end, canceled_at, created_at, updated_at"
+      "id, user_id, creator_id, status, provider, provider_subscription_id, current_period_start, current_period_end, canceled_at, cancel_at_period_end, created_at, updated_at"
     )
     .single<SubscriptionRow>();
 
@@ -54,7 +57,8 @@ export async function cancelSubscription(subscriptionId: string): Promise<{
     providerSubscriptionId: data.provider_subscription_id ?? undefined,
     currentPeriodStart: data.current_period_start ?? undefined,
     currentPeriodEnd: data.current_period_end ?? undefined,
-    canceledAt: data.canceled_at ?? undefined,
+    cancelledAt: data.canceled_at ?? undefined,
+    cancelAtPeriodEnd: data.cancel_at_period_end,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
   };

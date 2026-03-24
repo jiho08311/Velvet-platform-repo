@@ -38,12 +38,12 @@ export async function createPost({
 }: CreatePostInput): Promise<{
   id: string
   creatorId: string
-  title?: string
-  content?: string
+  title: string | null
+  content: string | null
   status: "draft" | "published" | "archived"
   visibility: "public" | "subscribers" | "paid"
   priceCents: number
-  publishedAt?: string
+  publishedAt: string | null
   createdAt: string
   updatedAt: string
 }> {
@@ -109,12 +109,12 @@ export async function createPost({
   return {
     id: data.id,
     creatorId: data.creator_id,
-    title: data.title ?? undefined,
-    content: data.content ?? undefined,
+    title: data.title,
+    content: data.content,
     status: data.status,
     visibility: data.visibility,
     priceCents: data.price_cents,
-    publishedAt: data.published_at ?? undefined,
+    publishedAt: data.published_at,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
   }

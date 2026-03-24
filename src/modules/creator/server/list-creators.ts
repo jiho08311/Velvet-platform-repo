@@ -11,7 +11,7 @@ type CreatorRow = {
 }
 
 type ProfileRow = {
-  user_id: string
+  id: string
   username: string
   display_name: string
   avatar_url: string | null
@@ -49,28 +49,21 @@ export async function listCreators({
     .limit(limit)
     .returns<CreatorRow[]>()
 
-  if (creatorsError) {
-    throw creatorsError
-  }
-
-  if (!creators || creators.length === 0) {
-    return []
-  }
+  if (creatorsError) throw creatorsError
+  if (!creators || creators.length === 0) return []
 
   const userIds = creators.map((creator) => creator.user_id)
 
   const { data: profiles, error: profilesError } = await supabaseAdmin
     .from("profiles")
-    .select("user_id, username, display_name, avatar_url, bio")
-    .in("user_id", userIds)
+    .select("id, username, display_name, avatar_url, bio")
+    .in("id", userIds)
     .returns<ProfileRow[]>()
 
-  if (profilesError) {
-    throw profilesError
-  }
+  if (profilesError) throw profilesError
 
   const profileMap = new Map(
-    (profiles ?? []).map((profile) => [profile.user_id, profile])
+    (profiles ?? []).map((profile) => [profile.id, profile])
   )
 
   return creators.map((creator) => {

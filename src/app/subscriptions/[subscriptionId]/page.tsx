@@ -7,20 +7,28 @@ type SubscriptionDetailPageProps = {
   }>
 }
 
-function formatDate(value: string) {
+function formatDate(value?: string | null) {
+  if (!value) return "N/A"
+
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value))
 }
 
-function getStatusClassName(status: "active" | "canceled" | "expired") {
+function getStatusClassName(
+  status: "incomplete" | "active" | "canceled" | "expired"
+) {
   if (status === "active") {
     return "border-emerald-500/20 bg-emerald-500/15 text-emerald-300"
   }
 
   if (status === "canceled") {
     return "border-amber-500/20 bg-amber-500/15 text-amber-300"
+  }
+
+  if (status === "incomplete") {
+    return "border-sky-500/20 bg-sky-500/15 text-sky-300"
   }
 
   return "border-zinc-700 bg-zinc-800/70 text-zinc-300"
@@ -127,9 +135,7 @@ export default async function SubscriptionDetailPage({
                 Renewal
               </p>
               <p className="mt-3 text-base text-zinc-200">
-                {subscription.billing.renewalDate
-                  ? formatDate(subscription.billing.renewalDate)
-                  : "No renewal scheduled"}
+                {formatDate(subscription.billing.renewalDate)}
               </p>
             </div>
 

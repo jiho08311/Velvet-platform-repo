@@ -4,12 +4,9 @@ type GetCreatorBalanceParams = {
   creatorId: string
 }
 
-type PaymentRow = {
-  amount_cents: number | null
-}
-
-type PayoutRow = {
-  amount_cents: number | null
+type EarningRow = {
+  net_amount_cents: number | null
+  status: "pending" | "available" | "paid_out" | "reversed"
 }
 
 export type CreatorBalance = {
@@ -24,39 +21,46 @@ export async function getCreatorBalance({
 }: GetCreatorBalanceParams): Promise<CreatorBalance> {
   const supabase = await createSupabaseServerClient()
 
-  const { data: payments, error: paymentsError } = await supabase
-    .from("payments")
-    .select("amount_cents")
+  const { data: earnings, error: earningsError } = await supabase
+    .from("earnings")
+    .select("net_amount_cents, status")
     .eq("creator_id", creatorId)
-    .eq("status", "succeeded")
-    .returns<PaymentRow[]>()
+    .returns<EarningRow[]>()
 
-  if (paymentsError) {
-    throw paymentsError
+  if (earningsError) {
+    throw earningsError
   }
 
-  const { data: payouts, error: payoutsError } = await supabase
-    .from("payouts")
-    .select("amount_cents")
-    .eq("creator_id", creatorId)
-    .returns<PayoutRow[]>()
+  const rows = earnings ?? []
 
-  if (payoutsError) {
-    throw payoutsError
-  }
+  const totalEarningsCents = rows.reduce((sum, earning) => {
+    if (earning.status === "reversed") {
+      return sum
+    }
 
-  const totalEarningsCents = (payments ?? []).reduce((sum, payment) => {
-    return sum + (payment.amount_cents ?? 0)
+    return sum + (earning.net_amount_cents ?? 0)
   }, 0)
 
-  const totalPayoutsCents = (payouts ?? []).reduce((sum, payout) => {
-    return sum + (payout.amount_cents ?? 0)
+  const totalPayoutsCents = rows.reduce((sum, earning) => {
+    if (earning.status !== "paid_out") {
+      return sum
+    }
+
+    return sum + (earning.net_amount_cents ?? 0)
+  }, 0)
+
+  const availableBalanceCents = rows.reduce((sum, earning) => {
+    if (earning.status !== "available") {
+      return sum
+    }
+
+    return sum + (earning.net_amount_cents ?? 0)
   }, 0)
 
   return {
     creatorId,
     totalEarningsCents,
     totalPayoutsCents,
-    availableBalanceCents: totalEarningsCents - totalPayoutsCents,
+    availableBalanceCents,
   }
 }

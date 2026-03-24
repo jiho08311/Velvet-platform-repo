@@ -1,7 +1,7 @@
 import { getSession } from "@/modules/auth/server/get-session"
 import { CreatorPostList } from "@/modules/post/ui/CreatorPostList"
 import { getMyPosts } from "@/modules/post/server/get-my-posts"
-import { getUserById } from "@/modules/user/server/get-user-by-id"
+import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 
 export default async function CreatorContentPage() {
   const session = await getSession()
@@ -16,9 +16,9 @@ export default async function CreatorContentPage() {
     )
   }
 
-  const user = await getUserById(session.userId)
+  const creator = await getCreatorByUserId(session.userId)
 
-  if (!user || user.role !== "creator") {
+  if (!creator) {
     return (
       <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6">
         <section className="rounded-2xl border border-white/10 bg-neutral-950 p-8 text-center text-sm text-white/60">
@@ -29,7 +29,7 @@ export default async function CreatorContentPage() {
   }
 
   const result = await getMyPosts({
-    creatorId: session.userId,
+    creatorId: creator.id,
     limit: 20,
   })
 
@@ -49,7 +49,6 @@ export default async function CreatorContentPage() {
           id: post.id,
           text: post.text,
           createdAt: post.publishedAt ?? post.createdAt,
-          // ✅ isLocked 제거 → visibility 기반으로 변환
           isLocked: post.visibility !== "public",
           previewText: post.text,
         }))}

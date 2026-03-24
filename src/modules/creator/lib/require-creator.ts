@@ -2,10 +2,9 @@ import type { AuthSession } from "@/modules/auth/types"
 
 export type CreatorInfo = {
   id: string
-  profileId: string
-  subscriptionPrice: number
-  isVerified: boolean
-  headline?: string
+  userId: string
+  status: "pending" | "active" | "suspended"
+  subscriptionPriceCents: number
 }
 
 export type RequireCreatorOptions = {

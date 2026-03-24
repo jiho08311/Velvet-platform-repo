@@ -1,12 +1,12 @@
 import { createClient } from "@/infrastructure/supabase/server"
 
-export async function listMedia(ownerId: string) {
+export async function listMedia(creatorId: string) {
   const supabase = await createClient()
 
   const { data, error } = await supabase
     .from("media")
-    .select("id, type, created_at, thumbnail_url, owner_id")
-    .eq("owner_id", ownerId)
+    .select("id, post_id, type, status, storage_path, created_at")
+    .eq("creator_id", creatorId)
     .order("created_at", { ascending: false })
 
   if (error) {

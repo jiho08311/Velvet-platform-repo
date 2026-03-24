@@ -1,11 +1,15 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
-type SubscriptionStatus = "active" | "canceled" | "expired"
+type SubscriptionStatus =
+  | "incomplete"
+  | "active"
+  | "canceled"
+  | "expired"
 
 type SubscriptionView = {
   id: string
   status: SubscriptionStatus
-  startedAt: string
+  startedAt: string | null
   creator: {
     id: string
     username: string
@@ -19,21 +23,19 @@ type SubscriptionView = {
   }
 }
 
-type SubscriptionRow = {
-  id: string
-  status: SubscriptionStatus
-  started_at: string
-  renewal_date: string | null
-  price_cents: number
-  currency: string
-  creator_id: string
-}
-
 type CreatorRow = {
   id: string
   username: string
   display_name: string
   avatar_url: string | null
+}
+
+type SubscriptionRow = {
+  id: string
+  status: SubscriptionStatus
+  current_period_start: string | null
+  current_period_end: string | null
+  creator: CreatorRow | CreatorRow[] | null
 }
 
 export async function getSubscriptionById(
@@ -45,10 +47,8 @@ export async function getSubscriptionById(
       `
       id,
       status,
-      started_at,
-      renewal_date,
-      price_cents,
-      currency,
+      current_period_start,
+      current_period_end,
       creator:creators(
         id,
         username,
@@ -58,7 +58,7 @@ export async function getSubscriptionById(
     `
     )
     .eq("id", subscriptionId)
-    .maybeSingle()
+    .maybeSingle<SubscriptionRow>()
 
   if (error) {
     throw error
@@ -68,22 +68,26 @@ export async function getSubscriptionById(
     return null
   }
 
-  const creator = data.creator as unknown as CreatorRow
+  const creatorData = Array.isArray(data.creator) ? data.creator[0] : data.creator
+
+  if (!creatorData) {
+    return null
+  }
 
   return {
     id: data.id,
     status: data.status,
-    startedAt: data.started_at,
+    startedAt: data.current_period_start,
     creator: {
-      id: creator.id,
-      username: creator.username,
-      displayName: creator.display_name,
-      avatarUrl: creator.avatar_url,
+      id: creatorData.id,
+      username: creatorData.username,
+      displayName: creatorData.display_name,
+      avatarUrl: creatorData.avatar_url,
     },
     billing: {
-      renewalDate: data.renewal_date,
+      renewalDate: data.current_period_end,
       planLabel: "Monthly subscription",
-      amountLabel: `$${(data.price_cents / 100).toFixed(2)} / month`,
+      amountLabel: "Subscription",
     },
   }
-} 
+}

@@ -1,5 +1,7 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 
+import { getCreatorBalance } from "./get-creator-balance"
+
 type CreatePayoutRequestInput = {
   creatorId: string
   amount: number
@@ -21,7 +23,13 @@ export async function createPayoutRequest(
     throw new Error("Amount must be greater than 0")
   }
 
-  const currency = input.currency?.trim().toUpperCase() || "USD"
+  const balance = await getCreatorBalance({ creatorId })
+
+  if (input.amount > balance.availableBalanceCents) {
+    throw new Error("INSUFFICIENT_AVAILABLE_BALANCE")
+  }
+
+  const currency = input.currency?.trim().toUpperCase() || "KRW"
 
   const { data, error } = await supabase
     .from("payout_requests")

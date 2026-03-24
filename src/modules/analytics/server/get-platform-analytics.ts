@@ -16,7 +16,7 @@ export async function getPlatformAnalytics(): Promise<PlatformAnalytics> {
     postsResult,
     paymentsResult,
   ] = await Promise.all([
-    supabase.from("users").select("*", { count: "exact", head: true }),
+    supabase.from("profiles").select("*", { count: "exact", head: true }),
 
     supabase.from("creators").select("*", { count: "exact", head: true }),
 
@@ -31,9 +31,7 @@ export async function getPlatformAnalytics(): Promise<PlatformAnalytics> {
       .eq("status", "succeeded"),
   ])
 
-  if (paymentsResult.error) {
-    throw paymentsResult.error
-  }
+  if (paymentsResult.error) throw paymentsResult.error
 
   const totalRevenueCents =
     paymentsResult.data?.reduce(

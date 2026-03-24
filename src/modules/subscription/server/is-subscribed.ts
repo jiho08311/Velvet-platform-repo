@@ -7,6 +7,7 @@ type IsSubscribedInput = {
 
 type SubscriptionRow = {
   id: string;
+  current_period_end: string | null;
 };
 
 export async function isSubscribed({
@@ -15,7 +16,7 @@ export async function isSubscribed({
 }: IsSubscribedInput): Promise<boolean> {
   const { data, error } = await supabaseAdmin
     .from("subscriptions")
-    .select("id")
+    .select("id, current_period_end")
     .eq("user_id", userId)
     .eq("creator_id", creatorId)
     .eq("status", "active")
@@ -25,5 +26,13 @@ export async function isSubscribed({
     throw error;
   }
 
-  return Boolean(data);
+  if (!data) {
+    return false;
+  }
+
+  if (!data.current_period_end) {
+    return true;
+  }
+
+  return new Date(data.current_period_end) > new Date();
 }

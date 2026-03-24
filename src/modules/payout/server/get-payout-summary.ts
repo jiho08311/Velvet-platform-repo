@@ -4,7 +4,7 @@ import { getCreatorBalance } from "./get-creator-balance"
 type PayoutRow = {
   id: string
   amount_cents: number | null
-  status: "pending" | "completed" | "failed"
+  status: "pending" | "processing" | "paid" | "failed"
   created_at: string
 }
 
@@ -20,7 +20,7 @@ export type PayoutSummary = {
   recentPayouts: Array<{
     id: string
     amount: number
-    status: "pending" | "completed" | "failed"
+    status: "pending" | "processing" | "paid" | "failed"
     createdAt: string
   }>
 }
@@ -65,7 +65,7 @@ export async function getPayoutSummary(
 
   return {
     creatorId: id,
-    currency: "USD",
+    currency: "KRW",
     availableBalance: balance.availableBalanceCents,
     pendingAmount,
     recentPayouts:

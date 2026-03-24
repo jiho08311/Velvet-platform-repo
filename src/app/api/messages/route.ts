@@ -9,11 +9,16 @@ export async function POST(request: Request) {
 
     const conversationId = body?.conversationId
     const content = body?.content
+    const type = body?.type === "ppv" ? "ppv" : "text"
+    const price =
+      body?.price === null || body?.price === undefined || body?.price === ""
+        ? null
+        : Number(body.price)
 
     if (!conversationId || !content) {
       return NextResponse.json(
         { error: "conversationId and content are required" },
-        { status: 400 },
+        { status: 400 }
       )
     }
 
@@ -21,19 +26,15 @@ export async function POST(request: Request) {
       conversationId,
       senderId: user.id,
       content,
+      type,
+      price,
     })
 
-    return NextResponse.json(
-      { message },
-      { status: 200 },
-    )
+    return NextResponse.json({ message }, { status: 200 })
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to send message"
 
-    return NextResponse.json(
-      { error: message },
-      { status: 400 },
-    )
+    return NextResponse.json({ error: message }, { status: 400 })
   }
 }

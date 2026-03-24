@@ -28,6 +28,9 @@ export async function createCreatorProfile({
       user_id: userId,
       username: profile.username,
       display_name: profile.display_name ?? profile.username,
+      status: "active",
+      subscription_price_cents: 0,
+      subscription_currency: "usd",
     })
     .select()
     .single()

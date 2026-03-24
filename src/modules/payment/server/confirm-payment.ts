@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-
+import { createEarning } from "@/modules/payout/server/create-earning"
+import { markEarningAsAvailable } from "@/modules/payout/server/mark-earning-as-available"
 import { upsertSubscription } from "@/modules/subscription/server/upsert-subscription"
 
 import { getPaymentProvider } from "./payment-provider-factory"
@@ -27,6 +28,14 @@ type PaymentRow = {
 
 type ConfirmPaymentInput = {
   paymentId: string
+}
+
+function isSettlablePaymentType(type: PaymentType): boolean {
+  return (
+    type === "subscription" ||
+    type === "ppv_post" ||
+    type === "ppv_message"
+  )
 }
 
 export async function confirmPayment({
@@ -68,6 +77,18 @@ export async function confirmPayment({
           existingPayment.confirmed_at ?? new Date().toISOString(),
         cancelAtPeriodEnd: false,
       })
+    }
+
+    if (isSettlablePaymentType(existingPayment.type)) {
+      const earning = await createEarning({
+        paymentId: existingPayment.id,
+      })
+
+      if (earning) {
+        await markEarningAsAvailable({
+          earningId: earning.id,
+        })
+      }
     }
 
     return {
@@ -127,6 +148,18 @@ export async function confirmPayment({
       currentPeriodStart: data.confirmed_at ?? confirmedAt,
       cancelAtPeriodEnd: false,
     })
+  }
+
+  if (isSettlablePaymentType(data.type)) {
+    const earning = await createEarning({
+      paymentId: data.id,
+    })
+
+    if (earning) {
+      await markEarningAsAvailable({
+        earningId: earning.id,
+      })
+    }
   }
 
   return {

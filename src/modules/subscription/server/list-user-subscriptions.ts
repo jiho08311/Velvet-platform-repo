@@ -1,72 +1,90 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin";
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+
+type SubscriptionStatus = "incomplete" | "active" | "canceled" | "expired"
+type SubscriptionProvider = "toss" | "mock"
 
 type SubscriptionRow = {
-  id: string;
-  user_id: string;
-  creator_id: string;
-  status: "incomplete" | "active" | "canceled" | "expired";
-  provider: "toss" | "mock";
-  provider_subscription_id: string | null;
-  current_period_start: string | null;
-  current_period_end: string | null;
-  canceled_at: string | null;
-  created_at: string;
-  updated_at: string;
-};
+  id: string
+  user_id: string
+  creator_id: string
+  status: SubscriptionStatus
+  provider: SubscriptionProvider
+  provider_subscription_id: string | null
+  current_period_start: string | null
+  current_period_end: string | null
+  canceled_at: string | null
+  cancel_at_period_end: boolean
+  created_at: string
+  updated_at: string
+}
 
-type ListUserSubscriptionsInput = {
-  userId: string;
-  status?: "incomplete" | "active" | "canceled" | "expired";
-};
+type GetActiveSubscriptionInput = {
+  userId: string
+  creatorId: string
+}
 
-export async function listUserSubscriptions({
+type ActiveSubscription = {
+  id: string
+  userId: string
+  creatorId: string
+  status: SubscriptionStatus
+  provider: SubscriptionProvider
+  providerSubscriptionId: string | null
+  cancelAtPeriodEnd: boolean
+  currentPeriodStart: string | null
+  currentPeriodEnd: string | null
+  cancelledAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export async function getActiveSubscription({
   userId,
-  status,
-}: ListUserSubscriptionsInput): Promise<
-  Array<{
-    id: string;
-    userId: string;
-    creatorId: string;
-    status: "incomplete" | "active" | "canceled" | "expired";
-    provider: "toss" | "mock";
-    providerSubscriptionId?: string;
-    currentPeriodStart?: string;
-    currentPeriodEnd?: string;
-    canceledAt?: string;
-    createdAt: string;
-    updatedAt: string;
-  }>
-> {
-  let query = supabaseAdmin
+  creatorId,
+}: GetActiveSubscriptionInput): Promise<ActiveSubscription | null> {
+  const { data, error } = await supabaseAdmin
     .from("subscriptions")
     .select(
-      "id, user_id, creator_id, status, provider, provider_subscription_id, current_period_start, current_period_end, canceled_at, created_at, updated_at"
+      "id, user_id, creator_id, status, provider, provider_subscription_id, cancel_at_period_end, current_period_start, current_period_end, canceled_at, created_at, updated_at"
     )
     .eq("user_id", userId)
-    .order("created_at", { ascending: false });
-
-  if (status) {
-    query = query.eq("status", status);
-  }
-
-  const { data, error } = await query.returns<SubscriptionRow[]>();
+    .eq("creator_id", creatorId)
+    .eq("status", "active")
+    .order("created_at", { ascending: false })
+    .returns<SubscriptionRow[]>()
 
   if (error) {
-    throw error;
+    throw error
   }
 
-  return (data ?? []).map((subscription) => ({
-    id: subscription.id,
-    userId: subscription.user_id,
-    creatorId: subscription.creator_id,
-    status: subscription.status,
-    provider: subscription.provider,
-    providerSubscriptionId:
-      subscription.provider_subscription_id ?? undefined,
-    currentPeriodStart: subscription.current_period_start ?? undefined,
-    currentPeriodEnd: subscription.current_period_end ?? undefined,
-    canceledAt: subscription.canceled_at ?? undefined,
-    createdAt: subscription.created_at,
-    updatedAt: subscription.updated_at,
-  }));
+  const rows = data ?? []
+  const now = new Date()
+
+  const activeRow =
+    rows.find((row) => {
+      if (!row.current_period_end) {
+        return false
+      }
+
+      return new Date(row.current_period_end) > now
+    }) ?? null
+
+  if (!activeRow) {
+    return null
+  }
+
+  return {
+    id: activeRow.id,
+    userId: activeRow.user_id,
+    creatorId: activeRow.creator_id,
+    status: activeRow.status,
+    provider: activeRow.provider,
+    providerSubscriptionId: activeRow.provider_subscription_id,
+    cancelAtPeriodEnd: activeRow.cancel_at_period_end,
+    currentPeriodStart: activeRow.current_period_start,
+    currentPeriodEnd: activeRow.current_period_end,
+    cancelledAt: activeRow.canceled_at,
+    createdAt: activeRow.created_at,
+    updatedAt: activeRow.updated_at,
+  }
 }

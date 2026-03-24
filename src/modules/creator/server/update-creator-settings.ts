@@ -13,11 +13,11 @@ export async function updateCreatorSettings(
   const { data, error } = await supabase
     .from("creators")
     .update({
-      subscription_price: input.subscriptionPrice,
+      subscription_price_cents: input.subscriptionPrice,
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", input.creatorId)
-    .select("id, user_id, subscription_price, updated_at")
+    .select("id, user_id, subscription_price_cents, updated_at")
     .maybeSingle()
 
   if (error) {

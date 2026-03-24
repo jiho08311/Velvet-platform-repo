@@ -28,9 +28,6 @@ type ProfileRow = {
 type CreatorRow = {
   id: string
   user_id: string
-  username: string
-  display_name: string | null
-  avatar_url: string | null
 }
 
 export async function getConversationById({
@@ -95,7 +92,7 @@ export async function getConversationById({
     } else {
       const { data: creator, error: creatorError } = await supabaseAdmin
         .from("creators")
-        .select("id, user_id, username, display_name, avatar_url")
+        .select("id, user_id")
         .eq("user_id", otherUserId)
         .maybeSingle<CreatorRow>()
 
@@ -103,14 +100,28 @@ export async function getConversationById({
         throw creatorError
       }
 
-      participant = creator
-        ? {
-            userId: creator.user_id,
-            username: creator.username,
-            displayName: creator.display_name ?? creator.username,
-            avatarUrl: creator.avatar_url,
-          }
-        : null
+      if (creator) {
+        const { data: creatorProfile, error: creatorProfileError } =
+          await supabaseAdmin
+            .from("profiles")
+            .select("id, username, display_name, avatar_url")
+            .eq("id", creator.user_id)
+            .maybeSingle<ProfileRow>()
+
+        if (creatorProfileError) {
+          throw creatorProfileError
+        }
+
+        participant = creatorProfile
+          ? {
+              userId: creatorProfile.id,
+              username: creatorProfile.username,
+              displayName:
+                creatorProfile.display_name ?? creatorProfile.username,
+              avatarUrl: creatorProfile.avatar_url,
+            }
+          : null
+      }
     }
   }
 

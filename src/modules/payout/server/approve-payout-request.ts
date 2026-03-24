@@ -4,13 +4,13 @@ type ApprovePayoutRequestParams = {
   payoutRequestId: string
 }
 
-type ApprovedPayoutRequestRow = {
-  id: string
+type ApprovePayoutRequestResultRow = {
+  payout_request_id: string
+  payout_id: string
   creator_id: string
   amount_cents: number
   currency: string
   status: string
-  approved_at: string | null
 }
 
 export async function approvePayoutRequest({
@@ -22,39 +22,20 @@ export async function approvePayoutRequest({
     throw new Error("Invalid payout request id")
   }
 
-  const now = new Date().toISOString()
+  const { data, error } = await supabaseAdmin.rpc(
+    "approve_payout_request_and_create_payout",
+    {
+      p_payout_request_id: safePayoutRequestId,
+    }
+  )
 
-  const { data: approvedRequest, error: updateError } = await supabaseAdmin
-    .from("payout_requests")
-    .update({
-      status: "approved",
-      approved_at: now,
-    })
-    .eq("id", safePayoutRequestId)
-    .eq("status", "pending")
-    .select("id, creator_id, amount_cents, currency, status, approved_at")
-    .maybeSingle<ApprovedPayoutRequestRow>()
-
-  if (updateError) {
-    throw updateError
+  if (error) {
+    throw error
   }
 
-  if (!approvedRequest) {
-    throw new Error("Payout request not found or not pending")
-  }
+  const rows = (data ?? []) as ApprovePayoutRequestResultRow[]
 
-  const { error: insertError } = await supabaseAdmin
-    .from("payouts")
-    .insert({
-      creator_id: approvedRequest.creator_id,
-      amount_cents: approvedRequest.amount_cents,
-      currency: approvedRequest.currency,
-      status: "completed",
-      provider_payout_id: null,
-      created_at: now,
-    })
-
-  if (insertError) {
-    throw insertError
+  if (rows.length === 0) {
+    throw new Error("Failed to approve payout request")
   }
 }

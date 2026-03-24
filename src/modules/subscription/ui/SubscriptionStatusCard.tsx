@@ -1,6 +1,10 @@
 import { StatusBadge } from "@/shared/ui/StatusBadge"
 
-type SubscriptionStatus = "active" | "canceled" | "inactive"
+type SubscriptionStatus =
+  | "incomplete"
+  | "active"
+  | "canceled"
+  | "expired"
 
 type SubscriptionStatusCardProps = {
   status: SubscriptionStatus

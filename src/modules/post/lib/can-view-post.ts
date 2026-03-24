@@ -1,33 +1,30 @@
 export type CanViewPostInput = {
   visibility: "public" | "subscribers" | "paid"
   viewerUserId: string | null | undefined
-  creatorId: string
+  creatorUserId: string
   isSubscribed: boolean
   hasPurchased?: boolean
 }
 
 export function canViewPost(input: CanViewPostInput): boolean {
   const viewerUserId = input.viewerUserId?.trim() ?? ""
-  const creatorId = input.creatorId.trim()
+  const creatorUserId = input.creatorUserId.trim()
 
-  if (!creatorId) return false
+  if (!creatorUserId) return false
 
-  // 본인은 항상 접근 가능
-  if (viewerUserId && viewerUserId === creatorId) {
+  // 본인 (creator.user_id 기준)
+  if (viewerUserId && viewerUserId === creatorUserId) {
     return true
   }
 
-  // public → 항상 열림
   if (input.visibility === "public") {
     return true
   }
 
-  // subscribers → 구독 필요
   if (input.visibility === "subscribers") {
     return input.isSubscribed
   }
 
-  // paid → 구매 필요
   if (input.visibility === "paid") {
     return input.hasPurchased === true
   }

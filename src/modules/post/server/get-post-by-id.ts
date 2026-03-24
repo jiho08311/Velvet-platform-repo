@@ -6,8 +6,8 @@ type PostRow = {
   title: string | null;
   content: string | null;
   status: "draft" | "published" | "archived";
-  visibility: "public" | "subscribers";
-  price_cents: number | null;
+  visibility: "public" | "subscribers" | "paid";
+  price_cents: number;
   published_at: string | null;
   created_at: string;
   updated_at: string;
@@ -16,12 +16,12 @@ type PostRow = {
 export async function getPostById(postId: string): Promise<{
   id: string;
   creatorId: string;
-  title?: string;
-  content?: string;
+  title: string | null;
+  content: string | null;
   status: "draft" | "published" | "archived";
-  visibility: "public" | "subscribers";
-  priceCents: number | null;
-  publishedAt?: string;
+  visibility: "public" | "subscribers" | "paid";
+  priceCents: number;
+  publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
 } | null> {
@@ -44,12 +44,12 @@ export async function getPostById(postId: string): Promise<{
   return {
     id: data.id,
     creatorId: data.creator_id,
-    title: data.title ?? undefined,
-    content: data.content ?? undefined,
+    title: data.title,
+    content: data.content,
     status: data.status,
     visibility: data.visibility,
     priceCents: data.price_cents,
-    publishedAt: data.published_at ?? undefined,
+    publishedAt: data.published_at,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
   };

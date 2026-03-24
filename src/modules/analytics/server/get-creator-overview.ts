@@ -13,9 +13,7 @@ export async function getCreatorOverview(
 ): Promise<CreatorOverview | null> {
   const id = creatorId.trim()
 
-  if (!id) {
-    return null
-  }
+  if (!id) return null
 
   const supabase = await createClient()
 
@@ -38,7 +36,7 @@ export async function getCreatorOverview(
 
     supabase
       .from("payments")
-      .select("amount, created_at")
+      .select("amount_cents, created_at")
       .eq("creator_id", id)
       .eq("status", "succeeded")
       .gte(
@@ -48,31 +46,22 @@ export async function getCreatorOverview(
 
     supabase
       .from("payments")
-      .select("amount")
+      .select("amount_cents")
       .eq("creator_id", id)
       .eq("status", "succeeded"),
   ])
 
-  if (postsResult.error) {
-    throw new Error("Failed to load creator overview")
-  }
-
-  if (subscriptionsResult.error) {
-    throw new Error("Failed to load creator overview")
-  }
-
-  if (monthlyPaymentsResult.error) {
-    throw new Error("Failed to load creator overview")
-  }
-
-  if (totalPaymentsResult.error) {
-    throw new Error("Failed to load creator overview")
-  }
+  if (postsResult.error) throw new Error("Failed to load creator overview")
+  if (subscriptionsResult.error) throw new Error("Failed to load creator overview")
+  if (monthlyPaymentsResult.error) throw new Error("Failed to load creator overview")
+  if (totalPaymentsResult.error) throw new Error("Failed to load creator overview")
 
   const monthlyRevenue = (monthlyPaymentsResult.data ?? []).reduce(
     (sum, row) => {
       const amount =
-        typeof row.amount === "number" ? row.amount : Number(row.amount ?? 0)
+        typeof row.amount_cents === "number"
+          ? row.amount_cents
+          : Number(row.amount_cents ?? 0)
 
       return sum + (Number.isFinite(amount) ? amount : 0)
     },
@@ -82,7 +71,9 @@ export async function getCreatorOverview(
   const totalRevenue = (totalPaymentsResult.data ?? []).reduce(
     (sum, row) => {
       const amount =
-        typeof row.amount === "number" ? row.amount : Number(row.amount ?? 0)
+        typeof row.amount_cents === "number"
+          ? row.amount_cents
+          : Number(row.amount_cents ?? 0)
 
       return sum + (Number.isFinite(amount) ? amount : 0)
     },

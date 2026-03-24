@@ -6,7 +6,7 @@ export type ViewerSubscriptionStatus = {
     id: string
     viewerUserId: string
     creatorId: string
-    currentPeriodEndAt: string
+    currentPeriodEndAt: string | null
     status: "active" | "canceled" | "expired"
   } | null
 }
@@ -15,7 +15,7 @@ type SubscriptionRow = {
   id: string
   user_id: string
   creator_id: string
-  current_period_end_at: string
+  current_period_end: string | null
   status: "active" | "canceled" | "expired"
 }
 
@@ -35,7 +35,7 @@ export async function getViewerSubscription(
 
   const { data, error } = await supabaseAdmin
     .from("subscriptions")
-    .select("id, user_id, creator_id, current_period_end_at, status")
+    .select("id, user_id, creator_id, current_period_end, status")
     .eq("user_id", viewerId)
     .eq("creator_id", creator)
     .maybeSingle<SubscriptionRow>()
@@ -59,7 +59,7 @@ export async function getViewerSubscription(
       id: data.id,
       viewerUserId: data.user_id,
       creatorId: data.creator_id,
-      currentPeriodEndAt: data.current_period_end_at,
+      currentPeriodEndAt: data.current_period_end,
       status: data.status,
     },
   }

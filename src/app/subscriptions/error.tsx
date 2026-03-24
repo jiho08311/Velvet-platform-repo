@@ -1,4 +1,3 @@
-// src/app/subscriptions/error.tsx
 "use client"
 
 type SubscriptionsErrorProps = {

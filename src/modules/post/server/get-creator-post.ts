@@ -1,25 +1,32 @@
-import type { Post } from "../types"
-
-export type CreatorPostListItem = Post & {
-  isLocked: boolean
-}
-
-export type GetCreatorPostsInput = {
+export type CanViewPostInput = {
+  visibility: "public" | "subscribers" | "paid"
+  viewerUserId: string | null | undefined
   creatorId: string
-  limit?: number
-  cursor?: string | null
+  isSubscribed: boolean
+  hasPurchased?: boolean
 }
 
-export type GetCreatorPostsResult = {
-  items: CreatorPostListItem[]
-  nextCursor: string | null
-}
+export function canViewPost(input: CanViewPostInput): boolean {
+  const viewerUserId = input.viewerUserId?.trim() ?? ""
+  const creatorId = input.creatorId.trim()
 
-export async function getCreatorPosts(
-  _input: GetCreatorPostsInput
-): Promise<GetCreatorPostsResult> {
-  return {
-    items: [],
-    nextCursor: null,
+  if (!creatorId) return false
+
+  if (viewerUserId && viewerUserId === creatorId) {
+    return true
   }
+
+  if (input.visibility === "public") {
+    return true
+  }
+
+  if (input.visibility === "subscribers") {
+    return input.isSubscribed
+  }
+
+  if (input.visibility === "paid") {
+    return input.hasPurchased === true
+  }
+
+  return false
 }

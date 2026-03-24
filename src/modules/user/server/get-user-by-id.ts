@@ -1,5 +1,3 @@
-// src/modules/user/server/get-user-by-id.ts
-
 import type { User, UserId } from "@/modules/user"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
@@ -22,10 +20,8 @@ export async function getUserById(userId: UserId): Promise<User | null> {
 
   return {
     id: data.id,
-    email: data.email ?? "",
+    email: data.email,
     username: data.username,
-    role: "fan",
-    status: "active",
     createdAt: data.created_at,
   }
 }

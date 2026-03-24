@@ -12,6 +12,15 @@ type ConversationRow = {
   last_message_at: string | null
 }
 
+type CreatorRow = {
+  id: string
+  user_id: string
+}
+
+type SubscriptionRow = {
+  status: string
+}
+
 export type Conversation = {
   id: string
   createdAt: string
@@ -24,6 +33,63 @@ export async function getOrCreateConversation({
   userBId,
 }: GetOrCreateConversationParams): Promise<Conversation> {
   const supabase = await createSupabaseServerClient()
+
+  const { data: userACreator, error: userACreatorError } = await supabase
+    .from("creators")
+    .select("id, user_id")
+    .eq("user_id", userAId)
+    .maybeSingle<CreatorRow>()
+
+  if (userACreatorError) {
+    throw userACreatorError
+  }
+
+  const { data: userBCreator, error: userBCreatorError } = await supabase
+    .from("creators")
+    .select("id, user_id")
+    .eq("user_id", userBId)
+    .maybeSingle<CreatorRow>()
+
+  if (userBCreatorError) {
+    throw userBCreatorError
+  }
+
+  const userAIsCreator = Boolean(userACreator)
+  const userBIsCreator = Boolean(userBCreator)
+
+  if (!userAIsCreator && userBCreator) {
+    const { data: subscription, error: subscriptionError } = await supabase
+      .from("subscriptions")
+      .select("status")
+      .eq("creator_id", userBCreator.id)
+      .eq("user_id", userAId)
+      .maybeSingle<SubscriptionRow>()
+
+    if (subscriptionError) {
+      throw subscriptionError
+    }
+
+    if (!subscription || subscription.status !== "active") {
+      throw new Error("Subscription required")
+    }
+  }
+
+  if (!userBIsCreator && userACreator) {
+    const { data: subscription, error: subscriptionError } = await supabase
+      .from("subscriptions")
+      .select("status")
+      .eq("creator_id", userACreator.id)
+      .eq("user_id", userBId)
+      .maybeSingle<SubscriptionRow>()
+
+    if (subscriptionError) {
+      throw subscriptionError
+    }
+
+    if (!subscription || subscription.status !== "active") {
+      throw new Error("Subscription required")
+    }
+  }
 
   const { data: participantRows, error: participantError } = await supabase
     .from("conversation_participants")

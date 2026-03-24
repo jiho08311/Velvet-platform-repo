@@ -2,7 +2,7 @@ export type AdminUserId = string
 
 export type AdminUser = {
   id: AdminUserId
-  email: string
+  email: string | null
   role: "admin"
   createdAt: string
 }

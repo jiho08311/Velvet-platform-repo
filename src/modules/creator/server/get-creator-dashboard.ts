@@ -41,7 +41,7 @@ export async function getCreatorDashboard(
 
     supabase
       .from("payments")
-      .select("amount, created_at, currency")
+      .select("amount_cents, created_at, currency")
       .eq("creator_id", id)
       .eq("status", "succeeded")
       .gte(
@@ -51,31 +51,22 @@ export async function getCreatorDashboard(
 
     supabase
       .from("payments")
-      .select("amount, currency")
+      .select("amount_cents, currency")
       .eq("creator_id", id)
       .eq("status", "succeeded"),
   ])
 
-  if (postsResult.error) {
-    throw new Error("Failed to load creator dashboard")
-  }
-
-  if (subscribersResult.error) {
-    throw new Error("Failed to load creator dashboard")
-  }
-
-  if (monthlyPaymentsResult.error) {
-    throw new Error("Failed to load creator dashboard")
-  }
-
-  if (totalPaymentsResult.error) {
-    throw new Error("Failed to load creator dashboard")
-  }
+  if (postsResult.error) throw new Error("Failed to load creator dashboard")
+  if (subscribersResult.error) throw new Error("Failed to load creator dashboard")
+  if (monthlyPaymentsResult.error) throw new Error("Failed to load creator dashboard")
+  if (totalPaymentsResult.error) throw new Error("Failed to load creator dashboard")
 
   const monthlyRevenue = (monthlyPaymentsResult.data ?? []).reduce(
     (sum, row) => {
       const amount =
-        typeof row.amount === "number" ? row.amount : Number(row.amount ?? 0)
+        typeof row.amount_cents === "number"
+          ? row.amount_cents
+          : Number(row.amount_cents ?? 0)
 
       return sum + (Number.isFinite(amount) ? amount : 0)
     },
@@ -85,7 +76,9 @@ export async function getCreatorDashboard(
   const totalRevenue = (totalPaymentsResult.data ?? []).reduce(
     (sum, row) => {
       const amount =
-        typeof row.amount === "number" ? row.amount : Number(row.amount ?? 0)
+        typeof row.amount_cents === "number"
+          ? row.amount_cents
+          : Number(row.amount_cents ?? 0)
 
       return sum + (Number.isFinite(amount) ? amount : 0)
     },

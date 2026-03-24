@@ -7,6 +7,6 @@ export type Creator = {
   username: string
   displayName: string
   bio: string | null
-  isActive: boolean
+  status: "pending" | "active" | "suspended"
   createdAt: string
 }

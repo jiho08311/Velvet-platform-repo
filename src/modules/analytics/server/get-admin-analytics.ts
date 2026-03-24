@@ -17,7 +17,7 @@ export async function getAdminAnalytics(): Promise<AdminAnalyticsSummary> {
     reportsResult,
     paymentsResult,
   ] = await Promise.all([
-    supabase.from("users").select("*", { count: "exact", head: true }),
+    supabase.from("profiles").select("*", { count: "exact", head: true }),
     supabase
       .from("creators")
       .select("*", { count: "exact", head: true })
@@ -28,29 +28,20 @@ export async function getAdminAnalytics(): Promise<AdminAnalyticsSummary> {
       .eq("status", "pending"),
     supabase
       .from("payments")
-      .select("amount")
+      .select("amount_cents")
       .eq("status", "succeeded"),
   ])
 
-  if (usersResult.error) {
-    throw new Error("Failed to load analytics")
-  }
-
-  if (creatorsResult.error) {
-    throw new Error("Failed to load analytics")
-  }
-
-  if (reportsResult.error) {
-    throw new Error("Failed to load analytics")
-  }
-
-  if (paymentsResult.error) {
-    throw new Error("Failed to load analytics")
-  }
+  if (usersResult.error) throw new Error("Failed to load analytics")
+  if (creatorsResult.error) throw new Error("Failed to load analytics")
+  if (reportsResult.error) throw new Error("Failed to load analytics")
+  if (paymentsResult.error) throw new Error("Failed to load analytics")
 
   const totalRevenue = (paymentsResult.data ?? []).reduce((sum, row) => {
     const amount =
-      typeof row.amount === "number" ? row.amount : Number(row.amount ?? 0)
+      typeof row.amount_cents === "number"
+        ? row.amount_cents
+        : Number(row.amount_cents ?? 0)
 
     return sum + (Number.isFinite(amount) ? amount : 0)
   }, 0)

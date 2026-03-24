@@ -1,17 +1,25 @@
-export type NotificationId = string
-export type NotificationUserId = string
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
-export type NotificationType =
-  | "subscription_created"
-  | "payment_succeeded"
-  | "ppv_purchased"
-  | "message_received"
-
-export type Notification = {
-  id: NotificationId
-  userId: NotificationUserId
-  type: NotificationType
+type CreateNotificationInput = {
+  userId: string
+  type: string
   title: string
-  isRead: boolean
-  createdAt: string
+  body: string
+  data?: Record<string, unknown>
+}
+
+export async function createNotification(input: CreateNotificationInput) {
+  const { error } = await supabaseAdmin.from("notifications").insert({
+    user_id: input.userId,
+    type: input.type,
+    status: "unread",
+    title: input.title,
+    body: input.body,
+    data: input.data ?? {},
+    read_at: null,
+  })
+
+  if (error) {
+    throw error
+  }
 }

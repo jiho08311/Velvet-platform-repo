@@ -2,8 +2,10 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { requireUser } from "@/modules/auth/server/require-user"
+import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { getConversationById } from "@/modules/message/server/get-conversation-by-id"
 import { listMessages } from "@/modules/message/server/list-messages"
+import { MessagePurchaseButton } from "@/modules/message/ui/MessagePurchaseButton"
 
 type ConversationDetailPageProps = {
   params: Promise<{
@@ -31,6 +33,8 @@ export default async function ConversationDetailPage({
   })
 
   const participant = conversation.participant
+  const meAsCreator = await getCreatorByUserId(user.id)
+  const canSendPpv = Boolean(meAsCreator)
 
   return (
     <main className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-4xl flex-col gap-4 px-4 py-6">
@@ -93,9 +97,32 @@ export default async function ConversationDetailPage({
                         : "border border-white/10 bg-white/5 text-white"
                     }`}
                   >
-                    <p className="whitespace-pre-wrap text-sm leading-6">
-                      {message.content}
-                    </p>
+                    {message.isLocked ? (
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-xs font-medium uppercase tracking-[0.18em] opacity-70">
+                            PPV message
+                          </p>
+                          <p className="mt-2 text-sm opacity-80">
+                            Unlock this message to view the content.
+                          </p>
+                        </div>
+
+                        {message.price ? (
+                          <p className="text-sm font-medium">
+                            ${message.price.toFixed(2)}
+                          </p>
+                        ) : null}
+
+                        {!isMine ? (
+                          <MessagePurchaseButton messageId={message.id} />
+                        ) : null}
+                      </div>
+                    ) : (
+                      <p className="whitespace-pre-wrap text-sm leading-6">
+                        {message.content}
+                      </p>
+                    )}
 
                     <p
                       className={`mt-2 text-xs ${
@@ -118,11 +145,46 @@ export default async function ConversationDetailPage({
         >
           <input type="hidden" name="conversationId" value={conversation.id} />
 
+          {canSendPpv ? (
+            <div className="mb-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div className="flex flex-wrap items-center gap-4">
+                <label className="flex items-center gap-2 text-sm text-white">
+                  <input
+                    type="checkbox"
+                    name="isPpv"
+                    value="true"
+                    className="h-4 w-4 rounded border-white/20 bg-transparent"
+                  />
+                  Send as PPV
+                </label>
+
+                <div className="flex items-center gap-2">
+                  <label htmlFor="price" className="text-sm text-white/70">
+                    Price
+                  </label>
+                  <input
+                    id="price"
+                    name="price"
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    placeholder="10.00"
+                    className="h-10 w-28 rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none placeholder:text-white/30"
+                  />
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           <div className="flex items-end gap-3">
             <textarea
               name="content"
               rows={3}
-              placeholder="Write a message..."
+              placeholder={
+                canSendPpv
+                  ? "Write a message or send a PPV message..."
+                  : "Write a message..."
+              }
               className="min-h-[88px] flex-1 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none placeholder:text-white/30"
             />
 

@@ -40,6 +40,9 @@ export async function POST(request: Request, context: RouteContext) {
   const { conversationId } = await context.params
   const formData = await request.formData()
   const content = String(formData.get("content") || "").trim()
+  const isPpv = String(formData.get("isPpv") || "") === "true"
+  const rawPrice = String(formData.get("price") || "").trim()
+  const price = rawPrice ? Number(rawPrice) : null
 
   if (!content) {
     return NextResponse.redirect(
@@ -52,6 +55,8 @@ export async function POST(request: Request, context: RouteContext) {
     conversationId,
     senderId: userId,
     content,
+    type: isPpv ? "ppv" : "text",
+    price,
   })
 
   return NextResponse.redirect(

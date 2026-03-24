@@ -12,7 +12,9 @@ type SubscriberListItem = {
   avatarUrl: string | null
 }
 
-function formatDate(value: string) {
+function formatDate(value?: string | null) {
+  if (!value) return "N/A"
+
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
   }).format(new Date(value))
@@ -113,6 +115,8 @@ function normalizeSubscriber(
       "started_at",
       "createdAt",
       "created_at",
+      "currentPeriodStartAt",
+      "current_period_start",
       "subscribedAt",
       "subscribed_at",
     ]) ?? new Date().toISOString()
@@ -193,7 +197,6 @@ export default async function CreatorSubscribersPage() {
                   <div className="flex min-w-0 items-center gap-4">
                     <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-zinc-800 text-lg font-semibold text-white">
                       {subscriber.avatarUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={subscriber.avatarUrl}
                           alt={subscriber.displayName}

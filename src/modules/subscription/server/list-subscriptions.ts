@@ -10,9 +10,8 @@ export async function listSubscriptions(creatorId: string) {
         id,
         status,
         created_at,
-        started_at,
         user_id,
-        users (
+        profiles:user_id (
           id,
           username,
           display_name,
@@ -27,15 +26,15 @@ export async function listSubscriptions(creatorId: string) {
     throw new Error("Failed to load subscriptions")
   }
 
-  return (data ?? []).map((subscription) => {
-    const user = Array.isArray(subscription.users)
-      ? subscription.users[0]
-      : subscription.users
+  return (data ?? []).map((subscription: any) => {
+    const user = Array.isArray(subscription.profiles)
+      ? subscription.profiles[0]
+      : subscription.profiles
 
     return {
       id: subscription.id,
       status: subscription.status,
-      startedAt: subscription.started_at ?? subscription.created_at,
+      startedAt: subscription.created_at,
       userId: user?.id ?? "",
       username: user?.username ?? "",
       displayName: user?.display_name ?? "",

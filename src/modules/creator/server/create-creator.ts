@@ -26,7 +26,7 @@ export async function createCreator({
   updatedAt: string
 }> {
   const { error: userError } = await supabaseAdmin
-    .from("users")
+    .from("profiles")
     .update({ role: "creator" })
     .eq("id", userId)
 

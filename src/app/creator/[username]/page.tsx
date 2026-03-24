@@ -26,6 +26,14 @@ function formatCount(value: number | null | undefined) {
   return new Intl.NumberFormat("en-US").format(value ?? 0)
 }
 
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(value))
+}
+
 export default async function CreatorPage({ params }: CreatorPageProps) {
   const { username } = await params
 
@@ -142,7 +150,73 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
           </div>
         </section>
 
-        {/* 나머지 그대로 유지 */}
+       {isOwner ? (
+  <section className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
+    <CreatePostComposer creatorId={creator.id} />
+  </section>
+) : null}
+
+        <section className="flex flex-col gap-4">
+          {posts.length === 0 ? (
+            <div className="rounded-3xl border border-zinc-200 bg-white px-6 py-10 text-center shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
+              <p className="text-base font-medium text-zinc-900">No posts yet</p>
+              <p className="mt-2 text-sm text-zinc-500">
+                This creator has not published any posts yet.
+              </p>
+            </div>
+          ) : (
+            posts.map((post) => {
+              const isPaidPost = post.visibility === "paid" && post.price_cents > 0
+
+              return (
+                <article
+                  key={post.id}
+                  className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-[0_8px_24px_rgba(0,0,0,0.04)]"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-zinc-900">
+                        {creator.displayName ?? creator.username}
+                      </p>
+                      <p className="mt-1 text-xs text-zinc-500">
+                        {formatDate(post.created_at)}
+                      </p>
+                    </div>
+
+                    <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium capitalize text-zinc-600">
+                      {post.visibility}
+                    </span>
+                  </div>
+
+                  {post.isLocked ? (
+                    <div className="mt-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-5">
+                      <p className="text-sm font-medium text-zinc-900">
+                        {isPaidPost ? "This post is paid content." : "Subscriber-only post."}
+                      </p>
+                      <p className="mt-2 text-sm text-zinc-500">
+                        {isPaidPost
+                          ? "Unlock this post to view the full content."
+                          : "Subscribe to this creator to view the full content."}
+                      </p>
+
+                     {isPaidPost ? (
+  <div className="mt-4">
+    <PostPurchaseButton postId={post.id} />
+  </div>
+) : null}
+                    </div>
+                  ) : (
+                    <div className="mt-4">
+                      <p className="whitespace-pre-wrap text-sm leading-7 text-zinc-700">
+                        {post.content}
+                      </p>
+                    </div>
+                  )}
+                </article>
+              )
+            })
+          )}
+        </section>
       </div>
     </main>
   )

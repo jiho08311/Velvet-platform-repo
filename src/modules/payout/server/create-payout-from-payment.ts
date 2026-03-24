@@ -10,34 +10,25 @@ type CreatePayoutFromPaymentParams = {
 export async function createPayoutFromPayment(
   payment: CreatePayoutFromPaymentParams
 ) {
-  console.log("CREATE PAYOUT START", {
-    payment,
-  })
-
   const platformFee = Math.floor(payment.amount_cents * 0.2)
   const creatorAmount = payment.amount_cents - platformFee
-
-  console.log("CREATE PAYOUT CALCULATED", {
-    platformFee,
-    creatorAmount,
-  })
 
   const { data, error } = await supabaseAdmin
     .from("payouts")
     .insert({
       creator_id: payment.creator_id,
-      payment_id: payment.id,
       amount_cents: creatorAmount,
       currency: payment.currency,
-      status: "pending",
+      status: "paid",
+      provider: "mock",
+      provider_payout_id: null,
+      created_at: new Date().toISOString(),
+      paid_at: new Date().toISOString(),
     })
-    .select("id, creator_id, payment_id, amount_cents, currency, status")
+    .select(
+      "id, creator_id, amount_cents, currency, status, paid_at, created_at"
+    )
     .single()
-
-  console.log("CREATE PAYOUT INSERT RESULT", {
-    data,
-    error,
-  })
 
   if (error) {
     throw error

@@ -1,24 +1,16 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin";
+import { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"
 
 export async function checkSubscription({
   userId,
   creatorId,
 }: {
-  userId: string;
-  creatorId: string;
+  userId: string
+  creatorId: string
 }): Promise<boolean> {
-  const { data, error } = await supabaseAdmin
-    .from("subscriptions")
-    .select("status")
-    .eq("user_id", userId)
-    .eq("creator_id", creatorId)
-    .limit(1)
-    .maybeSingle();
+  const subscription = await getActiveSubscription({
+    userId,
+    creatorId,
+  })
 
-  if (error || !data) {
-    console.error("checkSubscription error:", error);
-    return false;
-  }
-
-  return data.status === "active" || data.status === "trialing";
+  return Boolean(subscription)
 }

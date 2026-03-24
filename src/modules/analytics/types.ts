@@ -1,19 +1,16 @@
-export type AnalyticsSummary = {
-  totalUsers: number
-  totalCreators: number
-  totalSubscribers: number
-  totalRevenue: number
+export type RecentPayment = {
+  id: string
+  amountCents: number
+  type: "subscription" | "tip" | "ppv_message" | "ppv_post"
+  createdAt: string
 }
 
 export type CreatorDashboardSummary = {
   subscriberCount: number
   activeSubscriptionCount: number
   monthlyRevenue: number
-  recentPayments: Array<{
-    id: string
-    amount: number
-    currency: string
-    status: string
-    createdAt: string
-  }>
+  subscriptionRevenue: number
+  ppvPostRevenue: number
+  ppvMessageRevenue: number
+  recentPayments: RecentPayment[]
 }
