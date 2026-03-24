@@ -1,5 +1,3 @@
-// src/app/feed/page.tsx
-
 import Link from "next/link"
 import { redirect } from "next/navigation"
 
@@ -7,6 +5,7 @@ import { getSession } from "@/modules/auth/server/get-session"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { getHomeFeed } from "@/modules/feed/server/get-home-feed"
 import { FeedList } from "@/modules/feed/ui/FeedList"
+import { getRecommendedCreators } from "@/modules/search/server/get-recommended-creators"
 import { Card } from "@/shared/ui/Card"
 import { EmptyState } from "@/shared/ui/EmptyState"
 
@@ -19,15 +18,20 @@ export default async function FeedPage() {
 
   const creator = await getCreatorByUserId(session.userId)
 
-  const feed = await getHomeFeed({
-    viewerUserId: session.userId,
-    limit: 20,
-  })
+  const [feed, recommendedCreators] = await Promise.all([
+    getHomeFeed({
+      viewerUserId: session.userId,
+      limit: 20,
+    }),
+    getRecommendedCreators({
+      viewerUserId: session.userId,
+      limit: 3,
+    }),
+  ])
 
   return (
     <main className="min-h-screen bg-zinc-50 text-zinc-900">
       <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[240px_minmax(0,1fr)_320px]">
-        {/* LEFT SIDEBAR */}
         <aside className="hidden lg:block">
           <div className="sticky top-24 space-y-3">
             <Card className="p-3">
@@ -46,12 +50,12 @@ export default async function FeedPage() {
                   Message
                 </a>
 
-               <a
-  href="/search"
-  className="rounded-2xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
->
-  Search
-</a>
+                <a
+                  href="/search"
+                  className="rounded-2xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                >
+                  Search
+                </a>
 
                 <a
                   href="/explore-tab"
@@ -67,7 +71,6 @@ export default async function FeedPage() {
                   Notification
                 </a>
 
-                {/* ✅ 여기 수정 */}
                 <Link
                   href="/post/new"
                   className="rounded-2xl bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
@@ -102,7 +105,6 @@ export default async function FeedPage() {
           </div>
         </aside>
 
-        {/* CENTER FEED */}
         <section className="min-w-0">
           <Card className="overflow-hidden p-0">
             <div className="border-b border-zinc-200 bg-white px-6 py-5">
@@ -145,55 +147,50 @@ export default async function FeedPage() {
           </Card>
         </section>
 
-        {/* RIGHT SIDEBAR */}
         <aside className="hidden lg:block">
           <div className="sticky top-24 space-y-4">
-            <Card>
-              <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-zinc-900">
-                  Search posts
-                </h2>
-                <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-400">
-                  Search creator posts...
-                </div>
-              </div>
-            </Card>
-
             <Card>
               <div className="space-y-4">
                 <h2 className="text-sm font-semibold text-zinc-900">
                   Recommended for you
                 </h2>
 
-                <div className="space-y-3">
-                  {["Luna Velvet", "Mina Rose", "Ari Night"].map((name) => (
-                    <div
-                      key={name}
-                      className="flex items-center justify-between gap-3"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-200 text-sm font-semibold text-zinc-700">
-                          {name.slice(0, 1)}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-zinc-900">
-                            {name}
-                          </p>
-                          <p className="text-xs text-zinc-500">
-                            Recommended creator
-                          </p>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        className="rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100"
+                {recommendedCreators.length === 0 ? (
+                  <p className="text-sm text-zinc-500">
+                    No recommendations available yet.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {recommendedCreators.map((creator) => (
+                      <div
+                        key={creator.id}
+                        className="flex items-center justify-between gap-3"
                       >
-                        View
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-200 text-sm font-semibold text-zinc-700">
+                            {(creator.displayName ?? creator.username).slice(0, 1)}
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-zinc-900">
+                              {creator.displayName ?? creator.username}
+                            </p>
+                            <p className="truncate text-xs text-zinc-500">
+                              @{creator.username}
+                            </p>
+                          </div>
+                        </div>
+
+                        <Link
+                          href={`/creator/${creator.username}`}
+                          className="rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100"
+                        >
+                          View
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </Card>
           </div>
