@@ -31,12 +31,11 @@ export async function createUserSignupWorkflow({
     id: authUser.id,
     email: authUser.email ?? email,
     username,
-    role: "fan",
-    status: "active",
   })
 
   const profile = await createProfile({
     userId: user.id,
+    email: authUser.email ?? email,
     username,
     displayName,
   })
