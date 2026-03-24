@@ -71,6 +71,7 @@ export async function searchCreators(
 
       return {
         id: creator.id,
+        bio: null,
         username: creator.username,
         displayName: profile.display_name ?? profile.username,
         avatarUrl: null,
