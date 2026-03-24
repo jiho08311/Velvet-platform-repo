@@ -1,5 +1,5 @@
 import "@/styles/globals.css"
-import { AppHeader } from "@/shared/ui/AppHeader"
+import { AppHeader } from "@/app/_components/AppHeader"
 
 export default function RootLayout({
   children,

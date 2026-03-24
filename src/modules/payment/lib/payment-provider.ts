@@ -2,7 +2,7 @@ export type CreatePaymentInput = {
   paymentId: string
   orderId: string
   orderName: string
-  amountCents: number
+  amount: number
   currency: string
   customerId: string
   customerEmail?: string | null
@@ -19,7 +19,7 @@ export type CreatePaymentResult = {
 export type ConfirmPaymentInput = {
   paymentId: string
   providerPaymentId?: string | null
-  amountCents?: number | null
+  amount?: number | null
 }
 
 export type ConfirmPaymentResult = {

@@ -2,8 +2,20 @@ node_modules
 .next
 .vercel
 .DS_Store
+
+# env
 .env
 .env.local
 .env.production
 .env.*
 !.env.example
+
+# supabase
+supabase/.temp
+
+# logs
+*.log
+
+# editor
+.vscode
+.idea

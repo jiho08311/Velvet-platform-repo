@@ -17,7 +17,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const [creators, posts] = query
     ? await Promise.all([
-        searchCreators({ query, limit: 12 }),
+        searchCreators({ query, limit: 20 }),
         searchPosts({ query, limit: 12 }),
       ])
     : [[], []]
@@ -32,9 +32,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#C2185B]">
               Search
             </p>
+
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-900">
               Search
             </h1>
+
             <p className="mt-2 text-sm text-zinc-600">
               Search creators and posts across the platform.
             </p>
@@ -45,9 +47,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                   type="text"
                   name="q"
                   defaultValue={query}
-                  placeholder="Search creators or posts..."
+                  placeholder="Search creators or posts."
                   className="h-11 flex-1 rounded-2xl border border-zinc-200 bg-white px-4 text-sm text-zinc-900 outline-none transition-all duration-200 ease-out placeholder:text-zinc-400 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/20"
                 />
+
                 <button
                   type="submit"
                   className="inline-flex h-11 items-center justify-center rounded-full bg-[#C2185B] px-5 text-sm font-medium text-white transition-all duration-200 ease-out hover:bg-[#D81B60]"
@@ -84,10 +87,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#C2185B]">
                     Creators
                   </p>
+
                   <h2 className="mt-2 text-lg font-semibold text-zinc-900">
                     Creators
                   </h2>
                 </div>
+
                 <p className="text-sm text-zinc-500">{creators.length} result(s)</p>
               </div>
 
@@ -95,7 +100,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 <div className="mt-4">
                   <EmptyState
                     title="Search creators"
-                    description="Search for creators by username or display name."
+                    description="Search for creators by display name, username, or headline."
                   />
                 </div>
               ) : creators.length === 0 ? (
@@ -106,40 +111,60 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                   />
                 </div>
               ) : (
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {creators.map((creator) => {
                     const creatorData = creator as {
                       id: string
                       username: string
                       displayName: string
                       avatarUrl?: string | null
+                      headline?: string | null
+                      bio?: string | null
+                      isVerified?: boolean
                     }
 
                     return (
                       <Link
                         key={creatorData.id}
                         href={`/creator/${creatorData.username}`}
-                        className="flex items-start gap-4 rounded-3xl border border-zinc-200 bg-zinc-50 p-4 transition-all duration-200 ease-out hover:border-[#C2185B]/30 hover:bg-white"
+                        className="block rounded-3xl border border-zinc-200 bg-zinc-50 p-5 transition-all duration-200 ease-out hover:border-[#C2185B]/30 hover:bg-white"
                       >
-                        <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-zinc-200 bg-white text-sm font-semibold text-zinc-900">
-                          {creatorData.avatarUrl ? (
-                            <img
-                              src={creatorData.avatarUrl}
-                              alt={creatorData.displayName}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            creatorData.displayName.slice(0, 1).toUpperCase()
-                          )}
-                        </div>
+                        <div className="flex items-start gap-4">
+                          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-200 bg-white text-sm font-semibold text-zinc-900">
+                            {creatorData.avatarUrl ? (
+                              <img
+                                src={creatorData.avatarUrl}
+                                alt={creatorData.displayName}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              creatorData.displayName.slice(0, 1).toUpperCase()
+                            )}
+                          </div>
 
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-zinc-900">
-                            {creatorData.displayName}
-                          </p>
-                          <p className="truncate text-xs text-zinc-500">
-                            @{creatorData.username}
-                          </p>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="truncate text-sm font-semibold text-zinc-900">
+                                {creatorData.displayName}
+                              </h3>
+
+                              {creatorData.isVerified ? (
+                                <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-600">
+                                  Verified
+                                </span>
+                              ) : null}
+                            </div>
+
+                            <p className="mt-1 truncate text-xs text-zinc-500">
+                              @{creatorData.username}
+                            </p>
+
+                            {creatorData.headline || creatorData.bio ? (
+                              <p className="mt-3 line-clamp-2 text-sm leading-6 text-zinc-600">
+                                {creatorData.headline ?? creatorData.bio}
+                              </p>
+                            ) : null}
+                          </div>
                         </div>
                       </Link>
                     )
@@ -154,8 +179,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#C2185B]">
                     Posts
                   </p>
-                  <h2 className="mt-2 text-lg font-semibold text-zinc-900">Posts</h2>
+
+                  <h2 className="mt-2 text-lg font-semibold text-zinc-900">
+                    Posts
+                  </h2>
                 </div>
+
                 <p className="text-sm text-zinc-500">{posts.length} result(s)</p>
               </div>
 

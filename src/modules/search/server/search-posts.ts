@@ -40,7 +40,6 @@ export async function searchPosts(
     .from("posts")
     .select("id, creator_id, title, content, visibility, created_at")
     .or(`title.ilike.%${query}%,content.ilike.%${query}%`)
-    .is("deleted_at", null)
     .eq("status", "published")
     .limit(limit)
 

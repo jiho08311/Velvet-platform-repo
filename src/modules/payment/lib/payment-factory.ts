@@ -1,21 +1,27 @@
 import type {
+  ConfirmPaymentInput,
   ConfirmPaymentResult,
+  CreatePaymentInput,
   CreatePaymentResult,
   PaymentProvider,
 } from "./payment-provider"
 
 class MockPaymentProvider implements PaymentProvider {
-  async createPayment(): Promise<CreatePaymentResult> {
+  async createPayment(
+    input: CreatePaymentInput
+  ): Promise<CreatePaymentResult> {
     return {
-      checkoutUrl: "/payment/success",
+      checkoutUrl: input.successUrl,
       providerPaymentId: "mock_payment_id",
     }
   }
 
-  async confirmPayment(): Promise<ConfirmPaymentResult> {
+  async confirmPayment(
+    input: ConfirmPaymentInput
+  ): Promise<ConfirmPaymentResult> {
     return {
       status: "succeeded",
-      providerPaymentId: "mock_payment_id",
+      providerPaymentId: input.providerPaymentId ?? "mock_payment_id",
     }
   }
 }

@@ -46,12 +46,12 @@ export default async function FeedPage() {
                   Message
                 </a>
 
-                <a
-                  href="/explore"
-                  className="rounded-2xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
-                >
-                  Explore
-                </a>
+               <a
+  href="/search"
+  className="rounded-2xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+>
+  Search
+</a>
 
                 <a
                   href="/explore-tab"

@@ -10,7 +10,7 @@ export async function authGuard(
   req: NextRequest,
   options: AuthGuardOptions = {}
 ) {
-  const loginPath = options.loginPath ?? "/login"
+  const loginPath = options.loginPath ?? "/sign-in"
 
   const session = options.getSession
     ? await options.getSession(req)
@@ -18,7 +18,10 @@ export async function authGuard(
 
   if (!session) {
     const url = new URL(loginPath, req.url)
-    url.searchParams.set("redirect", req.nextUrl.pathname)
+    url.searchParams.set(
+      "redirect",
+      `${req.nextUrl.pathname}${req.nextUrl.search}`
+    )
 
     return NextResponse.redirect(url)
   }

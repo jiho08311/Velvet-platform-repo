@@ -12,28 +12,22 @@ export function DashboardStats({
   return (
     <section className="grid gap-4 sm:grid-cols-3">
       <div className="border border-zinc-200 bg-white p-4 shadow-sm">
-        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-          Subscribers
-        </p>
-        <p className="mt-2 text-2xl font-semibold text-zinc-900">
-          {subscriberCount.toLocaleString()}
+        <p className="text-xs text-zinc-500">Subscribers</p>
+        <p className="mt-1 text-lg font-semibold text-zinc-900">
+          {subscriberCount}
         </p>
       </div>
 
       <div className="border border-zinc-200 bg-white p-4 shadow-sm">
-        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-          Active Subscriptions
-        </p>
-        <p className="mt-2 text-2xl font-semibold text-zinc-900">
-          {activeSubscriptionCount.toLocaleString()}
+        <p className="text-xs text-zinc-500">Active Subscriptions</p>
+        <p className="mt-1 text-lg font-semibold text-zinc-900">
+          {activeSubscriptionCount}
         </p>
       </div>
 
       <div className="border border-zinc-200 bg-white p-4 shadow-sm">
-        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-          Monthly Revenue
-        </p>
-        <p className="mt-2 text-2xl font-semibold text-zinc-900">
+        <p className="text-xs text-zinc-500">Monthly Revenue</p>
+        <p className="mt-1 text-lg font-semibold text-zinc-900">
           ₩{monthlyRevenue.toLocaleString()}
         </p>
       </div>
