@@ -80,9 +80,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                 >
                   <div className="flex flex-col gap-3 border-b border-zinc-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-sm text-zinc-500">
-                      {new Date(
-                        post.published_at ?? post.created_at
-                      ).toLocaleString()}
+                      {new Date(post.created_at).toLocaleString()}
                     </p>
 
                     <span className="inline-flex w-fit items-center rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-xs font-medium capitalize text-zinc-700">
@@ -114,33 +112,11 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                       </div>
                     </div>
                   ) : (
-                    <>
-                      {post.media_thumbnail_urls &&
-                      post.media_thumbnail_urls.length > 0 ? (
-                        <div className="mt-4 grid grid-cols-2 gap-2 px-5 sm:grid-cols-3">
-                          {post.media_thumbnail_urls
-                            .slice(0, 3)
-                            .map((url: string, index: number) => (
-                              <div
-                                key={`${url}-${index}`}
-                                className="aspect-square overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100"
-                              >
-                                <img
-                                  src={url}
-                                  alt={`Post media ${index + 1}`}
-                                  className="h-full w-full object-cover"
-                                />
-                              </div>
-                            ))}
-                        </div>
-                      ) : null}
-
-                      <div className="px-5 pb-5 pt-4">
-                        <p className="whitespace-pre-wrap text-sm leading-7 text-zinc-700">
-                          {post.content ?? post.title ?? ""}
-                        </p>
-                      </div>
-                    </>
+                    <div className="px-5 pb-5 pt-4">
+                      <p className="whitespace-pre-wrap text-sm leading-7 text-zinc-700">
+                        {post.content ?? ""}
+                      </p>
+                    </div>
                   )}
                 </article>
               ))}
