@@ -1,5 +1,6 @@
 import { getSession } from "@/modules/auth/server/get-session"
 import { getCreatorOverview } from "@/modules/analytics/server/get-creator-overview"
+import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { getUserById } from "@/modules/user/server/get-user-by-id"
 
 export default async function CreatorDashboardPage() {
@@ -17,7 +18,19 @@ export default async function CreatorDashboardPage() {
 
   const user = await getUserById(session.userId)
 
-  if (!user || user.role !== "creator") {
+  if (!user) {
+    return (
+      <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
+        <section className="rounded-2xl border border-white/10 bg-neutral-950 p-8 text-center text-sm text-white/60">
+          Creator access is required to view this page.
+        </section>
+      </main>
+    )
+  }
+
+  const creator = await getCreatorByUserId(user.id)
+
+  if (!creator) {
     return (
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
         <section className="rounded-2xl border border-white/10 bg-neutral-950 p-8 text-center text-sm text-white/60">
