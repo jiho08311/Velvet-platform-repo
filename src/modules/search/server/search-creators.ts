@@ -30,11 +30,12 @@ export async function searchCreators(
 
   const limit = Math.max(1, Math.min(input.limit ?? 10, 50))
 
-  const { data: profileRows, error: profileError } = await supabaseAdmin
-    .from("profiles")
-    .select("id, username, display_name")
-    .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
-    .limit(limit)
+const { data: profileRows, error: profileError } = await supabaseAdmin
+  .from("profiles")
+  .select("id, username, display_name")
+  .eq("is_deactivated", false) // ✅ 추가
+  .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
+  .limit(limit)
 
   if (profileError) {
     throw profileError

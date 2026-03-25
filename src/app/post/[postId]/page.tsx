@@ -1,4 +1,6 @@
 import Link from "next/link"
+import { redirect } from "next/navigation"
+import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { getPostById } from "@/modules/post/server/get-post-by-id"
 import { EmptyState } from "@/shared/ui/EmptyState"
 import { Card } from "@/shared/ui/Card"
@@ -20,7 +22,19 @@ export default async function PostDetailPage({
   params,
 }: PostDetailPageProps) {
   const { postId } = await params
-  const post = await getPostById(postId)
+  const user = await getCurrentUser()
+
+  if (!user) {
+    redirect(`/sign-in?next=/post/${postId}`)
+  }
+
+  let post = null
+
+  try {
+    post = await getPostById(postId, user.id)
+  } catch {
+    redirect("/verify-pass")
+  }
 
   if (!post) {
     return (

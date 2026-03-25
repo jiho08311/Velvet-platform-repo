@@ -22,6 +22,11 @@ type SubscriptionRow = {
   status: string
 }
 
+type ProfileRow = {
+  id: string
+  is_deactivated: boolean | null
+}
+
 type MessageRow = {
   id: string
   conversation_id: string
@@ -79,6 +84,20 @@ export async function sendMessage(input: SendMessageInput) {
 
   if (!otherUserId) {
     throw new Error("Other participant not found")
+  }
+
+  const { data: otherProfile, error: otherProfileError } = await supabase
+    .from("profiles")
+    .select("id, is_deactivated")
+    .eq("id", otherUserId)
+    .maybeSingle<ProfileRow>()
+
+  if (otherProfileError) {
+    throw otherProfileError
+  }
+
+  if (!otherProfile || otherProfile.is_deactivated) {
+    throw new Error("User is not available")
   }
 
   const { data: senderCreator, error: senderCreatorError } = await supabase

@@ -1,7 +1,28 @@
 import { Suspense } from "react"
-import { SignInForm } from "@/modules/auth/ui/SignInForm"
+import { redirect } from "next/navigation"
 
-export default function SignInPage() {
+import { SignInForm } from "@/modules/auth/ui/SignInForm"
+import { getCurrentUser } from "@/modules/auth/server/get-current-user"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+
+export default async function SignInPage() {
+  const user = await getCurrentUser()
+
+  if (user) {
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("is_deactivated")
+      .eq("id", user.id)
+      .single()
+
+    if (profile?.is_deactivated) {
+      redirect("/reactivate-account")
+    }
+
+    // 이미 로그인된 정상 유저면 홈으로
+    redirect("/")
+  }
+
   return (
     <main className="min-h-screen bg-white">
       <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">

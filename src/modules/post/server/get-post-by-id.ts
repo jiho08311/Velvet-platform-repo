@@ -1,3 +1,4 @@
+import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin";
 
 type PostRow = {
@@ -13,7 +14,10 @@ type PostRow = {
   updated_at: string;
 };
 
-export async function getPostById(postId: string): Promise<{
+export async function getPostById(
+  postId: string,
+  viewerUserId: string
+): Promise<{
   id: string;
   creatorId: string;
   title: string | null;
@@ -25,6 +29,8 @@ export async function getPostById(postId: string): Promise<{
   createdAt: string;
   updatedAt: string;
 } | null> {
+  await assertPassVerified({ profileId: viewerUserId })
+
   const { data, error } = await supabaseAdmin
     .from("posts")
     .select(

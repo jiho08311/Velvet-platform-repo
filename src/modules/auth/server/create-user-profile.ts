@@ -5,6 +5,7 @@ type CreateUserProfileInput = {
   email: string
   displayName: string
   username: string
+  birthDate: string
 }
 
 export function buildDefaultUsername(email: string, userId: string) {
@@ -19,18 +20,23 @@ export async function createUserProfile({
   email,
   displayName,
   username,
+  birthDate,
 }: CreateUserProfileInput) {
   const { data, error } = await supabaseAdmin
     .from("profiles")
     .upsert(
-      {
-        id,
-        email,
-        display_name: displayName,
-        username,
-      },
-      { onConflict: "id" }
-    )
+  {
+    id,
+    email,
+    display_name: displayName,
+    username,
+    birth_date: birthDate,
+    is_adult_verified: true,
+    adult_verified_at: new Date().toISOString(),
+    adult_verification_method: "self_reported",
+  },
+  { onConflict: "id" }
+)
     .select()
     .single()
 

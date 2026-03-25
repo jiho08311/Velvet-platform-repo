@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 
+import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { getSession } from "@/modules/auth/server/get-session"
 import { getNotificationById } from "@/modules/notification/server/get-notification-by-id"
 import MarkNotificationReadButton from "@/modules/notification/ui/MarkNotificationReadButton"
@@ -164,6 +165,12 @@ export default async function NotificationDetailPage({
 
   if (!userId) {
     redirect("/sign-in?next=/notifications")
+  }
+
+  try {
+    await assertPassVerified({ profileId: userId })
+  } catch {
+    redirect("/verify-pass")
   }
 
   const { id } = params

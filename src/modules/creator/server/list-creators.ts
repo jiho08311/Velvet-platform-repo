@@ -16,6 +16,7 @@ type ProfileRow = {
   display_name: string
   avatar_url: string | null
   bio: string | null
+  is_deactivated: boolean | null
 }
 
 type ListCreatorsInput = {
@@ -56,8 +57,9 @@ export async function listCreators({
 
   const { data: profiles, error: profilesError } = await supabaseAdmin
     .from("profiles")
-    .select("id, username, display_name, avatar_url, bio")
+    .select("id, username, display_name, avatar_url, bio, is_deactivated")
     .in("id", userIds)
+    .eq("is_deactivated", false)
     .returns<ProfileRow[]>()
 
   if (profilesError) throw profilesError
@@ -66,21 +68,23 @@ export async function listCreators({
     (profiles ?? []).map((profile) => [profile.id, profile])
   )
 
-  return creators.map((creator) => {
-    const profile = profileMap.get(creator.user_id)
+  return creators
+    .filter((creator) => profileMap.has(creator.user_id))
+    .map((creator) => {
+      const profile = profileMap.get(creator.user_id)!
 
-    return {
-      id: creator.id,
-      userId: creator.user_id,
-      username: profile?.username ?? "",
-      displayName: profile?.display_name ?? "",
-      avatarUrl: profile?.avatar_url ?? "",
-      bio: profile?.bio ?? "",
-      status: creator.status,
-      subscriptionPriceCents: creator.subscription_price_cents,
-      subscriptionCurrency: creator.subscription_currency,
-      createdAt: creator.created_at,
-      updatedAt: creator.updated_at,
-    }
-  })
+      return {
+        id: creator.id,
+        userId: creator.user_id,
+        username: profile.username,
+        displayName: profile.display_name ?? "",
+        avatarUrl: profile.avatar_url ?? "",
+        bio: profile.bio ?? "",
+        status: creator.status,
+        subscriptionPriceCents: creator.subscription_price_cents,
+        subscriptionCurrency: creator.subscription_currency,
+        createdAt: creator.created_at,
+        updatedAt: creator.updated_at,
+      }
+    })
 }

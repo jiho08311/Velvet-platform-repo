@@ -103,7 +103,7 @@ export async function listConversations({
     .from("profiles")
     .select("id, username, display_name, avatar_url")
     .in("id", participantIds)
-
+.eq("is_deactivated", false)
   if (profilesError) {
     throw profilesError
   }
@@ -130,7 +130,13 @@ export async function listConversations({
     }
   }
 
-  return ((conversations ?? []) as ConversationRow[]).map((row) => {
+  return ((conversations ?? []) as ConversationRow[])
+  .filter((row) => {
+    const participantUserId = otherParticipantMap.get(row.id) ?? ""
+    return profileMap.has(participantUserId) // ✅ deactivate 제거
+  })
+  
+  .map((row) => {
     const participantUserId = otherParticipantMap.get(row.id) ?? ""
     const profile = profileMap.get(participantUserId)
     const lastMessage = lastMessageMap.get(row.id)

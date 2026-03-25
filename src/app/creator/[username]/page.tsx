@@ -1,6 +1,7 @@
 import Link from "next/link"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { PostPurchaseButton } from "@/modules/post/ui/PostPurchaseButton"
+import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { getCreatorByUsername } from "@/modules/creator/server/get-creator-by-username"
 import { getCreatorDashboardSummary } from "@/modules/analytics/server/get-creator-dashboard-summary"
@@ -39,16 +40,28 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
     notFound()
   }
 
-  const summary = await getCreatorDashboardSummary(creator.id)
   const user = await getCurrentUser()
   const userId = user?.id
+  const isOwner = userId === creator.userId
+
+  if (!userId) {
+    redirect(`/sign-in?next=/creator/${username}`)
+  }
+
+  if (!isOwner) {
+    try {
+      await assertPassVerified({ profileId: userId })
+    } catch {
+      redirect("/verify-pass")
+    }
+  }
+
+  const summary = await getCreatorDashboardSummary(creator.id)
 
   const posts = await getCreatorFeed({
     creatorId: creator.id,
     userId,
   })
-
-  const isOwner = userId === creator.userId
 
   return (
     <main className="min-h-screen bg-white text-zinc-900">

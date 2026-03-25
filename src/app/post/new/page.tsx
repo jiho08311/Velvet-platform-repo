@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
 
+import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { CreatePostComposer } from "@/modules/post/ui/CreatePostComposer"
@@ -9,6 +10,12 @@ export default async function NewPostPage() {
 
   if (!user) {
     redirect("/sign-in?next=/post/new")
+  }
+
+  try {
+    await assertPassVerified({ profileId: user.id })
+  } catch {
+    redirect("/verify-pass")
   }
 
   const creator = await getCreatorByUserId(user.id)

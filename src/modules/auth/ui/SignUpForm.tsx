@@ -5,6 +5,7 @@ import { useState } from "react";
 export function SignUpForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
@@ -22,6 +23,7 @@ export function SignUpForm() {
         body: JSON.stringify({
           email,
           password,
+          birthDate,
         }),
       });
 
@@ -30,11 +32,10 @@ export function SignUpForm() {
       console.log("SIGN UP RESPONSE >>>", data);
 
       if (!response.ok) {
-        alert(data.error || "Sign up failed");
+        alert(data.error || data.message || "Sign up failed");
         return;
       }
 
-      // ✅ 성공 → 로그인 페이지로
       window.location.href = "/sign-in";
     } catch (error) {
       console.error("SIGN UP ERROR >>>", error);
@@ -74,6 +75,33 @@ export function SignUpForm() {
           required
           className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/20"
         />
+      </div>
+
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-zinc-200">
+          Birth date
+        </label>
+
+        <input
+          type="date"
+          value={birthDate}
+          onChange={(e) => setBirthDate(e.target.value)}
+          required
+          className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/20"
+        />
+
+        <p className="text-xs text-zinc-400">
+          Only users aged 19 or older can sign up. Age eligibility is checked on
+          the server.
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4">
+        <p className="text-sm font-medium text-white">PASS verification</p>
+        <p className="mt-1 text-xs text-zinc-400">
+          PASS verification will be connected in the next step after the current
+          19+ sign-up check is finalized.
+        </p>
       </div>
 
       <button

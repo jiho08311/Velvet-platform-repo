@@ -1,4 +1,4 @@
-import { requireUser } from "@/modules/auth/server/require-user"
+import { requireActiveUser } from "@/modules/auth/server/require-active-user"
 import { getProfileByUserId } from "@/modules/profile/server/get-profile-by-user-id"
 
 type ProfileView = {
@@ -9,7 +9,7 @@ type ProfileView = {
 } | null
 
 export default async function SettingsPage() {
-  const user = await requireUser()
+  const user = await requireActiveUser()
   const profileResult = await getProfileByUserId(user.id)
   const profile = profileResult as ProfileView
 

@@ -1,5 +1,5 @@
-// src/app/messages/page.tsx
-
+import { redirect } from "next/navigation"
+import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { getSession } from "@/modules/auth/server/get-session"
 import { listConversations } from "@/modules/message/server/list-conversations"
 import { ConversationList } from "@/modules/message/ui/ConversationList"
@@ -23,6 +23,12 @@ export default async function MessagesPage() {
         />
       </main>
     )
+  }
+
+  try {
+    await assertPassVerified({ profileId: session.userId })
+  } catch {
+    redirect("/verify-pass")
   }
 
   const conversations = await listConversations({

@@ -23,6 +23,7 @@ type ProfileRow = {
   username: string
   display_name: string | null
   avatar_url: string | null
+  is_deactivated: boolean | null
 }
 
 type CreatorRow = {
@@ -74,13 +75,16 @@ export async function getConversationById({
   if (otherUserId) {
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
-      .select("id, username, display_name, avatar_url")
+      .select("id, username, display_name, avatar_url, is_deactivated")
       .eq("id", otherUserId)
       .maybeSingle<ProfileRow>()
 
     if (profileError) {
       throw profileError
     }
+    if (!profile || profile.is_deactivated) {
+  return null // ✅ invalid user 처리
+}
 
     if (profile) {
       participant = {

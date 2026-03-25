@@ -69,6 +69,7 @@ export async function getRecommendedCreators({
     .from("profiles")
     .select("id, username, display_name")
     .in("id", profileIds)
+    .eq("is_deactivated", false)
 
   if (profileError) {
     throw profileError

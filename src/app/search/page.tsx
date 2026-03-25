@@ -1,5 +1,8 @@
 import Link from "next/link"
+import { redirect } from "next/navigation"
 
+import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
+import { requireUser } from "@/modules/auth/server/require-user"
 import { searchCreators } from "@/modules/search/server/search-creators"
 
 import { Card } from "@/shared/ui/Card"
@@ -12,6 +15,14 @@ type SearchPageProps = {
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
+  const user = await requireUser()
+
+  try {
+    await assertPassVerified({ profileId: user.id })
+  } catch {
+    redirect("/verify-pass")
+  }
+
   const { q = "" } = await searchParams
   const query = q.trim()
 

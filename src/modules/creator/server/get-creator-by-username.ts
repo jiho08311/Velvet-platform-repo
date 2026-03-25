@@ -33,14 +33,14 @@ export async function getCreatorByUsername(username?: string) {
   if (creatorError) throw creatorError
   if (!creator) return null
 
-  const { data: profile, error: profileError } = await supabaseAdmin
-    .from("profiles")
-    .select("id, username, display_name")
-    .eq("id", creator.user_id)
-    .maybeSingle<ProfileLookupRow>()
+const { data: profile, error: profileError } = await supabaseAdmin
+  .from("profiles")
+  .select("id, username, display_name, is_deactivated")
+  .eq("id", creator.user_id)
+  .maybeSingle()
 
-  if (profileError) throw profileError
-  if (!profile) return null
+if (profileError) throw profileError
+if (!profile || profile.is_deactivated) return null // ✅ 추가
 
   return {
     id: creator.id,

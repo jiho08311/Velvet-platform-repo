@@ -1,5 +1,7 @@
 import Link from "next/link"
+import { redirect } from "next/navigation"
 
+import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { requireUser } from "@/modules/auth/server/require-user"
 import { listNotifications } from "@/modules/notification/server/list-notifications"
 import { Card } from "@/shared/ui/Card"
@@ -38,6 +40,13 @@ function getNotificationTone(type: string) {
 
 export default async function NotificationsPage() {
   const user = await requireUser()
+
+  try {
+    await assertPassVerified({ profileId: user.id })
+  } catch {
+    redirect("/verify-pass")
+  }
+
   const notifications = await listNotifications({
     userId: user.id,
   })

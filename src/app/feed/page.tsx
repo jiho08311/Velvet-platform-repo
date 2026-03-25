@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-
+import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { getSession } from "@/modules/auth/server/get-session"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { getHomeFeed } from "@/modules/feed/server/get-home-feed"
@@ -14,6 +14,12 @@ export default async function FeedPage() {
 
   if (!session) {
     redirect("/sign-in?next=/feed")
+  }
+
+  try {
+    await assertPassVerified({ profileId: session.userId })
+  } catch {
+    redirect("/verify-pass")
   }
 
   const creator = await getCreatorByUserId(session.userId)
