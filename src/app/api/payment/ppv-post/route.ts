@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Post id is required" }, { status: 400 });
   }
 
-  const post = await getPostById(postId);
+  const post = await getPostById(postId, user.id);
 
   if (!post) {
     return NextResponse.json({ error: "Post not found" }, { status: 404 });
