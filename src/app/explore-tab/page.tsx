@@ -2,9 +2,12 @@ import { redirect } from "next/navigation"
 
 import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { requireUser } from "@/modules/auth/server/require-user"
-import { ExploreCreatorGrid } from "@/modules/search/ui/ExploreCreatorGrid"
+
 import { searchCreators } from "@/modules/search/server/search-creators"
-import { getExploreCreators } from "@/modules/search/server/get-explore-creators"
+import { getExplorePosts } from "@/modules/search/server/get-explore-posts"
+
+import { ExploreCreatorGrid } from "@/modules/search/ui/ExploreCreatorGrid"
+import { ExplorePostGrid } from "@/modules/search/ui/ExplorePostGrid"
 
 type ExplorePageProps = {
   searchParams: Promise<{
@@ -33,17 +36,21 @@ export default async function ExplorePage({
         query,
         limit: 20,
       })
-    : await getExploreCreators(20)
+    : []
+
+  const posts = isSearching ? [] : await getExplorePosts(24)
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
       <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5">
         <h1 className="text-xl font-semibold text-white">Explore</h1>
         <p className="mt-1 text-sm text-zinc-400">
-          Discover creators you may want to follow.
+          {isSearching
+            ? "Search creators by username or display name."
+            : "Discover public image posts from creators."}
         </p>
 
-        <form action="/explore" className="mt-4">
+        <form action="/explore-tab" className="mt-4">
           <div className="flex gap-3">
             <input
               type="text"
@@ -62,20 +69,24 @@ export default async function ExplorePage({
         </form>
       </section>
 
-      {isSearching && creators.length === 0 ? (
-        <section className="flex flex-col items-center justify-center rounded-3xl border border-zinc-800 bg-zinc-900/70 p-10 text-center">
-          <div className="text-4xl">🔍</div>
+      {isSearching ? (
+        creators.length === 0 ? (
+          <section className="flex flex-col items-center justify-center rounded-3xl border border-zinc-800 bg-zinc-900/70 p-10 text-center">
+            <div className="text-4xl">🔍</div>
 
-          <p className="mt-4 text-base font-semibold text-white">
-            No results found
-          </p>
+            <p className="mt-4 text-base font-semibold text-white">
+              No results found
+            </p>
 
-          <p className="mt-1 text-sm text-zinc-400">
-            Try a different keyword.
-          </p>
-        </section>
+            <p className="mt-1 text-sm text-zinc-400">
+              Try a different keyword.
+            </p>
+          </section>
+        ) : (
+          <ExploreCreatorGrid creators={creators} />
+        )
       ) : (
-        <ExploreCreatorGrid creators={creators} />
+        <ExplorePostGrid posts={posts} />
       )}
     </main>
   )

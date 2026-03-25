@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
+
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { getPostById } from "@/modules/post/server/get-post-by-id"
 import { EmptyState } from "@/shared/ui/EmptyState"
@@ -69,16 +70,35 @@ export default async function PostDetailPage({
           </div>
 
           {post.title ? (
-            <h1 className="mt-4 text-3xl font-semibold text-white">{post.title}</h1>
+            <h1 className="mt-4 text-3xl font-semibold text-white">
+              {post.title}
+            </h1>
           ) : null}
 
           <p className="mt-6 text-base leading-8 text-zinc-200">
             {post.content ?? ""}
           </p>
 
-          <div className="mt-8 flex h-[360px] items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950/60 text-sm text-zinc-500">
-            Media content placeholder
-          </div>
+          {post.media.length > 0 ? (
+            <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {post.media.map((media) => (
+                <div
+                  key={media.id}
+                  className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/60"
+                >
+                  <img
+                    src={media.url}
+                    alt="Post media"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-8 flex h-[360px] items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950/60 text-sm text-zinc-500">
+              No media
+            </div>
+          )}
 
           <div className="mt-6 flex flex-wrap gap-3">
             <div className="inline-flex items-center rounded-full border border-zinc-700 px-4 py-2 text-sm text-zinc-300">

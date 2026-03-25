@@ -3,9 +3,9 @@ import Link from "next/link"
 import { Card } from "@/shared/ui/Card"
 
 type PaymentFailPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     reason?: string
-  }
+  }>
 }
 
 const reasonMessageMap: Record<string, string> = {
@@ -15,10 +15,11 @@ const reasonMessageMap: Record<string, string> = {
   verification_failed: "결제 검증에 실패했어요.",
 }
 
-export default function PaymentFailPage({
+export default async function PaymentFailPage({
   searchParams,
 }: PaymentFailPageProps) {
-  const reason = searchParams?.reason ?? "failed"
+  const params = searchParams ? await searchParams : undefined
+  const reason = params?.reason ?? "failed"
   const message =
     reasonMessageMap[reason] ?? "결제를 완료하지 못했어요. 다시 시도해 주세요."
 

@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
+
 import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { getSession } from "@/modules/auth/server/get-session"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
@@ -79,7 +80,7 @@ export default async function FeedPage() {
 
                 <Link
                   href="/post/new"
-                  className="rounded-2xl bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                  className="rounded-2xl px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
                 >
                   Post
                 </Link>
@@ -112,8 +113,8 @@ export default async function FeedPage() {
         </aside>
 
         <section className="min-w-0">
-          <Card className="overflow-hidden p-0">
-            <div className="border-b border-zinc-200 bg-white px-6 py-5">
+          <div className="space-y-4">
+            <Card className="p-6">
               <div className="flex flex-col gap-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#C2185B]">
                   Feed
@@ -125,32 +126,37 @@ export default async function FeedPage() {
                   Discover the latest creator posts and updates.
                 </p>
               </div>
-            </div>
+            </Card>
 
-            <div className="border-b border-zinc-200 bg-zinc-50/70 px-6 py-4">
-              <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-400">
+            <Card className="p-4">
+              <Link
+                href="/post/new"
+                className="flex items-center rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-400 transition hover:border-zinc-300 hover:bg-white"
+              >
                 Share something with your subscribers...
-              </div>
-            </div>
+              </Link>
+            </Card>
 
-            <div className="p-6">
-              {feed.items.length === 0 ? (
+            {feed.items.length === 0 ? (
+              <Card className="p-6">
                 <EmptyState
                   title="No posts yet"
                   description="Posts from creators you follow will appear here."
                 />
-              ) : (
-                <FeedList
-                  posts={feed.items.map((item) => ({
-                    id: item.id,
-                    text: item.text,
-                    createdAt: item.createdAt,
-                  }))}
-                  emptyMessage="No posts yet from creators you subscribe to."
-                />
-              )}
-            </div>
-          </Card>
+              </Card>
+            ) : (
+              <FeedList
+                posts={feed.items.map((item) => ({
+                  id: item.id,
+                  postId: item.id,
+                  text: item.text,
+                  createdAt: item.createdAt,
+                  mediaThumbnailUrls: item.mediaThumbnailUrls ?? [],
+                }))}
+                emptyMessage="No posts yet from creators you subscribe to."
+              />
+            )}
+          </div>
         </section>
 
         <aside className="hidden lg:block">

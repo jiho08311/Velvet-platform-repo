@@ -1,6 +1,6 @@
 "use client"
 
-import { FormEvent, useState } from "react"
+import { FormEvent, useRef, useState } from "react"
 
 type PostVisibility = "public" | "subscribers" | "paid"
 
@@ -8,6 +8,7 @@ type SubmitPostInput = {
   text: string
   visibility: PostVisibility
   priceCents?: number
+  files: File[]
 }
 
 type CreatePostFormProps = {
@@ -22,6 +23,8 @@ export function CreatePostForm({
   const [text, setText] = useState("")
   const [visibility, setVisibility] = useState<PostVisibility>("subscribers")
   const [priceCents, setPriceCents] = useState<number>(0)
+  const [files, setFiles] = useState<File[]>([])
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -30,11 +33,17 @@ export function CreatePostForm({
       text,
       visibility,
       priceCents: visibility === "paid" ? priceCents : 0,
+      files,
     })
 
     setText("")
     setVisibility("subscribers")
     setPriceCents(0)
+    setFiles([])
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
   }
 
   return (
@@ -55,6 +64,38 @@ export function CreatePostForm({
           placeholder="Write something for your audience..."
           className="min-h-[180px] w-full resize-none rounded-2xl border border-white/10 bg-neutral-900 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35"
         />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label
+          htmlFor="post-files"
+          className="text-sm font-medium text-white/80"
+        >
+          Photos
+        </label>
+        <input
+          ref={fileInputRef}
+          id="post-files"
+          name="files"
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={(event) => {
+            const nextFiles = Array.from(event.target.files ?? [])
+            setFiles(nextFiles)
+          }}
+          className="block w-full rounded-2xl border border-white/10 bg-neutral-900 px-4 py-3 text-sm text-white file:mr-3 file:rounded-full file:border-0 file:bg-white file:px-4 file:py-2 file:text-sm file:font-medium file:text-black"
+        />
+
+        {files.length > 0 ? (
+          <p className="text-xs text-white/45">
+            {files.length} file{files.length > 1 ? "s" : ""} selected
+          </p>
+        ) : (
+          <p className="text-xs text-white/45">
+            You can upload multiple images.
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">

@@ -34,8 +34,33 @@ function isSettlablePaymentType(type: PaymentType): boolean {
   return (
     type === "subscription" ||
     type === "ppv_post" ||
-    type === "ppv_message"
+    type === "ppv_message" ||
+    type === "tip"
   )
+}
+
+async function processSettlement(payment: {
+  id: string
+  creator_id: string | null
+  type: PaymentType
+}) {
+  if (!isSettlablePaymentType(payment.type)) {
+    return
+  }
+
+  try {
+    const earning = await createEarning({
+      paymentId: payment.id,
+    })
+
+    if (earning) {
+      await markEarningAsAvailable({
+        earningId: earning.id,
+      })
+    }
+  } catch (error) {
+    console.error("earning settlement failed:", error)
+  }
 }
 
 export async function confirmPayment({
@@ -63,10 +88,7 @@ export async function confirmPayment({
   }
 
   if (existingPayment.status === "succeeded") {
-    if (
-      existingPayment.type === "subscription" &&
-      existingPayment.creator_id
-    ) {
+    if (existingPayment.type === "subscription" && existingPayment.creator_id) {
       await upsertSubscription({
         userId: existingPayment.user_id,
         creatorId: existingPayment.creator_id,
@@ -79,17 +101,11 @@ export async function confirmPayment({
       })
     }
 
-    if (isSettlablePaymentType(existingPayment.type)) {
-      const earning = await createEarning({
-        paymentId: existingPayment.id,
-      })
-
-      if (earning) {
-        await markEarningAsAvailable({
-          earningId: earning.id,
-        })
-      }
-    }
+    await processSettlement({
+      id: existingPayment.id,
+      creator_id: existingPayment.creator_id,
+      type: existingPayment.type,
+    })
 
     return {
       id: existingPayment.id,
@@ -150,17 +166,11 @@ export async function confirmPayment({
     })
   }
 
-  if (isSettlablePaymentType(data.type)) {
-    const earning = await createEarning({
-      paymentId: data.id,
-    })
-
-    if (earning) {
-      await markEarningAsAvailable({
-        earningId: earning.id,
-      })
-    }
-  }
+  await processSettlement({
+    id: data.id,
+    creator_id: data.creator_id,
+    type: data.type,
+  })
 
   return {
     id: data.id,

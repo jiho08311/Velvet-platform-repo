@@ -5,27 +5,48 @@ type UploadMediaInput = {
   file: File
 }
 
+const MEDIA_BUCKET =
+  process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "media"
+
+function getFileExtension(fileName: string): string {
+  const segments = fileName.split(".")
+  return segments.length > 1 ? segments[segments.length - 1].toLowerCase() : ""
+}
+
+function buildStoragePath(creatorId: string, file: File): string {
+  const now = Date.now()
+  const random = Math.random().toString(36).slice(2, 10)
+  const extension = getFileExtension(file.name)
+  const safeExtension = extension ? `.${extension}` : ""
+
+  return `creator/${creatorId}/posts/${now}-${random}${safeExtension}`
+}
+
 export async function uploadMedia({
   creatorId,
   file,
 }: UploadMediaInput): Promise<string> {
-  const id = creatorId.trim()
+  const resolvedCreatorId = creatorId.trim()
 
-  if (!id) {
+  if (!resolvedCreatorId) {
     throw new Error("creatorId is required")
   }
 
-  const fileExtension = file.name.includes(".")
-    ? file.name.split(".").pop()?.toLowerCase() ?? "bin"
-    : "bin"
+  if (!(file instanceof File)) {
+    throw new Error("file is required")
+  }
 
-  const fileName = `${crypto.randomUUID()}.${fileExtension}`
-  const storagePath = `${id}/${fileName}`
+  if (file.size <= 0) {
+    throw new Error("file is empty")
+  }
+
+  const storagePath = buildStoragePath(resolvedCreatorId, file)
 
   const { error } = await supabaseAdmin.storage
-    .from("post-media")
+    .from(MEDIA_BUCKET)
     .upload(storagePath, file, {
-      contentType: file.type || "application/octet-stream",
+      cacheControl: "3600",
+      contentType: file.type || undefined,
       upsert: false,
     })
 

@@ -46,6 +46,7 @@ export async function upsertSubscription({
     )
     .eq("user_id", userId)
     .eq("creator_id", creatorId)
+    .eq("status", "active")
     .limit(1)
     .maybeSingle<SubscriptionRow>()
 
@@ -53,7 +54,7 @@ export async function upsertSubscription({
     throw existingError
   }
 
-  const cancelledAt = status === "canceled" ? new Date().toISOString() : null
+  const canceledAt = status === "canceled" ? new Date().toISOString() : null
 
   if (existing) {
     const { data, error } = await supabaseAdmin
@@ -65,7 +66,7 @@ export async function upsertSubscription({
           providerSubscriptionId ?? existing.provider_subscription_id,
         current_period_start: currentPeriodStart,
         current_period_end: currentPeriodEnd,
-        canceled_at: cancelledAt,
+        canceled_at: canceledAt,
         cancel_at_period_end: cancelAtPeriodEnd,
       })
       .eq("id", existing.id)
@@ -91,7 +92,7 @@ export async function upsertSubscription({
       provider_subscription_id: providerSubscriptionId ?? null,
       current_period_start: currentPeriodStart,
       current_period_end: currentPeriodEnd,
-      canceled_at: cancelledAt,
+      canceled_at: canceledAt,
       cancel_at_period_end: cancelAtPeriodEnd,
     })
     .select(

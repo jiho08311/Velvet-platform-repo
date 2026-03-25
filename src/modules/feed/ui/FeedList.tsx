@@ -2,6 +2,7 @@ import { PostCard } from "@/modules/post/ui/PostCard"
 
 type FeedListPost = {
   id: string
+  postId?: string
   text: string
   createdAt: string
   mediaThumbnailUrls?: string[]
@@ -24,16 +25,17 @@ export function FeedList({
     )
   }
 
-  return (
-    <section className="grid gap-4">
-      {posts.map((post) => (
-        <PostCard
-          key={post.id}
-          text={post.text}
-          createdAt={post.createdAt}
-          mediaThumbnailUrls={post.mediaThumbnailUrls}
-        />
-      ))}
-    </section>
-  )
+return (
+  <section className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+    {posts.map((post) => (
+      <PostCard
+        key={post.id}
+        postId={post.postId}
+        text={post.text}
+        createdAt={post.createdAt}
+        mediaThumbnailUrls={post.mediaThumbnailUrls}
+      />
+    ))}
+  </section>
+) 
 }

@@ -6,6 +6,7 @@ export type PostMediaItem = {
   postId: string
   type: "image" | "video" | "audio" | "file"
   url: string
+  mimeType: string | null
   sortOrder: number
 }
 
@@ -14,18 +15,24 @@ type MediaRow = {
   post_id: string
   type: "image" | "video" | "audio" | "file"
   storage_path: string
+  mime_type: string | null
   sort_order: number
+  status: "processing" | "ready" | "failed"
 }
 
 export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
-  const id = postId.trim()
-  if (!id) return []
+  const resolvedPostId = postId.trim()
+
+  if (!resolvedPostId) {
+    throw new Error("postId is required")
+  }
 
   const { data, error } = await supabaseAdmin
     .from("media")
-    .select("id, post_id, type, storage_path, sort_order")
-    .eq("post_id", id)
+    .select("id, post_id, type, storage_path, mime_type, sort_order, status")
+    .eq("post_id", resolvedPostId)
     .eq("status", "ready")
+    .eq("type", "image")
     .order("sort_order", { ascending: true })
     .returns<MediaRow[]>()
 
@@ -33,17 +40,22 @@ export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
     throw error
   }
 
-  const mediaList = data ?? []
+  const rows = data ?? []
 
   return Promise.all(
-    mediaList.map(async (media) => ({
-      id: media.id,
-      postId: media.post_id,
-      type: media.type,
-      url: await createMediaSignedUrl({
+    rows.map(async (media) => {
+      const url = await createMediaSignedUrl({
         storagePath: media.storage_path,
-      }),
-      sortOrder: media.sort_order,
-    }))
+      })
+
+      return {
+        id: media.id,
+        postId: media.post_id,
+        type: media.type,
+        url,
+        mimeType: media.mime_type,
+        sortOrder: media.sort_order,
+      }
+    })
   )
 }

@@ -1,22 +1,24 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
+import type { Media, MediaStatus, MediaType } from "../types"
+
 type CreateMediaInput = {
   postId: string
-  type: "image" | "video" | "audio" | "file"
+  type: MediaType
   storagePath: string
   mimeType?: string
   sortOrder?: number
-  status?: "processing" | "ready" | "failed"
+  status?: MediaStatus
 }
 
 type MediaRow = {
   id: string
   post_id: string
-  type: "image" | "video" | "audio" | "file"
-  status: "processing" | "ready" | "failed"
+  type: MediaType
   storage_path: string
   mime_type: string | null
   sort_order: number
+  status: MediaStatus
   created_at: string
 }
 
@@ -27,28 +29,30 @@ export async function createMedia({
   mimeType,
   sortOrder = 0,
   status = "processing",
-}: CreateMediaInput): Promise<{
-  id: string
-  postId: string
-  type: "image" | "video" | "audio" | "file"
-  status: "processing" | "ready" | "failed"
-  storagePath: string
-  mimeType?: string
-  sortOrder: number
-  createdAt: string
-}> {
+}: CreateMediaInput): Promise<Media> {
+  const resolvedPostId = postId.trim()
+  const resolvedStoragePath = storagePath.trim()
+
+  if (!resolvedPostId) {
+    throw new Error("postId is required")
+  }
+
+  if (!resolvedStoragePath) {
+    throw new Error("storagePath is required")
+  }
+
   const { data, error } = await supabaseAdmin
     .from("media")
     .insert({
-      post_id: postId,
+      post_id: resolvedPostId,
       type,
-      status,
-      storage_path: storagePath,
-      mime_type: mimeType,
+      storage_path: resolvedStoragePath,
+      mime_type: mimeType ?? null,
       sort_order: sortOrder,
+      status,
     })
     .select(
-      "id, post_id, type, status, storage_path, mime_type, sort_order, created_at"
+      "id, post_id, type, storage_path, mime_type, sort_order, status, created_at"
     )
     .single<MediaRow>()
 
@@ -60,10 +64,10 @@ export async function createMedia({
     id: data.id,
     postId: data.post_id,
     type: data.type,
-    status: data.status,
     storagePath: data.storage_path,
-    mimeType: data.mime_type ?? undefined,
+    mimeType: data.mime_type,
     sortOrder: data.sort_order,
+    status: data.status,
     createdAt: data.created_at,
   }
 }

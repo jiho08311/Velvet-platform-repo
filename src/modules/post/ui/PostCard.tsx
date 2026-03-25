@@ -19,11 +19,33 @@ export function PostCard({
 }: PostCardProps) {
   const thumbnails = mediaThumbnailUrls ?? []
 
-  const content = (
-    <article className="overflow-hidden rounded-md border border-zinc-200 bg-white shadow-sm transition-colors duration-200 hover:border-[#C2185B]/40">
-      {thumbnails.length > 0 ? (
-        <div className="grid grid-cols-2 gap-px border-b border-zinc-200 bg-zinc-200 sm:grid-cols-3">
-          {thumbnails.slice(0, 3).map((thumbnailUrl, index) => (
+  function renderMedia() {
+    if (thumbnails.length === 0) {
+      return (
+        <div className="flex aspect-[16/9] items-center justify-center border-b border-zinc-200 bg-zinc-50 text-sm text-zinc-500">
+          No media
+        </div>
+      )
+    }
+
+    if (thumbnails.length === 1) {
+      return (
+        <div className="overflow-hidden border-b border-zinc-200 bg-zinc-100">
+          <div className="aspect-[4/5] w-full overflow-hidden">
+            <img
+              src={thumbnails[0]}
+              alt="Post media"
+              className="h-full w-full object-cover"
+            />
+          </div>
+        </div>
+      )
+    }
+
+    if (thumbnails.length === 2) {
+      return (
+        <div className="grid grid-cols-2 gap-px border-b border-zinc-200 bg-zinc-200">
+          {thumbnails.slice(0, 2).map((thumbnailUrl, index) => (
             <div
               key={`${thumbnailUrl}-${index}`}
               className="aspect-square overflow-hidden bg-zinc-100"
@@ -36,15 +58,34 @@ export function PostCard({
             </div>
           ))}
         </div>
-      ) : (
-        <div className="flex aspect-[16/9] items-center justify-center border-b border-zinc-200 bg-zinc-50 text-sm text-zinc-500">
-          No media
-        </div>
-      )}
+      )
+    }
+
+    return (
+      <div className="grid grid-cols-3 gap-px border-b border-zinc-200 bg-zinc-200">
+        {thumbnails.slice(0, 3).map((thumbnailUrl, index) => (
+          <div
+            key={`${thumbnailUrl}-${index}`}
+            className="aspect-square overflow-hidden bg-zinc-100"
+          >
+            <img
+              src={thumbnailUrl}
+              alt={`Post media ${index + 1}`}
+              className="h-full w-full object-cover"
+            />
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  const content = (
+    <article className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-colors duration-200 hover:border-[#C2185B]/40">
+      {renderMedia()}
 
       <div className="p-4">
         {isLocked ? (
-          <div className="border border-[#C2185B]/20 bg-[#FFF1F5] p-4">
+          <div className="rounded-2xl border border-[#C2185B]/20 bg-[#FFF1F5] p-4">
             <p className="text-sm font-medium text-zinc-900">
               This post is locked.
             </p>

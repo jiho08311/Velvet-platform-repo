@@ -68,7 +68,7 @@ function toEarning(row: EarningRow): Earning {
   }
 }
 
-function toEarningSourceType(type: PaymentType): EarningSourceType {
+function toEarningSourceType(type: PaymentType): EarningSourceType | null {
   if (type === "subscription") {
     return "subscription"
   }
@@ -81,7 +81,11 @@ function toEarningSourceType(type: PaymentType): EarningSourceType {
     return "ppv_message"
   }
 
-  throw new Error("PAYMENT_TYPE_NOT_SETTLABLE")
+  if (type === "tip") {
+    return "ppv_message"
+  }
+
+  return null
 }
 
 export async function createEarning({
@@ -133,6 +137,11 @@ export async function createEarning({
   }
 
   const sourceType = toEarningSourceType(payment.type)
+
+  if (!sourceType) {
+    return null
+  }
+
   const grossAmountCents = payment.amount_cents ?? 0
 
   if (grossAmountCents <= 0) {

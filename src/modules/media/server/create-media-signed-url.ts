@@ -5,22 +5,29 @@ type CreateMediaSignedUrlInput = {
   expiresIn?: number
 }
 
+const MEDIA_BUCKET =
+  process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "media"
+
 export async function createMediaSignedUrl({
   storagePath,
-  expiresIn = 60 * 10,
+  expiresIn = 60 * 60,
 }: CreateMediaSignedUrlInput): Promise<string> {
-  const path = storagePath.trim()
+  const resolvedStoragePath = storagePath.trim()
 
-  if (!path) {
+  if (!resolvedStoragePath) {
     throw new Error("storagePath is required")
   }
 
   const { data, error } = await supabaseAdmin.storage
-    .from("post-media")
-    .createSignedUrl(path, expiresIn)
+    .from(MEDIA_BUCKET)
+    .createSignedUrl(resolvedStoragePath, expiresIn)
 
   if (error) {
     throw error
+  }
+
+  if (!data?.signedUrl) {
+    throw new Error("Failed to create media signed url")
   }
 
   return data.signedUrl

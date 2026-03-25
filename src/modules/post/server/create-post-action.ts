@@ -2,13 +2,14 @@
 
 import { revalidatePath } from "next/cache"
 
-import { createPost } from "./create-post"
+import { createPostWithMediaWorkflow } from "@/workflows/create-post-with-media-workflow"
 
 type CreatePostActionInput = {
   creatorId: string
   text: string
   visibility: "public" | "subscribers" | "paid"
   priceCents?: number
+  files?: File[]
 }
 
 export async function createPostAction({
@@ -16,6 +17,7 @@ export async function createPostAction({
   text,
   visibility,
   priceCents = 0,
+  files = [],
 }: CreatePostActionInput): Promise<void> {
   const content = text.trim()
 
@@ -23,19 +25,20 @@ export async function createPostAction({
     throw new Error("Post text is required")
   }
 
-  // ✅ paid validation
   if (visibility === "paid" && priceCents <= 0) {
     throw new Error("Paid post price must be greater than 0")
   }
 
-  await createPost({
+  await createPostWithMediaWorkflow({
     creatorId,
     content,
     visibility,
     priceCents: visibility === "paid" ? priceCents : 0,
     status: "published",
+    files,
   })
 
-  revalidatePath("/creator")
+  revalidatePath("/feed")
+  revalidatePath("/post/new")
   revalidatePath(`/creator/${creatorId}`)
 }

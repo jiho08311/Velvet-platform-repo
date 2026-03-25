@@ -1,10 +1,14 @@
-export type MediaId = string
+export type MediaType = "image" | "video" | "audio" | "file"
+
+export type MediaStatus = "processing" | "ready" | "failed"
 
 export type Media = {
-  id: MediaId
+  id: string
   postId: string
+  type: MediaType
   storagePath: string
-  type: "image" | "video" | "audio" | "file"
-  status: "processing" | "ready" | "failed"
+  mimeType: string | null
+  sortOrder: number
+  status: MediaStatus
   createdAt: string
 }
