@@ -7,7 +7,7 @@ type AssertPassVerifiedParams = {
 export async function assertPassVerified({
   profileId,
 }: AssertPassVerifiedParams) {
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.BYPASS_PASS_VERIFICATION === "true") {
     return {
       success: true,
     }
