@@ -38,80 +38,9 @@ export default async function FeedPage() {
 
   return (
     <main className="min-h-screen bg-zinc-50 text-zinc-900">
-      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[240px_minmax(0,1fr)_320px]">
-        <aside className="hidden lg:block">
-          <div className="sticky top-24 space-y-3">
-            <Card className="p-3">
-              <nav className="flex flex-col gap-2">
-                <a
-                  href="/feed"
-                  className="rounded-2xl bg-[#C2185B] px-4 py-3 text-sm font-semibold text-white"
-                >
-                  Home
-                </a>
-
-                <a
-                  href="/messages"
-                  className="rounded-2xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
-                >
-                  Message
-                </a>
-
-                <a
-                  href="/search"
-                  className="rounded-2xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
-                >
-                  Search
-                </a>
-
-                <a
-                  href="/explore-tab"
-                  className="rounded-2xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
-                >
-                  Explore Tab
-                </a>
-
-                <a
-                  href="/notifications"
-                  className="rounded-2xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
-                >
-                  Notification
-                </a>
-
-                <Link
-                  href="/post/new"
-                  className="rounded-2xl px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
-                >
-                  Post
-                </Link>
-
-                <a
-                  href="/profile"
-                  className="rounded-2xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
-                >
-                  Profile
-                </a>
-
-                <a
-                  href="/settings"
-                  className="rounded-2xl px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
-                >
-                  Settings
-                </a>
-
-                {!creator ? (
-                  <a
-                    href="/become-creator"
-                    className="mt-2 rounded-2xl bg-[#C2185B] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#D81B60]"
-                  >
-                    Become creator
-                  </a>
-                ) : null}
-              </nav>
-            </Card>
-          </div>
-        </aside>
-
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        
+        {/* Feed */}
         <section className="min-w-0">
           <div className="space-y-4">
             <Card className="p-6">
@@ -159,6 +88,7 @@ export default async function FeedPage() {
           </div>
         </section>
 
+        {/* Right Sidebar (추천 유지) */}
         <aside className="hidden lg:block">
           <div className="sticky top-24 space-y-4">
             <Card>
@@ -207,6 +137,7 @@ export default async function FeedPage() {
             </Card>
           </div>
         </aside>
+
       </div>
     </main>
   )
