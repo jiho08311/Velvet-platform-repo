@@ -20,7 +20,7 @@ export const tossPaymentProvider: PaymentProvider = {
 
     const url = `https://js.tosspayments.com/v1/payment?clientKey=${clientKey}&orderId=${input.orderId}&orderName=${encodeURIComponent(
       input.orderName
-    )}&amount=${input.amountCents / 100}&successUrl=${encodeURIComponent(
+    )}&amount=${input.amountCents} &successUrl=${encodeURIComponent(
       input.successUrl
     )}&failUrl=${encodeURIComponent(input.failUrl)}`
 

@@ -1,11 +1,22 @@
+import { FeedEmptyState } from "./FeedEmptyState"
 import { PostCard } from "@/modules/post/ui/PostCard"
 
 type FeedListPost = {
   id: string
   postId?: string
+  creatorId: string
+  creatorUserId?: string
+  currentUserId?: string
   text: string
   createdAt: string
   mediaThumbnailUrls?: string[]
+  isLocked?: boolean
+  lockReason?: "none" | "subscription" | "purchase"
+  creator: {
+    username: string
+    displayName: string | null
+    avatarUrl: string | null
+  }
 }
 
 type FeedListProps = {
@@ -19,23 +30,30 @@ export function FeedList({
 }: FeedListProps) {
   if (posts.length === 0) {
     return (
-      <section className="rounded-md border border-dashed border-zinc-200 bg-zinc-50 p-8 text-center">
-        <p className="text-sm font-medium text-zinc-500">{emptyMessage}</p>
-      </section>
+      <FeedEmptyState
+        title="No feed yet"
+        description={emptyMessage}
+      />
     )
   }
 
-return (
-  <section className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-    {posts.map((post) => (
-      <PostCard
-        key={post.id}
-        postId={post.postId}
-        text={post.text}
-        createdAt={post.createdAt}
-        mediaThumbnailUrls={post.mediaThumbnailUrls}
-      />
-    ))}
-  </section>
-) 
+  return (
+    <section className="mx-auto flex w-full max-w-3xl flex-col gap-4">
+      {posts.map((post) => (
+        <PostCard
+          key={post.id}
+          postId={post.postId}
+          text={post.text}
+          createdAt={post.createdAt}
+          mediaThumbnailUrls={post.mediaThumbnailUrls}
+          isLocked={post.isLocked}
+          lockReason={post.lockReason}
+          creatorId={post.creatorId}
+          creatorUserId={post.creatorUserId}
+          currentUserId={post.currentUserId}
+          creator={post.creator}
+        />
+      ))}
+    </section>
+  )
 }

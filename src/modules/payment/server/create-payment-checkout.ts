@@ -31,7 +31,7 @@ export async function createPaymentCheckout({
   subscriptionId,
   type,
   amountCents,
-  currency = "usd",
+  currency = "KRW",
   provider = "mock",
   providerReferenceId,
   targetType = null,

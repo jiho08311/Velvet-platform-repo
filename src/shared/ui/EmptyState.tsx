@@ -14,16 +14,16 @@ export function EmptyState({
   actionHref,
 }: EmptyStateProps) {
   return (
-    <section className="rounded-md border border-dashed border-zinc-200 bg-zinc-50 p-8 text-center text-zinc-900">
+    <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-8 text-center text-white">
       <div className="mx-auto flex max-w-md flex-col items-center">
-        <div className="mb-4 text-3xl">💗</div>
+        <div className="mb-4 h-12 w-12 rounded-2xl bg-zinc-800" />
 
-        <h2 className="text-lg font-semibold text-zinc-900">
+        <h2 className="text-xl font-semibold tracking-tight text-white">
           {title}
         </h2>
 
         {description ? (
-          <p className="mt-2 text-sm leading-6 text-zinc-500">
+          <p className="mt-3 text-sm leading-6 text-zinc-400">
             {description}
           </p>
         ) : null}
@@ -31,7 +31,7 @@ export function EmptyState({
         {actionLabel && actionHref ? (
           <Link
             href={actionHref}
-            className="mt-5 inline-flex items-center rounded-md bg-[#C2185B] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#D81B60]"
+            className="mt-6 inline-flex min-h-[44px] items-center rounded-2xl bg-[#C2185B] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#D81B60] active:bg-[#AD1457]"
           >
             {actionLabel}
           </Link>

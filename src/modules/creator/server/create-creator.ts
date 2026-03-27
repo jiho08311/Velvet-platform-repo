@@ -40,7 +40,7 @@ export async function createCreator({
       user_id: userId,
       status: "pending",
       subscription_price_cents: 0,
-      subscription_currency: "usd",
+      subscription_currency: "KRW",
     })
     .select(
       "id, user_id, status, subscription_price_cents, subscription_currency, created_at, updated_at"

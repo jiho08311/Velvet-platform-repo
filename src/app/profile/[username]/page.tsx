@@ -18,7 +18,7 @@ function formatPrice(amountCents: number, currency: string) {
     style: "currency",
     currency: currency.toUpperCase(),
     maximumFractionDigits: 2,
-  }).format(amountCents / 100)
+  }).format(amountCents)
 }
 
 export default async function CreatorPage({ params }: CreatorPageProps) {
@@ -97,7 +97,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                           {post.visibility === "paid"
                             ? `Purchase this post for ${formatPrice(
                                 post.price_cents ?? 0,
-                                "USD"
+                                "KRW"
                               )}.`
                             : "Subscribe to unlock this post."}
                         </p>

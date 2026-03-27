@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
       creatorId: creator.id,
       type: "subscription",
       amountCents: creator.subscriptionPriceCents,
-      currency: creator.subscriptionCurrency,
+   currency: "KRW",
       provider: "toss",
       orderId: `sub_${creator.id}_${user.id}_${Date.now()}`,
       orderName: `${creator.displayName} subscription`,

@@ -30,7 +30,7 @@ export async function createCreatorProfile({
       display_name: profile.display_name ?? profile.username,
       status: "active",
       subscription_price_cents: 0,
-      subscription_currency: "usd",
+      subscription_currency: "KRW",
     })
     .select()
     .single()

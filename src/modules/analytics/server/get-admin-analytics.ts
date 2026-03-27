@@ -51,6 +51,6 @@ export async function getAdminAnalytics(): Promise<AdminAnalyticsSummary> {
     totalRevenue,
     activeCreators: creatorsResult.count ?? 0,
     openReports: reportsResult.count ?? 0,
-    currency: "USD",
+    currency: "KRW",
   }
 }

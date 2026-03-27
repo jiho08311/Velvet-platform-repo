@@ -1,3 +1,4 @@
+
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
@@ -28,6 +29,7 @@ type SubscriptionRow = {
 export type PostDetail = {
   id: string
   creatorId: string
+  creatorUserId: string
   title: string | null
   content: string | null
   visibility: "public" | "subscribers" | "paid"
@@ -35,6 +37,8 @@ export type PostDetail = {
   status: "draft" | "published" | "archived"
   createdAt: string
   publishedAt: string | null
+  isLocked: boolean
+  lockReason: "none" | "subscription" | "purchase"
   media: {
     id: string
     postId: string
@@ -127,22 +131,29 @@ export async function getPostById(
     hasPurchasedResult,
   })
 
-  if (!access.canView) {
-    throw new Error("POST_ACCESS_DENIED")
-  }
+  const media = access.canView ? await getPostMedia(post.id) : []
 
-  const media = await getPostMedia(post.id)
+  const lockReason: "none" | "subscription" | "purchase" = access.canView
+    ? "none"
+    : post.visibility === "paid"
+      ? "purchase"
+      : post.visibility === "subscribers"
+        ? "subscription"
+        : "none"
 
   return {
     id: post.id,
     creatorId: post.creator_id,
+    creatorUserId: creator.user_id,
     title: post.title,
-    content: post.content,
+    content: access.canView ? post.content : null,
     visibility: post.visibility,
     priceCents: post.price_cents,
     status: post.status,
     createdAt: post.created_at,
     publishedAt: post.published_at,
+    isLocked: !access.canView,
+    lockReason,
     media,
   }
 }

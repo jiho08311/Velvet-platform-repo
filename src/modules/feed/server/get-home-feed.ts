@@ -6,10 +6,18 @@ import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 export type HomeFeedItem = {
   id: string
   creatorId: string
+  creatorUserId?: string
+  currentUserId?: string
   text: string
   createdAt: string
   isLocked: boolean
+  lockReason?: "none" | "subscription" | "purchase"
   mediaThumbnailUrls?: string[]
+  creator: {
+    username: string
+    displayName: string | null
+    avatarUrl: string | null
+  }
 }
 
 export type GetHomeFeedInput = {
@@ -30,6 +38,13 @@ type SubscriptionRow = {
 type CreatorRow = {
   id: string
   user_id: string
+  username: string
+  display_name: string | null
+}
+
+type ProfileRow = {
+  id: string
+  avatar_url: string | null
 }
 
 type PostRow = {
@@ -86,7 +101,7 @@ export async function getHomeFeed(
 
   const { data: creators, error: creatorsError } = await supabaseAdmin
     .from("creators")
-    .select("id, user_id")
+    .select("id, user_id, username, display_name")
     .in("id", creatorIds)
     .returns<CreatorRow[]>()
 
@@ -94,10 +109,28 @@ export async function getHomeFeed(
     throw creatorsError
   }
 
-  const creatorUserIdMap = new Map<string, string>()
+  const creatorMap = new Map<string, CreatorRow>()
+  const creatorUserIds: string[] = []
 
   for (const creator of creators ?? []) {
-    creatorUserIdMap.set(creator.id, creator.user_id)
+    creatorMap.set(creator.id, creator)
+    creatorUserIds.push(creator.user_id)
+  }
+
+  const { data: profiles, error: profilesError } = await supabaseAdmin
+    .from("profiles")
+    .select("id, avatar_url")
+    .in("id", creatorUserIds)
+    .returns<ProfileRow[]>()
+
+  if (profilesError) {
+    throw profilesError
+  }
+
+  const profileMap = new Map<string, ProfileRow>()
+
+  for (const profile of profiles ?? []) {
+    profileMap.set(profile.id, profile)
   }
 
   let query = supabaseAdmin
@@ -153,7 +186,9 @@ export async function getHomeFeed(
 
   const items: HomeFeedItem[] = await Promise.all(
     postList.map(async (post) => {
-      const creatorUserId = creatorUserIdMap.get(post.creator_id) ?? ""
+      const creator = creatorMap.get(post.creator_id)
+      const creatorUserId = creator?.user_id ?? ""
+      const profile = profileMap.get(creatorUserId)
 
       const hasPurchased =
         post.visibility === "paid" && post.price_cents !== null
@@ -171,6 +206,15 @@ export async function getHomeFeed(
         hasPurchased,
       })
 
+      const lockReason: "none" | "subscription" | "purchase" =
+        hasAccess
+          ? "none"
+          : post.visibility === "paid"
+            ? "purchase"
+            : post.visibility === "subscribers"
+              ? "subscription"
+              : "none"
+
       const media = hasAccess ? (mediaMap.get(post.id) ?? []).slice(0, 3) : []
 
       const mediaThumbnailUrls = await Promise.all(
@@ -184,10 +228,18 @@ export async function getHomeFeed(
       return {
         id: post.id,
         creatorId: post.creator_id,
+        creatorUserId,
+        currentUserId: viewerUserId,
         text: hasAccess ? post.content ?? post.title ?? "" : "",
         createdAt: post.published_at ?? post.created_at,
         isLocked: !hasAccess,
+        lockReason,
         mediaThumbnailUrls,
+        creator: {
+          username: creator?.username ?? "",
+          displayName: creator?.display_name ?? null,
+          avatarUrl: profile?.avatar_url ?? null,
+        },
       }
     })
   )

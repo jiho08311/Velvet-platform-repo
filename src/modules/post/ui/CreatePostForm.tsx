@@ -47,13 +47,31 @@ export function CreatePostForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex flex-col gap-2">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-5 rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#F472B6]">
+            Create
+          </p>
+          <h2 className="mt-2 text-xl font-semibold tracking-tight text-white">
+            New post
+          </h2>
+        </div>
+
+        <div className="rounded-full border border-zinc-800 bg-zinc-950 px-3 py-1 text-xs text-zinc-400">
+          Creator only
+        </div>
+      </div>
+
+      <div className="space-y-2">
         <label
           htmlFor="post-text"
-          className="text-sm font-medium text-white/80"
+          className="text-sm font-medium text-zinc-200"
         >
-          Post text
+          Caption (optional)
         </label>
         <textarea
           id="post-text"
@@ -61,17 +79,17 @@ export function CreatePostForm({
           rows={6}
           value={text}
           onChange={(event) => setText(event.target.value)}
-          placeholder="Write something for your audience..."
-          className="min-h-[180px] w-full resize-none rounded-2xl border border-white/10 bg-neutral-900 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35"
+          placeholder="Add a caption or upload media..."
+          className="min-h-[180px] w-full resize-none rounded-3xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
         />
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="space-y-2">
         <label
           htmlFor="post-files"
-          className="text-sm font-medium text-white/80"
+          className="text-sm font-medium text-zinc-200"
         >
-          Photos
+          Media
         </label>
         <input
           ref={fileInputRef}
@@ -84,78 +102,104 @@ export function CreatePostForm({
             const nextFiles = Array.from(event.target.files ?? [])
             setFiles(nextFiles)
           }}
-          className="block w-full rounded-2xl border border-white/10 bg-neutral-900 px-4 py-3 text-sm text-white file:mr-3 file:rounded-full file:border-0 file:bg-white file:px-4 file:py-2 file:text-sm file:font-medium file:text-black"
+          className="block w-full rounded-3xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-300 file:mr-3 file:rounded-full file:border-0 file:bg-white file:px-4 file:py-2 file:text-sm file:font-medium file:text-black"
         />
 
-        {files.length > 0 ? (
-          <p className="text-xs text-white/45">
-            {files.length} file{files.length > 1 ? "s" : ""} selected
+        <p className="text-xs text-zinc-500">
+          {files.length > 0
+            ? `${files.length} file${files.length > 1 ? "s" : ""} selected`
+            : "Add images or leave empty if you're posting text only."}
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <label
+            htmlFor="post-visibility"
+            className="text-sm font-medium text-zinc-200"
+          >
+            Access
+          </label>
+          <select
+            id="post-visibility"
+            name="visibility"
+            value={visibility}
+            onChange={(event) =>
+              setVisibility(event.target.value as PostVisibility)
+            }
+            className="w-full rounded-3xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white outline-none"
+          >
+            <option value="public">Public</option>
+            <option value="subscribers">Subscribers</option>
+            <option value="paid">Paid post</option>
+          </select>
+
+          <p className="text-xs text-zinc-500">
+            {visibility === "public" && "Anyone can view this post."}
+            {visibility === "subscribers" &&
+              "Only active subscribers can view this post."}
+            {visibility === "paid" &&
+              "Users must purchase this post to unlock it."}
           </p>
+        </div>
+
+        {visibility === "paid" ? (
+          <div className="space-y-2">
+            <label
+              htmlFor="post-price"
+              className="text-sm font-medium text-zinc-200"
+            >
+              Price (KRW)
+            </label>
+            <input
+              id="post-price"
+              name="priceCents"
+              type="number"
+              min={100}
+              step={100}
+              value={priceCents}
+              onChange={(event) => setPriceCents(Number(event.target.value))}
+              placeholder="예: 5000"
+              className="w-full rounded-3xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
+            />
+            <p className="text-xs text-zinc-500">
+              Paid posts are unlocked after purchase.
+            </p>
+          </div>
         ) : (
-          <p className="text-xs text-white/45">
-            You can upload multiple images.
-          </p>
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 px-4 py-4">
+            <p className="text-sm font-medium text-white">
+              {visibility === "public" ? "Open reach" : "Subscriber content"}
+            </p>
+            <p className="mt-1 text-xs leading-5 text-zinc-500">
+              {visibility === "public"
+                ? "Use this for discovery and profile growth."
+                : "Use this for member-only content and retention."}
+            </p>
+          </div>
         )}
       </div>
 
-      <div className="flex flex-col gap-2">
-        <label
-          htmlFor="post-visibility"
-          className="text-sm font-medium text-white/80"
-        >
-          Visibility
-        </label>
-        <select
-          id="post-visibility"
-          name="visibility"
-          value={visibility}
-          onChange={(event) =>
-            setVisibility(event.target.value as PostVisibility)
-          }
-          className="rounded-2xl border border-white/10 bg-neutral-900 px-4 py-3 text-sm text-white outline-none"
-        >
-          <option value="public">Public</option>
-          <option value="subscribers">Subscribers</option>
-          <option value="paid">Paid post</option>
-        </select>
-      </div>
-
-      {visibility === "paid" ? (
-        <div className="flex flex-col gap-2">
-          <label
-            htmlFor="post-price"
-            className="text-sm font-medium text-white/80"
-          >
-            PPV 가격 (원)
-          </label>
-          <input
-            id="post-price"
-            name="priceCents"
-            type="number"
-            min={100}
-            step={100}
-            value={priceCents}
-            onChange={(event) => setPriceCents(Number(event.target.value))}
-            placeholder="예: 5000"
-            className="rounded-2xl border border-white/10 bg-neutral-900 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35"
-          />
-        </div>
-      ) : null}
-
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3">
-        <p className="text-sm text-white/55">
-          {visibility === "paid"
-            ? "유료 게시글로 발행됩니다."
-            : "Ready to publish this post."}
+      <div className="rounded-3xl border border-zinc-800 bg-zinc-950 px-4 py-4">
+        <p className="text-xs text-zinc-500">
+          You can publish with text, media, or both. Empty posts are not allowed.
         </p>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="inline-flex h-11 items-center justify-center rounded-full border border-white/10 bg-white px-5 text-sm font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isSubmitting ? "Publishing..." : "Publish"}
-        </button>
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <p className="text-sm text-zinc-400">
+            {visibility === "paid"
+              ? "This post will be published as premium content."
+              : "Ready to publish this post."}
+          </p>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="inline-flex h-11 items-center justify-center rounded-full bg-[#C2185B] px-5 text-sm font-semibold text-white transition hover:bg-[#D81B60] active:bg-[#AD1457] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSubmitting ? "Publishing..." : "Publish"}
+          </button>
+        </div>
       </div>
     </form>
   )

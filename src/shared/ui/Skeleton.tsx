@@ -11,7 +11,7 @@ export function Skeleton({
   width = "100%",
   height = 16,
   className = "",
-  rounded = "rounded-sm",
+  rounded = "rounded-xl",
 }: SkeletonProps) {
   const style: CSSProperties = {
     width,
@@ -20,11 +20,11 @@ export function Skeleton({
 
   return (
     <div
-      className={`relative overflow-hidden bg-zinc-200 ${rounded} ${className}`}
+      className={`relative overflow-hidden bg-zinc-900 ${rounded} ${className}`}
       style={style}
       aria-hidden="true"
     >
-      <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+      <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
     </div>
   )
 }

@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     creatorId: post.creatorId,
     postId: post.id,
     amount: post.priceCents,
-    currency: "USD",
+    currency: "KRW",
   });
 
   return NextResponse.json({ ok: true });

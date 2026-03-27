@@ -1,74 +1,86 @@
+"use client"
+
 import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
+
+const navigationItems = [
+  { href: "/feed", label: "Home" },
+  { href: "/messages", label: "Messages" },
+  { href: "/search", label: "Search" },
+  { href: "/notifications", label: "Notifications" },
+  { href: "/post/new", label: "Post" },
+  { href: "/profile", label: "Profile" },
+  { href: "/settings", label: "Settings" },
+]
 
 export function AppSidebar() {
+  const pathname = usePathname()
+  const [isCreator, setIsCreator] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    async function checkCreator() {
+      try {
+        const res = await fetch("/api/creator/me", {
+          cache: "no-store",
+        })
+
+        if (!res.ok) {
+          setIsCreator(false)
+          return
+        }
+
+        const data = await res.json()
+        setIsCreator(Boolean(data?.creator))
+      } catch {
+        setIsCreator(false)
+      }
+    }
+
+    checkCreator()
+  }, [])
+
   return (
-    <aside className="hidden md:block w-72 shrink-0 px-4 py-6">
-      <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
-        <div className="space-y-2">
-          <Link
-            href="/feed"
-            className="block rounded-xl bg-[#C2185B] px-4 py-3 text-sm text-white"
-          >
-            Home
-          </Link>
+    <aside className="hidden w-72 shrink-0 md:block">
+      <div className="sticky top-[73px] px-4 py-6">
+        <nav className="space-y-1">
+          {navigationItems.map((item) => {
+            const isActive = pathname === item.href
 
-          <Link
-            href="/messages"
-            className="block rounded-xl px-4 py-3 text-sm text-zinc-700 hover:bg-zinc-100"
-          >
-            Message
-          </Link>
-
-          <Link
-            href="/search"
-            className="block rounded-xl px-4 py-3 text-sm text-zinc-700 hover:bg-zinc-100"
-          >
-            Search
-          </Link>
-
-          <Link
-            href="/explore-tab"
-            className="block rounded-xl px-4 py-3 text-sm text-zinc-700 hover:bg-zinc-100"
-          >
-            Explore Tab
-          </Link>
-
-          <Link
-            href="/notifications"
-            className="block rounded-xl px-4 py-3 text-sm text-zinc-700 hover:bg-zinc-100"
-          >
-            Notification
-          </Link>
-
-          <Link
-            href="/post/new"
-            className="block rounded-xl px-4 py-3 text-sm text-zinc-700 hover:bg-zinc-100"
-          >
-            Post
-          </Link>
-
-          <Link
-            href="/profile"
-            className="block rounded-xl px-4 py-3 text-sm text-zinc-700 hover:bg-zinc-100"
-          >
-            Profile
-          </Link>
-
-          <Link
-            href="/settings"
-            className="block rounded-xl px-4 py-3 text-sm text-zinc-700 hover:bg-zinc-100"
-          >
-            Settings
-          </Link>
-        </div>
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex min-h-[48px] items-center rounded-2xl px-4 text-sm font-medium transition ${
+                  isActive
+                    ? "bg-[#C2185B] text-white shadow-sm"
+                    : "text-zinc-400 hover:bg-zinc-900 hover:text-white"
+                }`}
+              >
+                {item.label}
+              </Link>
+            )
+          })}
+        </nav>
 
         <div className="mt-6">
-          <Link
-            href="/become-creator"
-            className="block rounded-xl bg-[#C2185B] px-4 py-3 text-center text-sm font-medium text-white transition hover:bg-[#D81B60] active:bg-[#AD1457]"
-          >
-            Become creator
-          </Link>
+          {isCreator === null ? (
+            <div className="h-[48px] w-full animate-pulse rounded-2xl bg-zinc-800" />
+          ) : isCreator ? (
+            <Link
+              href="/dashboard"
+              className="inline-flex min-h-[48px] w-full items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-4 text-sm font-semibold text-white transition hover:bg-white/10"
+            >
+              Creator dashboard
+            </Link>
+          ) : (
+            <Link
+              href="/become-creator"
+              className="inline-flex min-h-[48px] w-full items-center justify-center rounded-2xl bg-[#C2185B] px-4 text-sm font-semibold text-white transition hover:bg-[#D81B60] active:bg-[#AD1457]"
+            >
+              Become creator
+            </Link>
+          )}
         </div>
       </div>
     </aside>

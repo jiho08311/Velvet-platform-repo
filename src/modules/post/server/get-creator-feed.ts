@@ -26,6 +26,8 @@ type MediaRow = {
   sort_order: number
 }
 
+type PostLockReason = "none" | "subscription" | "purchase"
+
 export async function getCreatorFeed({
   creatorId,
   userId,
@@ -68,13 +70,23 @@ export async function getCreatorFeed({
         })
       }
 
-      const isLocked =
-        (isSubscribersOnly && !hasSubscriptionAccess) ||
-        (isPaidPost && !hasPurchased)
+      let lockReason: PostLockReason = "none"
+
+      if (isSubscribersOnly && !hasSubscriptionAccess) {
+        lockReason = "subscription"
+      }
+
+      if (isPaidPost && !hasPurchased) {
+        lockReason = "purchase"
+      }
+
+      const isLocked = lockReason !== "none"
 
       return {
         ...post,
+        priceCents: post.price_cents,
         isLocked,
+        lockReason,
         content: isLocked ? null : post.content,
       }
     })

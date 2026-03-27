@@ -1,4 +1,3 @@
-import { LockedPostCard } from "./LockedPostCard"
 import { PostCard } from "./PostCard"
 
 type CreatorPostListItem = {
@@ -34,30 +33,16 @@ export function CreatorPostList({
 
   return (
     <section className="grid gap-4">
-      {posts.map((post) => {
-        const canShowFullPost = !post.isLocked || isSubscribed
-
-        if (canShowFullPost) {
-          return (
-            <PostCard
-              key={post.id}
-              text={post.text}
-              createdAt={post.createdAt}
-              mediaThumbnailUrls={post.mediaThumbnailUrls}
-            />
-          )
-        }
-
-        return (
-          <LockedPostCard
-            key={post.id}
-            previewText={post.previewText ?? post.text}
-            createdAt={post.createdAt}
-            previewThumbnailUrl={post.previewThumbnailUrl}
-            unlockLabel={unlockLabel}
-          />
-        )
-      })}
+      {posts.map((post) => (
+        <PostCard
+          key={post.id}
+          postId={post.id}
+          text={post.previewText ?? post.text}
+          createdAt={post.createdAt}
+          mediaThumbnailUrls={post.mediaThumbnailUrls}
+          isLocked={post.isLocked && !isSubscribed}
+        />
+      ))}
     </section>
   )
 }

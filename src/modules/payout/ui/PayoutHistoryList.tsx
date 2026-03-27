@@ -19,12 +19,12 @@ type PayoutListProps = {
   emptyDescription?: string
 }
 
-function formatPrice(amountCents: number, currency = "USD") {
+function formatPrice(amountCents: number, currency = "KRW") {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: currency.toUpperCase(),
     maximumFractionDigits: 2,
-  }).format(amountCents / 100)
+  }).format(amountCents)
 }
 
 function formatDate(value: string) {
@@ -81,7 +81,7 @@ export function PayoutList({
                 Amount
               </p>
               <p className="mt-1 text-sm font-semibold text-zinc-900 sm:mt-0">
-                {formatPrice(payout.amountCents, payout.currency ?? "USD")}
+                {formatPrice(payout.amountCents, payout.currency ?? "KRW")}
               </p>
             </div>
 

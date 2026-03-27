@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 
 type PostPurchaseButtonProps = {
   postId: string
@@ -22,7 +23,10 @@ function getPostPurchaseErrorMessage(message: string) {
   return "게시물 구매에 실패했습니다"
 }
 
-export function PostPurchaseButton({ postId }: PostPurchaseButtonProps) {
+export function PostPurchaseButton({
+  postId,
+}: PostPurchaseButtonProps) {
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
 
@@ -67,7 +71,8 @@ export function PostPurchaseButton({ postId }: PostPurchaseButtonProps) {
         throw new Error(confirmData.error ?? "Failed to confirm payment")
       }
 
-      window.location.reload()
+      router.replace(`/post/${postId}`)
+      router.refresh()
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to purchase post"
@@ -79,19 +84,23 @@ export function PostPurchaseButton({ postId }: PostPurchaseButtonProps) {
   }
 
   return (
-    <div className="mt-3">
+    <div className="flex w-full min-w-[220px] flex-col gap-2 sm:w-auto">
       <button
         type="button"
         onClick={handlePurchase}
         disabled={isLoading}
-        className="inline-flex items-center justify-center rounded-md bg-[#C2185B] px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-[#D81B60] disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#C2185B] px-5 text-sm font-semibold text-white transition hover:bg-[#D81B60] active:bg-[#AD1457] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isLoading ? "Processing..." : "Unlock post"}
+        {isLoading ? "Unlocking..." : "Unlock now"}
       </button>
 
+      <p className="text-center text-xs text-zinc-500">
+        One-time purchase
+      </p>
+
       {errorMessage ? (
-        <div className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2">
-          <p className="text-xs text-red-600">{errorMessage}</p>
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3">
+          <p className="text-xs leading-5 text-red-300">{errorMessage}</p>
         </div>
       ) : null}
     </div>

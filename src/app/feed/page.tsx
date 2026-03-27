@@ -1,14 +1,14 @@
-import Link from "next/link"
 import { redirect } from "next/navigation"
 
 import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { getSession } from "@/modules/auth/server/get-session"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { getHomeFeed } from "@/modules/feed/server/get-home-feed"
+import { FeedComposer } from "@/modules/feed/ui/FeedComposer"
+import { FeedEmptyState } from "@/modules/feed/ui/FeedEmptyState"
 import { FeedList } from "@/modules/feed/ui/FeedList"
 import { getRecommendedCreators } from "@/modules/search/server/get-recommended-creators"
 import { Card } from "@/shared/ui/Card"
-import { EmptyState } from "@/shared/ui/EmptyState"
 
 export default async function FeedPage() {
   const session = await getSession()
@@ -23,7 +23,7 @@ export default async function FeedPage() {
     redirect("/verify-pass")
   }
 
-  const creator = await getCreatorByUserId(session.userId)
+  await getCreatorByUserId(session.userId)
 
   const [feed, recommendedCreators] = await Promise.all([
     getHomeFeed({
@@ -37,68 +37,45 @@ export default async function FeedPage() {
   ])
 
   return (
-    <main className="min-h-screen bg-zinc-50 text-zinc-900">
-      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        
-        {/* Feed */}
-        <section className="min-w-0">
-          <div className="space-y-4">
-            <Card className="p-6">
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#C2185B]">
-                  Feed
-                </p>
-                <h1 className="text-2xl font-semibold text-zinc-900">
-                  Home feed
-                </h1>
-                <p className="text-sm leading-6 text-zinc-500">
-                  Discover the latest creator posts and updates.
-                </p>
-              </div>
-            </Card>
+    <main className="min-h-screen">
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-0 py-2 sm:px-0 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <section className="min-w-0 space-y-4">
+          <FeedComposer />
 
-            <Card className="p-4">
-              <Link
-                href="/post/new"
-                className="flex items-center rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-400 transition hover:border-zinc-300 hover:bg-white"
-              >
-                Share something with your subscribers...
-              </Link>
-            </Card>
-
-            {feed.items.length === 0 ? (
-              <Card className="p-6">
-                <EmptyState
-                  title="No posts yet"
-                  description="Posts from creators you follow will appear here."
-                />
-              </Card>
-            ) : (
-              <FeedList
-                posts={feed.items.map((item) => ({
-                  id: item.id,
-                  postId: item.id,
-                  text: item.text,
-                  createdAt: item.createdAt,
-                  mediaThumbnailUrls: item.mediaThumbnailUrls ?? [],
-                }))}
-                emptyMessage="No posts yet from creators you subscribe to."
-              />
-            )}
-          </div>
+          {feed.items.length === 0 ? (
+            <FeedEmptyState
+              title="No posts yet"
+              description="Posts from creators you follow will appear here."
+            />
+          ) : (
+        <FeedList
+  posts={feed.items.map((item) => ({
+    id: item.id,
+    postId: item.id,
+    creatorId: item.creatorId,
+    creatorUserId: item.creatorUserId,
+    currentUserId: item.currentUserId,
+    text: item.text,
+    createdAt: item.createdAt,
+    mediaThumbnailUrls: item.mediaThumbnailUrls ?? [],
+    isLocked: item.isLocked,
+    lockReason: item.lockReason,
+    creator: item.creator,
+  }))}
+/>
+          )}
         </section>
 
-        {/* Right Sidebar (추천 유지) */}
         <aside className="hidden lg:block">
           <div className="sticky top-24 space-y-4">
-            <Card>
+            <Card className="border-zinc-800 bg-zinc-900/70 p-4">
               <div className="space-y-4">
-                <h2 className="text-sm font-semibold text-zinc-900">
+                <h2 className="text-sm font-semibold text-white">
                   Recommended for you
                 </h2>
 
                 {recommendedCreators.length === 0 ? (
-                  <p className="text-sm text-zinc-500">
+                  <p className="text-sm text-zinc-400">
                     No recommendations available yet.
                   </p>
                 ) : (
@@ -108,27 +85,29 @@ export default async function FeedPage() {
                         key={creator.id}
                         className="flex items-center justify-between gap-3"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-200 text-sm font-semibold text-zinc-700">
-                            {(creator.displayName ?? creator.username).slice(0, 1)}
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-white">
+                            {(creator.displayName ?? creator.username)
+                              .slice(0, 1)
+                              .toUpperCase()}
                           </div>
 
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-zinc-900">
+                            <p className="truncate text-sm font-medium text-white">
                               {creator.displayName ?? creator.username}
                             </p>
-                            <p className="truncate text-xs text-zinc-500">
+                            <p className="truncate text-xs text-zinc-400">
                               @{creator.username}
                             </p>
                           </div>
                         </div>
 
-                        <Link
+                        <a
                           href={`/creator/${creator.username}`}
-                          className="rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100"
+                          className="rounded-full border border-zinc-700 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-zinc-800"
                         >
                           View
-                        </Link>
+                        </a>
                       </div>
                     ))}
                   </div>
@@ -137,7 +116,6 @@ export default async function FeedPage() {
             </Card>
           </div>
         </aside>
-
       </div>
     </main>
   )

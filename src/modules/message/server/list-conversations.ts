@@ -22,8 +22,10 @@ type ProfileRow = {
 type MessageRow = {
   id: string
   conversation_id: string
+  sender_id: string
   content: string
   created_at: string
+  type: string | null
 }
 
 export type Conversation = {
@@ -80,10 +82,11 @@ export async function listConversations({
     throw conversationsError
   }
 
-  const { data: allParticipantRows, error: allParticipantsError } = await supabase
-    .from("conversation_participants")
-    .select("conversation_id, user_id")
-    .in("conversation_id", conversationIds)
+  const { data: allParticipantRows, error: allParticipantsError } =
+    await supabase
+      .from("conversation_participants")
+      .select("conversation_id, user_id")
+      .in("conversation_id", conversationIds)
 
   if (allParticipantsError) {
     throw allParticipantsError
@@ -92,7 +95,10 @@ export async function listConversations({
   const otherParticipantMap = new Map<string, string>()
 
   for (const row of (allParticipantRows ?? []) as ConversationParticipantRow[]) {
-    if (row.user_id !== userId && !otherParticipantMap.has(row.conversation_id)) {
+    if (
+      row.user_id !== userId &&
+      !otherParticipantMap.has(row.conversation_id)
+    ) {
       otherParticipantMap.set(row.conversation_id, row.user_id)
     }
   }
@@ -103,7 +109,8 @@ export async function listConversations({
     .from("profiles")
     .select("id, username, display_name, avatar_url")
     .in("id", participantIds)
-.eq("is_deactivated", false)
+    .eq("is_deactivated", false)
+
   if (profilesError) {
     throw profilesError
   }
@@ -114,7 +121,7 @@ export async function listConversations({
 
   const { data: messages, error: messagesError } = await supabase
     .from("messages")
-    .select("id, conversation_id, content, created_at")
+    .select("id, conversation_id, sender_id, content, created_at, type")
     .in("conversation_id", conversationIds)
     .order("created_at", { ascending: false })
 
@@ -122,43 +129,52 @@ export async function listConversations({
     throw messagesError
   }
 
+  const messageRows = (messages ?? []) as MessageRow[]
   const lastMessageMap = new Map<string, MessageRow>()
 
-  for (const message of (messages ?? []) as MessageRow[]) {
+  for (const message of messageRows) {
     if (!lastMessageMap.has(message.conversation_id)) {
       lastMessageMap.set(message.conversation_id, message)
     }
   }
 
   return ((conversations ?? []) as ConversationRow[])
-  .filter((row) => {
-    const participantUserId = otherParticipantMap.get(row.id) ?? ""
-    return profileMap.has(participantUserId) // ✅ deactivate 제거
-  })
-  
-  .map((row) => {
-    const participantUserId = otherParticipantMap.get(row.id) ?? ""
-    const profile = profileMap.get(participantUserId)
-    const lastMessage = lastMessageMap.get(row.id)
+    .filter((row) => {
+      const participantUserId = otherParticipantMap.get(row.id) ?? ""
+      return profileMap.has(participantUserId)
+    })
+    .map((row) => {
+      const participantUserId = otherParticipantMap.get(row.id) ?? ""
+      const profile = profileMap.get(participantUserId)
+      const lastMessage = lastMessageMap.get(row.id)
 
-    return {
-      id: row.id,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      lastMessageAt: row.last_message_at,
-      participant: {
-        userId: participantUserId,
-        username: profile?.username ?? "",
-        displayName: profile?.display_name ?? profile?.username ?? "",
-        avatarUrl: profile?.avatar_url ?? null,
-      },
-      lastMessage: lastMessage
-        ? {
-            id: lastMessage.id,
-            content: lastMessage.content,
-            createdAt: lastMessage.created_at,
-          }
-        : null,
-    }
-  })
+      const hasIncomingPpv = messageRows.some(
+        (m) =>
+          m.conversation_id === row.id &&
+          (m.type ?? "text") === "ppv" &&
+          m.sender_id !== userId
+      )
+
+      return {
+        id: row.id,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        lastMessageAt: row.last_message_at,
+        participant: {
+          userId: participantUserId,
+          username: profile?.username ?? "",
+          displayName: profile?.display_name ?? profile?.username ?? "",
+          avatarUrl: profile?.avatar_url ?? null,
+        },
+        lastMessage: lastMessage
+          ? {
+              id: lastMessage.id,
+              content: hasIncomingPpv
+                ? "유료 메시지입니다"
+                : lastMessage.content,
+              createdAt: lastMessage.created_at,
+            }
+          : null,
+      }
+    })
 }

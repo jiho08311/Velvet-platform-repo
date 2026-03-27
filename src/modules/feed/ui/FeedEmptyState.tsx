@@ -10,8 +10,11 @@ export function FeedEmptyState({
   description = "Subscribe to creators to see posts in your feed.",
 }: FeedEmptyStateProps) {
   return (
-    <div className="border border-zinc-200 bg-white p-4">
-      <EmptyState title={title} description={description} />
-    </div>
+    <EmptyState
+      title={title}
+      description={description}
+      actionLabel="Explore creators"
+      actionHref="/search"
+    />
   )
 }

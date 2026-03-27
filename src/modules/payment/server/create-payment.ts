@@ -43,7 +43,7 @@ export default async function createPayment({
   type,
   status = "pending",
   amountCents,
-  currency = "usd",
+  currency = "KRW",
   provider = "mock",
   providerReferenceId,
   targetType = null,

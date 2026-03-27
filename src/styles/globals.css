@@ -1,12 +1,28 @@
 @import "tailwindcss";
 
+:root {
+  --background: #09090b;
+  --foreground: #f4f4f5;
+  --surface: #18181b;
+  --surface-2: #27272a;
+  --border: #27272a;
+  --muted: #a1a1aa;
+  --accent: #c2185b;
+  --accent-hover: #d81b60;
+  --accent-active: #ad1457;
+}
+
 html,
 body {
   padding: 0;
   margin: 0;
   font-family: system-ui, sans-serif;
-  background: #ffffff;
-  color: #18181b;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+html {
+  color-scheme: dark;
 }
 
 body {
@@ -15,6 +31,11 @@ body {
 
 * {
   box-sizing: border-box;
+}
+
+*::selection {
+  background: rgba(194, 24, 91, 0.28);
+  color: #ffffff;
 }
 
 a {
@@ -27,4 +48,31 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  outline: none;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  box-shadow: 0 0 0 2px rgba(194, 24, 91, 0.45);
+  border-radius: 16px;
+}
+
+img,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+::placeholder {
+  color: #71717a;
 }

@@ -1,4 +1,3 @@
-import Link from "next/link"
 import { redirect } from "next/navigation"
 
 import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
@@ -7,21 +6,6 @@ import { listNotifications } from "@/modules/notification/server/list-notificati
 import { Card } from "@/shared/ui/Card"
 import { EmptyState } from "@/shared/ui/EmptyState"
 import { StatusBadge } from "@/shared/ui/StatusBadge"
-
-function getNotificationText(notification: {
-  message?: string
-  title?: string
-}) {
-  if (typeof notification.message === "string") {
-    return notification.message
-  }
-
-  if (typeof notification.title === "string") {
-    return notification.title
-  }
-
-  return ""
-}
 
 function getNotificationTone(type: string) {
   switch (type) {
@@ -52,21 +36,21 @@ export default async function NotificationsPage() {
   })
 
   return (
-    <main className="min-h-screen bg-zinc-50 text-zinc-900">
+    <main className="min-h-screen bg-zinc-950 text-white">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
-        <Card className="overflow-hidden p-0">
-          <div className="border-b border-zinc-200 bg-gradient-to-r from-[#FCE4EC] via-white to-[#FFF1F5] p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#C2185B]">
-              Notifications
-            </p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-900">
-              Notifications
-            </h1>
-            <p className="mt-2 text-sm text-zinc-600">
-              Stay updated on subscriptions, messages, payments, and platform
-              activity.
-            </p>
-          </div>
+        <Card className="p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-zinc-400">
+            Notifications
+          </p>
+
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">
+            Notifications
+          </h1>
+
+          <p className="mt-2 text-sm text-zinc-400">
+            Stay updated on subscriptions, messages, payments, and platform
+            activity.
+          </p>
         </Card>
 
         <Card className="overflow-hidden p-0">
@@ -78,15 +62,14 @@ export default async function NotificationsPage() {
               />
             </div>
           ) : (
-            <ul className="divide-y divide-zinc-200">
+            <ul className="divide-y divide-zinc-800">
               {notifications.map((notification) => (
                 <li key={notification.id}>
-                  <Link
-                    href={`/notifications/${notification.id}`}
-                    className={`flex items-start justify-between gap-4 px-5 py-4 transition-all duration-200 ease-out ${
+                  <div
+                    className={`flex items-start justify-between gap-4 px-5 py-4 ${
                       notification.isRead
-                        ? "bg-transparent hover:bg-zinc-100"
-                        : "bg-[#FFF1F5] hover:bg-[#FCE4EC]"
+                        ? "bg-transparent"
+                        : "bg-zinc-800"
                     }`}
                   >
                     <div className="min-w-0 flex-1">
@@ -103,18 +86,18 @@ export default async function NotificationsPage() {
                       <p
                         className={`mt-2 line-clamp-2 whitespace-pre-wrap text-sm leading-6 ${
                           notification.isRead
-                            ? "font-normal text-zinc-500"
-                            : "font-semibold text-zinc-900"
+                            ? "font-normal text-zinc-400"
+                            : "font-semibold text-white"
                         }`}
                       >
-                        {getNotificationText(notification)}
+                        {notification.message}
                       </p>
 
                       <p className="mt-1.5 text-xs text-zinc-500">
                         {new Date(notification.createdAt).toLocaleString()}
                       </p>
                     </div>
-                  </Link>
+                  </div>
                 </li>
               ))}
             </ul>

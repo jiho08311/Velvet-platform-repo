@@ -1,5 +1,10 @@
-import Link from "next/link"
+"use client"
 
+import { useRouter } from "next/navigation"
+
+import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
+
+import { LockedPostCard } from "./LockedPostCard"
 import { PostPurchaseButton } from "./PostPurchaseButton"
 
 type PostCardProps = {
@@ -8,6 +13,16 @@ type PostCardProps = {
   createdAt: string
   mediaThumbnailUrls?: string[]
   isLocked?: boolean
+  lockReason?: "none" | "subscription" | "purchase"
+  priceCents?: number
+  creatorId: string
+  creatorUserId?: string
+  currentUserId?: string
+  creator: {
+    username: string
+    displayName: string | null
+    avatarUrl: string | null
+  }
 }
 
 export function PostCard({
@@ -16,21 +31,32 @@ export function PostCard({
   createdAt,
   mediaThumbnailUrls,
   isLocked = false,
+  lockReason = "none",
+  priceCents,
+  creatorId,
+  creatorUserId,
+  currentUserId,
+  creator,
 }: PostCardProps) {
+  const router = useRouter()
+
   const thumbnails = mediaThumbnailUrls ?? []
+  const creatorName = creator.displayName ?? creator.username
+  const creatorInitial = creatorName.slice(0, 1).toUpperCase()
+
+  function handleCardClick() {
+    if (!postId || isLocked) return
+    router.push(`/post/${postId}`)
+  }
 
   function renderMedia() {
     if (thumbnails.length === 0) {
-      return (
-        <div className="flex aspect-[16/9] items-center justify-center border-b border-zinc-200 bg-zinc-50 text-sm text-zinc-500">
-          No media
-        </div>
-      )
+      return null
     }
 
     if (thumbnails.length === 1) {
       return (
-        <div className="overflow-hidden border-b border-zinc-200 bg-zinc-100">
+        <div className="overflow-hidden rounded-[28px] bg-zinc-950">
           <div className="aspect-[4/5] w-full overflow-hidden">
             <img
               src={thumbnails[0]}
@@ -44,11 +70,11 @@ export function PostCard({
 
     if (thumbnails.length === 2) {
       return (
-        <div className="grid grid-cols-2 gap-px border-b border-zinc-200 bg-zinc-200">
+        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[28px] bg-zinc-950">
           {thumbnails.slice(0, 2).map((thumbnailUrl, index) => (
             <div
               key={`${thumbnailUrl}-${index}`}
-              className="aspect-square overflow-hidden bg-zinc-100"
+              className="aspect-square overflow-hidden bg-zinc-900"
             >
               <img
                 src={thumbnailUrl}
@@ -62,11 +88,11 @@ export function PostCard({
     }
 
     return (
-      <div className="grid grid-cols-3 gap-px border-b border-zinc-200 bg-zinc-200">
+      <div className="grid grid-cols-3 gap-px overflow-hidden rounded-[28px] bg-zinc-950">
         {thumbnails.slice(0, 3).map((thumbnailUrl, index) => (
           <div
             key={`${thumbnailUrl}-${index}`}
-            className="aspect-square overflow-hidden bg-zinc-100"
+            className="aspect-square overflow-hidden bg-zinc-900"
           >
             <img
               src={thumbnailUrl}
@@ -79,39 +105,102 @@ export function PostCard({
     )
   }
 
-  const content = (
-    <article className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-colors duration-200 hover:border-[#C2185B]/40">
-      {renderMedia()}
+  function renderLockedAction() {
+    if (lockReason === "subscription") {
+      return (
+        <div onClick={(event) => event.stopPropagation()}>
+          <SubscribeButton
+            creatorId={creatorId}
+            creatorUserId={creatorUserId}
+            currentUserId={currentUserId}
+          />
+        </div>
+      )
+    }
 
-      <div className="p-4">
-        {isLocked ? (
-          <div className="rounded-2xl border border-[#C2185B]/20 bg-[#FFF1F5] p-4">
-            <p className="text-sm font-medium text-zinc-900">
-              This post is locked.
-            </p>
-            <p className="mt-2 text-xs text-zinc-600">
-              Purchase access to view this content.
-            </p>
-            {postId ? <PostPurchaseButton postId={postId} /> : null}
-          </div>
-        ) : (
-          <p className="whitespace-pre-wrap text-sm leading-7 text-zinc-700">
-            {text}
-          </p>
-        )}
+    if (lockReason === "purchase" && postId) {
+      return (
+        <div onClick={(event) => event.stopPropagation()}>
+          <PostPurchaseButton postId={postId} />
+        </div>
+      )
+    }
 
-        <p className="mt-4 text-xs text-zinc-500">{createdAt}</p>
-      </div>
-    </article>
-  )
-
-  if (!postId) {
-    return content
+    return null
   }
 
   return (
-    <Link href={`/post/${postId}`} className="block">
-      {content}
-    </Link>
+    <article
+      onClick={handleCardClick}
+      className={`overflow-hidden rounded-[32px] border border-zinc-800 bg-zinc-900/70 p-4 transition sm:p-5 ${
+        isLocked
+          ? "cursor-default"
+          : "cursor-pointer hover:border-zinc-700"
+      }`}
+    >
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-3">
+          {creator.avatarUrl ? (
+            <img
+              src={creator.avatarUrl}
+              alt={creatorName}
+              className="h-11 w-11 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-white">
+              {creatorInitial}
+            </div>
+          )}
+
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-white">
+              {creatorName}
+            </p>
+            <p className="truncate text-xs text-zinc-400">
+              @{creator.username}
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {isLocked ? (
+            <>
+              <LockedPostCard
+                previewText={text}
+                createdAt={createdAt}
+                previewThumbnailUrl={thumbnails[0] ?? null}
+                ctaLabel={
+                  lockReason === "subscription" ? "Subscribe now" : "Unlock post"
+                }
+                priceCents={priceCents}
+                lockReason={
+                  lockReason === "subscription" || lockReason === "purchase"
+                    ? lockReason
+                    : undefined
+                }
+                onClick={() => {}}
+              />
+
+              <div
+                className="-mt-24 flex justify-center px-6 pb-2"
+                onClick={(event) => event.stopPropagation()}
+              >
+                {renderLockedAction()}
+              </div>
+            </>
+          ) : (
+            <>
+              {renderMedia()}
+
+              <p className="whitespace-pre-wrap text-[15px] leading-7 text-zinc-100">
+                {text}
+              </p>
+
+              <p className="text-xs text-zinc-500">{createdAt}</p>
+            </>
+          )}
+        </div>
+      </div>
+    </article>
   )
 }

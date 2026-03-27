@@ -88,7 +88,7 @@ export async function getCreatorDashboard(
   const currency =
     (monthlyPaymentsResult.data?.[0]?.currency ??
       totalPaymentsResult.data?.[0]?.currency ??
-      "USD") as string
+      "KRW") as string
 
   return {
     creatorId: id,

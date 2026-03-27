@@ -1,7 +1,7 @@
 // src/app/subscriptions/loading.tsx
 export default function SubscriptionsLoading() {
   return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-10">
+    <main className="min-h-screen bg-white px-6 py-10">
       <div className="mx-auto max-w-4xl animate-pulse space-y-4">
         {[...Array(5)].map((_, i) => (
           <div

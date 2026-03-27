@@ -39,7 +39,7 @@ export async function getCreatorByUserId(userId: string) {
     username: data.username ?? "",
     status: data.status,
     subscriptionPriceCents: data.subscription_price_cents ?? 0,
-    subscriptionCurrency: data.subscription_currency ?? "usd",
+    subscriptionCurrency: data.subscription_currency ?? "KRW",
     createdAt: data.created_at,
     updatedAt: data.updated_at,
   }

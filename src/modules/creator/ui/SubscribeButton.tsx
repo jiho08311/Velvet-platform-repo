@@ -17,7 +17,7 @@ type SubscriptionCheckResponse = {
 type CheckoutResponse = {
   payment?: {
     id?: string
-    amount_cents?: number
+    amountCents?: number // ✅ 여기 camelCase로 변경
   }
   checkout?: {
     orderId?: string
@@ -130,7 +130,7 @@ export default function SubscribeButton({
       }
 
       const paymentId = data.payment?.id
-      const amountCents = (data.payment as any)?.amountCents ?? 0
+const amountCents = data.payment?.amountCents ?? 0
       const orderId = data.checkout?.orderId ?? paymentId
       const orderName = data.checkout?.orderName ?? "Creator subscription"
 
@@ -142,7 +142,7 @@ export default function SubscribeButton({
       const tossPayments = await loadTossPayments(clientKey)
 
       await tossPayments.requestPayment("카드", {
-        amount: amountCents / 100,
+        amount: amountCents,
         orderId,
         orderName,
         successUrl: `${window.location.origin}/payment/success?paymentId=${paymentId}`,
@@ -158,6 +158,7 @@ export default function SubscribeButton({
   async function handleCancel() {
     try {
       setLoading(true)
+      setErrorMessage("")
 
       const res = await fetch("/api/subscription/cancel", {
         method: "POST",
@@ -170,28 +171,28 @@ export default function SubscribeButton({
       const data = await res.json()
 
       if (!res.ok || !data.success) {
-        alert(data.error ?? "Failed to cancel subscription")
+        setErrorMessage(data.error ?? "구독 취소에 실패했습니다")
         return
       }
 
       setCancelAtPeriodEnd(true)
     } catch {
-      alert("Failed to cancel subscription")
+      setErrorMessage("구독 취소에 실패했습니다")
     } finally {
       setLoading(false)
     }
   }
 
-  const baseBtn =
-    "w-full sm:w-auto px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+  const buttonBase =
+    "inline-flex h-12 items-center justify-center rounded-full px-5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
 
   if (checking) {
     return (
       <button
         disabled
-        className={`${baseBtn} rounded-md bg-zinc-200 text-zinc-700`}
+        className={`${buttonBase} w-full min-w-[220px] bg-zinc-800 text-zinc-300 sm:w-auto`}
       >
-        Loading...
+        Checking...
       </button>
     )
   }
@@ -200,7 +201,7 @@ export default function SubscribeButton({
     return (
       <button
         disabled
-        className={`${baseBtn} rounded-md bg-zinc-200 text-zinc-700`}
+        className={`${buttonBase} w-full min-w-[220px] bg-zinc-800 text-zinc-400 sm:w-auto`}
       >
         Your creator page
       </button>
@@ -209,40 +210,58 @@ export default function SubscribeButton({
 
   if (subscribed) {
     return (
-      <div className="flex w-full flex-col gap-2 sm:w-auto">
-        <button
-          disabled
-          className={`${baseBtn} rounded-md bg-green-100 text-green-700`}
-        >
-          {cancelAtPeriodEnd ? "Cancellation scheduled" : "Subscribed"}
-        </button>
+      <div className="flex w-full min-w-[220px] flex-col gap-2 sm:w-auto">
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3">
+          <p className="text-sm font-semibold text-white">
+            {cancelAtPeriodEnd ? "Subscription ending" : "Subscribed"}
+          </p>
+          <p className="mt-1 text-xs text-zinc-300">
+            {cancelAtPeriodEnd
+              ? "Your subscription is scheduled to end at the end of the current period."
+              : "You have access to subscriber-only content."}
+          </p>
+        </div>
 
         <button
           onClick={handleCancel}
           disabled={loading || cancelAtPeriodEnd}
-          className={`${baseBtn} rounded-md border border-red-300 bg-white text-red-600 hover:bg-red-50`}
+          className={`${buttonBase} w-full border border-zinc-700 bg-zinc-950 text-zinc-100 hover:bg-zinc-900`}
         >
-          {cancelAtPeriodEnd ? "Scheduled" : "Cancel"}
+          {cancelAtPeriodEnd
+            ? "Cancellation scheduled"
+            : loading
+              ? "Processing..."
+              : "Cancel subscription"}
         </button>
+
+        {errorMessage ? (
+          <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-3 py-2">
+            <p className="text-xs text-red-300">{errorMessage}</p>
+          </div>
+        ) : null}
       </div>
     )
   }
 
   return (
-    <div className="flex w-full flex-col gap-2 sm:w-auto">
+    <div className="flex w-full min-w-[220px] flex-col gap-2 sm:w-auto">
       <button
         onClick={handleSubscribe}
         disabled={loading}
-        className={`${baseBtn} rounded-md bg-[#C2185B] text-white hover:bg-[#D81B60]`}
+        className={`${buttonBase} w-full bg-[#C2185B] text-white hover:bg-[#D81B60] active:bg-[#AD1457]`}
       >
-        {loading ? "Loading..." : "Subscribe"}
+        {loading ? "Processing..." : "Subscribe now"}
       </button>
 
-      {errorMessage && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2">
-          <p className="text-xs text-red-600">{errorMessage}</p>
+      <p className="text-center text-xs text-zinc-500">
+        Cancel anytime
+      </p>
+
+      {errorMessage ? (
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-3 py-2">
+          <p className="text-xs text-red-300">{errorMessage}</p>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

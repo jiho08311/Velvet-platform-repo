@@ -16,12 +16,11 @@ type CreatorPageProps = {
   }>
 }
 
-function formatPrice(amountCents: number, currency: string) {
-  return new Intl.NumberFormat("en-US", {
+function formatPrice(amount: number) {
+  return new Intl.NumberFormat("ko-KR", {
     style: "currency",
-    currency: currency.toUpperCase(),
-    maximumFractionDigits: 2,
-  }).format(amountCents / 100)
+    currency: "KRW",
+  }).format(amount)
 }
 
 function formatCount(value: number | null | undefined) {
@@ -65,136 +64,129 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
   })
 
   return (
-    <main className="min-h-screen bg-white text-zinc-900">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
-        <section className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
-          <div className="h-28 bg-gradient-to-r from-[#C2185B] via-[#D81B60] to-[#F06292]" />
+    <main className="min-h-screen">
+      <div className="mx-auto w-full max-w-3xl px-4 pb-32 pt-6">
+        <div className="h-40 w-full rounded-3xl bg-gradient-to-r from-[#C2185B] via-[#D81B60] to-[#F06292]" />
 
-          <div className="px-5 pb-6 pt-0 sm:px-6">
-            <div className="-mt-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div className="flex items-end gap-4">
-                <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-zinc-100 text-2xl font-semibold text-zinc-700 shadow-sm">
-                  {creator.avatarUrl ? (
-                    <img
-                      src={creator.avatarUrl}
-                      alt={creator.displayName ?? creator.username}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    (creator.displayName ?? creator.username)
-                      .slice(0, 1)
-                      .toUpperCase()
-                  )}
+        <div className="mt-[-40px] flex items-end justify-between gap-4">
+          <div className="flex items-end gap-4">
+            <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-zinc-950 bg-zinc-900">
+              {creator.avatarUrl ? (
+                <img
+                  src={creator.avatarUrl}
+                  alt={creator.displayName ?? creator.username}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-xl font-semibold text-white">
+                  {(creator.displayName ?? creator.username)
+                    .slice(0, 1)
+                    .toUpperCase()}
                 </div>
-
-                <div className="pb-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#C2185B]">
-                    Creator
-                  </p>
-                  <h1 className="mt-2 text-3xl font-semibold text-zinc-900">
-                    {creator.displayName ?? creator.username}
-                  </h1>
-                  <p className="mt-1 text-sm text-zinc-500">@{creator.username}</p>
-                </div>
-              </div>
-
-              <div className="flex shrink-0 items-center gap-3">
-                {isOwner ? (
-                  <Link
-                    href="/profile/edit"
-                    className="inline-flex h-11 items-center justify-center rounded-full border border-zinc-300 px-5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
-                  >
-                    Edit profile
-                  </Link>
-                ) : (
-                  <>
-                    <Link
-                      href={`/messages/new?creatorUsername=${creator.username}`}
-                      className="inline-flex h-11 items-center justify-center rounded-full border border-zinc-300 px-5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
-                    >
-                      Send message
-                    </Link>
-
-                    <SubscribeButton creatorId={creator.id} />
-                  </>
-                )}
-              </div>
+              )}
             </div>
 
-            <div className="mt-5">
-              <p className="text-sm leading-7 text-zinc-600">
-                {creator.bio ?? "No bio yet."}
-              </p>
-            </div>
+            <div className="pb-1">
+              <h1 className="text-xl font-semibold text-white">
+                {creator.displayName ?? creator.username}
+              </h1>
 
-            <div className="mt-6 grid grid-cols-3 gap-3">
-              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4">
-                <p className="text-xs font-medium uppercase tracking-[0.18em] text-zinc-500">
-                  Subscribers
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-zinc-900">
-                  {formatCount(summary?.subscriberCount)}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4">
-                <p className="text-xs font-medium uppercase tracking-[0.18em] text-zinc-500">
-                  Posts
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-zinc-900">
-                  {formatCount(posts.length)}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4">
-                <p className="text-xs font-medium uppercase tracking-[0.18em] text-zinc-500">
-                  Revenue
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-zinc-900">
-                  {formatPrice((summary?.monthlyRevenue ?? 0) * 100, "USD")}
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#C2185B]">
-                Posts
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold text-zinc-900">
-                Creator posts
-              </h2>
+              <p className="text-sm text-zinc-400">@{creator.username}</p>
             </div>
           </div>
 
+          <div className="hidden flex-col items-end gap-2 md:flex">
+            {isOwner ? (
+              <Link
+                href="/profile/edit"
+                className="rounded-full bg-zinc-800 px-4 py-2 text-sm text-white hover:bg-zinc-700"
+              >
+                Edit
+              </Link>
+            ) : (
+              <>
+                <p className="text-sm font-medium text-white">
+                  {formatPrice(creator.subscriptionPriceCents)}
+                  <span className="ml-1 text-zinc-400">/ month</span>
+                </p>
+
+                <SubscribeButton
+                  creatorId={creator.id}
+                  creatorUserId={creator.userId}
+                  currentUserId={userId}
+                />
+              </>
+            )}
+          </div>
+        </div>
+
+        <p className="mt-4 text-sm text-zinc-400">
+          {creator.bio ?? "No bio yet."}
+        </p>
+
+        {!isOwner ? (
+          <p className="mt-2 text-sm text-zinc-500">
+            Subscribe to unlock exclusive content
+          </p>
+        ) : null}
+
+        <div className="mt-4 flex items-center gap-4 text-xs text-zinc-500">
+          <span>{formatCount(summary?.subscriberCount)} subscribers</span>
+          <span>{formatCount(posts.length)} posts</span>
+        </div>
+
+        <div className="mt-6 space-y-4">
           {isOwner ? <CreatePostComposer creatorId={creator.id} /> : null}
 
           {posts.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-zinc-200 bg-zinc-50 p-10 text-center">
-              <p className="text-lg font-semibold text-zinc-900">No posts yet</p>
-              <p className="mt-2 text-sm text-zinc-500">
-                This creator has not published any posts yet.
+            <div className="text-center text-sm text-zinc-500">No posts yet</div>
+          ) : (
+            posts.map((post) => (
+              <PostCard
+                key={post.id}
+                postId={post.id}
+                text={post.content ?? ""}
+                createdAt={new Date(post.created_at).toLocaleString()}
+                mediaThumbnailUrls={post.mediaThumbnailUrls ?? []}
+                isLocked={post.isLocked}
+                lockReason={post.lockReason}
+                creatorId={creator.id}
+                creatorUserId={creator.userId}
+                currentUserId={userId}
+                creator={{
+                  username: creator.username,
+                  displayName: creator.displayName ?? creator.username,
+                  avatarUrl: creator.avatarUrl ?? null,
+                }}
+              />
+            ))
+          )}
+        </div>
+      </div>
+
+      {!isOwner ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800 bg-zinc-950/95 px-4 py-3 backdrop-blur md:hidden">
+          <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-white">
+                {formatPrice(creator.subscriptionPriceCents)}
+                <span className="ml-1 text-zinc-400">/ month</span>
+              </p>
+              <p className="truncate text-xs text-zinc-500">
+                Unlock subscriber-only posts
               </p>
             </div>
-          ) : (
-            <div className="grid gap-6">
-              {posts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  postId={post.id}
-                  text={post.content ?? ""}
-                  createdAt={new Date(post.created_at).toLocaleString()}
-                  mediaThumbnailUrls={post.mediaThumbnailUrls ?? []}
-                  isLocked={post.isLocked}
-                />
-              ))}
+
+            <div className="shrink-0">
+              <SubscribeButton
+                creatorId={creator.id}
+                creatorUserId={creator.userId}
+                currentUserId={userId}
+              />
             </div>
-          )}
-        </section>
-      </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   )
 }

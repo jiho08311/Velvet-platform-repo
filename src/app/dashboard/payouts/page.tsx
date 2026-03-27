@@ -12,11 +12,11 @@ import { PayoutList } from "@/modules/payout/ui/PayoutHistoryList"
 
 import { Card } from "@/shared/ui/Card"
 
-function formatPrice(amountCents: number, currency = "KRW") {
+function formatPrice(amount: number, currency = "KRW") {
   return new Intl.NumberFormat("ko-KR", {
     style: "currency",
     currency,
-  }).format(amountCents / 100)
+  }).format(amount)
 }
 
 async function requestPayoutAction(formData: FormData) {

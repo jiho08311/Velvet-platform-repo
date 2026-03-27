@@ -14,55 +14,63 @@ export function AppHeader({
   action,
 }: AppHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-6">
-        <div className="min-w-0">
-          <Link href="/feed" className="flex items-center gap-2">
+    <header className="sticky top-0 z-40 border-b border-zinc-900/80 bg-zinc-950/90 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 px-4 py-3 md:px-6">
+        <div className="flex min-w-0 items-center gap-3">
+          <Link href="/feed" className="flex items-center gap-3">
             <Image
               src="/logo-mark.png"
               alt="Velvet logo"
-              width={28}
-              height={28}
-              className="rounded-md"
+              width={36}
+              height={24}
+              className="rounded-xl"
             />
-            <span className="text-base font-semibold text-zinc-900">
-              {title}
-            </span>
-          </Link>
+            <div className="min-w-0">
+              <span className="block truncate text-sm font-semibold tracking-tight text-white md:text-base">
+                {title}
+              </span>
 
-          {description ? (
-            <p className="mt-1 truncate text-xs text-zinc-500">
-              {description}
-            </p>
-          ) : null}
+              {description ? (
+                <p className="hidden truncate text-xs text-zinc-500 md:block">
+                  {description}
+                </p>
+              ) : null}
+            </div>
+          </Link>
         </div>
 
         <div className="flex items-center gap-2">
+          <nav className="hidden items-center gap-1 md:flex">
+            <Link
+              href="/feed"
+              className="rounded-full px-3 py-2 text-sm font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
+            >
+              Feed
+            </Link>
+            <Link
+              href="/search"
+              className="rounded-full px-3 py-2 text-sm font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
+            >
+              Search
+            </Link>
+            <Link
+              href="/messages"
+              className="rounded-full px-3 py-2 text-sm font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
+            >
+              Messages
+            </Link>
+          </nav>
+
           <Link
-            href="/feed"
-            className="hidden rounded-md border border-zinc-200 px-3 py-1.5 text-sm text-zinc-700 transition-colors hover:bg-zinc-50 sm:inline-flex"
+            href="/post/new"
+            className="inline-flex items-center rounded-full bg-[#C2185B] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#D81B60] active:bg-[#AD1457]"
           >
-            Feed
+            New post
           </Link>
-          <Link
-            href="/dashboard"
-            className="hidden rounded-md border border-zinc-200 px-3 py-1.5 text-sm text-zinc-700 transition-colors hover:bg-zinc-50 sm:inline-flex"
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/search"
-            className="hidden rounded-md border border-zinc-200 px-3 py-1.5 text-sm text-zinc-700 transition-colors hover:bg-zinc-50 sm:inline-flex"
-          >
-            Search
-          </Link>
-          <Link
-            href="/notifications"
-            className="hidden rounded-md border border-zinc-200 px-3 py-1.5 text-sm text-zinc-700 transition-colors hover:bg-zinc-50 sm:inline-flex"
-          >
-            Notifications
-          </Link>
-          {action ?? <SignOutButton />}
+
+          <div className="shrink-0">
+            {action ?? <SignOutButton />}
+          </div>
         </div>
       </div>
     </header>

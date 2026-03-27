@@ -1,4 +1,3 @@
-// src/shared/ui/Avatar.tsx
 type AvatarProps = {
   src?: string | null
   alt: string
@@ -9,8 +8,8 @@ type AvatarProps = {
 const sizeClassNameMap = {
   sm: "h-8 w-8 text-xs",
   md: "h-10 w-10 text-sm",
-  lg: "h-14 w-14 text-lg",
-  xl: "h-20 w-20 text-2xl",
+  lg: "h-14 w-14 text-base",
+  xl: "h-20 w-20 text-xl",
 }
 
 export function Avatar({
@@ -27,7 +26,7 @@ export function Avatar({
       <img
         src={src}
         alt={alt}
-        className={`${sizeClassName} rounded-full object-cover`}
+        className={`${sizeClassName} rounded-full border border-zinc-800 object-cover`}
       />
     )
   }
@@ -35,7 +34,7 @@ export function Avatar({
   return (
     <div
       aria-label={alt}
-      className={`${sizeClassName} flex items-center justify-center rounded-full bg-zinc-800 font-semibold text-white`}
+      className={`${sizeClassName} flex items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 font-semibold text-white`}
     >
       {label}
     </div>

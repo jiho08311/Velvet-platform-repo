@@ -135,7 +135,7 @@ export default async function ProfilePage() {
       <main className="min-h-screen bg-zinc-950 px-6 py-10 text-zinc-100">
         <div className="mx-auto max-w-4xl">
           <div className="rounded-3xl border border-dashed border-zinc-800 bg-zinc-900/40 p-12 text-center">
-            <h1 className="text-2xl text-white">Profile not available</h1>
+            <h1 className="text-2xl">Profile not available</h1>
           </div>
         </div>
       </main>
@@ -150,7 +150,7 @@ export default async function ProfilePage() {
         <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-6">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-2xl text-white">{profile.displayName}</h2>
+              <h2 className="text-2xl">{profile.displayName}</h2>
               <p className="text-sm text-zinc-400">@{profile.username}</p>
             </div>
 
@@ -186,7 +186,7 @@ export default async function ProfilePage() {
       </div>
 
       <div>
-        <h2 className="text-2xl text-white">{profile.displayName}</h2>
+        <h2 className="text-2xl">{profile.displayName}</h2>
         <p className="text-sm text-zinc-400">@{profile.username}</p>
       </div>
     </div>

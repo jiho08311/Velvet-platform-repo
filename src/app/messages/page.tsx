@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation"
+import { Card } from "@/shared/ui/Card"
 import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { getSession } from "@/modules/auth/server/get-session"
 import { listConversations } from "@/modules/message/server/list-conversations"
@@ -10,12 +11,12 @@ export default async function MessagesPage() {
   if (!session) {
     return (
       <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6">
-        <section className="rounded-2xl border border-white/10 bg-neutral-950 p-6 text-white">
-          <h1 className="text-2xl font-semibold">Messages</h1>
-          <p className="mt-2 text-sm text-white/60">
+        <Card className="p-6">
+          <h1 className="text-2xl font-semibold text-white">Messages</h1>
+          <p className="mt-2 text-sm text-zinc-400">
             View your conversations and continue chatting with creators and fans.
           </p>
-        </section>
+        </Card>
 
         <ConversationList
           conversations={[]}
@@ -37,12 +38,12 @@ export default async function MessagesPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6">
-      <section className="rounded-2xl border border-white/10 bg-neutral-950 p-6 text-white">
-        <h1 className="text-2xl font-semibold">Messages</h1>
-        <p className="mt-2 text-sm text-white/60">
+      <Card className="p-6">
+        <h1 className="text-2xl font-semibold text-white">Messages</h1>
+        <p className="mt-2 text-sm text-zinc-400">
           View your conversations and continue chatting with creators and fans.
         </p>
-      </section>
+      </Card>
 
       <ConversationList
         conversations={conversations.map((conversation) => ({

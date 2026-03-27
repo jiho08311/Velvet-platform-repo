@@ -76,7 +76,7 @@ export async function getCreatorById(
     username: profile?.username ?? creator.username ?? "",
     displayName: profile?.display_name ?? "",
     subscriptionPriceCents: creator.subscription_price_cents ?? 0,
-    subscriptionCurrency: creator.subscription_currency ?? "USD",
+    subscriptionCurrency: creator.subscription_currency ?? "KRW",
     status: creator.status,
     createdAt: creator.created_at,
   };

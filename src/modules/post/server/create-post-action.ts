@@ -20,9 +20,10 @@ export async function createPostAction({
   files = [],
 }: CreatePostActionInput): Promise<void> {
   const content = text.trim()
+  const hasMedia = files.length > 0
 
-  if (!content) {
-    throw new Error("Post text is required")
+  if (!content && !hasMedia) {
+    throw new Error("Post must have text or media")
   }
 
   if (visibility === "paid" && priceCents <= 0) {
@@ -31,7 +32,7 @@ export async function createPostAction({
 
   await createPostWithMediaWorkflow({
     creatorId,
-    content,
+    content: content || null,
     visibility,
     priceCents: visibility === "paid" ? priceCents : 0,
     status: "published",

@@ -34,7 +34,7 @@ export default async function CreatorPayoutPage() {
   const summary = summaryResult as PayoutSummaryView
   const payouts = payoutsResult as PayoutView[]
 
-  const currency = summary?.currency?.toUpperCase() ?? "USD"
+  const currency = summary?.currency?.toUpperCase() ?? "KRW"
   const availableAmountCents = summary?.availableAmountCents ?? 0
   const pendingAmountCents = summary?.pendingAmountCents ?? 0
 
@@ -51,14 +51,14 @@ export default async function CreatorPayoutPage() {
         <div className="rounded-2xl border border-white/10 bg-neutral-950 p-5 text-white">
           <p className="text-sm text-white/50">Available balance</p>
           <p className="mt-2 text-2xl font-semibold">
-            {availableAmountCents / 100} {currency}
+        {availableAmountCents} {currency}
           </p>
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-neutral-950 p-5 text-white">
           <p className="text-sm text-white/50">Pending payout</p>
           <p className="mt-2 text-2xl font-semibold">
-            {pendingAmountCents / 100} {currency}
+          {pendingAmountCents} {currency}
           </p>
         </div>
 
@@ -105,8 +105,7 @@ export default async function CreatorPayoutPage() {
                   className="grid grid-cols-[1fr_140px_180px] gap-4 px-5 py-4 text-white"
                 >
                   <div className="text-sm font-medium">
-                    {(payout.amountCents ?? 0) / 100}{" "}
-                    {(payout.currency ?? currency).toUpperCase()}
+                   ₩{(payout.amountCents ?? 0).toLocaleString()}
                   </div>
 
                   <div>

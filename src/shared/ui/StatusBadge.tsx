@@ -6,11 +6,11 @@ type StatusBadgeProps = {
 }
 
 const toneClassNameMap: Record<Tone, string> = {
-  default: "border-zinc-200 bg-zinc-100 text-zinc-700",
-  success: "border-green-200 bg-green-50 text-green-700",
-  warning: "border-yellow-200 bg-yellow-50 text-yellow-700",
-  danger: "border-red-200 bg-red-50 text-red-700",
-  info: "border-[#C2185B]/20 bg-[#C2185B]/10 text-[#C2185B]",
+  default: "border-zinc-800 bg-zinc-900 text-zinc-300",
+  success: "border-green-900/60 bg-green-950/60 text-green-300",
+  warning: "border-yellow-900/60 bg-yellow-950/60 text-yellow-300",
+  danger: "border-red-900/60 bg-red-950/60 text-red-300",
+  info: "border-[#C2185B]/30 bg-[#C2185B]/10 text-[#F472B6]",
 }
 
 function getToneFromLabel(label: string): Tone {
@@ -30,7 +30,7 @@ export function StatusBadge({ label, tone }: StatusBadgeProps) {
 
   return (
     <span
-      className={`inline-flex items-center rounded-md border px-2 py-1 text-xs font-medium capitalize tracking-wide ${toneClassNameMap[resolvedTone]}`}
+      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium capitalize tracking-wide ${toneClassNameMap[resolvedTone]}`}
     >
       {label}
     </span>

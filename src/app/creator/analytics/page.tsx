@@ -13,7 +13,7 @@ type AnalyticsSummaryView = {
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "KRW",
     maximumFractionDigits: 0,
   }).format(value)
 }
