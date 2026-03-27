@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation"
 
 import { getSession } from "@/modules/auth/server/get-session"
-import { listMedia } from "@/modules/media/server/list-media"
 
 type MediaLibraryItem = {
   id: string
