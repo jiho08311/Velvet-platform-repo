@@ -8,6 +8,14 @@ type CreatorPostListItem = {
   previewText?: string
   mediaThumbnailUrls?: string[]
   previewThumbnailUrl?: string | null
+  creatorId?: string
+  creatorUserId?: string
+  currentUserId?: string
+  creator?: {
+    username: string
+    displayName: string | null
+    avatarUrl: string | null
+  }
 }
 
 type CreatorPostListProps = {
@@ -41,6 +49,16 @@ export function CreatorPostList({
           createdAt={post.createdAt}
           mediaThumbnailUrls={post.mediaThumbnailUrls}
           isLocked={post.isLocked && !isSubscribed}
+          creatorId={post.creatorId ?? ""}
+          creatorUserId={post.creatorUserId}
+          currentUserId={post.currentUserId}
+          creator={
+            post.creator ?? {
+              username: "creator",
+              displayName: null,
+              avatarUrl: null,
+            }
+          }
         />
       ))}
     </section>
