@@ -16,6 +16,7 @@ type PostCardProps = {
   postId?: string
   text: string
   createdAt: string
+   mediaThumbnailUrls?: string[]
   media?: MediaItem[]
   isLocked?: boolean
   lockReason?: "none" | "subscription" | "purchase"
