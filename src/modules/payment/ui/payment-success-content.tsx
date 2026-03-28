@@ -11,7 +11,18 @@ export function PaymentSuccessContent() {
   const router = useRouter()
 
   useEffect(() => {
-    const paymentId = searchParams.get("paymentId")
+    let paymentId = searchParams.get("paymentId")
+
+    const paymentKey = searchParams.get("paymentKey")
+    const orderId = searchParams.get("orderId")
+    const amount = searchParams.get("amount")
+
+    const postId = searchParams.get("postId")
+    const messageId = searchParams.get("messageId")
+
+    if (!paymentId && orderId) {
+      paymentId = orderId
+    }
 
     if (!paymentId) {
       router.replace("/payment/fail?reason=invalid_request")
@@ -27,6 +38,9 @@ export function PaymentSuccessContent() {
           },
           body: JSON.stringify({
             paymentId,
+            paymentKey,
+            orderId,
+            amount,
           }),
         })
 
@@ -38,6 +52,17 @@ export function PaymentSuccessContent() {
 
         if (!data.ok) {
           throw new Error("CONFIRM_FAILED")
+        }
+
+        if (postId) {
+          router.replace(`/post/${postId}`)
+          return
+        }
+
+        if (messageId) {
+          router.replace("/messages")
+          router.refresh() // 🔥 핵심 추가
+          return
         }
       } catch (error) {
         console.error("confirm failed:", error)

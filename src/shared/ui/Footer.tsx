@@ -18,6 +18,17 @@ export default function Footer() {
           </a>
         </p>
 
+        {/* 🔥 전화번호 추가 */}
+        <p>
+          Phone:{" "}
+          <a
+            href="tel:+821088546156"
+            className="text-zinc-300 transition hover:text-white"
+          >
+            +82 10-8854-6156
+          </a>
+        </p>
+
         <div className="flex flex-wrap gap-4 text-xs text-zinc-500">
           <a href="/terms" className="transition hover:text-white">
             이용약관

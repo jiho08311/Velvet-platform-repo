@@ -18,15 +18,32 @@ type PostRow = {
   created_at: string
 }
 
+type MediaType = "image" | "video" | "audio" | "file"
+
 type MediaRow = {
   post_id: string
   storage_path: string
-  type: "image" | "video" | "audio" | "file"
+  type: MediaType | null
+  mime_type: string | null
   status: "processing" | "ready" | "failed"
   sort_order: number
 }
 
 type PostLockReason = "none" | "subscription" | "purchase"
+
+function resolveMediaType(row: MediaRow): MediaType {
+  if (row.type === "image" || row.type === "video" || row.type === "audio" || row.type === "file") {
+    return row.type
+  }
+
+  if (typeof row.mime_type === "string") {
+    if (row.mime_type.startsWith("image/")) return "image"
+    if (row.mime_type.startsWith("video/")) return "video"
+    if (row.mime_type.startsWith("audio/")) return "audio"
+  }
+
+  return "file"
+}
 
 export async function getCreatorFeed({
   creatorId,
@@ -97,13 +114,13 @@ export async function getCreatorFeed({
   if (postIds.length === 0) {
     return resolvedPosts.map((post) => ({
       ...post,
-      mediaThumbnailUrls: [],
+      media: [],
     }))
   }
 
   const { data: mediaRows, error: mediaError } = await supabaseAdmin
     .from("media")
-    .select("post_id, storage_path, type, status, sort_order")
+    .select("post_id, storage_path, type, mime_type, status, sort_order")
     .in("post_id", postIds)
     .eq("status", "ready")
     .order("sort_order", { ascending: true })
@@ -123,19 +140,26 @@ export async function getCreatorFeed({
 
   return Promise.all(
     resolvedPosts.map(async (post) => {
-      const media = post.isLocked ? [] : (mediaMap.get(post.id) ?? []).slice(0, 3)
+      const selectedMediaRows = post.isLocked
+        ? []
+        : (mediaMap.get(post.id) ?? []).slice(0, 3)
 
-      const mediaThumbnailUrls = await Promise.all(
-        media.map((item) =>
-          createMediaSignedUrl({
+      const media = await Promise.all(
+        selectedMediaRows.map(async (item) => {
+          const url = await createMediaSignedUrl({
             storagePath: item.storage_path,
           })
-        )
+
+          return {
+            url,
+            type: resolveMediaType(item),
+          }
+        })
       )
 
       return {
         ...post,
-        mediaThumbnailUrls,
+        media,
       }
     })
   )

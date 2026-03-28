@@ -7,11 +7,16 @@ import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 import { LockedPostCard } from "./LockedPostCard"
 import { PostPurchaseButton } from "./PostPurchaseButton"
 
+type MediaItem = {
+  url: string
+  type?: "image" | "video" | "audio" | "file"
+}
+
 type PostCardProps = {
   postId?: string
   text: string
   createdAt: string
-  mediaThumbnailUrls?: string[]
+  media?: MediaItem[]
   isLocked?: boolean
   lockReason?: "none" | "subscription" | "purchase"
   priceCents?: number
@@ -29,7 +34,7 @@ export function PostCard({
   postId,
   text,
   createdAt,
-  mediaThumbnailUrls,
+  media = [],
   isLocked = false,
   lockReason = "none",
   priceCents,
@@ -40,7 +45,6 @@ export function PostCard({
 }: PostCardProps) {
   const router = useRouter()
 
-  const thumbnails = mediaThumbnailUrls ?? []
   const creatorName = creator.displayName ?? creator.username
   const creatorInitial = creatorName.slice(0, 1).toUpperCase()
 
@@ -49,56 +53,76 @@ export function PostCard({
     router.push(`/post/${postId}`)
   }
 
-  function renderMedia() {
-    if (thumbnails.length === 0) {
-      return null
+  function renderSingleMedia(item: MediaItem, alt: string) {
+    if (item.type === "video") {
+      return (
+        <video
+          src={item.url}
+          controls
+          playsInline
+          className="h-full w-full object-cover"
+        />
+      )
     }
 
-    if (thumbnails.length === 1) {
+    if (item.type === "audio") {
       return (
-        <div className="overflow-hidden rounded-[28px] bg-zinc-950">
-          <div className="aspect-[4/5] w-full overflow-hidden">
-            <img
-              src={thumbnails[0]}
-              alt="Post media"
-              className="h-full w-full object-cover"
-            />
-          </div>
+        <div className="flex h-full w-full items-center justify-center bg-zinc-900 p-4">
+          <audio controls className="w-full">
+            <source src={item.url} />
+          </audio>
         </div>
       )
     }
 
-    if (thumbnails.length === 2) {
+    if (item.type === "file") {
       return (
-        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[28px] bg-zinc-950">
-          {thumbnails.slice(0, 2).map((thumbnailUrl, index) => (
-            <div
-              key={`${thumbnailUrl}-${index}`}
-              className="aspect-square overflow-hidden bg-zinc-900"
-            >
-              <img
-                src={thumbnailUrl}
-                alt={`Post media ${index + 1}`}
-                className="h-full w-full object-cover"
-              />
-            </div>
-          ))}
+        <div className="flex h-full w-full items-center justify-center bg-zinc-900 p-4">
+          <a
+            href={item.url}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(event) => event.stopPropagation()}
+            className="rounded-full border border-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-800"
+          >
+            Open file
+          </a>
         </div>
       )
     }
 
     return (
-      <div className="grid grid-cols-3 gap-px overflow-hidden rounded-[28px] bg-zinc-950">
-        {thumbnails.slice(0, 3).map((thumbnailUrl, index) => (
+      <img
+        src={item.url}
+        alt={alt}
+        className="h-full w-full object-cover"
+      />
+    )
+  }
+
+  function renderMedia() {
+    if (media.length === 0) return null
+
+    if (media.length === 1) {
+      const item = media[0]
+
+      return (
+        <div className="overflow-hidden rounded-[28px] bg-zinc-950">
+          <div className="aspect-[4/5] w-full overflow-hidden">
+            {renderSingleMedia(item, "Post media")}
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[28px] bg-zinc-950">
+        {media.slice(0, 2).map((item, index) => (
           <div
-            key={`${thumbnailUrl}-${index}`}
+            key={`${item.url}-${index}`}
             className="aspect-square overflow-hidden bg-zinc-900"
           >
-            <img
-              src={thumbnailUrl}
-              alt={`Post media ${index + 1}`}
-              className="h-full w-full object-cover"
-            />
+            {renderSingleMedia(item, `Post media ${index + 1}`)}
           </div>
         ))}
       </div>
@@ -133,9 +157,7 @@ export function PostCard({
     <article
       onClick={handleCardClick}
       className={`overflow-hidden rounded-[32px] border border-zinc-800 bg-zinc-900/70 p-4 transition sm:p-5 ${
-        isLocked
-          ? "cursor-default"
-          : "cursor-pointer hover:border-zinc-700"
+        isLocked ? "cursor-default" : "cursor-pointer hover:border-zinc-700"
       }`}
     >
       <div className="flex flex-col gap-4">
@@ -168,7 +190,7 @@ export function PostCard({
               <LockedPostCard
                 previewText={text}
                 createdAt={createdAt}
-                previewThumbnailUrl={thumbnails[0] ?? null}
+                previewThumbnailUrl={media[0]?.url ?? null}
                 ctaLabel={
                   lockReason === "subscription" ? "Subscribe now" : "Unlock post"
                 }

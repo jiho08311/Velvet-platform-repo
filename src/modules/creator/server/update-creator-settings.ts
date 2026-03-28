@@ -1,4 +1,5 @@
 import { createClient } from "@/infrastructure/supabase/server"
+import { assertValidSubscriptionPrice } from "@/modules/subscription/lib/subscription-price"
 
 type UpdateCreatorSettingsInput = {
   creatorId: string
@@ -10,10 +11,26 @@ export async function updateCreatorSettings(
 ) {
   const supabase = await createClient()
 
+  console.log("DEBUG input.creatorId:", input.creatorId)
+  console.log(
+    "DEBUG input.subscriptionPrice:",
+    input.subscriptionPrice
+  )
+
+  const { data: debugCreators } = await supabase
+    .from("creators")
+    .select("id, user_id, subscription_price_cents")
+    .limit(5)
+
+  console.log("DEBUG creators table:", debugCreators)
+
+  // ✅ 여기 핵심
+  const price = assertValidSubscriptionPrice(input.subscriptionPrice)
+
   const { data, error } = await supabase
     .from("creators")
     .update({
-      subscription_price_cents: input.subscriptionPrice,
+      subscription_price_cents: price,
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", input.creatorId)
@@ -23,6 +40,8 @@ export async function updateCreatorSettings(
   if (error) {
     throw new Error("Failed to update creator settings")
   }
+
+  console.log("DEBUG updated creator row:", data)
 
   return data
 }

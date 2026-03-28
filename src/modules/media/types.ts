@@ -4,7 +4,9 @@ export type MediaStatus = "processing" | "ready" | "failed"
 
 export type Media = {
   id: string
-  postId: string
+  postId: string | null
+  messageId: string | null
+  ownerUserId: string | null
   type: MediaType
   storagePath: string
   mimeType: string | null

@@ -32,7 +32,7 @@ export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
     .select("id, post_id, type, storage_path, mime_type, sort_order, status")
     .eq("post_id", resolvedPostId)
     .eq("status", "ready")
-    .eq("type", "image")
+    // ❌ type 필터 제거 (이게 핵심)
     .order("sort_order", { ascending: true })
     .returns<MediaRow[]>()
 

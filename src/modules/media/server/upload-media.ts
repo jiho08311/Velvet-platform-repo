@@ -1,8 +1,9 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 type UploadMediaInput = {
-  creatorId: string
+  uploaderUserId: string
   file: File
+  purpose?: "post" | "message"
 }
 
 const MEDIA_BUCKET =
@@ -13,23 +14,32 @@ function getFileExtension(fileName: string): string {
   return segments.length > 1 ? segments[segments.length - 1].toLowerCase() : ""
 }
 
-function buildStoragePath(creatorId: string, file: File): string {
+function buildStoragePath(
+  uploaderUserId: string,
+  file: File,
+  purpose: "post" | "message"
+): string {
   const now = Date.now()
   const random = Math.random().toString(36).slice(2, 10)
   const extension = getFileExtension(file.name)
   const safeExtension = extension ? `.${extension}` : ""
 
-  return `creator/${creatorId}/posts/${now}-${random}${safeExtension}`
+  if (purpose === "message") {
+    return `user/${uploaderUserId}/messages/${now}-${random}${safeExtension}`
+  }
+
+  return `creator/${uploaderUserId}/posts/${now}-${random}${safeExtension}`
 }
 
 export async function uploadMedia({
-  creatorId,
+  uploaderUserId,
   file,
+  purpose = "post",
 }: UploadMediaInput): Promise<string> {
-  const resolvedCreatorId = creatorId.trim()
+  const resolvedUploaderUserId = uploaderUserId.trim()
 
-  if (!resolvedCreatorId) {
-    throw new Error("creatorId is required")
+  if (!resolvedUploaderUserId) {
+    throw new Error("uploaderUserId is required")
   }
 
   if (!(file instanceof File)) {
@@ -40,7 +50,7 @@ export async function uploadMedia({
     throw new Error("file is empty")
   }
 
-  const storagePath = buildStoragePath(resolvedCreatorId, file)
+  const storagePath = buildStoragePath(resolvedUploaderUserId, file, purpose)
 
   const { error } = await supabaseAdmin.storage
     .from(MEDIA_BUCKET)

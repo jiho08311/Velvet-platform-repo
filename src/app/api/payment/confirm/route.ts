@@ -9,12 +9,27 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json()
 
-    const paymentId = body.paymentId as string | undefined
+    // 🔥 기존 유지
+    let paymentId = body.paymentId as string | undefined
 
-    if (!paymentId) {
-      return NextResponse.json({ error: "Missing paymentId" }, { status: 400 })
+    // 🔥 Toss 대응 추가 (기존 기능 절대 안 건드림)
+    const paymentKey = body.paymentKey as string | undefined
+    const orderId = body.orderId as string | undefined
+    const amount = body.amount as number | undefined
+
+    // 🔥 Toss일 경우 orderId를 paymentId로 사용
+    if (!paymentId && orderId) {
+      paymentId = orderId
     }
 
+    if (!paymentId) {
+      return NextResponse.json(
+        { error: "Missing paymentId" },
+        { status: 400 }
+      )
+    }
+
+    // 🔥 기존 로직 그대로 유지
     const result = await confirmPayment({
       paymentId,
     })

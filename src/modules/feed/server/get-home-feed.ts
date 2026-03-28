@@ -3,6 +3,8 @@ import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed
 import { canViewPost } from "@/modules/post/server/can-view-post"
 import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 
+type MediaType = "image" | "video" | "audio" | "file"
+
 export type HomeFeedItem = {
   id: string
   creatorId: string
@@ -12,7 +14,11 @@ export type HomeFeedItem = {
   createdAt: string
   isLocked: boolean
   lockReason?: "none" | "subscription" | "purchase"
-  mediaThumbnailUrls?: string[]
+  priceCents?: number
+  media?: Array<{
+    url: string
+    type: MediaType
+  }>
   creator: {
     username: string
     displayName: string | null
@@ -61,9 +67,29 @@ type PostRow = {
 type MediaRow = {
   post_id: string
   storage_path: string
-  type: "image" | "video" | "audio" | "file"
+  type: MediaType | null
+  mime_type: string | null
   status: "processing" | "ready" | "failed"
   sort_order: number
+}
+
+function resolveMediaType(row: MediaRow): MediaType {
+  if (
+    row.type === "image" ||
+    row.type === "video" ||
+    row.type === "audio" ||
+    row.type === "file"
+  ) {
+    return row.type
+  }
+
+  if (typeof row.mime_type === "string") {
+    if (row.mime_type.startsWith("image/")) return "image"
+    if (row.mime_type.startsWith("video/")) return "video"
+    if (row.mime_type.startsWith("audio/")) return "audio"
+  }
+
+  return "file"
 }
 
 export async function getHomeFeed(
@@ -166,7 +192,7 @@ export async function getHomeFeed(
 
   const { data: mediaRows, error: mediaError } = await supabaseAdmin
     .from("media")
-    .select("post_id, storage_path, type, status, sort_order")
+    .select("post_id, storage_path, type, mime_type, status, sort_order")
     .in("post_id", postIds)
     .eq("status", "ready")
     .order("sort_order", { ascending: true })
@@ -215,14 +241,21 @@ export async function getHomeFeed(
               ? "subscription"
               : "none"
 
-      const media = hasAccess ? (mediaMap.get(post.id) ?? []).slice(0, 3) : []
+      const selectedMediaRows = hasAccess
+        ? (mediaMap.get(post.id) ?? []).slice(0, 3)
+        : []
 
-      const mediaThumbnailUrls = await Promise.all(
-        media.map((item) =>
-          createMediaSignedUrl({
+      const media = await Promise.all(
+        selectedMediaRows.map(async (item) => {
+          const url = await createMediaSignedUrl({
             storagePath: item.storage_path,
           })
-        )
+
+          return {
+            url,
+            type: resolveMediaType(item),
+          }
+        })
       )
 
       return {
@@ -234,7 +267,8 @@ export async function getHomeFeed(
         createdAt: post.published_at ?? post.created_at,
         isLocked: !hasAccess,
         lockReason,
-        mediaThumbnailUrls,
+        priceCents: post.price_cents ?? undefined,
+        media,
         creator: {
           username: creator?.username ?? "",
           displayName: creator?.display_name ?? null,

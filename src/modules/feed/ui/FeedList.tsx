@@ -9,9 +9,13 @@ type FeedListPost = {
   currentUserId?: string
   text: string
   createdAt: string
-  mediaThumbnailUrls?: string[]
+  media?: Array<{
+    url: string
+    type?: "image" | "video" | "audio" | "file"
+  }>
   isLocked?: boolean
   lockReason?: "none" | "subscription" | "purchase"
+  priceCents?: number
   creator: {
     username: string
     displayName: string | null
@@ -45,9 +49,10 @@ export function FeedList({
           postId={post.postId}
           text={post.text}
           createdAt={post.createdAt}
-          mediaThumbnailUrls={post.mediaThumbnailUrls}
+          media={post.media ?? []} // 🔥 핵심 수정
           isLocked={post.isLocked}
           lockReason={post.lockReason}
+          priceCents={post.priceCents}
           creatorId={post.creatorId}
           creatorUserId={post.creatorUserId}
           currentUserId={post.currentUserId}

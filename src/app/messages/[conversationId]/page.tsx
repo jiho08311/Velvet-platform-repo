@@ -6,6 +6,7 @@ import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user
 import { getConversationById } from "@/modules/message/server/get-conversation-by-id"
 import { listMessages } from "@/modules/message/server/list-messages"
 import { MessagePurchaseButton } from "@/modules/message/ui/MessagePurchaseButton"
+import { MessageComposerSection } from "@/modules/message/ui/MessageComposerSection"
 
 type ConversationDetailPageProps = {
   params: Promise<{
@@ -30,6 +31,7 @@ export default async function ConversationDetailPage({
 
   const messages = await listMessages({
     conversationId,
+    userId: user.id, // 🔥 핵심 수정
   })
 
   const participant = conversation.participant
@@ -110,7 +112,7 @@ export default async function ConversationDetailPage({
 
                         {message.price ? (
                           <p className="text-sm font-medium">
-                            ${message.price.toFixed(2)}
+                            ₩{message.price.toLocaleString()}
                           </p>
                         ) : null}
 
@@ -119,9 +121,37 @@ export default async function ConversationDetailPage({
                         ) : null}
                       </div>
                     ) : (
-                      <p className="whitespace-pre-wrap text-sm leading-6">
-                        {message.content}
-                      </p>
+                      <div className="space-y-3">
+                        {message.content ? (
+                          <p className="whitespace-pre-wrap text-sm leading-6">
+                            {message.content}
+                          </p>
+                        ) : null}
+
+                        {message.media.length > 0 ? (
+                          <div className="space-y-3">
+                            {message.media.map((media) =>
+                              media.type === "image" ? (
+                                <img
+                                  key={media.id}
+                                  src={media.url}
+                                  alt=""
+                                  className="w-full rounded-xl object-cover"
+                                />
+                              ) : (
+                                <video
+                                  key={media.id}
+                                  src={media.url}
+                                  controls
+                                  playsInline
+                                  preload="metadata"
+                                  className="w-full rounded-xl"
+                                />
+                              )
+                            )}
+                          </div>
+                        ) : null}
+                      </div>
                     )}
 
                     <p
@@ -138,64 +168,9 @@ export default async function ConversationDetailPage({
           </div>
         )}
 
-        <form
-          action={`/api/messages/${conversation.id}/send`}
-          method="post"
-          className="mt-4 border-t border-white/10 pt-4"
-        >
-          <input type="hidden" name="conversationId" value={conversation.id} />
-
-          {canSendPpv ? (
-            <div className="mb-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-              <div className="flex flex-wrap items-center gap-4">
-                <label className="flex items-center gap-2 text-sm text-white">
-                  <input
-                    type="checkbox"
-                    name="isPpv"
-                    value="true"
-                    className="h-4 w-4 rounded border-white/20 bg-transparent"
-                  />
-                  Send as PPV
-                </label>
-
-                <div className="flex items-center gap-2">
-                  <label htmlFor="price" className="text-sm text-white/70">
-                    Price
-                  </label>
-                  <input
-                    id="price"
-                    name="price"
-                    type="number"
-                    min="1"
-                    step="0.01"
-                    placeholder="10.00"
-                    className="h-10 w-28 rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none placeholder:text-white/30"
-                  />
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          <div className="flex items-end gap-3">
-            <textarea
-              name="content"
-              rows={3}
-              placeholder={
-                canSendPpv
-                  ? "Write a message or send a PPV message..."
-                  : "Write a message..."
-              }
-              className="min-h-[88px] flex-1 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none placeholder:text-white/30"
-            />
-
-            <button
-              type="submit"
-              className="inline-flex h-11 items-center justify-center rounded-xl bg-white px-4 text-sm font-medium text-black transition hover:bg-white/90"
-            >
-              Send
-            </button>
-          </div>
-        </form>
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <MessageComposerSection conversationId={conversation.id} />
+        </div>
       </section>
     </main>
   )

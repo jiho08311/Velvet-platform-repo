@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { loadTossPayments } from "@tosspayments/tosspayments-sdk"
 
 type PostPurchaseButtonProps = {
   postId: string
@@ -45,40 +46,59 @@ export function PostPurchaseButton({
 
       const checkoutData = await checkoutRes.json()
 
+      console.log("🔥 checkoutRes.ok:", checkoutRes.ok)
+      console.log("🔥 checkoutData:", checkoutData)
+
       if (!checkoutRes.ok) {
         throw new Error(checkoutData.error ?? "Failed to create payment")
       }
 
-      const paymentId = checkoutData.payment?.id
+      const payment = checkoutData.payment
 
-      if (!paymentId) {
-        throw new Error("Missing paymentId")
+      console.log("🔥 payment:", payment)
+
+      if (!payment) {
+        throw new Error("Missing payment data")
       }
 
-      const confirmRes = await fetch("/api/payment/confirm", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          paymentId,
-        }),
+      const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY
+
+      console.log("🔥 clientKey:", clientKey)
+
+      if (!clientKey) {
+        throw new Error("Missing NEXT_PUBLIC_TOSS_CLIENT_KEY")
+      }
+
+      const tossPayments = (await loadTossPayments(clientKey)) as any
+
+      console.log("🔥 tossPayments loaded")
+
+      // 🔥 핵심 수정 (v2 방식)
+      const paymentInstance = tossPayments.payment({
+        customerKey: payment.id,
       })
 
-      const confirmData = await confirmRes.json()
+      await paymentInstance.requestPayment({
+        method: "CARD",
+        amount: {
+          currency: "KRW",
+          value: payment.amountCents,
+        },
+        orderId: payment.id,
+        orderName: "Paid post",
+        successUrl: `${window.location.origin}/payment/success?postId=${postId}`,
+        failUrl: `${window.location.origin}/payment/fail`,
+      })
 
-      if (!confirmRes.ok) {
-        throw new Error(confirmData.error ?? "Failed to confirm payment")
-      }
+      // redirect됨 → 아래 코드 실행 안됨
 
-      router.replace(`/post/${postId}`)
-      router.refresh()
     } catch (error) {
+      console.error("❌ purchase error:", error)
+
       const message =
         error instanceof Error ? error.message : "Failed to purchase post"
 
       setErrorMessage(getPostPurchaseErrorMessage(message))
-    } finally {
       setIsLoading(false)
     }
   }

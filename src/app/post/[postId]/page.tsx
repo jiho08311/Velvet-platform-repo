@@ -20,6 +20,89 @@ function formatDate(value: string) {
   }).format(new Date(value))
 }
 
+function renderUnlockedMedia(media: {
+  id: string
+  url: string
+  type: "image" | "video" | "audio" | "file"
+}) {
+  if (media.type === "video") {
+    return (
+      <video
+        src={media.url}
+        controls
+        playsInline
+        className="w-full"
+      />
+    )
+  }
+
+  if (media.type === "audio") {
+    return (
+      <div className="flex min-h-[180px] items-center justify-center bg-zinc-900 p-6">
+        <audio controls className="w-full">
+          <source src={media.url} />
+        </audio>
+      </div>
+    )
+  }
+
+  if (media.type === "file") {
+    return (
+      <div className="flex min-h-[180px] items-center justify-center bg-zinc-900 p-6">
+        <a
+          href={media.url}
+          target="_blank"
+          rel="noreferrer"
+          className="rounded-full border border-zinc-700 px-4 py-2 text-sm text-white transition hover:bg-zinc-800"
+        >
+          Open file
+        </a>
+      </div>
+    )
+  }
+
+  return (
+    <img
+      src={media.url}
+      alt="Post media"
+      className="w-full object-cover"
+    />
+  )
+}
+
+function renderLockedMedia(media: {
+  id: string
+  url: string
+  type: "image" | "video" | "audio" | "file"
+}) {
+  if (media.type === "video") {
+    return (
+      <video
+        src={media.url}
+        muted
+        playsInline
+        className="h-full w-full object-cover opacity-40 blur-md"
+      />
+    )
+  }
+
+  if (media.type === "audio" || media.type === "file") {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-zinc-900 text-sm text-zinc-500">
+        Locked content
+      </div>
+    )
+  }
+
+  return (
+    <img
+      src={media.url}
+      alt="Locked post media"
+      className="h-full w-full object-cover opacity-40 blur-md"
+    />
+  )
+}
+
 export default async function PostDetailPage({
   params,
 }: PostDetailPageProps) {
@@ -84,11 +167,7 @@ export default async function PostDetailPage({
                       key={media.id}
                       className="relative overflow-hidden bg-zinc-900"
                     >
-                      <img
-                        src={media.url}
-                        alt="Locked post media"
-                        className="h-full w-full object-cover opacity-40 blur-md"
-                      />
+                      {renderLockedMedia(media)}
                       <div className="absolute inset-0 bg-black/40" />
                     </div>
                   ))}
@@ -129,35 +208,26 @@ export default async function PostDetailPage({
             </div>
           ) : (
             <>
-             {post.media.length > 0 ? (
-  post.media.length === 1 ? (
-    <div className="bg-zinc-950">
-      <div className="relative overflow-hidden bg-zinc-900">
-        <img
-          src={post.media[0].url}
-          alt="Post media"
-          className="w-full object-cover"
-        />
-      </div>
-    </div>
-  ) : (
-    <div className="grid grid-cols-1 gap-px bg-zinc-950 sm:grid-cols-2">
-      {post.media.map((media) => (
-        <div
-          key={media.id}
-          className="relative overflow-hidden bg-zinc-900"
-        >
-          <img
-            src={media.url}
-            alt="Post media"
-            className="h-full w-full object-cover"
-          />
-        </div>
-      ))}
-    </div>
-  )
-) : (
-                  
+              {post.media.length > 0 ? (
+                post.media.length === 1 ? (
+                  <div className="bg-zinc-950">
+                    <div className="relative overflow-hidden bg-zinc-900">
+                      {renderUnlockedMedia(post.media[0])}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-px bg-zinc-950 sm:grid-cols-2">
+                    {post.media.map((media) => (
+                      <div
+                        key={media.id}
+                        className="relative overflow-hidden bg-zinc-900"
+                      >
+                        {renderUnlockedMedia(media)}
+                      </div>
+                    ))}
+                  </div>
+                )
+              ) : (
                 <div className="flex h-[360px] items-center justify-center bg-zinc-900 text-sm text-zinc-500">
                   No media
                 </div>

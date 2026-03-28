@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { loadTossPayments } from "@tosspayments/tosspayments-sdk"
 
 type MessagePurchaseButtonProps = {
   messageId: string
@@ -47,36 +48,40 @@ export function MessagePurchaseButton({
         throw new Error(checkoutData.error ?? "Failed to create payment")
       }
 
-      const paymentId = checkoutData.payment?.id
+      const payment = checkoutData.payment
 
-      if (!paymentId) {
-        throw new Error("Missing paymentId")
+      if (!payment) {
+        throw new Error("Missing payment data")
       }
 
-      const confirmRes = await fetch("/api/payment/confirm-message", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          paymentId,
-          messageId,
-        }),
+      const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY
+
+      if (!clientKey) {
+        throw new Error("Missing NEXT_PUBLIC_TOSS_CLIENT_KEY")
+      }
+
+      const tossPayments = (await loadTossPayments(clientKey)) as any
+
+      const paymentInstance = tossPayments.payment({
+        customerKey: payment.id,
       })
 
-      const confirmData = await confirmRes.json()
-
-      if (!confirmRes.ok) {
-        throw new Error(confirmData.error ?? "Failed to confirm payment")
-      }
-
-      window.location.reload()
+      await paymentInstance.requestPayment({
+        method: "CARD",
+        amount: {
+          currency: "KRW",
+          value: payment.amountCents,
+        },
+        orderId: payment.id,
+        orderName: "Paid message",
+        successUrl: `${window.location.origin}/payment/success?messageId=${messageId}`,
+        failUrl: `${window.location.origin}/payment/fail`,
+      })
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to purchase message"
 
       setErrorMessage(getMessagePurchaseErrorMessage(message))
-    } finally {
       setIsLoading(false)
     }
   }

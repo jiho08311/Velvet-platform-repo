@@ -7,7 +7,7 @@ export function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const next = searchParams.get("next") || "/"
+  const next = searchParams.get("next") || "/feed"; // 🔥 여기 수정
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

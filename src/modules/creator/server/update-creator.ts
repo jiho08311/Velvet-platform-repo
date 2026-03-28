@@ -17,6 +17,14 @@ type CreatorRow = {
   updated_at: string
 }
 
+// ✅ 내부 validation 함수 (lib 없이)
+function isValidSubscriptionPrice(price: number) {
+  if (!Number.isInteger(price)) return false
+  if (price <= 0) return false
+  if (price > 10_000_000) return false // max 100,000원
+  return true
+}
+
 export async function updateCreator({
   creatorId,
   status,
@@ -38,6 +46,10 @@ export async function updateCreator({
   }
 
   if (subscriptionPriceCents !== undefined) {
+    if (!isValidSubscriptionPrice(subscriptionPriceCents)) {
+      throw new Error("Invalid subscription price")
+    }
+
     updateData.subscription_price_cents = subscriptionPriceCents
   }
 

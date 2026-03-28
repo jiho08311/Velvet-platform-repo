@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import { requireUser } from "@/modules/auth/server/require-user"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createPaymentCheckout } from "@/modules/payment/server/create-payment-checkout"
+import { assertValidMessagePrice } from "@/modules/message/lib/message-price"
 
 type PurchaseRequestBody = {
   messageId?: string
@@ -53,7 +54,11 @@ export async function POST(request: Request) {
       )
     }
 
-    if (!message.price || message.price <= 0) {
+    let validatedPrice: number
+
+    try {
+      validatedPrice = assertValidMessagePrice(message.price ?? 0)
+    } catch {
       return NextResponse.json(
         { error: "Invalid message price" },
         { status: 400 }
@@ -123,19 +128,17 @@ export async function POST(request: Request) {
       )
     }
 
-    const amountCents = Math.round(message.price * 100)
-
     const result = await createPaymentCheckout({
       userId: user.id,
       creatorId: creator.id,
       type: "ppv_message",
-      amountCents,
-      provider: "mock",
+      amountCents: validatedPrice,
+      provider: "toss",
       targetType: "message",
       targetId: message.id,
       orderId: `ppv_message_${message.id}_${user.id}_${Date.now()}`,
       orderName: "Message purchase",
-      successUrl: `${appUrl}/payment/success`,
+      successUrl: `${appUrl}/payment/success?messageId=${message.id}`,
       failUrl: `${appUrl}/payment/fail`,
     })
 

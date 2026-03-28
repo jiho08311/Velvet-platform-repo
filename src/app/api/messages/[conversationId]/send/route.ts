@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
-
-import { getSession } from "@/modules/auth/server/get-session"
+import { requireUser } from "@/modules/auth/server/require-user"
 import { sendMessage } from "@/modules/message/server/send-message"
 
 type RouteContext = {
@@ -9,58 +8,46 @@ type RouteContext = {
   }>
 }
 
-function getSessionUserId(session: unknown) {
-  if (!session || typeof session !== "object") return null
-
-  if ("userId" in session && typeof session.userId === "string") {
-    return session.userId
-  }
-
-  if (
-    "user" in session &&
-    session.user &&
-    typeof session.user === "object" &&
-    "id" in session.user &&
-    typeof session.user.id === "string"
-  ) {
-    return session.user.id
-  }
-
-  return null
-}
-
 export async function POST(request: Request, context: RouteContext) {
-  const session = await getSession()
-  const userId = getSessionUserId(session)
+  try {
+    const user = await requireUser()
+    const body = await request.json()
 
-  if (!userId) {
-    return NextResponse.redirect(new URL("/sign-in", request.url), 303)
+    const { conversationId } = await context.params
+
+    const content = body?.content
+    const type = body?.type === "ppv" ? "ppv" : "text"
+    const price =
+      body?.price === null || body?.price === undefined || body?.price === ""
+        ? null
+        : Number(body.price)
+
+    // 🔥 핵심 추가
+    const mediaIds = Array.isArray(body?.mediaIds)
+      ? body.mediaIds
+      : []
+
+    if (!conversationId || (!content && mediaIds.length === 0)) {
+      return NextResponse.json(
+        { error: "content or media is required" },
+        { status: 400 }
+      )
+    }
+
+    const message = await sendMessage({
+      conversationId,
+      senderId: user.id,
+      content: content ?? "",
+      type,
+      price,
+      mediaIds, // 🔥 여기 추가
+    })
+
+    return NextResponse.json({ message }, { status: 200 })
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to send message"
+
+    return NextResponse.json({ error: message }, { status: 400 })
   }
-
-  const { conversationId } = await context.params
-  const formData = await request.formData()
-  const content = String(formData.get("content") || "").trim()
-  const isPpv = String(formData.get("isPpv") || "") === "true"
-  const rawPrice = String(formData.get("price") || "").trim()
-  const price = rawPrice ? Number(rawPrice) : null
-
-  if (!content) {
-    return NextResponse.redirect(
-      new URL(`/messages/${conversationId}`, request.url),
-      303
-    )
-  }
-
-  await sendMessage({
-    conversationId,
-    senderId: userId,
-    content,
-    type: isPpv ? "ppv" : "text",
-    price,
-  })
-
-  return NextResponse.redirect(
-    new URL(`/messages/${conversationId}`, request.url),
-    303
-  )
 }

@@ -18,11 +18,17 @@ export const tossPaymentProvider: PaymentProvider = {
       throw new Error("Missing TOSS_CLIENT_KEY")
     }
 
-    const url = `https://js.tosspayments.com/v1/payment?clientKey=${clientKey}&orderId=${input.orderId}&orderName=${encodeURIComponent(
-      input.orderName
-    )}&amount=${input.amountCents} &successUrl=${encodeURIComponent(
-      input.successUrl
-    )}&failUrl=${encodeURIComponent(input.failUrl)}`
+    // 🔥 기존 구조 유지 + URL만 정상화
+    const params = new URLSearchParams({
+      clientKey,
+      amount: String(input.amountCents),
+      orderId: input.orderId,
+      orderName: input.orderName,
+      successUrl: input.successUrl,
+      failUrl: input.failUrl,
+    })
+
+    const url = `https://api.tosspayments.com/v1/payments/redirect?${params.toString()}`
 
     return {
       provider: "toss",

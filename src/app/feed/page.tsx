@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 
 import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { getSession } from "@/modules/auth/server/get-session"
+import { requireActiveUser } from "@/modules/auth/server/require-active-user"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { getHomeFeed } from "@/modules/feed/server/get-home-feed"
 import { FeedComposer } from "@/modules/feed/ui/FeedComposer"
@@ -10,12 +11,57 @@ import { FeedList } from "@/modules/feed/ui/FeedList"
 import { getRecommendedCreators } from "@/modules/search/server/get-recommended-creators"
 import { Card } from "@/shared/ui/Card"
 
+type FeedMediaItem = {
+  url: string
+  type?: "image" | "video" | "audio" | "file"
+}
+
+function normalizeMedia(item: unknown): FeedMediaItem[] {
+  if (!item || typeof item !== "object") {
+    return []
+  }
+
+  const maybeItem = item as {
+    media?: Array<{ url: string; type?: "image" | "video" | "audio" | "file" }>
+    mediaThumbnailUrls?: string[]
+  }
+
+  if (Array.isArray(maybeItem.media)) {
+    return maybeItem.media
+  }
+
+  if (Array.isArray(maybeItem.mediaThumbnailUrls)) {
+    return maybeItem.mediaThumbnailUrls.map((url) => ({
+      url,
+      type: "image" as const,
+    }))
+  }
+
+  return []
+}
+
+function normalizePriceCents(item: unknown): number | undefined {
+  if (!item || typeof item !== "object") {
+    return undefined
+  }
+
+  const maybeItem = item as {
+    priceCents?: number
+  }
+
+  return typeof maybeItem.priceCents === "number"
+    ? maybeItem.priceCents
+    : undefined
+}
+
 export default async function FeedPage() {
   const session = await getSession()
 
   if (!session) {
     redirect("/sign-in?next=/feed")
   }
+
+  await requireActiveUser()
 
   try {
     await assertPassVerified({ profileId: session.userId })
@@ -48,21 +94,22 @@ export default async function FeedPage() {
               description="Posts from creators you follow will appear here."
             />
           ) : (
-        <FeedList
-  posts={feed.items.map((item) => ({
-    id: item.id,
-    postId: item.id,
-    creatorId: item.creatorId,
-    creatorUserId: item.creatorUserId,
-    currentUserId: item.currentUserId,
-    text: item.text,
-    createdAt: item.createdAt,
-    mediaThumbnailUrls: item.mediaThumbnailUrls ?? [],
-    isLocked: item.isLocked,
-    lockReason: item.lockReason,
-    creator: item.creator,
-  }))}
-/>
+            <FeedList
+              posts={feed.items.map((item) => ({
+                id: item.id,
+                postId: item.id,
+                creatorId: item.creatorId,
+                creatorUserId: item.creatorUserId,
+                currentUserId: item.currentUserId,
+                text: item.text,
+                createdAt: item.createdAt,
+                media: normalizeMedia(item),
+                isLocked: item.isLocked,
+                lockReason: item.lockReason,
+                priceCents: normalizePriceCents(item),
+                creator: item.creator,
+              }))}
+            />
           )}
         </section>
 

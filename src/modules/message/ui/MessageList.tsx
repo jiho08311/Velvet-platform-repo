@@ -1,10 +1,21 @@
 import { MessageItem } from "./MessageItem"
 
+type MessageListItemMedia = {
+  id: string
+  url: string
+  type: "image" | "video"
+  mimeType?: string
+}
+
 type MessageListItem = {
   id: string
   content: string
   createdAt: string
   isOwn?: boolean
+  media?: MessageListItemMedia[]
+  type?: "text" | "ppv"
+  price?: number | null
+  isLocked?: boolean
 }
 
 type MessageListProps = {
@@ -29,9 +40,14 @@ export function MessageList({
       {messages.map((message) => (
         <MessageItem
           key={message.id}
+          messageId={message.id}
           content={message.content}
           createdAt={message.createdAt}
           isOwn={message.isOwn}
+          media={message.media ?? []}
+          type={message.type ?? "text"}
+          price={message.price ?? null}
+          isLocked={message.isLocked ?? false}
         />
       ))}
     </section>

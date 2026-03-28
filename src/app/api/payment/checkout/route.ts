@@ -4,6 +4,7 @@ import { requireUser } from "@/modules/auth/server/require-user"
 import { getCreatorById } from "@/modules/creator/server/get-creator-by-id"
 import { createPaymentCheckout } from "@/modules/payment/server/create-payment-checkout"
 import { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"
+import { assertValidSubscriptionPrice } from "@/modules/subscription/lib/subscription-price"
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,7 +42,11 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (!creator.subscriptionPriceCents || creator.subscriptionPriceCents <= 0) {
+    let price: number
+
+    try {
+      price = assertValidSubscriptionPrice(creator.subscriptionPriceCents)
+    } catch {
       return NextResponse.json(
         { error: "Invalid subscription price" },
         { status: 400 }
@@ -68,8 +73,8 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       creatorId: creator.id,
       type: "subscription",
-      amountCents: creator.subscriptionPriceCents,
-   currency: "KRW",
+      amountCents: price,
+      currency: "KRW",
       provider: "toss",
       orderId: `sub_${creator.id}_${user.id}_${Date.now()}`,
       orderName: `${creator.displayName} subscription`,

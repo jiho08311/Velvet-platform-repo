@@ -147,9 +147,10 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                 postId={post.id}
                 text={post.content ?? ""}
                 createdAt={new Date(post.created_at).toLocaleString()}
-                mediaThumbnailUrls={post.mediaThumbnailUrls ?? []}
+                media={post.media ?? []}
                 isLocked={post.isLocked}
                 lockReason={post.lockReason}
+                priceCents={post.priceCents}
                 creatorId={creator.id}
                 creatorUserId={creator.userId}
                 currentUserId={userId}

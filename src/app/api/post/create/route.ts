@@ -3,6 +3,7 @@ import { requireUser } from "@/modules/auth/server/require-user"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { getProfileByUserId } from "@/modules/profile/server/get-profile-by-user-id"
 import { createPostWithMediaWorkflow } from "@/workflows/create-post-with-media-workflow"
+import { assertValidPpvPrice } from "@/modules/post/lib/ppv-price"
 
 type PostStatus = "draft" | "published" | "archived"
 type PostVisibility = "public" | "subscribers" | "paid"
@@ -41,15 +42,21 @@ export async function POST(request: Request) {
         ? Number(priceCentsValue)
         : 0
 
-    const priceCents = Number.isFinite(parsedPriceCents)
+    const rawPriceCents = Number.isFinite(parsedPriceCents)
       ? Math.max(0, Math.floor(parsedPriceCents))
       : 0
 
-    if (visibility === "paid" && priceCents <= 0) {
-      return NextResponse.json(
-        { error: "Paid post price must be greater than 0" },
-        { status: 400 }
-      )
+    let finalPrice = 0
+
+    if (visibility === "paid") {
+      try {
+        finalPrice = assertValidPpvPrice(rawPriceCents)
+      } catch {
+        return NextResponse.json(
+          { error: "Invalid post price" },
+          { status: 400 }
+        )
+      }
     }
 
     const user = await requireUser()
@@ -75,7 +82,7 @@ export async function POST(request: Request) {
       files,
       status,
       visibility,
-      priceCents,
+      priceCents: finalPrice,
     })
 
     return NextResponse.json(
