@@ -52,9 +52,9 @@ export async function createPostWithMediaWorkflow({
 
   for (const [index, file] of files.entries()) {
     const storagePath = await uploadMedia({
-      creatorId,
-      file,
-    });
+  uploaderUserId: creatorId,
+  file,
+});
 
     const mediaRow = await createMedia({
       postId: post.id,
