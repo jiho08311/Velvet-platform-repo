@@ -32,7 +32,12 @@ type MediaRow = {
 type PostLockReason = "none" | "subscription" | "purchase"
 
 function resolveMediaType(row: MediaRow): MediaType {
-  if (row.type === "image" || row.type === "video" || row.type === "audio" || row.type === "file") {
+  if (
+    row.type === "image" ||
+    row.type === "video" ||
+    row.type === "audio" ||
+    row.type === "file"
+  ) {
     return row.type
   }
 
@@ -102,6 +107,7 @@ export async function getCreatorFeed({
       return {
         ...post,
         priceCents: post.price_cents,
+        hasPurchased,
         isLocked,
         lockReason,
         content: isLocked ? null : post.content,
@@ -148,6 +154,11 @@ export async function getCreatorFeed({
         selectedMediaRows.map(async (item) => {
           const url = await createMediaSignedUrl({
             storagePath: item.storage_path,
+            viewerUserId: safeUserId,
+            creatorUserId: post.creator_id,
+            visibility: post.visibility,
+            isSubscribed: hasSubscriptionAccess,
+            hasPurchased: post.hasPurchased,
           })
 
           return {
