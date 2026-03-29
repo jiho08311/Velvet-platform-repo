@@ -16,7 +16,7 @@ type PostCardProps = {
   postId?: string
   text: string
   createdAt: string
-   mediaThumbnailUrls?: string[]
+  mediaThumbnailUrls?: string[]
   media?: MediaItem[]
   isLocked?: boolean
   lockReason?: "none" | "subscription" | "purchase"
@@ -55,10 +55,13 @@ export function PostCard({
   }
 
   function renderSingleMedia(item: MediaItem, alt: string) {
+    const mediaUrl = item.url?.trim() ?? ""
+    if (!mediaUrl) return null
+
     if (item.type === "video") {
       return (
         <video
-          src={item.url}
+          src={mediaUrl}
           controls
           playsInline
           className="h-full w-full object-cover"
@@ -70,7 +73,7 @@ export function PostCard({
       return (
         <div className="flex h-full w-full items-center justify-center bg-zinc-900 p-4">
           <audio controls className="w-full">
-            <source src={item.url} />
+            <source src={mediaUrl} />
           </audio>
         </div>
       )
@@ -80,7 +83,7 @@ export function PostCard({
       return (
         <div className="flex h-full w-full items-center justify-center bg-zinc-900 p-4">
           <a
-            href={item.url}
+            href={mediaUrl}
             target="_blank"
             rel="noreferrer"
             onClick={(event) => event.stopPropagation()}
@@ -94,7 +97,7 @@ export function PostCard({
 
     return (
       <img
-        src={item.url}
+        src={mediaUrl}
         alt={alt}
         className="h-full w-full object-cover"
       />

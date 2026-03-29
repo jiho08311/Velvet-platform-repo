@@ -29,14 +29,20 @@ type SubscriptionRow = {
   updated_at: string
 }
 
+function addOneMonth(dateString: string): string {
+  const date = new Date(dateString)
+  date.setMonth(date.getMonth() + 1)
+  return date.toISOString()
+}
+
 export async function upsertSubscription({
   userId,
   creatorId,
   status = "active",
   provider = "toss",
   providerSubscriptionId,
-  currentPeriodStart = new Date().toISOString(),
-  currentPeriodEnd = null,
+  currentPeriodStart,
+  currentPeriodEnd,
   cancelAtPeriodEnd = false,
 }: UpsertSubscriptionInput) {
   const { data: existing, error: existingError } = await supabaseAdmin
@@ -54,6 +60,24 @@ export async function upsertSubscription({
     throw existingError
   }
 
+  const now = new Date().toISOString()
+
+  let resolvedCurrentPeriodStart = currentPeriodStart ?? now
+  let resolvedCurrentPeriodEnd = currentPeriodEnd ?? null
+
+  if (status === "active") {
+    if (currentPeriodStart && currentPeriodEnd) {
+      resolvedCurrentPeriodStart = currentPeriodStart
+      resolvedCurrentPeriodEnd = currentPeriodEnd
+    } else if (existing?.current_period_end && new Date(existing.current_period_end).getTime() > Date.now()) {
+      resolvedCurrentPeriodStart = existing.current_period_end
+      resolvedCurrentPeriodEnd = addOneMonth(existing.current_period_end)
+    } else {
+      resolvedCurrentPeriodStart = now
+      resolvedCurrentPeriodEnd = addOneMonth(now)
+    }
+  }
+
   const canceledAt = status === "canceled" ? new Date().toISOString() : null
 
   if (existing) {
@@ -64,8 +88,8 @@ export async function upsertSubscription({
         provider,
         provider_subscription_id:
           providerSubscriptionId ?? existing.provider_subscription_id,
-        current_period_start: currentPeriodStart,
-        current_period_end: currentPeriodEnd,
+        current_period_start: resolvedCurrentPeriodStart,
+        current_period_end: resolvedCurrentPeriodEnd,
         canceled_at: canceledAt,
         cancel_at_period_end: cancelAtPeriodEnd,
       })
@@ -90,8 +114,8 @@ export async function upsertSubscription({
       status,
       provider,
       provider_subscription_id: providerSubscriptionId ?? null,
-      current_period_start: currentPeriodStart,
-      current_period_end: currentPeriodEnd,
+      current_period_start: resolvedCurrentPeriodStart,
+      current_period_end: resolvedCurrentPeriodEnd,
       canceled_at: canceledAt,
       cancel_at_period_end: cancelAtPeriodEnd,
     })

@@ -1,7 +1,13 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { canViewPost } from "@/modules/post/server/can-view-post"
 
 type CreateMediaSignedUrlInput = {
   storagePath: string
+  viewerUserId?: string | null
+  creatorUserId?: string | null
+  visibility: "public" | "subscribers" | "paid"
+  isSubscribed?: boolean
+  hasPurchased?: boolean
   expiresIn?: number
 }
 
@@ -10,12 +16,31 @@ const MEDIA_BUCKET =
 
 export async function createMediaSignedUrl({
   storagePath,
+  viewerUserId,
+  creatorUserId,
+  visibility,
+  isSubscribed = false,
+  hasPurchased = false,
   expiresIn = 60 * 60,
 }: CreateMediaSignedUrlInput): Promise<string> {
-  const resolvedStoragePath = storagePath.trim()
+  const resolvedStoragePath = storagePath?.trim() ?? ""
+  const resolvedViewerUserId = viewerUserId?.trim() ?? ""
+  const resolvedCreatorUserId = creatorUserId?.trim() ?? ""
 
   if (!resolvedStoragePath) {
-    throw new Error("storagePath is required")
+    return ""
+  }
+
+  const hasAccess = canViewPost({
+    viewerUserId: resolvedViewerUserId,
+    creatorId: resolvedCreatorUserId,
+    visibility,
+    isSubscribed,
+    hasPurchased,
+  })
+
+  if (!hasAccess) {
+    return ""
   }
 
   const { data, error } = await supabaseAdmin.storage
@@ -23,12 +48,8 @@ export async function createMediaSignedUrl({
     .createSignedUrl(resolvedStoragePath, expiresIn)
 
   if (error) {
-    throw error
+    return ""
   }
 
-  if (!data?.signedUrl) {
-    throw new Error("Failed to create media signed url")
-  }
-
-  return data.signedUrl
+  return data?.signedUrl ?? ""
 }

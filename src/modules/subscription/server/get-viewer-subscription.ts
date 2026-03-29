@@ -7,6 +7,7 @@ export type ViewerSubscriptionStatus = {
     viewerUserId: string
     creatorId: string
     currentPeriodEndAt: string | null
+    cancelAtPeriodEnd: boolean
     status: "active" | "canceled" | "expired"
   } | null
 }
@@ -16,7 +17,9 @@ type SubscriptionRow = {
   user_id: string
   creator_id: string
   current_period_end: string | null
+  cancel_at_period_end: boolean | null
   status: "active" | "canceled" | "expired"
+  created_at: string
 }
 
 export async function getViewerSubscription(
@@ -35,32 +38,44 @@ export async function getViewerSubscription(
 
   const { data, error } = await supabaseAdmin
     .from("subscriptions")
-    .select("id, user_id, creator_id, current_period_end, status")
+    .select(
+      "id, user_id, creator_id, current_period_end, cancel_at_period_end, status, created_at"
+    )
     .eq("user_id", viewerId)
     .eq("creator_id", creator)
-    .maybeSingle<SubscriptionRow>()
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .returns<SubscriptionRow[]>()
 
   if (error) {
     throw error
   }
 
-  if (!data) {
+  const row = data?.[0]
+
+  if (!row) {
     return {
       isActive: false,
       subscription: null,
     }
   }
 
-  const isActive = data.status === "active"
+  const isExpiredByDate =
+    row.current_period_end !== null &&
+    new Date(row.current_period_end).getTime() <= Date.now()
+
+  const resolvedStatus =
+    row.status === "active" && isExpiredByDate ? "expired" : row.status
 
   return {
-    isActive,
+    isActive: resolvedStatus === "active",
     subscription: {
-      id: data.id,
-      viewerUserId: data.user_id,
-      creatorId: data.creator_id,
-      currentPeriodEndAt: data.current_period_end,
-      status: data.status,
+      id: row.id,
+      viewerUserId: row.user_id,
+      creatorId: row.creator_id,
+      currentPeriodEndAt: row.current_period_end,
+      cancelAtPeriodEnd: Boolean(row.cancel_at_period_end),
+      status: resolvedStatus,
     },
   }
 }

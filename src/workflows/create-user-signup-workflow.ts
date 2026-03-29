@@ -1,6 +1,7 @@
 import { signUp } from "@/modules/auth/server/sign-up"
 import { createUser } from "@/modules/user/server/create-user"
 import { createProfile } from "@/modules/profile/server/create-profile"
+import { isUsernameTaken } from "@/modules/profile/server/is-username-taken"
 
 type CreateUserSignupWorkflowInput = {
   email: string
@@ -15,6 +16,13 @@ export async function createUserSignupWorkflow({
   username,
   displayName,
 }: CreateUserSignupWorkflowInput) {
+  // ✅ username 중복 체크
+  const taken = await isUsernameTaken(username)
+
+  if (taken) {
+    throw new Error("USERNAME_ALREADY_TAKEN")
+  }
+
   const authResult = await signUp({ email, password })
 
   if (authResult.error) {

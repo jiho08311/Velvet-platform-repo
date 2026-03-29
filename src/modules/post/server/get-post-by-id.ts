@@ -1,4 +1,3 @@
-
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
@@ -51,17 +50,16 @@ export type PostDetail = {
 
 export async function getPostById(
   postId: string,
-  viewerUserId: string
+  viewerUserId?: string | null
 ): Promise<PostDetail | null> {
   const resolvedPostId = postId.trim()
-  const resolvedViewerUserId = viewerUserId.trim()
+  const resolvedViewerUserId =
+    typeof viewerUserId === "string" && viewerUserId.trim().length > 0
+      ? viewerUserId.trim()
+      : null
 
   if (!resolvedPostId) {
     throw new Error("postId is required")
-  }
-
-  if (!resolvedViewerUserId) {
-    throw new Error("viewerUserId is required")
   }
 
   const { data: post, error: postError } = await supabaseAdmin
@@ -94,25 +92,32 @@ export async function getPostById(
     throw new Error("Creator not found")
   }
 
-  const { data: subscriptionRow, error: subscriptionError } = await supabaseAdmin
-    .from("subscriptions")
-    .select("id")
-    .eq("user_id", resolvedViewerUserId)
-    .eq("creator_id", post.creator_id)
-    .eq("status", "active")
-    .maybeSingle<SubscriptionRow>()
+  let isSubscribed = false
+  let hasPurchasedResult = false
 
-  if (subscriptionError) {
-    throw subscriptionError
+  if (resolvedViewerUserId) {
+    const { data: subscriptionRow, error: subscriptionError } =
+      await supabaseAdmin
+        .from("subscriptions")
+        .select("id")
+        .eq("user_id", resolvedViewerUserId)
+        .eq("creator_id", post.creator_id)
+        .eq("status", "active")
+        .maybeSingle<SubscriptionRow>()
+
+    if (subscriptionError) {
+      throw subscriptionError
+    }
+
+    isSubscribed = Boolean(subscriptionRow)
+
+    if (post.visibility === "paid" && (post.price_cents ?? 0) > 0) {
+      hasPurchasedResult = await hasPurchasedPost({
+        userId: resolvedViewerUserId,
+        postId: post.id,
+      })
+    }
   }
-
-  const hasPurchasedResult =
-    post.visibility === "paid" && (post.price_cents ?? 0) > 0
-      ? await hasPurchasedPost({
-          userId: resolvedViewerUserId,
-          postId: post.id,
-        })
-      : false
 
   const access = await getPostAccess({
     viewerUserId: resolvedViewerUserId,
@@ -127,7 +132,7 @@ export async function getPostById(
     creator: {
       userId: creator.user_id,
     },
-    isSubscribedResult: Boolean(subscriptionRow),
+    isSubscribedResult: isSubscribed,
     hasPurchasedResult,
   })
 

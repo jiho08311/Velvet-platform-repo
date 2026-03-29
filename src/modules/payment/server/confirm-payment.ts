@@ -39,6 +39,12 @@ function isSettlablePaymentType(type: PaymentType): boolean {
   )
 }
 
+function addOneMonth(isoString: string): string {
+  const date = new Date(isoString)
+  date.setMonth(date.getMonth() + 1)
+  return date.toISOString()
+}
+
 async function processSettlement(payment: {
   id: string
   creator_id: string | null
@@ -89,14 +95,17 @@ export async function confirmPayment({
 
   if (existingPayment.status === "succeeded") {
     if (existingPayment.type === "subscription" && existingPayment.creator_id) {
+      const currentPeriodStart =
+        existingPayment.confirmed_at ?? new Date().toISOString()
+
       await upsertSubscription({
         userId: existingPayment.user_id,
         creatorId: existingPayment.creator_id,
         status: "active",
         provider: existingPayment.provider,
         providerSubscriptionId: existingPayment.id,
-        currentPeriodStart:
-          existingPayment.confirmed_at ?? new Date().toISOString(),
+        currentPeriodStart,
+        currentPeriodEnd: addOneMonth(currentPeriodStart),
         cancelAtPeriodEnd: false,
       })
     }
@@ -155,13 +164,16 @@ export async function confirmPayment({
   }
 
   if (data.type === "subscription" && data.creator_id) {
+    const currentPeriodStart = data.confirmed_at ?? confirmedAt
+
     await upsertSubscription({
       userId: data.user_id,
       creatorId: data.creator_id,
       status: "active",
       provider: data.provider,
       providerSubscriptionId: data.id,
-      currentPeriodStart: data.confirmed_at ?? confirmedAt,
+      currentPeriodStart,
+      currentPeriodEnd: addOneMonth(currentPeriodStart),
       cancelAtPeriodEnd: false,
     })
   }

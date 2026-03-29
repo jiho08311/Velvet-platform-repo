@@ -62,7 +62,21 @@ export async function getActiveSubscription({
     return null
   }
 
-  if (data.current_period_end && new Date(data.current_period_end).getTime() <= Date.now()) {
+  const isExpired =
+    data.current_period_end !== null &&
+    new Date(data.current_period_end).getTime() <= Date.now()
+
+  if (isExpired) {
+    if (data.cancel_at_period_end) {
+      await supabaseAdmin
+        .from("subscriptions")
+        .update({
+          status: "expired",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", data.id)
+    }
+
     return null
   }
 

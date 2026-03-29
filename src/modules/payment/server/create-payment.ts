@@ -8,7 +8,6 @@ type PaymentTargetType = "post" | "message" | null
 type CreatePaymentInput = {
   userId: string
   creatorId?: string
-  subscriptionId?: string
   type: PaymentType
   status?: PaymentStatus
   amountCents: number
@@ -23,7 +22,6 @@ type PaymentRow = {
   id: string
   user_id: string
   creator_id: string | null
-  subscription_id: string | null
   type: PaymentType
   status: PaymentStatus
   amount_cents: number
@@ -39,7 +37,6 @@ type PaymentRow = {
 export default async function createPayment({
   userId,
   creatorId,
-  subscriptionId,
   type,
   status = "pending",
   amountCents,
@@ -48,28 +45,13 @@ export default async function createPayment({
   providerReferenceId,
   targetType = null,
   targetId,
-}: CreatePaymentInput): Promise<{
-  id: string
-  userId: string
-  creatorId?: string
-  subscriptionId?: string
-  type: PaymentType
-  status: PaymentStatus
-  amountCents: number
-  currency: string
-  provider: PaymentProvider
-  providerReferenceId?: string
-  targetType: PaymentTargetType
-  targetId?: string
-  createdAt: string
-  updatedAt: string
-}> {
+}: CreatePaymentInput) {
   if (providerReferenceId) {
     const { data: existingPayment, error: existingPaymentError } =
       await supabaseAdmin
         .from("payments")
         .select(
-          "id, user_id, creator_id, subscription_id, type, status, amount_cents, currency, provider, provider_reference_id, target_type, target_id, created_at, updated_at"
+          "id, user_id, creator_id, type, status, amount_cents, currency, provider, provider_reference_id, target_type, target_id, created_at, updated_at"
         )
         .eq("provider_reference_id", providerReferenceId)
         .maybeSingle<PaymentRow>()
@@ -83,13 +65,13 @@ export default async function createPayment({
         id: existingPayment.id,
         userId: existingPayment.user_id,
         creatorId: existingPayment.creator_id ?? undefined,
-        subscriptionId: existingPayment.subscription_id ?? undefined,
         type: existingPayment.type,
         status: existingPayment.status,
         amountCents: existingPayment.amount_cents,
         currency: existingPayment.currency,
         provider: existingPayment.provider,
-        providerReferenceId: existingPayment.provider_reference_id ?? undefined,
+        providerReferenceId:
+          existingPayment.provider_reference_id ?? undefined,
         targetType: existingPayment.target_type,
         targetId: existingPayment.target_id ?? undefined,
         createdAt: existingPayment.created_at,
@@ -103,7 +85,6 @@ export default async function createPayment({
     .insert({
       user_id: userId,
       creator_id: creatorId ?? null,
-      subscription_id: subscriptionId ?? null,
       type,
       status,
       amount_cents: amountCents,
@@ -114,7 +95,7 @@ export default async function createPayment({
       target_id: targetId ?? null,
     })
     .select(
-      "id, user_id, creator_id, subscription_id, type, status, amount_cents, currency, provider, provider_reference_id, target_type, target_id, created_at, updated_at"
+      "id, user_id, creator_id, type, status, amount_cents, currency, provider, provider_reference_id, target_type, target_id, created_at, updated_at"
     )
     .single<PaymentRow>()
 
@@ -126,7 +107,6 @@ export default async function createPayment({
     id: data.id,
     userId: data.user_id,
     creatorId: data.creator_id ?? undefined,
-    subscriptionId: data.subscription_id ?? undefined,
     type: data.type,
     status: data.status,
     amountCents: data.amount_cents,

@@ -1,5 +1,4 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-
 import { reverseEarning } from "@/modules/payout/server/reverse-earning"
 
 type RefundPaymentInput = {
@@ -9,6 +8,9 @@ type RefundPaymentInput = {
 type PaymentRow = {
   id: string
   status: "pending" | "succeeded" | "failed" | "refunded"
+  user_id: string
+  creator_id: string | null
+  type: "subscription" | "tip" | "ppv_message" | "ppv_post"
 }
 
 export async function refundPayment({
@@ -22,7 +24,7 @@ export async function refundPayment({
 
   const { data: payment, error: paymentError } = await supabaseAdmin
     .from("payments")
-    .select("id, status")
+    .select("id, status, user_id, creator_id, type")
     .eq("id", safePaymentId)
     .maybeSingle<PaymentRow>()
 
@@ -57,4 +59,17 @@ export async function refundPayment({
   await reverseEarning({
     paymentId: payment.id,
   })
+
+  // 🔥 추가: subscription 환불 처리
+  if (payment.type === "subscription" && payment.creator_id) {
+    await supabaseAdmin
+      .from("subscriptions")
+      .update({
+        status: "expired",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", payment.user_id)
+      .eq("creator_id", payment.creator_id)
+      .eq("status", "active")
+  }
 }

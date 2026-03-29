@@ -9,6 +9,8 @@ import { getCreatorDashboardSummary } from "@/modules/analytics/server/get-creat
 import { getCreatorFeed } from "@/modules/post/server/get-creator-feed"
 import { CreatePostComposer } from "@/modules/post/ui/CreatePostComposer"
 import { PostCard } from "@/modules/post/ui/PostCard"
+import { getViewerSubscription } from "@/modules/subscription/server/get-viewer-subscription"
+import { SubscriptionStatusCard } from "@/modules/subscription/ui/SubscriptionStatusCard"
 
 type CreatorPageProps = {
   params: Promise<{
@@ -62,6 +64,15 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
     creatorId: creator.id,
     userId,
   })
+
+  const viewerSubscription = await getViewerSubscription(userId, creator.id)
+
+  const subscriptionStatus: "active" | "canceled" | "expired" | "inactive" =
+    viewerSubscription.isActive
+      ? "active"
+      : viewerSubscription.subscription
+        ? viewerSubscription.subscription.status
+        : "inactive"
 
   return (
     <main className="min-h-screen">
@@ -123,6 +134,20 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
         <p className="mt-4 text-sm text-zinc-400">
           {creator.bio ?? "No bio yet."}
         </p>
+
+        {!isOwner ? (
+          <div className="mt-4">
+            <SubscriptionStatusCard
+              status={subscriptionStatus}
+              currentPeriodEndAt={
+                viewerSubscription.subscription?.currentPeriodEndAt
+              }
+              cancelAtPeriodEnd={Boolean(
+                viewerSubscription.subscription?.cancelAtPeriodEnd
+              )}
+            />
+          </div>
+        ) : null}
 
         {!isOwner ? (
           <p className="mt-2 text-sm text-zinc-500">

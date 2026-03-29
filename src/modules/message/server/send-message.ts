@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { assertValidMessagePrice } from "@/modules/message/lib/message-price"
+import { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"
 
 type SendMessageInput = {
   conversationId: string
@@ -19,10 +20,6 @@ type ParticipantRow = {
 type CreatorRow = {
   id: string
   user_id: string
-}
-
-type SubscriptionRow = {
-  status: string
 }
 
 type ProfileRow = {
@@ -56,7 +53,6 @@ export async function sendMessage(input: SendMessageInput) {
   const mediaIds = Array.from(new Set((input.mediaIds ?? []).filter(Boolean)))
   const hasMedia = mediaIds.length > 0
 
-  // 🔥 핵심 로그 1
   console.log("[sendMessage] incoming mediaIds:", mediaIds)
 
   if (!trimmedContent && !hasMedia) {
@@ -109,14 +105,12 @@ export async function sendMessage(input: SendMessageInput) {
   const otherIsCreator = Boolean(otherCreator)
 
   if (!senderIsCreator && otherIsCreator && otherCreator) {
-    const { data: subscription } = await supabase
-      .from("subscriptions")
-      .select("status")
-      .eq("creator_id", otherCreator.id)
-      .eq("user_id", input.senderId)
-      .maybeSingle<SubscriptionRow>()
+    const subscription = await getActiveSubscription({
+      userId: input.senderId,
+      creatorId: otherCreator.id,
+    })
 
-    if (!subscription || subscription.status !== "active") {
+    if (!subscription) {
       throw new Error("Subscription required")
     }
   }
@@ -125,7 +119,6 @@ export async function sendMessage(input: SendMessageInput) {
     throw new Error("Only creators can send PPV messages")
   }
 
-  // 🔥 핵심 로그 2 (media 존재 여부 확인)
   if (mediaIds.length > 0) {
     const { data: existingMedia, error: mediaFetchError } = await supabaseAdmin
       .from("media")
@@ -167,7 +160,6 @@ export async function sendMessage(input: SendMessageInput) {
     throw messageError
   }
 
-  // 🔥 핵심 로그 3 (message 생성 확인)
   console.log("[sendMessage] created message:", message.id)
 
   if (mediaIds.length > 0) {
@@ -179,7 +171,6 @@ export async function sendMessage(input: SendMessageInput) {
       .in("id", mediaIds)
       .select("id, message_id")
 
-    // 🔥 핵심 로그 4 (업데이트 결과)
     console.log("[sendMessage] updatedMedia:", updatedMedia)
     console.log("[sendMessage] mediaUpdateError:", mediaUpdateError)
 

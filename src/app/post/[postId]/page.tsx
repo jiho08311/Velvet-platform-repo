@@ -25,10 +25,16 @@ function renderUnlockedMedia(media: {
   url: string
   type: "image" | "video" | "audio" | "file"
 }) {
+  const mediaUrl = media.url?.trim() ?? ""
+
+  if (!mediaUrl) {
+    return null
+  }
+
   if (media.type === "video") {
     return (
       <video
-        src={media.url}
+        src={mediaUrl}
         controls
         playsInline
         className="w-full"
@@ -40,7 +46,7 @@ function renderUnlockedMedia(media: {
     return (
       <div className="flex min-h-[180px] items-center justify-center bg-zinc-900 p-6">
         <audio controls className="w-full">
-          <source src={media.url} />
+          <source src={mediaUrl} />
         </audio>
       </div>
     )
@@ -50,7 +56,7 @@ function renderUnlockedMedia(media: {
     return (
       <div className="flex min-h-[180px] items-center justify-center bg-zinc-900 p-6">
         <a
-          href={media.url}
+          href={mediaUrl}
           target="_blank"
           rel="noreferrer"
           className="rounded-full border border-zinc-700 px-4 py-2 text-sm text-white transition hover:bg-zinc-800"
@@ -63,7 +69,7 @@ function renderUnlockedMedia(media: {
 
   return (
     <img
-      src={media.url}
+      src={mediaUrl}
       alt="Post media"
       className="w-full object-cover"
     />
@@ -75,10 +81,16 @@ function renderLockedMedia(media: {
   url: string
   type: "image" | "video" | "audio" | "file"
 }) {
+  const mediaUrl = media.url?.trim() ?? ""
+
+  if (!mediaUrl) {
+    return null
+  }
+
   if (media.type === "video") {
     return (
       <video
-        src={media.url}
+        src={mediaUrl}
         muted
         playsInline
         className="h-full w-full object-cover opacity-40 blur-md"
@@ -96,7 +108,7 @@ function renderLockedMedia(media: {
 
   return (
     <img
-      src={media.url}
+      src={mediaUrl}
       alt="Locked post media"
       className="h-full w-full object-cover opacity-40 blur-md"
     />

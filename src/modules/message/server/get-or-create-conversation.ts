@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
+import { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"
 
 type GetOrCreateConversationParams = {
   userAId: string
@@ -15,10 +16,6 @@ type ConversationRow = {
 type CreatorRow = {
   id: string
   user_id: string
-}
-
-type SubscriptionRow = {
-  status: string
 }
 
 export type Conversation = {
@@ -58,35 +55,23 @@ export async function getOrCreateConversation({
   const userBIsCreator = Boolean(userBCreator)
 
   if (!userAIsCreator && userBCreator) {
-    const { data: subscription, error: subscriptionError } = await supabase
-      .from("subscriptions")
-      .select("status")
-      .eq("creator_id", userBCreator.id)
-      .eq("user_id", userAId)
-      .maybeSingle<SubscriptionRow>()
+    const subscription = await getActiveSubscription({
+      userId: userAId,
+      creatorId: userBCreator.id,
+    })
 
-    if (subscriptionError) {
-      throw subscriptionError
-    }
-
-    if (!subscription || subscription.status !== "active") {
+    if (!subscription) {
       throw new Error("Subscription required")
     }
   }
 
   if (!userBIsCreator && userACreator) {
-    const { data: subscription, error: subscriptionError } = await supabase
-      .from("subscriptions")
-      .select("status")
-      .eq("creator_id", userACreator.id)
-      .eq("user_id", userBId)
-      .maybeSingle<SubscriptionRow>()
+    const subscription = await getActiveSubscription({
+      userId: userBId,
+      creatorId: userACreator.id,
+    })
 
-    if (subscriptionError) {
-      throw subscriptionError
-    }
-
-    if (!subscription || subscription.status !== "active") {
+    if (!subscription) {
       throw new Error("Subscription required")
     }
   }

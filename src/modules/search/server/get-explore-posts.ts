@@ -34,12 +34,9 @@ type CreatorRow = {
 function shuffleArray<T>(items: T[]): T[] {
   const next = [...items]
 
-  for (let index = next.length - 1; index > 0; index -= 1) {
-    const randomIndex = Math.floor(Math.random() * (index + 1))
-    const current = next[index]
-
-    next[index] = next[randomIndex]
-    next[randomIndex] = current
+  for (let i = next.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[next[i], next[j]] = [next[j], next[i]]
   }
 
   return next
@@ -58,15 +55,10 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
     .limit(fetchSize)
     .returns<PostRow[]>()
 
-  if (postError) {
-    throw postError
-  }
+  if (postError) throw postError
 
   const posts = postRows ?? []
-
-  if (posts.length === 0) {
-    return []
-  }
+  if (posts.length === 0) return []
 
   const postIds = posts.map((post) => post.id)
 
@@ -79,9 +71,7 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
     .order("sort_order", { ascending: true })
     .returns<MediaRow[]>()
 
-  if (mediaError) {
-    throw mediaError
-  }
+  if (mediaError) throw mediaError
 
   const firstImageMap = new Map<string, MediaRow>()
 
@@ -91,11 +81,11 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
     }
   }
 
-  const postsWithImage = posts.filter((post) => firstImageMap.has(post.id))
+  const postsWithImage = posts.filter((post) =>
+    firstImageMap.has(post.id)
+  )
 
-  if (postsWithImage.length === 0) {
-    return []
-  }
+  if (postsWithImage.length === 0) return []
 
   const creatorIds = Array.from(
     new Set(postsWithImage.map((post) => post.creator_id))
@@ -108,9 +98,7 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
     .eq("status", "active")
     .returns<CreatorRow[]>()
 
-  if (creatorError) {
-    throw creatorError
-  }
+  if (creatorError) throw creatorError
 
   const creatorMap = new Map(
     (creatorRows ?? []).map((creator) => [creator.id, creator])
@@ -127,8 +115,13 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
         throw new Error("Invalid explore post data")
       }
 
+      // ✅ 보안 적용 (핵심 수정)
       const imageUrl = await createMediaSignedUrl({
         storagePath: media.storage_path,
+        viewerUserId: creator.user_id,
+        creatorUserId: creator.user_id,
+        visibility: "public",
+        hasPurchased: true,
       })
 
       return {

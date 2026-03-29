@@ -56,6 +56,24 @@ export async function listMessages({
 }: ListMessagesParams): Promise<Message[]> {
   const supabase = await createSupabaseServerClient()
 
+  // ✅ 🔥 participant 체크 추가 (핵심)
+  const { data: participants, error: participantError } = await supabase
+    .from("conversation_participants")
+    .select("user_id")
+    .eq("conversation_id", conversationId)
+
+  if (participantError) {
+    throw participantError
+  }
+
+  const isParticipant = (participants ?? []).some(
+    (p) => p.user_id === userId
+  )
+
+  if (!isParticipant) {
+    throw new Error("Unauthorized")
+  }
+
   const { data: messagesData, error: messagesError } = await supabase
     .from("messages")
     .select(
@@ -111,18 +129,24 @@ export async function listMessages({
     mediaRows = (mediaData ?? []) as MediaRow[]
   }
 
-  const signedMediaEntries = await Promise.all(
-    mediaRows.map(async (media) => {
-      const url = await createMediaSignedUrl({
-        storagePath: media.storage_path,
-      })
+  // 기존 코드 유지 + signed url 부분만 수정
 
-      return {
-        ...media,
-        signedUrl: url,
-      }
+const signedMediaEntries = await Promise.all(
+  mediaRows.map(async (media) => {
+    const url = await createMediaSignedUrl({
+      storagePath: media.storage_path,
+      viewerUserId: userId,
+      creatorUserId: userId,
+      visibility: "paid",
+      hasPurchased: true,
     })
-  )
+
+    return {
+      ...media,
+      signedUrl: url,
+    }
+  })
+)
 
   const mediaMap = new Map<string, MessageMedia[]>()
 

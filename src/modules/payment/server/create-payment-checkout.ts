@@ -12,7 +12,6 @@ type PaymentTargetType = "post" | "message" | null
 type CreatePaymentCheckoutInput = {
   userId: string
   creatorId?: string
-  subscriptionId?: string
   type: PaymentType
   amountCents: number
   currency?: string
@@ -30,7 +29,6 @@ type CreatePaymentCheckoutInput = {
 export async function createPaymentCheckout({
   userId,
   creatorId,
-  subscriptionId,
   type,
   amountCents,
   currency = "KRW",
@@ -46,7 +44,6 @@ export async function createPaymentCheckout({
 }: CreatePaymentCheckoutInput) {
   let resolvedAmountCents = amountCents
 
-  // 🔥 subscription
   if (type === "subscription") {
     resolvedAmountCents = assertValidSubscriptionPrice(amountCents)
 
@@ -64,12 +61,10 @@ export async function createPaymentCheckout({
     }
   }
 
-  // 🔥 ppv_message 가격 강제
   if (type === "ppv_message") {
     resolvedAmountCents = assertValidMessagePrice(amountCents)
   }
 
-  // 🔥 ppv_post 중복 구매 방지 (기존 유지)
   if (type === "ppv_post" && targetType === "post" && targetId) {
     const alreadyPurchased = await hasPurchasedPost({
       userId,
@@ -84,7 +79,6 @@ export async function createPaymentCheckout({
   const payment = await createPayment({
     userId,
     creatorId,
-    subscriptionId,
     type,
     status: "pending",
     amountCents: resolvedAmountCents,
@@ -97,7 +91,6 @@ export async function createPaymentCheckout({
 
   const paymentProvider = getPaymentProvider(provider)
 
-  // 🔥 핵심 추가: successUrl에 paymentId 포함
   const successUrlWithPaymentId = successUrl.includes("?")
     ? `${successUrl}&paymentId=${payment.id}`
     : `${successUrl}?paymentId=${payment.id}`

@@ -1,7 +1,6 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
 import { canViewPost } from "@/modules/post/server/can-view-post"
-import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 
 type MediaType = "image" | "video" | "audio" | "file"
 
@@ -103,37 +102,89 @@ export async function getHomeFeed(
 
   const limit = Math.max(1, Math.min(input.limit ?? 20, 100))
 
-  const { data: subscriptions, error: subscriptionsError } = await supabaseAdmin
+  const { data: subscriptions } = await supabaseAdmin
     .from("subscriptions")
     .select("creator_id")
     .eq("user_id", viewerUserId)
     .eq("status", "active")
     .returns<SubscriptionRow[]>()
 
-  if (subscriptionsError) {
-    throw subscriptionsError
-  }
-
   const creatorIds = (subscriptions ?? []).map(
     (subscription) => subscription.creator_id
   )
 
+  // ✅ fallback (신규 유저)
   if (creatorIds.length === 0) {
+    const { data: posts } = await supabaseAdmin
+      .from("posts")
+      .select(
+        "id, creator_id, title, content, visibility, price_cents, created_at, published_at"
+      )
+      .eq("status", "published")
+      .eq("visibility", "public")
+      .order("published_at", { ascending: false })
+      .limit(limit)
+      .returns<PostRow[]>()
+
+    const postList = posts ?? []
+
+    const creatorIds = Array.from(new Set(postList.map((p) => p.creator_id)))
+
+    const { data: creators } = await supabaseAdmin
+      .from("creators")
+      .select("id, user_id, username, display_name")
+      .in("id", creatorIds)
+      .returns<CreatorRow[]>()
+
+    const creatorMap = new Map(
+      (creators ?? []).map((c) => [c.id, c])
+    )
+
+    const creatorUserIds = (creators ?? []).map((c) => c.user_id)
+
+    const { data: profiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id, avatar_url")
+      .in("id", creatorUserIds)
+      .returns<ProfileRow[]>()
+
+    const profileMap = new Map(
+      (profiles ?? []).map((p) => [p.id, p])
+    )
+
+    const items = postList.map((post) => {
+      const creator = creatorMap.get(post.creator_id)
+      const profile = profileMap.get(creator?.user_id ?? "")
+
+      return {
+        id: post.id,
+        creatorId: post.creator_id,
+        creatorUserId: creator?.user_id,
+        currentUserId: viewerUserId,
+        text: post.content ?? post.title ?? "",
+        createdAt: post.published_at ?? post.created_at,
+        isLocked: false,
+       lockReason: "none" as const,
+        media: [],
+        creator: {
+          username: creator?.username ?? "",
+          displayName: creator?.display_name ?? null,
+          avatarUrl: profile?.avatar_url ?? null,
+        },
+      }
+    })
+
     return {
-      items: [],
+      items,
       nextCursor: null,
     }
   }
 
-  const { data: creators, error: creatorsError } = await supabaseAdmin
+  const { data: creators } = await supabaseAdmin
     .from("creators")
     .select("id, user_id, username, display_name")
     .in("id", creatorIds)
     .returns<CreatorRow[]>()
-
-  if (creatorsError) {
-    throw creatorsError
-  }
 
   const creatorMap = new Map<string, CreatorRow>()
   const creatorUserIds: string[] = []
@@ -143,21 +194,15 @@ export async function getHomeFeed(
     creatorUserIds.push(creator.user_id)
   }
 
-  const { data: profiles, error: profilesError } = await supabaseAdmin
+  const { data: profiles } = await supabaseAdmin
     .from("profiles")
     .select("id, avatar_url")
     .in("id", creatorUserIds)
     .returns<ProfileRow[]>()
 
-  if (profilesError) {
-    throw profilesError
-  }
-
-  const profileMap = new Map<string, ProfileRow>()
-
-  for (const profile of profiles ?? []) {
-    profileMap.set(profile.id, profile)
-  }
+  const profileMap = new Map(
+    (profiles ?? []).map((p) => [p.id, p])
+  )
 
   let query = supabaseAdmin
     .from("posts")
@@ -173,34 +218,31 @@ export async function getHomeFeed(
     query = query.lt("published_at", input.cursor)
   }
 
-  const { data: posts, error: postsError } = await query.returns<PostRow[]>()
-
-  if (postsError) {
-    throw postsError
-  }
+  const { data: posts } = await query.returns<PostRow[]>()
 
   const postList = posts ?? []
-
-  if (postList.length === 0) {
-    return {
-      items: [],
-      nextCursor: null,
-    }
-  }
-
   const postIds = postList.map((post) => post.id)
 
-  const { data: mediaRows, error: mediaError } = await supabaseAdmin
+  // ✅ N+1 제거
+  const { data: payments } = await supabaseAdmin
+    .from("payments")
+    .select("target_id")
+    .eq("user_id", viewerUserId)
+    .eq("target_type", "post")
+    .eq("status", "succeeded")
+    .in("target_id", postIds)
+
+  const purchasedSet = new Set(
+    (payments ?? []).map((p) => p.target_id)
+  )
+
+  const { data: mediaRows } = await supabaseAdmin
     .from("media")
     .select("post_id, storage_path, type, mime_type, status, sort_order")
     .in("post_id", postIds)
     .eq("status", "ready")
     .order("sort_order", { ascending: true })
     .returns<MediaRow[]>()
-
-  if (mediaError) {
-    throw mediaError
-  }
 
   const mediaMap = new Map<string, MediaRow[]>()
 
@@ -218,10 +260,7 @@ export async function getHomeFeed(
 
       const hasPurchased =
         post.visibility === "paid" && post.price_cents !== null
-          ? await hasPurchasedPost({
-              userId: viewerUserId,
-              postId: post.id,
-            })
+          ? purchasedSet.has(post.id)
           : false
 
       const hasAccess = canViewPost({
@@ -232,31 +271,25 @@ export async function getHomeFeed(
         hasPurchased,
       })
 
-      const lockReason: "none" | "subscription" | "purchase" =
-        hasAccess
-          ? "none"
-          : post.visibility === "paid"
-            ? "purchase"
-            : post.visibility === "subscribers"
-              ? "subscription"
-              : "none"
-
       const selectedMediaRows = hasAccess
         ? (mediaMap.get(post.id) ?? []).slice(0, 3)
         : []
 
-      const media = await Promise.all(
-        selectedMediaRows.map(async (item) => {
-          const url = await createMediaSignedUrl({
-            storagePath: item.storage_path,
-          })
+      // 수정된 부분만 반영된 전체 구조 유지
+// 👉 핵심: createMediaSignedUrl 호출부
 
-          return {
-            url,
-            type: resolveMediaType(item),
-          }
-        })
-      )
+const media = await Promise.all(
+  selectedMediaRows.map(async (item) => ({
+    url: await createMediaSignedUrl({
+      storagePath: item.storage_path,
+      viewerUserId,
+      creatorUserId,
+      visibility: post.visibility,
+      hasPurchased,
+    }),
+    type: resolveMediaType(item),
+  }))
+)
 
       return {
         id: post.id,
@@ -266,8 +299,6 @@ export async function getHomeFeed(
         text: hasAccess ? post.content ?? post.title ?? "" : "",
         createdAt: post.published_at ?? post.created_at,
         isLocked: !hasAccess,
-        lockReason,
-        priceCents: post.price_cents ?? undefined,
         media,
         creator: {
           username: creator?.username ?? "",
@@ -278,11 +309,11 @@ export async function getHomeFeed(
     })
   )
 
-  const nextCursor =
-    items.length === limit ? items[items.length - 1]?.createdAt ?? null : null
-
   return {
     items,
-    nextCursor,
+    nextCursor:
+      items.length === limit
+        ? items[items.length - 1]?.createdAt ?? null
+        : null,
   }
 }
