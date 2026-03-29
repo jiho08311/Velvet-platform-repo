@@ -52,6 +52,11 @@ export async function listCreatorPosts({
     isLocked?: boolean
   }>
 > {
+  const safeUserId =
+    typeof userId === "string" && userId.trim().length > 0
+      ? userId.trim()
+      : undefined
+
   let query = supabaseAdmin
     .from("posts")
     .select(
@@ -77,17 +82,25 @@ export async function listCreatorPosts({
     return []
   }
 
-  const filteredPosts: Array<PostRow & { isLocked?: boolean }> = []
+  const filteredPosts: Array<
+    PostRow & {
+      isLocked?: boolean
+      isSubscribed: boolean
+      hasPurchased: boolean
+    }
+  > = []
 
   for (const post of posts) {
     let isLocked = false
+    let isSubscribed = false
+    let hasPurchased = false
 
     if (post.visibility === "subscribers") {
-      if (!userId) {
+      if (!safeUserId) {
         isLocked = true
       } else {
-        const isSubscribed = await checkSubscription({
-          userId,
+        isSubscribed = await checkSubscription({
+          userId: safeUserId,
           creatorId: post.creator_id,
         })
 
@@ -98,11 +111,11 @@ export async function listCreatorPosts({
     }
 
     if (post.visibility === "paid") {
-      if (!userId) {
+      if (!safeUserId) {
         isLocked = true
       } else {
-        const hasPurchased = await hasPurchasedPost({
-          userId,
+        hasPurchased = await hasPurchasedPost({
+          userId: safeUserId,
           postId: post.id,
         })
 
@@ -112,9 +125,15 @@ export async function listCreatorPosts({
       }
     }
 
-    const nextPost: PostRow & { isLocked?: boolean } = {
+    const nextPost: PostRow & {
+      isLocked?: boolean
+      isSubscribed: boolean
+      hasPurchased: boolean
+    } = {
       ...post,
       isLocked,
+      isSubscribed,
+      hasPurchased,
       content: isLocked ? null : post.content,
     }
 
@@ -153,6 +172,11 @@ export async function listCreatorPosts({
         media.map((item) =>
           createMediaSignedUrl({
             storagePath: item.storage_path,
+            viewerUserId: safeUserId,
+            creatorUserId: post.creator_id,
+            visibility: post.visibility,
+            isSubscribed: post.isSubscribed,
+            hasPurchased: post.hasPurchased,
           })
         )
       )
