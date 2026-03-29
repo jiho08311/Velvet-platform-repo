@@ -1,5 +1,8 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+import { getCurrentUser } from "@/modules/auth/server/get-current-user"
+import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
+import { checkSubscription } from "@/modules/subscription/server/check-subscription"
 
 export type PostMediaItem = {
   id: string
@@ -20,6 +23,13 @@ type MediaRow = {
   status: "processing" | "ready" | "failed"
 }
 
+type PostAccessRow = {
+  id: string
+  creator_id: string
+  visibility: "public" | "subscribers" | "paid"
+  price_cents: number
+}
+
 export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
   const resolvedPostId = postId.trim()
 
@@ -27,12 +37,43 @@ export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
     throw new Error("postId is required")
   }
 
+  const user = await getCurrentUser()
+  const viewerUserId = user?.id ?? null
+
+  const { data: post, error: postError } = await supabaseAdmin
+    .from("posts")
+    .select("id, creator_id, visibility, price_cents")
+    .eq("id", resolvedPostId)
+    .maybeSingle<PostAccessRow>()
+
+  if (postError) {
+    throw postError
+  }
+
+  if (!post) {
+    return []
+  }
+
+  const isSubscribed = viewerUserId
+    ? await checkSubscription({
+        userId: viewerUserId,
+        creatorId: post.creator_id,
+      })
+    : false
+
+  const hasPurchased =
+    viewerUserId && post.visibility === "paid" && post.price_cents > 0
+      ? await hasPurchasedPost({
+          userId: viewerUserId,
+          postId: post.id,
+        })
+      : false
+
   const { data, error } = await supabaseAdmin
     .from("media")
     .select("id, post_id, type, storage_path, mime_type, sort_order, status")
     .eq("post_id", resolvedPostId)
     .eq("status", "ready")
-    // ❌ type 필터 제거 (이게 핵심)
     .order("sort_order", { ascending: true })
     .returns<MediaRow[]>()
 
@@ -46,6 +87,11 @@ export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
     rows.map(async (media) => {
       const url = await createMediaSignedUrl({
         storagePath: media.storage_path,
+        viewerUserId,
+        creatorUserId: post.creator_id,
+        visibility: post.visibility,
+        isSubscribed,
+        hasPurchased,
       })
 
       return {
