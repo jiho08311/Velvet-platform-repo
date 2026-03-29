@@ -144,6 +144,11 @@ export async function listFeedPosts({
         selectedMediaRows.map(async (item) => {
           const url = await createMediaSignedUrl({
             storagePath: item.storage_path,
+            viewerUserId: userId,
+            creatorUserId: post.creator_id,
+            visibility: post.visibility,
+            isSubscribed: true,
+            hasPurchased: false,
           })
 
           return {
