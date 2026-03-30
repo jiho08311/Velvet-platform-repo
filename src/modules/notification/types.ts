@@ -2,6 +2,7 @@ export const NOTIFICATION_TYPES = [
   "subscription_started",
   "ppv_message_received",
   "ppv_message_purchased",
+  "ppv_post_purchased",
   "payment_succeeded",
 ] as const
 

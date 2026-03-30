@@ -18,7 +18,7 @@ export async function cancelSubscription({
     .eq("user_id", userId)
     .eq("creator_id", creatorId)
     .eq("status", "active")
-    .select("id")
+    .select("id, user_id, creator_id, current_period_end")
     .maybeSingle()
 
   if (error) {

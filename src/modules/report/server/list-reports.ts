@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 type ListReportsParams = {
   limit?: number
+  cursor?: string
 }
 
 export async function listReports(params: ListReportsParams = {}) {
@@ -10,7 +11,7 @@ export async function listReports(params: ListReportsParams = {}) {
 
   const limit = Math.min(params.limit ?? 50, 100)
 
-  const { data, error } = await supabaseAdmin
+  let query = supabaseAdmin
     .from("reports")
     .select(`
       id,
@@ -30,9 +31,25 @@ export async function listReports(params: ListReportsParams = {}) {
     .order("created_at", { ascending: false })
     .limit(limit)
 
+  if (params.cursor) {
+    // 🔥 cursor 안전 처리
+    const safeCursor = decodeURIComponent(params.cursor).replace(" ", "+")
+    query = query.lt("created_at", safeCursor)
+  }
+
+  const { data, error } = await query
+
   if (error) {
     throw error
   }
 
-  return data ?? []
+  const nextCursor =
+    data && data.length === limit
+      ? data[data.length - 1].created_at
+      : null
+
+  return {
+    data: data ?? [],
+    nextCursor,
+  }
 }

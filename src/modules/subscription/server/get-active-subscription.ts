@@ -51,47 +51,62 @@ export async function getActiveSubscription({
     .eq("creator_id", creatorId)
     .eq("status", "active")
     .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle<SubscriptionRow>()
+    .returns<SubscriptionRow[]>()
 
   if (error) {
     throw error
   }
 
-  if (!data) {
-    return null
-  }
+  const rows = data ?? []
+  const now = Date.now()
 
-  const isExpired =
-    data.current_period_end !== null &&
-    new Date(data.current_period_end).getTime() <= Date.now()
+  const activeRow =
+    rows.find((row) => {
+      if (!row.current_period_end) {
+        return false
+      }
 
-  if (isExpired) {
-    if (data.cancel_at_period_end) {
-      await supabaseAdmin
-        .from("subscriptions")
-        .update({
-          status: "expired",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", data.id)
+      return new Date(row.current_period_end).getTime() > now
+    }) ?? null
+
+  const expiredRows = rows.filter((row) => {
+    if (!row.current_period_end) {
+      return false
     }
 
+    return new Date(row.current_period_end).getTime() <= now
+  })
+
+  const expiredIds = expiredRows
+    .filter((row) => row.cancel_at_period_end)
+    .map((row) => row.id)
+
+  if (expiredIds.length > 0) {
+    await supabaseAdmin
+      .from("subscriptions")
+      .update({
+        status: "expired",
+        updated_at: new Date().toISOString(),
+      })
+      .in("id", expiredIds)
+  }
+
+  if (!activeRow) {
     return null
   }
 
   return {
-    id: data.id,
-    userId: data.user_id,
-    creatorId: data.creator_id,
-    status: data.status,
-    provider: data.provider,
-    providerSubscriptionId: data.provider_subscription_id,
-    cancelAtPeriodEnd: data.cancel_at_period_end,
-    currentPeriodStart: data.current_period_start,
-    currentPeriodEnd: data.current_period_end,
-    canceledAt: data.canceled_at,
-    createdAt: data.created_at,
-    updatedAt: data.updated_at,
+    id: activeRow.id,
+    userId: activeRow.user_id,
+    creatorId: activeRow.creator_id,
+    status: activeRow.status,
+    provider: activeRow.provider,
+    providerSubscriptionId: activeRow.provider_subscription_id,
+    cancelAtPeriodEnd: activeRow.cancel_at_period_end,
+    currentPeriodStart: activeRow.current_period_start,
+    currentPeriodEnd: activeRow.current_period_end,
+    canceledAt: activeRow.canceled_at,
+    createdAt: activeRow.created_at,
+    updatedAt: activeRow.updated_at,
   }
 }

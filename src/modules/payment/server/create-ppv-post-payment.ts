@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { createNotification } from "@/modules/notification/server/create-notification"
 
 type CreatePpvPostPaymentInput = {
   userId: string
@@ -57,6 +58,30 @@ export async function createPpvPostPayment({
 
   if (error) {
     throw error
+  }
+
+  // 🔥 notification 추가 (핵심)
+  try {
+    const { data: creator } = await supabaseAdmin
+      .from("creators")
+      .select("user_id")
+      .eq("id", creatorId)
+      .maybeSingle()
+
+    if (creator?.user_id) {
+      await createNotification({
+        userId: creator.user_id,
+        type: "ppv_post_purchased",
+        title: "Post purchased",
+        body: "A user purchased your paid post.",
+        data: {
+          paymentId: data.id,
+          buyerId: userId,
+        },
+      })
+    }
+  } catch (e) {
+    console.error("ppv_post notification error:", e)
   }
 
   return data

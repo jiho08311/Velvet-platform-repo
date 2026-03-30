@@ -17,6 +17,8 @@ function getNotificationTone(type: NotificationType) {
       return "warning"
     case "ppv_message_purchased":
       return "success"
+    case "ppv_post_purchased":
+      return "success"
     case "payment_succeeded":
       return "success"
     default:
@@ -32,6 +34,8 @@ function getNotificationLabel(type: NotificationType) {
       return "PPV Message"
     case "ppv_message_purchased":
       return "Purchase"
+    case "ppv_post_purchased":
+      return "Post Purchase"
     case "payment_succeeded":
       return "Payment"
     default:

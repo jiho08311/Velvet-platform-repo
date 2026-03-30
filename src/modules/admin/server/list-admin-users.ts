@@ -6,41 +6,32 @@ export async function listAdminUsers() {
     roles: ["super_admin"],
   })
 
-  // 1. admin assignments 가져오기
-  const { data: assignments, error: assignmentError } =
-    await supabaseAdmin
-      .from("admin_role_assignments")
-      .select("profile_id, role")
-      .order("created_at", { ascending: false })
+  const { data, error } = await supabaseAdmin
+    .from("admin_role_assignments")
+    .select(`
+      profile_id,
+      role,
+      profiles!admin_role_assignments_profile_id_fkey (
+        id,
+        email,
+        username,
+        display_name
+      )
+    `)
+    .order("created_at", { ascending: false })
 
-  if (assignmentError) {
-    throw assignmentError
+  if (error) {
+    throw error
   }
 
-  if (!assignments || assignments.length === 0) {
+  if (!data || data.length === 0) {
     return []
   }
 
-  const profileIds = assignments.map((a) => a.profile_id)
-
-  // 2. profiles 조회 (RLS 안전)
-  const { data: profiles, error: profileError } =
-    await supabaseAdmin
-      .from("profiles")
-      .select("id, email, username, display_name")
-      .in("id", profileIds)
-
-  if (profileError) {
-    throw profileError
-  }
-
-  const profileMap = new Map(
-    (profiles ?? []).map((p) => [p.id, p])
-  )
-
-  // 3. merge
-  return assignments.map((a) => ({
-    role: a.role,
-    profile: profileMap.get(a.profile_id) ?? null,
+  return data.map((item) => ({
+    role: item.role,
+    profile: Array.isArray(item.profiles)
+      ? item.profiles[0]
+      : item.profiles ?? null,
   }))
 }

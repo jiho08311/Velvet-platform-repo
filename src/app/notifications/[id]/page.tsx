@@ -31,6 +31,8 @@ function getNotificationLabel(type: NotificationType) {
       return "PPV Message"
     case "ppv_message_purchased":
       return "Purchase"
+    case "ppv_post_purchased":
+      return "Post Purchase"
     case "payment_succeeded":
       return "Payment"
     default:

@@ -1,5 +1,6 @@
 import { requireActiveUser } from "@/modules/auth/server/require-active-user"
 import { getProfileByUserId } from "@/modules/profile/server/get-profile-by-user-id"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 type ProfileView = {
   displayName?: string | null
@@ -8,10 +9,28 @@ type ProfileView = {
   username?: string | null
 } | null
 
+type AdminRoleAssignmentRow = {
+  role: "super_admin" | "moderator" | "analytics_viewer"
+}
+
 export default async function SettingsPage() {
   const user = await requireActiveUser()
   const profileResult = await getProfileByUserId(user.id)
   const profile = profileResult as ProfileView
+
+  const { data: adminRoles, error: adminRolesError } = await supabaseAdmin
+    .from("admin_role_assignments")
+    .select("role")
+    .eq("profile_id", user.id)
+    .returns<AdminRoleAssignmentRow[]>()
+
+  if (adminRolesError) {
+    throw adminRolesError
+  }
+
+  const isSuperAdmin = (adminRoles ?? []).some(
+    (assignment) => assignment.role === "super_admin"
+  )
 
   const username =
     profile?.username ??
@@ -121,14 +140,20 @@ export default async function SettingsPage() {
         </p>
 
         <div className="mt-4 flex flex-wrap gap-3">
-          <form action="/api/settings/deactivate" method="post">
-            <button
-              type="submit"
-              className="inline-flex h-10 items-center justify-center rounded-xl border border-white/10 px-4 text-sm font-medium text-white/80 transition hover:bg-white/5"
-            >
-              Deactivate account
-            </button>
-          </form>
+          {!isSuperAdmin ? (
+            <form action="/api/settings/deactivate" method="post">
+              <button
+                type="submit"
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-white/10 px-4 text-sm font-medium text-white/80 transition hover:bg-white/5"
+              >
+                Deactivate account
+              </button>
+            </form>
+          ) : (
+            <div className="inline-flex h-10 items-center justify-center rounded-xl border border-white/10 px-4 text-sm font-medium text-white/40">
+              Super admin accounts cannot be deactivated here
+            </div>
+          )}
 
           <form action="/api/settings/delete-account" method="post">
             <button

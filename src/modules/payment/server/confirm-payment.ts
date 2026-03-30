@@ -108,7 +108,17 @@ export async function confirmPayment({
       type: existingPayment.type,
     })
 
-    // ✅ payment 알림만 유지
+    // 🔥 PPV MESSAGE unlock (추가)
+    if (existingPayment.type === "ppv_message") {
+      await supabaseAdmin
+        .from("payments")
+        .update({
+          target_type: "message",
+        })
+        .eq("id", existingPayment.id)
+    }
+
+    // ✅ notification 유지
     try {
       await createNotification({
         userId: existingPayment.user_id,
@@ -134,6 +144,24 @@ export async function confirmPayment({
             type: "ppv_message_purchased",
             title: "PPV purchased",
             body: "A user purchased your PPV message.",
+            data: { paymentId: existingPayment.id },
+          })
+        }
+      }
+
+      if (existingPayment.type === "ppv_post" && existingPayment.creator_id) {
+        const { data: creator } = await supabaseAdmin
+          .from("creators")
+          .select("user_id")
+          .eq("id", existingPayment.creator_id)
+          .maybeSingle()
+
+        if (creator?.user_id) {
+          await createNotification({
+            userId: creator.user_id,
+            type: "ppv_post_purchased",
+            title: "Post purchased",
+            body: "A user purchased your paid post.",
             data: { paymentId: existingPayment.id },
           })
         }
@@ -200,7 +228,17 @@ export async function confirmPayment({
     type: data.type,
   })
 
-  // ✅ payment 알림만 유지
+  // 🔥 PPV MESSAGE unlock (추가)
+  if (data.type === "ppv_message") {
+    await supabaseAdmin
+      .from("payments")
+      .update({
+        target_type: "message",
+      })
+      .eq("id", data.id)
+  }
+
+  // ✅ notification 유지
   try {
     await createNotification({
       userId: data.user_id,
@@ -223,6 +261,24 @@ export async function confirmPayment({
           type: "ppv_message_purchased",
           title: "PPV purchased",
           body: "A user purchased your PPV message.",
+          data: { paymentId: data.id },
+        })
+      }
+    }
+
+    if (data.type === "ppv_post" && data.creator_id) {
+      const { data: creator } = await supabaseAdmin
+        .from("creators")
+        .select("user_id")
+        .eq("id", data.creator_id)
+        .maybeSingle()
+
+      if (creator?.user_id) {
+        await createNotification({
+          userId: creator.user_id,
+          type: "ppv_post_purchased",
+          title: "Post purchased",
+          body: "A user purchased your paid post.",
           data: { paymentId: data.id },
         })
       }

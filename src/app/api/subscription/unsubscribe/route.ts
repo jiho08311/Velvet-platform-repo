@@ -3,35 +3,42 @@ import { NextResponse } from "next/server"
 import { requireUser } from "@/modules/auth/server/require-user"
 import { createClient } from "@/infrastructure/supabase/server"
 
-import { cancelSubscription } from "@/modules/subscription/server/cancel-subscription"
+import { unsubscribe } from "@/modules/subscription/server/unsubscribe"
 import { notifySubscriptionCanceledWorkflow } from "@/workflows/subscription/notify-subscription-canceled-workflow"
 
-export async function POST() {
+export async function POST(req: Request) {
   const user = await requireUser()
   const supabase = await createClient()
 
-  const { data: subscription, error } = await supabase
-    .from("subscriptions")
-    .select("id, user_id, creator_id")
-    .eq("user_id", user.id)
-    .eq("status", "active")
-    .single()
+  const body = await req.json()
+  const subscriptionId = body.subscriptionId as string | undefined
 
-  if (error || !subscription) {
+  if (!subscriptionId) {
     return NextResponse.json(
-      { error: "No active subscription" },
+      { error: "Missing subscriptionId" },
       { status: 400 }
     )
   }
 
-  const updated = await cancelSubscription({
-    userId: subscription.user_id,
-    creatorId: subscription.creator_id,
-  })
+  const { data: subscription, error } = await supabase
+    .from("subscriptions")
+    .select("id, user_id, creator_id")
+    .eq("id", subscriptionId)
+    .eq("user_id", user.id)
+    .single()
+
+  if (error || !subscription) {
+    return NextResponse.json(
+      { error: "Subscription not found" },
+      { status: 404 }
+    )
+  }
+
+  const updated = await unsubscribe(subscription.id)
 
   if (!updated) {
     return NextResponse.json(
-      { error: "Failed to cancel subscription" },
+      { error: "Failed to unsubscribe" },
       { status: 500 }
     )
   }
@@ -40,7 +47,7 @@ export async function POST() {
     subscriptionId: subscription.id,
     creatorId: subscription.creator_id,
     subscriberId: subscription.user_id,
-    mode: "period_end",
+    mode: "immediate",
   })
 
   return NextResponse.json({ success: true })

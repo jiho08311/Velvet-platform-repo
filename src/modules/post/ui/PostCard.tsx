@@ -36,6 +36,7 @@ export function PostCard({
   postId,
   text,
   createdAt,
+  mediaThumbnailUrls = [],
   media = [],
   isLocked = false,
   lockReason = "none",
@@ -48,8 +49,16 @@ export function PostCard({
   const router = useRouter()
   const pathname = usePathname()
 
-  const creatorName = creator.displayName ?? creator.username
+   const creatorName = creator.displayName ?? creator.username
   const creatorInitial = creatorName.slice(0, 1).toUpperCase()
+
+  const resolvedMedia =
+    media.length > 0
+      ? media
+      : mediaThumbnailUrls.map((url) => ({
+          url,
+          type: "image" as const,
+        }))
 
   function handleCardClick() {
     if (!postId || isLocked) return
@@ -107,10 +116,10 @@ export function PostCard({
   }
 
   function renderMedia() {
-    if (media.length === 0) return null
+    if (resolvedMedia.length === 0) return null
 
-    if (media.length === 1) {
-      const item = media[0]
+    if (resolvedMedia.length === 1) {
+      const item = resolvedMedia[0]
 
       return (
         <div className="overflow-hidden rounded-[28px] bg-zinc-950">
@@ -123,7 +132,7 @@ export function PostCard({
 
     return (
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[28px] bg-zinc-950">
-        {media.slice(0, 2).map((item, index) => (
+         {resolvedMedia.slice(0, 2).map((item, index) => (
           <div
             key={`${item.url}-${index}`}
             className="aspect-square overflow-hidden bg-zinc-900"
@@ -196,7 +205,7 @@ export function PostCard({
               <LockedPostCard
                 previewText={text}
                 createdAt={createdAt}
-                previewThumbnailUrl={media[0]?.url ?? null}
+              previewThumbnailUrl={resolvedMedia[0]?.url ?? null}
                 ctaLabel={
                   lockReason === "subscription" ? "Subscribe now" : "Unlock post"
                 }

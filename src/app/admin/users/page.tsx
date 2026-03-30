@@ -1,4 +1,6 @@
 import Link from "next/link"
+import { requireAdmin } from "@/modules/admin/server/require-admin"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { listUsers } from "@/modules/admin/server/list-users"
 import { Card } from "@/shared/ui/Card"
 import { EmptyState } from "@/shared/ui/EmptyState"
@@ -6,8 +8,28 @@ import { StatusBadge } from "@/shared/ui/StatusBadge"
 import { toggleUserStatusAction } from "./actions"
 import { toggleUserBanAction } from "./actions"
 
+type AdminAssignmentRow = {
+  profile_id: string
+}
+
 export default async function AdminUsersPage() {
+  const { user: currentAdmin } = await requireAdmin()
   const users = await listUsers()
+
+  const { data: adminAssignments, error: adminAssignmentsError } =
+    await supabaseAdmin
+      .from("admin_role_assignments")
+      .select("profile_id")
+
+  if (adminAssignmentsError) {
+    throw adminAssignmentsError
+  }
+
+  const adminUserIdSet = new Set(
+    (adminAssignments ?? []).map(
+      (assignment: AdminAssignmentRow) => assignment.profile_id
+    )
+  )
 
   if (users.length === 0) {
     return (
@@ -45,6 +67,9 @@ export default async function AdminUsersPage() {
               {users.map((user) => {
                 const isDeactivated = user.is_deactivated
                 const isBanned = user.is_banned
+                const isSelf = user.id === currentAdmin.id
+                const isAdminUser = adminUserIdSet.has(user.id)
+                const canManage = !isSelf && !isAdminUser
 
                 return (
                   <tr
@@ -76,58 +101,70 @@ export default async function AdminUsersPage() {
                       {isBanned && (
                         <StatusBadge label="banned" />
                       )}
+                      {isSelf && (
+                        <StatusBadge label="self" />
+                      )}
+                      {!isSelf && isAdminUser && (
+                        <StatusBadge label="admin" />
+                      )}
                     </td>
 
                     <td className="py-3 space-y-2">
-                      {/* Deactivate */}
-                      <form action={toggleUserStatusAction}>
-                        <input
-                          type="hidden"
-                          name="userId"
-                          value={user.id}
-                        />
-                        <input
-                          type="hidden"
-                          name="deactivate"
-                          value={(!isDeactivated).toString()}
-                        />
+                      {canManage ? (
+                        <>
+                          <form action={toggleUserStatusAction}>
+                            <input
+                              type="hidden"
+                              name="userId"
+                              value={user.id}
+                            />
+                            <input
+                              type="hidden"
+                              name="deactivate"
+                              value={(!isDeactivated).toString()}
+                            />
 
-                        <button
-                          type="submit"
-                          className={
-                            isDeactivated
-                              ? "rounded-xl bg-green-600 px-3 py-1 text-xs font-semibold text-white"
-                              : "rounded-xl bg-red-600 px-3 py-1 text-xs font-semibold text-white"
-                          }
-                        >
-                          {isDeactivated ? "Activate" : "Deactivate"}
-                        </button>
-                      </form>
+                            <button
+                              type="submit"
+                              className={
+                                isDeactivated
+                                  ? "rounded-xl bg-green-600 px-3 py-1 text-xs font-semibold text-white"
+                                  : "rounded-xl bg-red-600 px-3 py-1 text-xs font-semibold text-white"
+                              }
+                            >
+                              {isDeactivated ? "Activate" : "Deactivate"}
+                            </button>
+                          </form>
 
-                      {/* Ban */}
-                      <form action={toggleUserBanAction}>
-                        <input
-                          type="hidden"
-                          name="userId"
-                          value={user.id}
-                        />
-                        <input
-                          type="hidden"
-                          name="ban"
-                          value={(!isBanned).toString()}
-                        />
+                          <form action={toggleUserBanAction}>
+                            <input
+                              type="hidden"
+                              name="userId"
+                              value={user.id}
+                            />
+                            <input
+                              type="hidden"
+                              name="ban"
+                              value={(!isBanned).toString()}
+                            />
 
-                        <button
-                          type="submit"
-                          className={
-                            isBanned
-                              ? "rounded-xl bg-green-600 px-3 py-1 text-xs font-semibold text-white"
-                              : "rounded-xl bg-red-600 px-3 py-1 text-xs font-semibold text-white"
-                          }
-                        >
-                          {isBanned ? "Unban" : "Ban"}
-                        </button>
-                      </form>
+                            <button
+                              type="submit"
+                              className={
+                                isBanned
+                                  ? "rounded-xl bg-green-600 px-3 py-1 text-xs font-semibold text-white"
+                                  : "rounded-xl bg-red-600 px-3 py-1 text-xs font-semibold text-white"
+                              }
+                            >
+                              {isBanned ? "Unban" : "Ban"}
+                            </button>
+                          </form>
+                        </>
+                      ) : (
+                        <span className="text-xs text-zinc-500">
+                          Not allowed
+                        </span>
+                      )}
                     </td>
                   </tr>
                 )

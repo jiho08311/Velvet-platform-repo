@@ -1,5 +1,4 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { createNotification } from "@/modules/notification/server/create-notification"
 
 type SubscriptionStatus = "incomplete" | "active" | "canceled" | "expired"
 type SubscriptionProvider = "toss" | "mock"
@@ -82,7 +81,7 @@ export async function upsertSubscription({
     }
   }
 
-  const canceledAt = status === "canceled" ? new Date().toISOString() : null
+  const canceledAt = status === "canceled" ? now : null
 
   if (existing) {
     const { data, error } = await supabaseAdmin
@@ -96,6 +95,7 @@ export async function upsertSubscription({
         current_period_end: resolvedCurrentPeriodEnd,
         canceled_at: canceledAt,
         cancel_at_period_end: cancelAtPeriodEnd,
+        updated_at: now,
       })
       .eq("id", existing.id)
       .select(
@@ -130,31 +130,6 @@ export async function upsertSubscription({
 
   if (error) {
     throw error
-  }
-
-  // 🔥 notification
-  try {
-    if (status === "active") {
-      const { data: creator } = await supabaseAdmin
-        .from("creators")
-        .select("user_id")
-        .eq("id", creatorId)
-        .maybeSingle()
-
-      if (creator?.user_id) {
-        await createNotification({
-          userId: creator.user_id,
-          type: "subscription_started",
-          title: "New subscriber",
-          body: "You have a new subscriber.",
-          data: {
-            subscriptionId: data.id,
-          },
-        })
-      }
-    }
-  } catch (e) {
-    console.error("subscription notification error:", e)
   }
 
   return data

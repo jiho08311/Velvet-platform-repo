@@ -4,8 +4,21 @@ import { EmptyState } from "@/shared/ui/EmptyState"
 import { StatusBadge } from "@/shared/ui/StatusBadge"
 import { updateReportStatusAction } from "./actions"
 
-export default async function AdminReportsPage() {
-  const reports = await listReports()
+type Props = {
+  searchParams: Promise<{
+    cursor?: string
+  }>
+}
+
+export default async function AdminReportsPage({ searchParams }: Props) {
+  const resolvedSearchParams = await searchParams
+  const rawCursor = resolvedSearchParams?.cursor
+  const cursor = rawCursor ? rawCursor.replace(" ", "+") : undefined
+
+  const { data: reports, nextCursor } = await listReports({
+    limit: 20,
+    cursor,
+  })
 
   if (reports.length === 0) {
     return (
@@ -84,58 +97,25 @@ export default async function AdminReportsPage() {
                     <td className="py-3">
                       <div className="flex flex-wrap gap-2">
                         <form action={updateReportStatusAction}>
-                          <input
-                            type="hidden"
-                            name="reportId"
-                            value={report.id}
-                          />
-                          <input
-                            type="hidden"
-                            name="status"
-                            value="reviewing"
-                          />
-                          <button
-                            type="submit"
-                            className="rounded-xl bg-yellow-600 px-3 py-1 text-xs font-semibold text-white"
-                          >
+                          <input type="hidden" name="reportId" value={report.id} />
+                          <input type="hidden" name="status" value="reviewing" />
+                          <button className="rounded-xl bg-yellow-600 px-3 py-1 text-xs font-semibold text-white">
                             Review
                           </button>
                         </form>
 
                         <form action={updateReportStatusAction}>
-                          <input
-                            type="hidden"
-                            name="reportId"
-                            value={report.id}
-                          />
-                          <input
-                            type="hidden"
-                            name="status"
-                            value="resolved"
-                          />
-                          <button
-                            type="submit"
-                            className="rounded-xl bg-green-600 px-3 py-1 text-xs font-semibold text-white"
-                          >
+                          <input type="hidden" name="reportId" value={report.id} />
+                          <input type="hidden" name="status" value="resolved" />
+                          <button className="rounded-xl bg-green-600 px-3 py-1 text-xs font-semibold text-white">
                             Resolve
                           </button>
                         </form>
 
                         <form action={updateReportStatusAction}>
-                          <input
-                            type="hidden"
-                            name="reportId"
-                            value={report.id}
-                          />
-                          <input
-                            type="hidden"
-                            name="status"
-                            value="rejected"
-                          />
-                          <button
-                            type="submit"
-                            className="rounded-xl bg-red-600 px-3 py-1 text-xs font-semibold text-white"
-                          >
+                          <input type="hidden" name="reportId" value={report.id} />
+                          <input type="hidden" name="status" value="rejected" />
+                          <button className="rounded-xl bg-red-600 px-3 py-1 text-xs font-semibold text-white">
                             Reject
                           </button>
                         </form>
@@ -152,6 +132,17 @@ export default async function AdminReportsPage() {
           </table>
         </div>
       </Card>
+
+      {nextCursor && (
+        <div className="flex justify-center">
+          <a
+            href={`/admin/reports?cursor=${encodeURIComponent(nextCursor)}`}
+            className="rounded-xl bg-zinc-800 px-4 py-2 text-sm text-white hover:bg-zinc-700"
+          >
+            Load more
+          </a>
+        </div>
+      )}
     </div>
   )
 }

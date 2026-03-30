@@ -9,9 +9,10 @@ export async function unsubscribe(subscriptionId: string) {
       status: "canceled",
       canceled_at: new Date().toISOString(),
       cancel_at_period_end: false,
+      updated_at: new Date().toISOString(),
     })
     .eq("id", subscriptionId)
-    .select("id, status, canceled_at, cancel_at_period_end")
+    .select("id, user_id, creator_id, status, canceled_at, cancel_at_period_end")
     .maybeSingle()
 
   if (error) {

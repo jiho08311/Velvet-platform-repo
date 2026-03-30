@@ -4,7 +4,29 @@ type CreatorIdRow = {
   id: string
 }
 
+type AdminRoleAssignmentRow = {
+  role: "super_admin" | "moderator" | "analytics_viewer"
+}
+
 export async function deactivateAccount(userId: string) {
+  const { data: adminRoles, error: adminRolesError } = await supabaseAdmin
+    .from("admin_role_assignments")
+    .select("role")
+    .eq("profile_id", userId)
+    .returns<AdminRoleAssignmentRow[]>()
+
+  if (adminRolesError) {
+    throw adminRolesError
+  }
+
+  const isSuperAdmin = (adminRoles ?? []).some(
+    (assignment) => assignment.role === "super_admin"
+  )
+
+  if (isSuperAdmin) {
+    throw new Error("Super admin accounts cannot be deactivated")
+  }
+
   const { error: profileError } = await supabaseAdmin
     .from("profiles")
     .update({

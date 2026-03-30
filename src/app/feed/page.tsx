@@ -26,9 +26,12 @@ function normalizeMedia(item: unknown): FeedMediaItem[] {
     mediaThumbnailUrls?: string[]
   }
 
-  if (Array.isArray(maybeItem.media)) {
-    return maybeItem.media
-  }
+ if (Array.isArray(maybeItem.media)) {
+  return maybeItem.media.map((m) => ({
+    url: (m as any).url ?? (m as any).storagePath ?? "",
+    type: (m as any).type,
+  }))
+}
 
   if (Array.isArray(maybeItem.mediaThumbnailUrls)) {
     return maybeItem.mediaThumbnailUrls.map((url) => ({
