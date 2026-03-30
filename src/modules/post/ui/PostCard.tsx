@@ -1,8 +1,9 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
+import { ReportButton } from "@/modules/report/ui/ReportButton"
 
 import { LockedPostCard } from "./LockedPostCard"
 import { PostPurchaseButton } from "./PostPurchaseButton"
@@ -45,6 +46,7 @@ export function PostCard({
   creator,
 }: PostCardProps) {
   const router = useRouter()
+  const pathname = usePathname()
 
   const creatorName = creator.displayName ?? creator.username
   const creatorInitial = creatorName.slice(0, 1).toUpperCase()
@@ -223,6 +225,17 @@ export function PostCard({
               </p>
 
               <p className="text-xs text-zinc-500">{createdAt}</p>
+
+              {/* 🔥 신고 버튼 추가 */}
+              {postId && (
+                <div onClick={(e) => e.stopPropagation()}>
+                  <ReportButton
+                    targetType="post"
+                    targetId={postId}
+                    pathname={pathname}
+                  />
+                </div>
+              )}
             </>
           )}
         </div>

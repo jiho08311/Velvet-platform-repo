@@ -1,14 +1,10 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
-type CreateNotificationInput = {
-  userId: string
-  type: string
-  title: string
-  body: string
-  data?: Record<string, unknown>
-}
+import type { CreateNotificationInput } from "../types"
 
-export async function createNotification(input: CreateNotificationInput) {
+export async function createNotification(
+  input: CreateNotificationInput,
+): Promise<void> {
   const { error } = await supabaseAdmin.from("notifications").insert({
     user_id: input.userId,
     type: input.type,

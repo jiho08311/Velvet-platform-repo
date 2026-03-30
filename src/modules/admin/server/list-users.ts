@@ -1,32 +1,26 @@
-import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
+import { requireAdmin } from "./require-admin"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
-type ProfileRow = {
-  id: string
-  email: string | null
-  created_at: string
+type ListUsersParams = {
+  limit?: number
 }
 
-export type AdminUser = {
-  id: string
-  email: string | null
-  createdAt: string
-}
+export async function listUsers(params: ListUsersParams = {}) {
+  await requireAdmin()
 
-export async function listUsers(): Promise<AdminUser[]> {
-  const supabase = await createSupabaseServerClient()
+  const limit = Math.min(params.limit ?? 50, 100)
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("profiles")
-    .select("id, email, created_at")
+    .select(
+      "id, email, username, display_name, is_deactivated, is_banned, created_at"
+    )
     .order("created_at", { ascending: false })
+    .limit(limit)
 
   if (error) {
     throw error
   }
 
-  return (data ?? []).map((row: ProfileRow) => ({
-    id: row.id,
-    email: row.email,
-    createdAt: row.created_at,
-  }))
+  return data ?? []
 }

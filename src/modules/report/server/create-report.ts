@@ -1,46 +1,46 @@
-export type ReportTargetType = "post" | "profile" | "message"
+import { requireActiveUser } from "@/modules/auth/server/require-active-user"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
-export type CreateReportInput = {
-  reporterUserId: string
+type ReportTargetType = "post" | "message" | "user" | "creator"
+
+type CreateReportParams = {
   targetType: ReportTargetType
   targetId: string
   reason: string
+  description?: string
 }
 
-export type CreatedReport = {
-  id: string
-  reporterUserId: string
-  targetType: ReportTargetType
-  targetId: string
-  reason: string
-  createdAt: string
-}
-
-export async function createReport(
-  input: CreateReportInput
-): Promise<CreatedReport> {
-  const reporterUserId = input.reporterUserId.trim()
-  const targetId = input.targetId.trim()
-  const reason = input.reason.trim()
-
-  if (!reporterUserId) {
-    throw new Error("Reporter user id is required")
-  }
+export async function createReport({
+  targetType,
+  targetId,
+  reason,
+  description,
+}: CreateReportParams) {
+  const user = await requireActiveUser()
 
   if (!targetId) {
     throw new Error("Target id is required")
   }
 
-  if (!reason) {
+  if (!reason.trim()) {
     throw new Error("Reason is required")
   }
 
-  return {
-    id: crypto.randomUUID(),
-    reporterUserId,
-    targetType: input.targetType,
-    targetId,
-    reason,
-    createdAt: new Date().toISOString(),
+  const { data, error } = await supabaseAdmin
+    .from("reports")
+    .insert({
+      reporter_id: user.id,
+      target_type: targetType,
+      target_id: targetId,
+      reason,
+      description: description?.trim() || null,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    throw error
   }
+
+  return data
 }

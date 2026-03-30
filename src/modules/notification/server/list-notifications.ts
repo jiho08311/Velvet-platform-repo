@@ -1,22 +1,22 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 
+import type { Notification, NotificationRow } from "../types"
+import { mapNotificationRow } from "../types"
+import { getNotificationOwnerIds } from "./get-notification-owner-ids"
+
 type ListNotificationsParams = {
   userId: string
-}
-
-export type Notification = {
-  id: string
-  userId: string
-  type: string
-  message: string
-  isRead: boolean
-  createdAt: string
 }
 
 export async function listNotifications({
   userId,
 }: ListNotificationsParams): Promise<Notification[]> {
   const supabase = await createSupabaseServerClient()
+  const ownerIds = await getNotificationOwnerIds(userId)
+
+  if (ownerIds.length === 0) {
+    return []
+  }
 
   const { data, error } = await supabase
     .from("notifications")
@@ -24,23 +24,19 @@ export async function listNotifications({
       id,
       user_id,
       type,
+      status,
+      title,
       body,
-      read_at,
-      created_at
+      data,
+      created_at,
+      read_at
     `)
-    .eq("user_id", userId)
+    .in("user_id", ownerIds)
     .order("created_at", { ascending: false })
 
   if (error) {
     throw error
   }
 
-  return (data ?? []).map((row: any) => ({
-    id: row.id,
-    userId: row.user_id,
-    type: row.type,
-    message: row.body ?? "",
-    isRead: row.read_at !== null,
-    createdAt: row.created_at,
-  }))
+  return (data ?? []).map((row: NotificationRow) => mapNotificationRow(row))
 }

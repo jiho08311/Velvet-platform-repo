@@ -7,6 +7,7 @@ import { getConversationById } from "@/modules/message/server/get-conversation-b
 import { listMessages } from "@/modules/message/server/list-messages"
 import { MessagePurchaseButton } from "@/modules/message/ui/MessagePurchaseButton"
 import { MessageComposerSection } from "@/modules/message/ui/MessageComposerSection"
+import { ReportButton } from "@/modules/report/ui/ReportButton"
 
 type ConversationDetailPageProps = {
   params: Promise<{
@@ -19,6 +20,7 @@ export default async function ConversationDetailPage({
 }: ConversationDetailPageProps) {
   const user = await requireUser()
   const { conversationId } = await params
+  const pathname = `/messages/${conversationId}`
 
   const conversation = await getConversationById({
     conversationId,
@@ -31,7 +33,7 @@ export default async function ConversationDetailPage({
 
   const messages = await listMessages({
     conversationId,
-    userId: user.id, // 🔥 핵심 수정
+    userId: user.id,
   })
 
   const participant = conversation.participant
@@ -92,75 +94,88 @@ export default async function ConversationDetailPage({
                   key={message.id}
                   className={`flex ${isMine ? "justify-end" : "justify-start"}`}
                 >
-                  <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                      isMine
-                        ? "bg-white text-black"
-                        : "border border-white/10 bg-white/5 text-white"
-                    }`}
-                  >
-                    {message.isLocked ? (
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-xs font-medium uppercase tracking-[0.18em] opacity-70">
-                            PPV message
-                          </p>
-                          <p className="mt-2 text-sm opacity-80">
-                            Unlock this message to view the content.
-                          </p>
-                        </div>
-
-                        {message.price ? (
-                          <p className="text-sm font-medium">
-                            ₩{message.price.toLocaleString()}
-                          </p>
-                        ) : null}
-
-                        {!isMine ? (
-                          <MessagePurchaseButton messageId={message.id} />
-                        ) : null}
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {message.content ? (
-                          <p className="whitespace-pre-wrap text-sm leading-6">
-                            {message.content}
-                          </p>
-                        ) : null}
-
-                        {message.media.length > 0 ? (
-                          <div className="space-y-3">
-                            {message.media.map((media) =>
-                              media.type === "image" ? (
-                                <img
-                                  key={media.id}
-                                  src={media.url}
-                                  alt=""
-                                  className="w-full rounded-xl object-cover"
-                                />
-                              ) : (
-                                <video
-                                  key={media.id}
-                                  src={media.url}
-                                  controls
-                                  playsInline
-                                  preload="metadata"
-                                  className="w-full rounded-xl"
-                                />
-                              )
-                            )}
-                          </div>
-                        ) : null}
-                      </div>
-                    )}
-
-                    <p
-                      className={`mt-2 text-xs ${
-                        isMine ? "text-black/60" : "text-white/50"
+                  <div className="max-w-[80%]">
+                    <div
+                      className={`rounded-2xl px-4 py-3 ${
+                        isMine
+                          ? "bg-white text-black"
+                          : "border border-white/10 bg-white/5 text-white"
                       }`}
                     >
-                      {new Date(message.createdAt).toLocaleString()}
-                    </p>
+                      {message.isLocked ? (
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-xs font-medium uppercase tracking-[0.18em] opacity-70">
+                              PPV message
+                            </p>
+                            <p className="mt-2 text-sm opacity-80">
+                              Unlock this message to view the content.
+                            </p>
+                          </div>
+
+                          {message.price ? (
+                            <p className="text-sm font-medium">
+                              ₩{message.price.toLocaleString()}
+                            </p>
+                          ) : null}
+
+                          {!isMine ? (
+                            <MessagePurchaseButton messageId={message.id} />
+                          ) : null}
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {message.content ? (
+                            <p className="whitespace-pre-wrap text-sm leading-6">
+                              {message.content}
+                            </p>
+                          ) : null}
+
+                          {message.media.length > 0 ? (
+                            <div className="space-y-3">
+                              {message.media.map((media) =>
+                                media.type === "image" ? (
+                                  <img
+                                    key={media.id}
+                                    src={media.url}
+                                    alt=""
+                                    className="w-full rounded-xl object-cover"
+                                  />
+                                ) : (
+                                  <video
+                                    key={media.id}
+                                    src={media.url}
+                                    controls
+                                    playsInline
+                                    preload="metadata"
+                                    className="w-full rounded-xl"
+                                  />
+                                )
+                              )}
+                            </div>
+                          ) : null}
+                        </div>
+                      )}
+
+                      <p
+                        className={`mt-2 text-xs ${
+                          isMine ? "text-black/60" : "text-white/50"
+                        }`}
+                      >
+                        {new Date(message.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+
+                    {/* 🔥 신고 버튼 */}
+                    {!isMine && (
+                      <div className="mt-1">
+                        <ReportButton
+                          targetType="message"
+                          targetId={message.id}
+                          pathname={pathname}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               )

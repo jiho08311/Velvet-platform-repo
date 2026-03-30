@@ -15,16 +15,23 @@ export async function POST(request: Request) {
     if (!body.notificationId) {
       return NextResponse.json(
         { error: "notificationId is required" },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
-    const result = await markNotificationRead(
+    const notification = await markNotificationRead(
       body.notificationId,
-      user.id
+      user.id,
     )
 
-    return NextResponse.json(result)
+    if (!notification) {
+      return NextResponse.json(
+        { error: "Notification not found" },
+        { status: 404 },
+      )
+    }
+
+    return NextResponse.json({ notification }, { status: 200 })
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to mark as read"

@@ -29,7 +29,9 @@ export async function POST(
     return NextResponse.json({ notification }, { status: 200 })
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Failed to mark notification as read"
+      error instanceof Error
+        ? error.message
+        : "Failed to mark notification as read"
 
     return NextResponse.json({ error: message }, { status: 400 })
   }

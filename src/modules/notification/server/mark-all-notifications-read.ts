@@ -1,44 +1,39 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 
-import type {
-  MarkNotificationReadResult,
-  NotificationRow,
-} from "../types"
 import { getNotificationOwnerIds } from "./get-notification-owner-ids"
 
-export async function markNotificationRead(
-  notificationId: string,
-  userId: string,
-): Promise<MarkNotificationReadResult | null> {
+type MarkAllNotificationsReadParams = {
+  userId: string
+}
+
+type NotificationUnreadRow = {
+  id: string
+}
+
+export async function markAllNotificationsRead({
+  userId,
+}: MarkAllNotificationsReadParams): Promise<number> {
   const supabase = await createSupabaseServerClient()
   const ownerIds = await getNotificationOwnerIds(userId)
 
   if (ownerIds.length === 0) {
-    return null
+    return 0
   }
 
   const { data, error } = await supabase
     .from("notifications")
-    .select("id, user_id, read_at")
-    .eq("id", notificationId)
+    .select("id")
     .in("user_id", ownerIds)
-    .maybeSingle<NotificationRow>()
+    .is("read_at", null)
 
   if (error) {
     throw error
   }
 
-  if (!data) {
-    return null
-  }
+  const unreadNotifications = (data ?? []) as NotificationUnreadRow[]
 
-  if (data.read_at) {
-    return {
-      id: data.id,
-      userId: data.user_id,
-      status: "read",
-      readAt: data.read_at,
-    }
+  if (unreadNotifications.length === 0) {
+    return 0
   }
 
   const readAt = new Date().toISOString()
@@ -46,20 +41,15 @@ export async function markNotificationRead(
   const { error: updateError } = await supabase
     .from("notifications")
     .update({
-      read_at: readAt,
       status: "read",
+      read_at: readAt,
     })
-    .eq("id", notificationId)
     .in("user_id", ownerIds)
+    .is("read_at", null)
 
   if (updateError) {
     throw updateError
   }
 
-  return {
-    id: data.id,
-    userId: data.user_id,
-    status: "read",
-    readAt,
-  }
+  return unreadNotifications.length
 }

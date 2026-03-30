@@ -1,28 +1,43 @@
-import { createClient } from "@/infrastructure/supabase/server"
+import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 
-export async function getNotifications(userId: string) {
-  const supabase = await createClient()
+import type { Notification, NotificationRow } from "../types"
+import { mapNotificationRow } from "../types"
+
+type GetNotificationByIdParams = {
+  notificationId: string
+  userId: string
+}
+
+export async function getNotificationById({
+  notificationId,
+  userId,
+}: GetNotificationByIdParams): Promise<Notification | null> {
+  const supabase = await createSupabaseServerClient()
 
   const { data, error } = await supabase
     .from("notifications")
-    .select(
-      "id, user_id, type, status, title, body, data, created_at, read_at"
-    )
+    .select(`
+      id,
+      user_id,
+      type,
+      status,
+      title,
+      body,
+      data,
+      created_at,
+      read_at
+    `)
+    .eq("id", notificationId)
     .eq("user_id", userId)
-    .order("created_at", { ascending: false })
+    .maybeSingle<NotificationRow>()
 
   if (error) {
     throw error
   }
 
-  return (data ?? []).map((n) => ({
-    id: n.id,
-    userId: n.user_id,
-    type: n.type,
-    title: n.title,
-    body: n.body,
-    data: n.data,
-    createdAt: n.created_at,
-    isRead: n.read_at !== null,
-  }))
+  if (!data) {
+    return null
+  }
+
+  return mapNotificationRow(data)
 }

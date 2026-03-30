@@ -162,6 +162,28 @@ export async function sendMessage(input: SendMessageInput) {
 
   console.log("[sendMessage] created message:", message.id)
 
+// notification: ppv_message_received
+try {
+  if (messageType === "ppv" && otherUserId) {
+    const { createNotification } = await import(
+      "@/modules/notification/server/create-notification"
+    )
+
+    await createNotification({
+      userId: otherUserId,
+      type: "ppv_message_received",
+      title: "New PPV message",
+      body: "You received a paid message.",
+      data: {
+        messageId: message.id,
+        conversationId: input.conversationId,
+      },
+    })
+  }
+} catch (e) {
+  console.error("ppv_message_received notification error:", e)
+}
+
   if (mediaIds.length > 0) {
     const { data: updatedMedia, error: mediaUpdateError } = await supabaseAdmin
       .from("media")

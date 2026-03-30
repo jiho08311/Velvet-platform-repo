@@ -17,6 +17,31 @@ const navigationItems = [
 export function AppSidebar() {
   const pathname = usePathname()
   const [isCreator, setIsCreator] = useState<boolean | null>(null)
+  const [hasUnread, setHasUnread] = useState(false)
+
+  useEffect(() => {
+    async function fetchUnread() {
+      try {
+        const res = await fetch("/api/notifications", {
+          cache: "no-store",
+        })
+
+        if (!res.ok) return
+
+        const data = await res.json()
+
+        const unread = Array.isArray(data?.notifications)
+          ? data.notifications.some((n: any) => n.isRead === false)
+          : false
+
+        setHasUnread(unread)
+      } catch {
+        setHasUnread(false)
+      }
+    }
+
+    fetchUnread()
+  }, [])
 
   useEffect(() => {
     async function checkCreator() {
@@ -51,13 +76,17 @@ export function AppSidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex min-h-[48px] items-center rounded-2xl px-4 text-sm font-medium transition ${
+                className={`relative flex min-h-[48px] items-center rounded-2xl px-4 text-sm font-medium transition ${
                   isActive
                     ? "bg-[#C2185B] text-white shadow-sm"
                     : "text-zinc-400 hover:bg-zinc-900 hover:text-white"
                 }`}
               >
                 {item.label}
+
+                {item.href === "/notifications" && hasUnread ? (
+                  <span className="ml-auto h-2 w-2 rounded-full bg-red-500" />
+                ) : null}
               </Link>
             )
           })}

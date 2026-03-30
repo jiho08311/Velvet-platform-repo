@@ -1,5 +1,7 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 
+import { getNotificationOwnerIds } from "./get-notification-owner-ids"
+
 type DeleteNotificationParams = {
   notificationId: string
   userId: string
@@ -12,14 +14,19 @@ type NotificationRow = {
 export async function deleteNotification({
   notificationId,
   userId,
-}: DeleteNotificationParams): Promise<void> {
+}: DeleteNotificationParams): Promise<boolean> {
   const supabase = await createSupabaseServerClient()
+  const ownerIds = await getNotificationOwnerIds(userId)
+
+  if (ownerIds.length === 0) {
+    return false
+  }
 
   const { data, error } = await supabase
     .from("notifications")
     .select("id")
     .eq("id", notificationId)
-    .eq("user_id", userId)
+    .in("user_id", ownerIds)
     .maybeSingle<NotificationRow>()
 
   if (error) {
@@ -27,16 +34,18 @@ export async function deleteNotification({
   }
 
   if (!data) {
-    throw new Error("Notification not found")
+    return false
   }
 
   const { error: deleteError } = await supabase
     .from("notifications")
     .delete()
     .eq("id", notificationId)
-    .eq("user_id", userId)
+    .in("user_id", ownerIds)
 
   if (deleteError) {
     throw deleteError
   }
+
+  return true
 }

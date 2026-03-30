@@ -1,5 +1,8 @@
+"use client"
+
 import Link from "next/link"
 import Image from "next/image"
+import { useEffect, useState } from "react"
 import { SignOutButton } from "@/modules/auth/ui/SignOutButton"
 
 type AppHeaderProps = {
@@ -13,6 +16,33 @@ export function AppHeader({
   description,
   action,
 }: AppHeaderProps) {
+  const [hasUnread, setHasUnread] = useState(false)
+
+  useEffect(() => {
+    async function fetchUnread() {
+      try {
+        const res = await fetch("/api/notifications", {
+          cache: "no-store",
+        })
+
+        if (!res.ok) {
+          return
+        }
+
+        const data = await res.json()
+        const unread = Array.isArray(data?.notifications)
+          ? data.notifications.some((notification: { isRead?: boolean }) => notification.isRead === false)
+          : false
+
+        setHasUnread(unread)
+      } catch {
+        setHasUnread(false)
+      }
+    }
+
+    fetchUnread()
+  }, [])
+
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-900/80 bg-zinc-950/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 px-4 py-3 md:px-6">
@@ -47,17 +77,29 @@ export function AppHeader({
             >
               Feed
             </Link>
+
             <Link
               href="/search"
               className="rounded-full px-3 py-2 text-sm font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
             >
               Search
             </Link>
+
             <Link
               href="/messages"
               className="rounded-full px-3 py-2 text-sm font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
             >
               Messages
+            </Link>
+
+            <Link
+              href="/notifications"
+              className="relative rounded-full px-3 py-2 text-sm font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
+            >
+              Notifications
+              {hasUnread ? (
+                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
+              ) : null}
             </Link>
           </nav>
 
@@ -68,9 +110,7 @@ export function AppHeader({
             New post
           </Link>
 
-          <div className="shrink-0">
-            {action ?? <SignOutButton />}
-          </div>
+          <div className="shrink-0">{action ?? <SignOutButton />}</div>
         </div>
       </div>
     </header>

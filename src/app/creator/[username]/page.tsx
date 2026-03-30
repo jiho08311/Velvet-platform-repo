@@ -9,6 +9,7 @@ import { getCreatorDashboardSummary } from "@/modules/analytics/server/get-creat
 import { getCreatorFeed } from "@/modules/post/server/get-creator-feed"
 import { CreatePostComposer } from "@/modules/post/ui/CreatePostComposer"
 import { PostCard } from "@/modules/post/ui/PostCard"
+import { ReportButton } from "@/modules/report/ui/ReportButton"
 import { getViewerSubscription } from "@/modules/subscription/server/get-viewer-subscription"
 import { SubscriptionStatusCard } from "@/modules/subscription/ui/SubscriptionStatusCard"
 
@@ -45,6 +46,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
   const user = await getCurrentUser()
   const userId = user?.id
   const isOwner = userId === creator.userId
+  const pathname = `/creator/${username}`
 
   if (!userId) {
     redirect(`/sign-in?next=/creator/${username}`)
@@ -134,6 +136,16 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
         <p className="mt-4 text-sm text-zinc-400">
           {creator.bio ?? "No bio yet."}
         </p>
+
+        {!isOwner ? (
+          <div className="mt-2">
+            <ReportButton
+              targetType="creator"
+              targetId={creator.id}
+              pathname={pathname}
+            />
+          </div>
+        ) : null}
 
         {!isOwner ? (
           <div className="mt-4">

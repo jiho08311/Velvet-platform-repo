@@ -1,41 +1,38 @@
-import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
+import { requireAdmin } from "@/modules/admin/server/require-admin"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
-type ReportRow = {
-  id: string
-  user_id: string
-  target_id: string
-  type: string
-  reason: string
-  created_at: string
+type ListReportsParams = {
+  limit?: number
 }
 
-export type Report = {
-  id: string
-  userId: string
-  targetId: string
-  type: string
-  reason: string
-  createdAt: string
-}
+export async function listReports(params: ListReportsParams = {}) {
+  await requireAdmin()
 
-export async function listReports(): Promise<Report[]> {
-  const supabase = await createSupabaseServerClient()
+  const limit = Math.min(params.limit ?? 50, 100)
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("reports")
-    .select("id, user_id, target_id, type, reason, created_at")
+    .select(`
+      id,
+      target_type,
+      target_id,
+      reason,
+      description,
+      status,
+      created_at,
+      reporter:profiles!reports_reporter_id_fkey (
+        id,
+        email,
+        username,
+        display_name
+      )
+    `)
     .order("created_at", { ascending: false })
+    .limit(limit)
 
   if (error) {
     throw error
   }
 
-  return (data ?? []).map((row: ReportRow) => ({
-    id: row.id,
-    userId: row.user_id,
-    targetId: row.target_id,
-    type: row.type,
-    reason: row.reason,
-    createdAt: row.created_at,
-  }))
+  return data ?? []
 }

@@ -11,7 +11,12 @@ export async function GET() {
       userId: user.id,
     })
 
-    return NextResponse.json({ notifications }, { status: 200 })
+    return NextResponse.json(
+      {
+        notifications,
+      },
+      { status: 200 },
+    )
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to load notifications"

@@ -1,5 +1,9 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 
+import type { Notification, NotificationRow } from "../types"
+import { mapNotificationRow } from "../types"
+import { getNotificationOwnerIds } from "./get-notification-owner-ids"
+
 type GetNotificationByIdParams = {
   notificationId: string
   userId: string
@@ -8,8 +12,13 @@ type GetNotificationByIdParams = {
 export async function getNotificationById({
   notificationId,
   userId,
-}: GetNotificationByIdParams) {
+}: GetNotificationByIdParams): Promise<Notification | null> {
   const supabase = await createSupabaseServerClient()
+  const ownerIds = await getNotificationOwnerIds(userId)
+
+  if (ownerIds.length === 0) {
+    return null
+  }
 
   const { data, error } = await supabase
     .from("notifications")
@@ -17,37 +26,24 @@ export async function getNotificationById({
       id,
       user_id,
       type,
+      status,
       title,
       body,
-      status,
       data,
       created_at,
       read_at
     `)
     .eq("id", notificationId)
-    .eq("user_id", userId)
-    .maybeSingle()
+    .in("user_id", ownerIds)
+    .maybeSingle<NotificationRow>()
 
   if (error) {
-    throw new Error("Failed to load notification")
+    throw error
   }
 
   if (!data) {
     return null
   }
 
-  return {
-    id: data.id,
-    type: data.type,
-    content: data.body ?? "",
-    title: data.title ?? "",
-    status: data.status,
-    createdAt: data.created_at,
-    isRead: data.read_at !== null,
-    relatedCreatorId: null,
-    relatedCreatorUsername: null,
-    relatedCreatorDisplayName: null,
-    relatedPostId: null,
-    relatedPostTitle: null,
-  }
+  return mapNotificationRow(data)
 }

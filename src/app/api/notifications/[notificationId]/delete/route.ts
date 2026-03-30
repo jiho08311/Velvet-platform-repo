@@ -17,10 +17,17 @@ export async function POST(
     const { notificationId } = await params
     const user = await requireUser()
 
-    await deleteNotification({
+    const deleted = await deleteNotification({
       notificationId,
       userId: user.id,
     })
+
+    if (!deleted) {
+      return NextResponse.json(
+        { error: "Notification not found" },
+        { status: 404 },
+      )
+    }
 
     return NextResponse.json({ success: true }, { status: 200 })
   } catch (error) {

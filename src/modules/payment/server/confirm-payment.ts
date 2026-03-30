@@ -2,6 +2,7 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createEarning } from "@/modules/payout/server/create-earning"
 import { markEarningAsAvailable } from "@/modules/payout/server/mark-earning-as-available"
 import { upsertSubscription } from "@/modules/subscription/server/upsert-subscription"
+import { createNotification } from "@/modules/notification/server/create-notification"
 
 import { getPaymentProvider } from "./payment-provider-factory"
 
@@ -50,9 +51,7 @@ async function processSettlement(payment: {
   creator_id: string | null
   type: PaymentType
 }) {
-  if (!isSettlablePaymentType(payment.type)) {
-    return
-  }
+  if (!isSettlablePaymentType(payment.type)) return
 
   try {
     const earning = await createEarning({
@@ -73,10 +72,7 @@ export async function confirmPayment({
   paymentId,
 }: ConfirmPaymentInput): Promise<ConfirmedPayment | null> {
   const id = paymentId.trim()
-
-  if (!id) {
-    return null
-  }
+  if (!id) return null
 
   const { data: existingPayment, error: existingPaymentError } =
     await supabaseAdmin
@@ -85,14 +81,10 @@ export async function confirmPayment({
       .eq("id", id)
       .maybeSingle<PaymentRow>()
 
-  if (existingPaymentError) {
-    throw existingPaymentError
-  }
+  if (existingPaymentError) throw existingPaymentError
+  if (!existingPayment) return null
 
-  if (!existingPayment) {
-    return null
-  }
-
+  // 🔥 이미 성공된 결제
   if (existingPayment.status === "succeeded") {
     if (existingPayment.type === "subscription" && existingPayment.creator_id) {
       const currentPeriodStart =
@@ -116,14 +108,50 @@ export async function confirmPayment({
       type: existingPayment.type,
     })
 
+    // ✅ payment 알림만 유지
+    try {
+      await createNotification({
+        userId: existingPayment.user_id,
+        type: "payment_succeeded",
+        title: "Payment successful",
+        body: "Your payment was completed successfully.",
+        data: { paymentId: existingPayment.id },
+      })
+
+      if (
+        existingPayment.type === "ppv_message" &&
+        existingPayment.creator_id
+      ) {
+        const { data: creator } = await supabaseAdmin
+          .from("creators")
+          .select("user_id")
+          .eq("id", existingPayment.creator_id)
+          .maybeSingle()
+
+        if (creator?.user_id) {
+          await createNotification({
+            userId: creator.user_id,
+            type: "ppv_message_purchased",
+            title: "PPV purchased",
+            body: "A user purchased your PPV message.",
+            data: { paymentId: existingPayment.id },
+          })
+        }
+      }
+    } catch (e) {
+      console.error("notification error:", e)
+    }
+
     return {
       id: existingPayment.id,
       status: "succeeded",
       provider: existingPayment.provider,
-      confirmedAt: existingPayment.confirmed_at ?? new Date().toISOString(),
+      confirmedAt:
+        existingPayment.confirmed_at ?? new Date().toISOString(),
     }
   }
 
+  // 🔥 신규 결제 confirm
   const provider = getPaymentProvider(existingPayment.provider)
 
   const providerResult = await provider.confirmPayment({
@@ -146,22 +174,10 @@ export async function confirmPayment({
     .eq("id", id)
     .eq("status", "pending")
     .select("id, user_id, creator_id, type, provider, confirmed_at")
-    .maybeSingle<{
-      id: string
-      user_id: string
-      creator_id: string | null
-      type: PaymentType
-      provider: PaymentProvider
-      confirmed_at: string | null
-    }>()
+    .maybeSingle()
 
-  if (error) {
-    throw error
-  }
-
-  if (!data) {
-    return null
-  }
+  if (error) throw error
+  if (!data) return null
 
   if (data.type === "subscription" && data.creator_id) {
     const currentPeriodStart = data.confirmed_at ?? confirmedAt
@@ -183,6 +199,37 @@ export async function confirmPayment({
     creator_id: data.creator_id,
     type: data.type,
   })
+
+  // ✅ payment 알림만 유지
+  try {
+    await createNotification({
+      userId: data.user_id,
+      type: "payment_succeeded",
+      title: "Payment successful",
+      body: "Your payment was completed successfully.",
+      data: { paymentId: data.id },
+    })
+
+    if (data.type === "ppv_message" && data.creator_id) {
+      const { data: creator } = await supabaseAdmin
+        .from("creators")
+        .select("user_id")
+        .eq("id", data.creator_id)
+        .maybeSingle()
+
+      if (creator?.user_id) {
+        await createNotification({
+          userId: creator.user_id,
+          type: "ppv_message_purchased",
+          title: "PPV purchased",
+          body: "A user purchased your PPV message.",
+          data: { paymentId: data.id },
+        })
+      }
+    }
+  } catch (e) {
+    console.error("notification error:", e)
+  }
 
   return {
     id: data.id,
