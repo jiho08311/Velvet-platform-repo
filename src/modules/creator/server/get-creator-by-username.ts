@@ -1,11 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
-type ProfileLookupRow = {
-  id: string
-  username: string
-  display_name: string
-}
-
 type CreatorRow = {
   id: string
   user_id: string
@@ -15,6 +9,15 @@ type CreatorRow = {
   created_at: string
   updated_at: string
   username: string
+}
+
+type ProfileRow = {
+  id: string
+  username: string
+  display_name: string | null
+  avatar_url: string | null
+  bio: string | null
+  is_deactivated: boolean
 }
 
 export async function getCreatorByUsername(username?: string) {
@@ -33,22 +36,22 @@ export async function getCreatorByUsername(username?: string) {
   if (creatorError) throw creatorError
   if (!creator) return null
 
-const { data: profile, error: profileError } = await supabaseAdmin
-  .from("profiles")
-  .select("id, username, display_name, is_deactivated")
-  .eq("id", creator.user_id)
-  .maybeSingle()
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select("id, username, display_name, avatar_url, bio, is_deactivated")
+    .eq("id", creator.user_id)
+    .maybeSingle<ProfileRow>()
 
-if (profileError) throw profileError
-if (!profile || profile.is_deactivated) return null // ✅ 추가
+  if (profileError) throw profileError
+  if (!profile || profile.is_deactivated) return null
 
   return {
     id: creator.id,
     userId: creator.user_id,
     username: creator.username,
-    displayName: profile.display_name,
-    avatarUrl: "",
-    bio: "",
+    displayName: profile.display_name ?? profile.username,
+    avatarUrl: profile.avatar_url ?? null,
+    bio: profile.bio ?? "",
     status: creator.status,
     subscriptionPriceCents: creator.subscription_price_cents,
     subscriptionCurrency: creator.subscription_currency,

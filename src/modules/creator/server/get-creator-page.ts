@@ -8,6 +8,14 @@ type GetCreatorPageInput = {
   viewerUserId?: string | null
 }
 
+type ProfileRow = {
+  id: string
+  display_name: string | null
+  avatar_url: string | null
+  bio: string | null
+  is_deactivated: boolean
+}
+
 export async function getCreatorPage({
   username,
   viewerUserId,
@@ -26,6 +34,16 @@ export async function getCreatorPage({
 
   if (!creator) return null
 
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("id, display_name, avatar_url, bio, is_deactivated")
+    .eq("id", creator.user_id)
+    .maybeSingle<ProfileRow>()
+
+  if (!profile || profile.is_deactivated) {
+    return null
+  }
+
   let isSubscribed = false
 
   if (viewerUserId) {
@@ -42,6 +60,7 @@ export async function getCreatorPage({
     )
     .eq("creator_id", creator.id)
     .eq("status", "published")
+    .is("deleted_at", null)
     .order("published_at", { ascending: false })
 
   const postList = posts ?? []
@@ -114,8 +133,8 @@ export async function getCreatorPage({
         currentUserId: viewerUserId ?? null,
         creator: {
           username: creator.username,
-          displayName: creator.display_name,
-          avatarUrl: null,
+          displayName: profile.display_name ?? creator.username,
+          avatarUrl: profile.avatar_url ?? null,
         },
       }
     })
@@ -126,7 +145,9 @@ export async function getCreatorPage({
       id: creator.id,
       userId: creator.user_id,
       username: creator.username,
-      displayName: creator.display_name,
+      displayName: profile.display_name ?? creator.username,
+      avatarUrl: profile.avatar_url ?? null,
+      bio: profile.bio ?? "",
       isSubscribed,
     },
     posts: items,

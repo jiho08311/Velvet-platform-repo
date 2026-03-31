@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { createReportAction } from "@/app/actions/create-report-action"
 
 type ReportTargetType = "post" | "message" | "user" | "creator"
@@ -9,6 +10,7 @@ type ReportButtonProps = {
   targetType: ReportTargetType
   targetId: string
   pathname: string
+  currentUserId?: string // ✅ 추가
 }
 
 const REASONS = [
@@ -26,14 +28,27 @@ export function ReportButton({
   targetType,
   targetId,
   pathname,
+  currentUserId, // ✅ 추가
 }: ReportButtonProps) {
   const [open, setOpen] = useState(false)
+  const router = useRouter()
+
+  const isGuest = !currentUserId // ✅ 핵심
+
+  function handleClick() {
+    if (isGuest) {
+      router.push(`/sign-in?next=${encodeURIComponent(pathname)}`)
+      return
+    }
+
+    setOpen((prev) => !prev)
+  }
 
   return (
     <div className="space-y-2">
       <button
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={handleClick} // ✅ 변경
         className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800"
       >
         {open ? "Cancel report" : "Report"}
