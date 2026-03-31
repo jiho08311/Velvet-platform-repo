@@ -29,6 +29,10 @@ type CreatorRow = {
   username: string
   display_name: string | null
   user_id: string
+  profiles: {
+    id: string
+    is_deactivated: boolean
+  } | null
 }
 
 function shuffleArray<T>(items: T[]): T[] {
@@ -51,6 +55,7 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
     .select("id, creator_id, created_at, published_at")
     .eq("status", "published")
     .eq("visibility", "public")
+    .is("deleted_at", null)
     .order("published_at", { ascending: false })
     .limit(fetchSize)
     .returns<PostRow[]>()
@@ -81,9 +86,7 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
     }
   }
 
-  const postsWithImage = posts.filter((post) =>
-    firstImageMap.has(post.id)
-  )
+  const postsWithImage = posts.filter((post) => firstImageMap.has(post.id))
 
   if (postsWithImage.length === 0) return []
 
@@ -93,9 +96,19 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
 
   const { data: creatorRows, error: creatorError } = await supabaseAdmin
     .from("creators")
-    .select("id, username, display_name, user_id")
+    .select(`
+      id,
+      username,
+      display_name,
+      user_id,
+      profiles!inner (
+        id,
+        is_deactivated
+      )
+    `)
     .in("id", creatorIds)
     .eq("status", "active")
+    .eq("profiles.is_deactivated", false)
     .returns<CreatorRow[]>()
 
   if (creatorError) throw creatorError
@@ -104,7 +117,13 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
     (creatorRows ?? []).map((creator) => [creator.id, creator])
   )
 
-  const shuffledPosts = shuffleArray(postsWithImage).slice(0, safeLimit)
+  const filteredPosts = postsWithImage.filter((post) =>
+    creatorMap.has(post.creator_id)
+  )
+
+  if (filteredPosts.length === 0) return []
+
+  const shuffledPosts = shuffleArray(filteredPosts).slice(0, safeLimit)
 
   return Promise.all(
     shuffledPosts.map(async (post) => {
@@ -115,7 +134,6 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
         throw new Error("Invalid explore post data")
       }
 
-      // ✅ 보안 적용 (핵심 수정)
       const imageUrl = await createMediaSignedUrl({
         storagePath: media.storage_path,
         viewerUserId: creator.user_id,

@@ -127,17 +127,49 @@ export async function getHomeFeed(
       .returns<PostRow[]>()
 
     const postList = posts ?? []
-    const fallbackCreatorIds = Array.from(new Set(postList.map((p) => p.creator_id)))
-    const postIds = postList.map((p) => p.id)
+    const fallbackCreatorIds = Array.from(
+      new Set(postList.map((post) => post.creator_id))
+    )
+
+    if (fallbackCreatorIds.length === 0) {
+      return {
+        items: [],
+        nextCursor: null,
+      }
+    }
 
     const { data: creators } = await supabaseAdmin
       .from("creators")
-      .select("id, user_id, username, display_name")
+      .select(`
+        id,
+        user_id,
+        username,
+        display_name,
+        profiles!inner (
+          id,
+          is_deactivated
+        )
+      `)
       .in("id", fallbackCreatorIds)
+      .eq("status", "active")
+      .eq("profiles.is_deactivated", false)
       .returns<CreatorRow[]>()
 
-    const creatorMap = new Map((creators ?? []).map((c) => [c.id, c]))
-    const creatorUserIds = (creators ?? []).map((c) => c.user_id)
+    const creatorMap = new Map((creators ?? []).map((creator) => [creator.id, creator]))
+    const filteredPosts = postList.filter((post) =>
+      creatorMap.has(post.creator_id)
+    )
+
+    if (filteredPosts.length === 0) {
+      return {
+        items: [],
+        nextCursor: null,
+      }
+    }
+
+    const creatorUserIds = Array.from(
+      new Set((creators ?? []).map((creator) => creator.user_id))
+    )
 
     const { data: profiles } = await supabaseAdmin
       .from("profiles")
@@ -145,7 +177,9 @@ export async function getHomeFeed(
       .in("id", creatorUserIds)
       .returns<ProfileRow[]>()
 
-    const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]))
+    const profileMap = new Map((profiles ?? []).map((profile) => [profile.id, profile]))
+
+    const postIds = filteredPosts.map((post) => post.id)
 
     const { data: mediaRows } = await supabaseAdmin
       .from("media")
@@ -164,7 +198,7 @@ export async function getHomeFeed(
     }
 
     const items: HomeFeedItem[] = await Promise.all(
-      postList.map(async (post) => {
+      filteredPosts.map(async (post) => {
         const creator = creatorMap.get(post.creator_id)
         const creatorUserId = creator?.user_id ?? ""
         const profile = profileMap.get(creatorUserId)
@@ -212,8 +246,19 @@ export async function getHomeFeed(
 
   const { data: creators } = await supabaseAdmin
     .from("creators")
-    .select("id, user_id, username, display_name")
+    .select(`
+      id,
+      user_id,
+      username,
+      display_name,
+      profiles!inner (
+        id,
+        is_deactivated
+      )
+    `)
     .in("id", creatorIds)
+    .eq("status", "active")
+    .eq("profiles.is_deactivated", false)
     .returns<CreatorRow[]>()
 
   const creatorMap = new Map<string, CreatorRow>()
@@ -224,20 +269,27 @@ export async function getHomeFeed(
     creatorUserIds.push(creator.user_id)
   }
 
+  if (creatorMap.size === 0) {
+    return {
+      items: [],
+      nextCursor: null,
+    }
+  }
+
   const { data: profiles } = await supabaseAdmin
     .from("profiles")
     .select("id, avatar_url")
     .in("id", creatorUserIds)
     .returns<ProfileRow[]>()
 
-  const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]))
+  const profileMap = new Map((profiles ?? []).map((profile) => [profile.id, profile]))
 
   let query = supabaseAdmin
     .from("posts")
     .select(
       "id, creator_id, title, content, visibility, price_cents, created_at, published_at"
     )
-    .in("creator_id", creatorIds)
+    .in("creator_id", Array.from(creatorMap.keys()))
     .eq("status", "published")
     .is("deleted_at", null)
     .order("published_at", { ascending: false })
@@ -260,7 +312,7 @@ export async function getHomeFeed(
     .eq("status", "succeeded")
     .in("target_id", postIds)
 
-  const purchasedSet = new Set((payments ?? []).map((p) => p.target_id))
+  const purchasedSet = new Set((payments ?? []).map((payment) => payment.target_id))
 
   const { data: mediaRows } = await supabaseAdmin
     .from("media")

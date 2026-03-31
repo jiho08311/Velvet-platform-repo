@@ -226,12 +226,12 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
             </div>
 
             <div className="shrink-0 flex flex-col gap-2">
-              <SubscribeButton
-                creatorId={creator.id}
-                creatorUserId={creator.userId}
-                currentUserId={userId}
-              />
-
+        <SubscribeButton
+  creatorId={creator.id}
+  creatorUserId={creator.userId}
+  currentUserId={userId}
+  creatorUsername={creator.username}
+/>
               {viewerSubscription.isActive && (
                 <Link
                   href={`/messages?creatorId=${creator.userId}`}

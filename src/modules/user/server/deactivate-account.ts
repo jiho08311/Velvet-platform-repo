@@ -62,17 +62,6 @@ export async function deactivateAccount(userId: string) {
   }
 
   if (creatorIds.length > 0) {
-    const { error: postError } = await supabaseAdmin
-      .from("posts")
-      .update({
-        status: "draft",
-      })
-      .in("creator_id", creatorIds)
-
-    if (postError) {
-      throw postError
-    }
-
     const { error: creatorSubscriptionError } = await supabaseAdmin
       .from("subscriptions")
       .update({
