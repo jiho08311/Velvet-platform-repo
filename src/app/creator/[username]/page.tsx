@@ -44,15 +44,14 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
   }
 
   const user = await getCurrentUser()
-  const userId = user?.id
+  const userId = user?.id ?? null
   const isOwner = userId === creator.userId
   const pathname = `/creator/${username}`
 
-  if (!userId) {
-    redirect(`/sign-in?next=/creator/${username}`)
-  }
+  // ❌ redirect 제거
 
-  if (!isOwner) {
+  // ✅ 로그인 유저에게만 PASS 검증
+  if (userId && !isOwner) {
     try {
       await assertPassVerified({ profileId: userId })
     } catch {
@@ -64,10 +63,15 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
 
   const posts = await getCreatorFeed({
     creatorId: creator.id,
-    userId,
+    userId: userId ?? "",
   })
 
-  const viewerSubscription = await getViewerSubscription(userId, creator.id)
+  const viewerSubscription = userId
+    ? await getViewerSubscription(userId, creator.id)
+    : {
+        isActive: false,
+        subscription: null,
+      }
 
   const subscriptionStatus: "active" | "canceled" | "expired" | "inactive" =
     viewerSubscription.isActive
@@ -123,12 +127,12 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                   <span className="ml-1 text-zinc-400">/ month</span>
                 </p>
 
-             <SubscribeButton
-  creatorId={creator.id}
-  creatorUserId={creator.userId}
-  currentUserId={userId}
-  creatorUsername={creator.username}
-/>
+                <SubscribeButton
+                  creatorId={creator.id}
+                  creatorUserId={creator.userId}
+                  currentUserId={userId ?? undefined}
+                  creatorUsername={creator.username}
+                />
 
                 {viewerSubscription.isActive && (
                   <Link
@@ -200,7 +204,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                 priceCents={post.priceCents}
                 creatorId={creator.id}
                 creatorUserId={creator.userId}
-                currentUserId={userId}
+                currentUserId={userId ?? undefined}
                 creator={{
                   username: creator.username,
                   displayName: creator.displayName ?? creator.username,
@@ -226,12 +230,13 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
             </div>
 
             <div className="shrink-0 flex flex-col gap-2">
-        <SubscribeButton
-  creatorId={creator.id}
-  creatorUserId={creator.userId}
-  currentUserId={userId}
-  creatorUsername={creator.username}
-/>
+              <SubscribeButton
+                creatorId={creator.id}
+                creatorUserId={creator.userId}
+                currentUserId={userId ?? undefined}
+                creatorUsername={creator.username}
+              />
+
               {viewerSubscription.isActive && (
                 <Link
                   href={`/messages?creatorId=${creator.userId}`}
