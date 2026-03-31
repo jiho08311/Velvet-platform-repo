@@ -18,7 +18,6 @@ export async function getCreatorPage({
     throw new Error("username is required")
   }
 
-  // 1. creator 조회
   const { data: creator } = await supabaseAdmin
     .from("creators")
     .select("id, user_id, username, display_name")
@@ -27,7 +26,6 @@ export async function getCreatorPage({
 
   if (!creator) return null
 
-  // 2. subscription 체크
   let isSubscribed = false
 
   if (viewerUserId) {
@@ -37,7 +35,6 @@ export async function getCreatorPage({
     })
   }
 
-  // 3. posts 조회
   const { data: posts } = await supabaseAdmin
     .from("posts")
     .select(
@@ -48,9 +45,8 @@ export async function getCreatorPage({
     .order("published_at", { ascending: false })
 
   const postList = posts ?? []
-  const postIds = postList.map((p) => p.id)
+  const postIds = postList.map((post) => post.id)
 
-  // 4. payments (한번에)
   let purchasedSet = new Set<string>()
 
   if (viewerUserId && postIds.length > 0) {
@@ -62,12 +58,9 @@ export async function getCreatorPage({
       .eq("status", "succeeded")
       .in("target_id", postIds)
 
-    purchasedSet = new Set(
-      (payments ?? []).map((p) => p.target_id)
-    )
+    purchasedSet = new Set((payments ?? []).map((payment) => payment.target_id))
   }
 
-  // 5. media 조회
   const { data: mediaRows } = await supabaseAdmin
     .from("media")
     .select("post_id, storage_path, type, mime_type, status, sort_order")
@@ -83,7 +76,6 @@ export async function getCreatorPage({
     mediaMap.set(media.post_id, current)
   }
 
-  // 6. 결과 구성
   const items = await Promise.all(
     postList.map(async (post) => {
       const hasPurchased = purchasedSet.has(post.id)
@@ -97,15 +89,15 @@ export async function getCreatorPage({
       })
 
       const media = await Promise.all(
-        (hasAccess ? mediaMap.get(post.id) ?? [] : []).map(async (m) => ({
+        (hasAccess ? mediaMap.get(post.id) ?? [] : []).map(async (item) => ({
           url: await createMediaSignedUrl({
-            storagePath: m.storage_path,
+            storagePath: item.storage_path,
             viewerUserId: viewerUserId ?? "",
             creatorUserId: creator.user_id,
             visibility: post.visibility,
             hasPurchased,
           }),
-          type: m.type ?? "image",
+          type: item.type ?? "image",
         }))
       )
 
@@ -116,6 +108,15 @@ export async function getCreatorPage({
         price: post.price_cents,
         media,
         createdAt: post.published_at ?? post.created_at,
+
+        creatorId: creator.id,
+        creatorUserId: creator.user_id,
+        currentUserId: viewerUserId ?? null,
+        creator: {
+          username: creator.username,
+          displayName: creator.display_name,
+          avatarUrl: null,
+        },
       }
     })
   )

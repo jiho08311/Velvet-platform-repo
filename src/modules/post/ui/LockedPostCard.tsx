@@ -3,11 +3,9 @@ type LockedPostCardProps = {
   createdAt: string
   previewThumbnailUrl?: string | null
 
-  ctaLabel: string
-  onClick: () => void
-
   priceCents?: number
   lockReason?: "subscription" | "purchase"
+  action?: React.ReactNode
 }
 
 function formatPrice(amount: number) {
@@ -18,10 +16,9 @@ export function LockedPostCard({
   previewText,
   createdAt,
   previewThumbnailUrl = null,
-  ctaLabel,
-  onClick,
   priceCents,
   lockReason,
+  action,
 }: LockedPostCardProps) {
   const isPaid =
     lockReason === "purchase" &&
@@ -66,13 +63,7 @@ export function LockedPostCard({
               </p>
             )}
 
-            <button
-              type="button"
-              onClick={onClick}
-              className="mt-4 inline-flex h-11 items-center justify-center rounded-full bg-[#C2185B] px-5 text-sm font-semibold text-white transition hover:bg-[#D81B60] active:bg-[#AD1457]"
-            >
-              {isPaid ? `Unlock ₩${formatPrice(priceCents)}` : ctaLabel}
-            </button>
+            {action ? <div className="mt-4">{action}</div> : null}
           </div>
         </div>
       </div>

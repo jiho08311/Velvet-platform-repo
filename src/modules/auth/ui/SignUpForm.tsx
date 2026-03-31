@@ -82,13 +82,28 @@ export function SignUpForm() {
           Birth date
         </label>
 
-        <input
-          type="date"
-          value={birthDate}
-          onChange={(e) => setBirthDate(e.target.value)}
-          required
-          className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/20"
-        />
+   <input
+  type="text"
+  value={birthDate}
+  onChange={(e) => {
+    let value = e.target.value.replace(/[^0-9]/g, "")
+
+    // YYYYMMDD 최대 8자리 제한
+    if (value.length > 8) return
+
+    // 자동 포맷: YYYY-MM-DD
+    if (value.length >= 5) {
+      value = `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`
+    } else if (value.length >= 3) {
+      value = `${value.slice(0, 4)}-${value.slice(4)}`
+    }
+
+    setBirthDate(value)
+  }}
+  placeholder="YYYY-MM-DD"
+  required
+  className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/20"
+/>
 
         <p className="text-xs text-zinc-400">
           Only users aged 19 or older can sign up. Age eligibility is checked on

@@ -2,11 +2,7 @@ export default function Footer() {
   return (
     <footer className="w-full border-t border-zinc-900 bg-zinc-950 text-sm text-zinc-500">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 md:px-6">
-        <p className="text-sm text-zinc-400">
-          Velvet | 대표자 양지호 | 사업자등록번호 113-25-65942
-        </p>
-
-        <p>경기도 성남시 분당구 판교로 711번길 14</p>
+        <p className="text-zinc-400">Velvet</p>
 
         <p>
           Contact:{" "}
@@ -15,17 +11,6 @@ export default function Footer() {
             className="text-zinc-300 transition hover:text-white"
           >
             platvelvet@gmail.com
-          </a>
-        </p>
-
-        {/* 🔥 전화번호 추가 */}
-        <p>
-          Phone:{" "}
-          <a
-            href="tel:+821088546156"
-            className="text-zinc-300 transition hover:text-white"
-          >
-            +82 10-8854-6156
           </a>
         </p>
 

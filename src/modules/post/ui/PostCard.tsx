@@ -1,6 +1,6 @@
 "use client"
 
-import { useRouter, usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
@@ -49,7 +49,7 @@ export function PostCard({
   const router = useRouter()
   const pathname = usePathname()
 
-   const creatorName = creator.displayName ?? creator.username
+  const creatorName = creator.displayName ?? creator.username
   const creatorInitial = creatorName.slice(0, 1).toUpperCase()
 
   const resolvedMedia =
@@ -132,7 +132,7 @@ export function PostCard({
 
     return (
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[28px] bg-zinc-950">
-         {resolvedMedia.slice(0, 2).map((item, index) => (
+        {resolvedMedia.slice(0, 2).map((item, index) => (
           <div
             key={`${item.url}-${index}`}
             className="aspect-square overflow-hidden bg-zinc-900"
@@ -152,6 +152,8 @@ export function PostCard({
             creatorId={creatorId}
             creatorUserId={creatorUserId}
             currentUserId={currentUserId}
+            creatorUsername={creator.username}
+            embedded
           />
         </div>
       )
@@ -160,7 +162,7 @@ export function PostCard({
     if (lockReason === "purchase" && postId) {
       return (
         <div onClick={(event) => event.stopPropagation()}>
-          <PostPurchaseButton postId={postId} />
+          <PostPurchaseButton postId={postId} embedded />
         </div>
       )
     }
@@ -201,30 +203,18 @@ export function PostCard({
 
         <div className="space-y-3">
           {isLocked ? (
-            <>
-              <LockedPostCard
-                previewText={text}
-                createdAt={createdAt}
+            <LockedPostCard
+              previewText={text}
+              createdAt={createdAt}
               previewThumbnailUrl={resolvedMedia[0]?.url ?? null}
-                ctaLabel={
-                  lockReason === "subscription" ? "Subscribe now" : "Unlock post"
-                }
-                priceCents={priceCents}
-                lockReason={
-                  lockReason === "subscription" || lockReason === "purchase"
-                    ? lockReason
-                    : undefined
-                }
-                onClick={() => {}}
-              />
-
-              <div
-                className="-mt-24 flex justify-center px-6 pb-2"
-                onClick={(event) => event.stopPropagation()}
-              >
-                {renderLockedAction()}
-              </div>
-            </>
+              priceCents={priceCents}
+              lockReason={
+                lockReason === "subscription" || lockReason === "purchase"
+                  ? lockReason
+                  : undefined
+              }
+              action={renderLockedAction()}
+            />
           ) : (
             <>
               {renderMedia()}
@@ -235,7 +225,6 @@ export function PostCard({
 
               <p className="text-xs text-zinc-500">{createdAt}</p>
 
-              {/* 🔥 신고 버튼 추가 */}
               {postId && (
                 <div onClick={(e) => e.stopPropagation()}>
                   <ReportButton

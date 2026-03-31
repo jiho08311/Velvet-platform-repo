@@ -7,7 +7,8 @@ type SubscribeButtonProps = {
   creatorId: string
   creatorUserId?: string
   currentUserId?: string
-   creatorUsername?: string 
+  creatorUsername?: string
+  embedded?: boolean
 }
 
 type SubscriptionCheckResponse = {
@@ -18,7 +19,7 @@ type SubscriptionCheckResponse = {
 type CheckoutResponse = {
   payment?: {
     id?: string
-    amountCents?: number // ✅ 여기 camelCase로 변경
+    amountCents?: number
   }
   checkout?: {
     orderId?: string
@@ -51,7 +52,8 @@ export default function SubscribeButton({
   creatorId,
   creatorUserId,
   currentUserId,
-    creatorUsername, 
+  creatorUsername,
+  embedded = false,
 }: SubscribeButtonProps) {
   const [loading, setLoading] = useState(false)
   const [subscribed, setSubscribed] = useState(false)
@@ -132,7 +134,7 @@ export default function SubscribeButton({
       }
 
       const paymentId = data.payment?.id
-const amountCents = data.payment?.amountCents ?? 0
+      const amountCents = data.payment?.amountCents ?? 0
       const orderId = data.checkout?.orderId ?? paymentId
       const orderName = data.checkout?.orderName ?? "Creator subscription"
 
@@ -147,7 +149,7 @@ const amountCents = data.payment?.amountCents ?? 0
         amount: amountCents,
         orderId,
         orderName,
-       successUrl: `${window.location.origin}/payment/success?paymentId=${paymentId}&creatorUsername=${creatorUsername}`,
+        successUrl: `${window.location.origin}/payment/success?paymentId=${paymentId}&creatorUsername=${creatorUsername}`,
         failUrl: `${window.location.origin}/payment/fail?paymentId=${paymentId}`,
       })
     } catch {
@@ -185,14 +187,19 @@ const amountCents = data.payment?.amountCents ?? 0
     }
   }
 
-  const buttonBase =
-    "inline-flex h-12 items-center justify-center rounded-full px-5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
+  const buttonBase = embedded
+    ? "inline-flex h-12 min-w-[220px] items-center justify-center rounded-full bg-[#C2185B] px-6 text-sm font-semibold text-white transition hover:bg-[#D81B60] active:bg-[#AD1457] disabled:cursor-not-allowed disabled:opacity-60"
+    : "inline-flex h-12 items-center justify-center rounded-full px-5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
 
   if (checking) {
     return (
       <button
         disabled
-        className={`${buttonBase} w-full min-w-[220px] bg-zinc-800 text-zinc-300 sm:w-auto`}
+        className={
+          embedded
+            ? "inline-flex h-12 min-w-[220px] items-center justify-center rounded-full bg-zinc-800 px-6 text-sm font-semibold text-zinc-300"
+            : `${buttonBase} w-full min-w-[220px] bg-zinc-800 text-zinc-300 sm:w-auto`
+        }
       >
         Checking...
       </button>
@@ -203,7 +210,11 @@ const amountCents = data.payment?.amountCents ?? 0
     return (
       <button
         disabled
-        className={`${buttonBase} w-full min-w-[220px] bg-zinc-800 text-zinc-400 sm:w-auto`}
+        className={
+          embedded
+            ? "inline-flex h-12 min-w-[220px] items-center justify-center rounded-full bg-zinc-800 px-6 text-sm font-semibold text-zinc-400"
+            : `${buttonBase} w-full min-w-[220px] bg-zinc-800 text-zinc-400 sm:w-auto`
+        }
       >
         Your creator page
       </button>
@@ -211,6 +222,23 @@ const amountCents = data.payment?.amountCents ?? 0
   }
 
   if (subscribed) {
+    if (embedded) {
+      return (
+        <button
+          type="button"
+          onClick={handleCancel}
+          disabled={loading || cancelAtPeriodEnd}
+          className="inline-flex h-12 min-w-[220px] items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 px-6 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {cancelAtPeriodEnd
+            ? "Cancellation scheduled"
+            : loading
+              ? "Processing..."
+              : "Cancel subscription"}
+        </button>
+      )
+    }
+
     return (
       <div className="flex w-full min-w-[220px] flex-col gap-2 sm:w-auto">
         <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3">
@@ -246,18 +274,20 @@ const amountCents = data.payment?.amountCents ?? 0
   }
 
   return (
-    <div className="flex w-full min-w-[220px] flex-col gap-2 sm:w-auto">
+    <div className={embedded ? "flex flex-col items-center gap-2" : "flex w-full min-w-[220px] flex-col gap-2 sm:w-auto"}>
       <button
         onClick={handleSubscribe}
         disabled={loading}
-        className={`${buttonBase} w-full bg-[#C2185B] text-white hover:bg-[#D81B60] active:bg-[#AD1457]`}
+        className={embedded ? buttonBase : `${buttonBase} w-full bg-[#C2185B] text-white hover:bg-[#D81B60] active:bg-[#AD1457]`}
       >
         {loading ? "Processing..." : "Subscribe now"}
       </button>
 
-      <p className="text-center text-xs text-zinc-500">
-        Cancel anytime
-      </p>
+      {!embedded ? (
+        <p className="text-center text-xs text-zinc-500">
+          Cancel anytime
+        </p>
+      ) : null}
 
       {errorMessage ? (
         <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-3 py-2">
