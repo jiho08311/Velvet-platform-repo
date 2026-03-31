@@ -30,6 +30,11 @@ type PostAccessRow = {
   price_cents: number
 }
 
+type CreatorRow = {
+  id: string
+  user_id: string
+}
+
 export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
   const resolvedPostId = postId.trim()
 
@@ -54,12 +59,25 @@ export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
     return []
   }
 
-  const isSubscribed = viewerUserId
-    ? await checkSubscription({
-        userId: viewerUserId,
-        creatorId: post.creator_id,
-      })
-    : false
+  const { data: creator, error: creatorError } = await supabaseAdmin
+    .from("creators")
+    .select("id, user_id")
+    .eq("id", post.creator_id)
+    .maybeSingle<CreatorRow>()
+
+  if (creatorError) {
+    throw creatorError
+  }
+
+  const creatorUserId = creator?.user_id ?? null
+
+  const isSubscribed =
+    viewerUserId && creatorUserId
+      ? await checkSubscription({
+          userId: viewerUserId,
+          creatorId: post.creator_id,
+        })
+      : false
 
   const hasPurchased =
     viewerUserId && post.visibility === "paid" && post.price_cents > 0
@@ -88,7 +106,7 @@ export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
       const url = await createMediaSignedUrl({
         storagePath: media.storage_path,
         viewerUserId,
-        creatorUserId: post.creator_id,
+        creatorUserId,
         visibility: post.visibility,
         isSubscribed,
         hasPurchased,

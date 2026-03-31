@@ -26,6 +26,13 @@ export async function getPostAccess({
 }: GetPostAccessInput): Promise<{
   canView: boolean
 }> {
+  // 🔥 핵심 추가: creator 본인은 무조건 접근 가능
+  if (viewerUserId && viewerUserId === creator.userId) {
+    return {
+      canView: true,
+    }
+  }
+
   const canView = canViewPost({
     viewerUserId: viewerUserId ?? null,
     creatorId: creator.userId,

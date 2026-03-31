@@ -31,13 +31,21 @@ export async function createMediaSignedUrl({
     return ""
   }
 
-  const hasAccess = canViewPost({
-    viewerUserId: resolvedViewerUserId,
-    creatorId: resolvedCreatorUserId,
-    visibility,
-    isSubscribed,
-    hasPurchased,
-  })
+  // ✅ 최소 수정: creator 본인은 무조건 접근 허용
+  const isOwner =
+    resolvedViewerUserId.length > 0 &&
+    resolvedCreatorUserId.length > 0 &&
+    resolvedViewerUserId === resolvedCreatorUserId
+
+  const hasAccess = isOwner
+    ? true
+    : canViewPost({
+        viewerUserId: resolvedViewerUserId,
+        creatorId: resolvedCreatorUserId,
+        visibility,
+        isSubscribed,
+        hasPurchased,
+      })
 
   if (!hasAccess) {
     return ""

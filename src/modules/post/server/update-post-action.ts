@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { createMedia } from "@/modules/media/server/create-media"
 import { uploadMedia } from "@/modules/media/server/upload-media"
+import { getCreatorStudioPost } from "@/modules/post/server/get-creator-studio-post"
 import { updatePost } from "@/modules/post/server/update-post"
 
 type UpdatePostActionInput = {
@@ -37,7 +38,7 @@ function resolveMediaType(file: File): "image" | "video" | "audio" | "file" {
 export async function updatePostAction({
   postId,
   text,
-  visibility,
+  visibility: _visibility,
   priceCents = 0,
   files = [],
   removedMediaIds = [],
@@ -54,7 +55,16 @@ export async function updatePostAction({
     throw new Error("Creator not found")
   }
 
-  if (visibility === "paid" && priceCents <= 0) {
+  const currentPost = await getCreatorStudioPost({
+    postId,
+    creatorId: creator.id,
+  })
+
+  if (!currentPost) {
+    throw new Error("Post not found")
+  }
+
+  if (currentPost.visibility === "paid" && priceCents <= 0) {
     throw new Error("Paid post price must be greater than 0")
   }
 
@@ -62,8 +72,8 @@ export async function updatePostAction({
     postId,
     creatorId: creator.id,
     content: text.trim() || null,
-    visibility,
-    priceCents: visibility === "paid" ? priceCents : 0,
+    visibility: currentPost.visibility,
+    priceCents: currentPost.visibility === "paid" ? priceCents : 0,
   })
 
   const validRemovedMediaIds = removedMediaIds

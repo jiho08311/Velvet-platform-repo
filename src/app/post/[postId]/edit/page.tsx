@@ -35,15 +35,12 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
     notFound()
   }
 
+  const fixedVisibility = post.visibility
+
   async function submitAction(formData: FormData) {
     "use server"
 
     const text = String(formData.get("text") ?? "")
-    const visibility = String(formData.get("visibility") ?? "public") as
-      | "public"
-      | "subscribers"
-      | "paid"
-
     const rawPrice = Number(formData.get("priceCents") ?? 0)
 
     const files = formData
@@ -57,7 +54,7 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
     await updatePostAction({
       postId,
       text,
-      visibility,
+   visibility: fixedVisibility,
       priceCents: Number.isFinite(rawPrice) ? rawPrice : 0,
       files,
       removedMediaIds,
@@ -90,9 +87,9 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
               <label className="space-y-2">
                 <span className="text-sm text-zinc-400">Visibility</span>
                 <select
-                  name="visibility"
-                  defaultValue={post.visibility}
-                  className="h-11 w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-3 text-sm text-white outline-none"
+                  value={post.visibility}
+                  disabled
+                  className="h-11 w-full cursor-not-allowed rounded-2xl border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-500 outline-none opacity-70"
                 >
                   <option value="public">Public</option>
                   <option value="subscribers">Subscribers</option>
@@ -105,7 +102,8 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
                 <select
                   name="priceCents"
                   defaultValue={String(post.priceCents > 0 ? post.priceCents : 4900)}
-                  className="h-11 w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-3 text-sm text-white outline-none"
+                  disabled={post.visibility !== "paid"}
+                  className="h-11 w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-3 text-sm text-white outline-none disabled:cursor-not-allowed disabled:text-zinc-500 disabled:opacity-70"
                 >
                   <option value={4900}>₩4,900</option>
                   <option value={9900}>₩9,900</option>
