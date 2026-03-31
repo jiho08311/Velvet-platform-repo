@@ -18,33 +18,53 @@ export function AppSidebar() {
   const pathname = usePathname()
   const [isCreator, setIsCreator] = useState<boolean | null>(null)
   const [hasUnread, setHasUnread] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+
+  function resolveHref(href: string) {
+    if (isAuthenticated === false) {
+      return `/sign-in?next=${encodeURIComponent(href)}`
+    }
+
+    return href
+  }
 
   useEffect(() => {
-    async function fetchUnread() {
+    async function fetchAuthAndUnread() {
       try {
         const res = await fetch("/api/notifications", {
           cache: "no-store",
         })
 
-        if (!res.ok) return
+        if (!res.ok) {
+          setIsAuthenticated(false)
+          setHasUnread(false)
+          return
+        }
+
+        setIsAuthenticated(true)
 
         const data = await res.json()
-
         const unread = Array.isArray(data?.notifications)
           ? data.notifications.some((n: any) => n.isRead === false)
           : false
 
         setHasUnread(unread)
       } catch {
+        setIsAuthenticated(false)
         setHasUnread(false)
       }
     }
 
-    fetchUnread()
+    fetchAuthAndUnread()
   }, [])
 
   useEffect(() => {
     async function checkCreator() {
+      if (isAuthenticated === false) {
+        setIsCreator(false)
+        return
+      }
+
       try {
         const res = await fetch("/api/creator/me", {
           cache: "no-store",
@@ -63,7 +83,7 @@ export function AppSidebar() {
     }
 
     checkCreator()
-  }, [])
+  }, [isAuthenticated])
 
   return (
     <aside className="hidden w-72 shrink-0 md:block">
@@ -75,7 +95,7 @@ export function AppSidebar() {
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={resolveHref(item.href)}
                 className={`relative flex min-h-[48px] items-center rounded-2xl px-4 text-sm font-medium transition ${
                   isActive
                     ? "bg-[#C2185B] text-white shadow-sm"
@@ -84,7 +104,7 @@ export function AppSidebar() {
               >
                 {item.label}
 
-                {item.href === "/notifications" && hasUnread ? (
+                {item.href === "/notifications" && isAuthenticated && hasUnread ? (
                   <span className="ml-auto h-2 w-2 rounded-full bg-red-500" />
                 ) : null}
               </Link>
@@ -93,8 +113,15 @@ export function AppSidebar() {
         </nav>
 
         <div className="mt-6">
-          {isCreator === null ? (
+          {isAuthenticated === null || isCreator === null ? (
             <div className="h-[48px] w-full animate-pulse rounded-2xl bg-zinc-800" />
+          ) : isAuthenticated === false ? (
+            <Link
+              href="/sign-in?next=%2Fbecome-creator"
+              className="inline-flex min-h-[48px] w-full items-center justify-center rounded-2xl bg-[#C2185B] px-4 text-sm font-semibold text-white transition hover:bg-[#D81B60] active:bg-[#AD1457]"
+            >
+              Become creator
+            </Link>
           ) : isCreator ? (
             <Link
               href="/dashboard"

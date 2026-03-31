@@ -1,7 +1,8 @@
 "use client"
 
 import { loadTossPayments } from "@tosspayments/payment-sdk"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { usePathname, useRouter } from "next/navigation"
 
 type SubscribeButtonProps = {
   creatorId: string
@@ -55,11 +56,20 @@ export default function SubscribeButton({
   creatorUsername,
   embedded = false,
 }: SubscribeButtonProps) {
+  const router = useRouter()
+  const pathname = usePathname()
   const [loading, setLoading] = useState(false)
   const [subscribed, setSubscribed] = useState(false)
   const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(false)
   const [checking, setChecking] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
+
+  const nextPath = useMemo(
+    () => encodeURIComponent(pathname || (creatorUsername ? `/creator/${creatorUsername}` : "/feed")),
+    [pathname, creatorUsername]
+  )
+
+  const isGuest = !currentUserId
 
   const isOwner =
     Boolean(currentUserId) &&
@@ -67,6 +77,13 @@ export default function SubscribeButton({
     currentUserId === creatorUserId
 
   async function checkCreatorSubscription() {
+    if (isGuest) {
+      setSubscribed(false)
+      setCancelAtPeriodEnd(false)
+      setChecking(false)
+      return false
+    }
+
     try {
       const res = await fetch(`/api/subscription/check?creatorId=${creatorId}`, {
         method: "GET",
@@ -101,9 +118,14 @@ export default function SubscribeButton({
     }
 
     checkCreatorSubscription()
-  }, [creatorId, isOwner])
+  }, [creatorId, isOwner, isGuest])
 
   async function handleSubscribe() {
+    if (isGuest) {
+      router.push(`/sign-in?next=${nextPath}`)
+      return
+    }
+
     try {
       setLoading(true)
       setErrorMessage("")

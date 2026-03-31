@@ -20,29 +20,44 @@ const navigationItems: NavigationItem[] = [
 export function MobileNavigation() {
   const pathname = usePathname()
   const [hasUnread, setHasUnread] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+
+  function resolveHref(href: string) {
+    if (isAuthenticated === false) {
+      return `/sign-in?next=${encodeURIComponent(href)}`
+    }
+
+    return href
+  }
 
   useEffect(() => {
-    async function fetchUnread() {
+    async function fetchAuthAndUnread() {
       try {
         const res = await fetch("/api/notifications", {
           cache: "no-store",
         })
 
-        if (!res.ok) return
+        if (!res.ok) {
+          setIsAuthenticated(false)
+          setHasUnread(false)
+          return
+        }
+
+        setIsAuthenticated(true)
 
         const data = await res.json()
-
         const unread = Array.isArray(data?.notifications)
           ? data.notifications.some((n: any) => n.isRead === false)
           : false
 
         setHasUnread(unread)
       } catch {
+        setIsAuthenticated(false)
         setHasUnread(false)
       }
     }
 
-    fetchUnread()
+    fetchAuthAndUnread()
   }, [])
 
   return (
@@ -55,7 +70,7 @@ export function MobileNavigation() {
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={resolveHref(item.href)}
               className={`relative flex min-h-[56px] items-center justify-center rounded-2xl px-2 text-center text-[11px] font-semibold transition ${
                 isActive
                   ? "bg-zinc-100 text-zinc-950"
@@ -64,8 +79,8 @@ export function MobileNavigation() {
             >
               {item.label}
 
-              {item.href === "/notifications" && hasUnread ? (
-                <span className="absolute top-2 right-3 h-2 w-2 rounded-full bg-red-500" />
+              {item.href === "/notifications" && isAuthenticated && hasUnread ? (
+                <span className="absolute right-3 top-2 h-2 w-2 rounded-full bg-red-500" />
               ) : null}
             </Link>
           )
