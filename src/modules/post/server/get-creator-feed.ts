@@ -71,6 +71,7 @@ export async function getCreatorFeed({
     .select("id, creator_id, content, visibility, price_cents, status, created_at")
     .eq("creator_id", creatorId)
     .eq("status", "published")
+    .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .returns<PostRow[]>()
 

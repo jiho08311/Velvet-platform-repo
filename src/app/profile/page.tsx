@@ -5,7 +5,7 @@ import { getSession } from "@/modules/auth/server/get-session"
 import { getProfileByUserId } from "@/modules/profile/server/get-profile-by-user-id"
 import { getUserById } from "@/modules/user/server/get-user-by-id"
 import { getMyPosts } from "@/modules/post/server/get-my-posts"
-
+import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 type ProfileData = {
   id: string
   displayName: string
@@ -15,12 +15,6 @@ type ProfileData = {
   email: string
   joinedAt: string
   isCreator: boolean
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-  }).format(new Date(value))
 }
 
 function getSessionUserId(session: unknown) {
@@ -102,15 +96,13 @@ function normalizeProfileData(
     username: (profile && getStringValue(profile, ["username"])) || "",
     bio: (profile && getStringValue(profile, ["bio"])) || "",
     avatarUrl:
-      (profile &&
-        getStringValue(profile, ["avatarUrl", "avatar_url"])) ||
-      null,
+      (profile && getStringValue(profile, ["avatarUrl", "avatar_url"])) || null,
     email: (user && getStringValue(user, ["email"])) || "",
     joinedAt:
       (user &&
         getStringValue(user, ["createdAt", "created_at", "joinedAt"])) ||
       new Date().toISOString(),
-    isCreator: getIsCreator(profile),
+   isCreator: true,
   }
 }
 
@@ -121,11 +113,12 @@ export default async function ProfilePage() {
   const userId = getSessionUserId(session)
   if (!userId) redirect("/login")
 
-  const [profileData, userData, postResult] = await Promise.all([
-    getProfileByUserId(userId),
-    getUserById(userId),
-    getMyPosts({ creatorId: userId }),
-  ])
+const [profileData, userData, postResult, creator] = await Promise.all([
+  getProfileByUserId(userId),
+  getUserById(userId),
+  getMyPosts({ creatorId: userId }),
+  getCreatorByUserId(userId),
+])
 
   const posts = postResult.items
   const profile = normalizeProfileData(profileData, userData)
@@ -145,8 +138,6 @@ export default async function ProfilePage() {
   return (
     <main className="min-h-screen bg-zinc-950 px-6 py-10 text-zinc-100">
       <div className="mx-auto max-w-4xl flex flex-col gap-8">
-
-        {/* Profile */}
         <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-6">
           <div className="flex justify-between items-center">
             <div>
@@ -154,7 +145,6 @@ export default async function ProfilePage() {
               <p className="text-sm text-zinc-400">@{profile.username}</p>
             </div>
 
-            {/* ✅ 항상 보이게 */}
             <Link
               href="/profile/edit"
               className="rounded-full border border-zinc-700 px-4 py-2 text-sm hover:bg-zinc-800"
@@ -168,42 +158,33 @@ export default async function ProfilePage() {
           </p>
         </section>
 
-        {/* Posts */}
-      <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-6">
-  <div className="flex items-start justify-between gap-4">
-    <div className="flex items-center gap-4">
-      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-zinc-800 text-2xl text-white">
-        {profile.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={profile.avatarUrl}
-            alt={profile.displayName}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          profile.displayName.slice(0, 1).toUpperCase()
+        {profile.isCreator && posts.length > 0 && (
+          <section className="grid grid-cols-3 gap-[2px] bg-zinc-900">
+            {posts.map((post: MyPostListItem) => {
+              const media = post.media?.[0]
+
+              return (
+                <Link
+                  key={post.id}
+                  href={`/post/${post.id}`}
+                  className="aspect-square overflow-hidden bg-zinc-800"
+                >
+                  {media?.url ? (
+                    <img
+                      src={media.url}
+                      alt=""
+                      className="h-full w-full object-cover hover:opacity-90"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-xs text-zinc-500">
+                      No media
+                    </div>
+                  )}
+                </Link>
+              )
+            })}
+          </section>
         )}
-      </div>
-
-      <div>
-        <h2 className="text-2xl">{profile.displayName}</h2>
-        <p className="text-sm text-zinc-400">@{profile.username}</p>
-      </div>
-    </div>
-
-    <Link
-      href="/profile/edit"
-      className="rounded-full border border-zinc-700 px-4 py-2 text-sm hover:bg-zinc-800"
-    >
-      Edit profile
-    </Link>
-  </div>
-
-  <p className="mt-4 text-sm text-zinc-300">
-    {profile.bio || "No bio yet"}
-  </p>
-</section>
-
       </div>
     </main>
   )

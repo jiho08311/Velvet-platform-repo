@@ -12,6 +12,12 @@ type CreatorRow = {
 }
 
 export async function getCreatorByUserId(userId: string) {
+  const resolvedUserId = userId.trim()
+
+  if (!resolvedUserId) {
+    return null
+  }
+
   const { data, error } = await supabaseAdmin
     .from("creators")
     .select(
@@ -26,7 +32,7 @@ export async function getCreatorByUserId(userId: string) {
       updated_at
       `
     )
-    .eq("user_id", userId)
+    .eq("user_id", resolvedUserId)
     .maybeSingle<CreatorRow>()
 
   if (error || !data) {

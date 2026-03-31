@@ -2,8 +2,10 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
+import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 import { getPostById } from "@/modules/post/server/get-post-by-id"
+import { deletePostAction } from "@/modules/post/server/delete-post-action"
 import { PostPurchaseButton } from "@/modules/post/ui/PostPurchaseButton"
 import { EmptyState } from "@/shared/ui/EmptyState"
 
@@ -125,7 +127,10 @@ export default async function PostDetailPage({
     redirect(`/sign-in?next=/post/${postId}`)
   }
 
-  const post = await getPostById(postId, user.id)
+  const [post, myCreator] = await Promise.all([
+    getPostById(postId, user.id),
+    getCreatorByUserId(user.id),
+  ])
 
   if (!post) {
     return (
@@ -144,6 +149,7 @@ export default async function PostDetailPage({
 
   const isLocked = post.isLocked
   const lockReason = post.lockReason ?? "none"
+  const isOwner = myCreator?.id === post.creatorId
 
   return (
     <main className="min-h-screen bg-zinc-950 px-4 py-8 text-white sm:px-6 sm:py-10">
@@ -157,17 +163,41 @@ export default async function PostDetailPage({
 
         <article className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/70">
           <div className="border-b border-zinc-800 px-5 py-4 sm:px-6">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 sm:text-sm">
-              <span>{formatDate(post.publishedAt ?? post.createdAt)}</span>
-              <span>•</span>
-              <span className="capitalize">{post.visibility}</span>
-            </div>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 sm:text-sm">
+                  <span>{formatDate(post.publishedAt ?? post.createdAt)}</span>
+                  <span>•</span>
+                  <span className="capitalize">{post.visibility}</span>
+                </div>
 
-            {post.title ? (
-              <h1 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                {post.title}
-              </h1>
-            ) : null}
+                {post.title ? (
+                  <h1 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                    {post.title}
+                  </h1>
+                ) : null}
+              </div>
+
+              {isOwner ? (
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/post/${post.id}/edit`}
+                    className="inline-flex h-10 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-white transition hover:bg-zinc-800"
+                  >
+                    Edit
+                  </Link>
+
+                  <form action={deletePostAction.bind(null, post.id)}>
+                    <button
+                      type="submit"
+                      className="inline-flex h-10 items-center justify-center rounded-full border border-red-900/60 bg-red-950/60 px-4 text-sm font-medium text-red-300 transition hover:bg-red-950"
+                    >
+                      Delete
+                    </button>
+                  </form>
+                </div>
+              ) : null}
+            </div>
           </div>
 
           {isLocked ? (

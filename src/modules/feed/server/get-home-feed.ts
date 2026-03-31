@@ -121,6 +121,7 @@ export async function getHomeFeed(
       )
       .eq("status", "published")
       .eq("visibility", "public")
+      .is("deleted_at", null)
       .order("published_at", { ascending: false })
       .limit(limit)
       .returns<PostRow[]>()
@@ -238,6 +239,7 @@ export async function getHomeFeed(
     )
     .in("creator_id", creatorIds)
     .eq("status", "published")
+    .is("deleted_at", null)
     .order("published_at", { ascending: false })
     .limit(limit)
 

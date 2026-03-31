@@ -68,6 +68,7 @@ export async function getPostById(
       "id, creator_id, title, content, visibility, price_cents, status, created_at, published_at"
     )
     .eq("id", resolvedPostId)
+    .is("deleted_at", null)
     .maybeSingle<PostRow>()
 
   if (postError) {
