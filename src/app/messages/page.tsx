@@ -4,8 +4,18 @@ import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { getSession } from "@/modules/auth/server/get-session"
 import { listConversations } from "@/modules/message/server/list-conversations"
 import { ConversationList } from "@/modules/message/ui/ConversationList"
+import { getOrCreateConversation } from "@/modules/message/server/get-or-create-conversation"
+import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 
-export default async function MessagesPage() {
+type MessagesPageProps = {
+  searchParams: Promise<{
+    creatorId?: string
+  }>
+}
+
+export default async function MessagesPage({
+  searchParams,
+}: MessagesPageProps) {
   const session = await getSession()
 
   if (!session) {
@@ -30,6 +40,22 @@ export default async function MessagesPage() {
     await assertPassVerified({ profileId: session.userId })
   } catch {
     redirect("/verify-pass")
+  }
+
+  const { creatorId } = await searchParams
+
+  // ✅ 핵심 추가: creatorId 있으면 바로 conversation 생성 후 이동
+  if (creatorId) {
+    const creator = await getCreatorByUserId(creatorId)
+
+    if (creator) {
+      const conversation = await getOrCreateConversation({
+        userAId: session.userId,
+        userBId: creator.userId,
+      })
+
+      redirect(`/messages/${conversation.id}`)
+    }
   }
 
   const conversations = await listConversations({

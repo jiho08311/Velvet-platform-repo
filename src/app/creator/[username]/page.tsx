@@ -123,11 +123,21 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                   <span className="ml-1 text-zinc-400">/ month</span>
                 </p>
 
-                <SubscribeButton
-                  creatorId={creator.id}
-                  creatorUserId={creator.userId}
-                  currentUserId={userId}
-                />
+             <SubscribeButton
+  creatorId={creator.id}
+  creatorUserId={creator.userId}
+  currentUserId={userId}
+  creatorUsername={creator.username}
+/>
+
+                {viewerSubscription.isActive && (
+                  <Link
+                    href={`/messages?creatorId=${creator.userId}`}
+                    className="inline-flex h-12 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 px-5 text-sm font-semibold text-white transition hover:bg-zinc-800"
+                  >
+                    Message
+                  </Link>
+                )}
               </>
             )}
           </div>
@@ -215,12 +225,21 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
               </p>
             </div>
 
-            <div className="shrink-0">
+            <div className="shrink-0 flex flex-col gap-2">
               <SubscribeButton
                 creatorId={creator.id}
                 creatorUserId={creator.userId}
                 currentUserId={userId}
               />
+
+              {viewerSubscription.isActive && (
+                <Link
+                  href={`/messages?creatorId=${creator.userId}`}
+                  className="inline-flex h-11 items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-900 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800"
+                >
+                  Message
+                </Link>
+              )}
             </div>
           </div>
         </div>

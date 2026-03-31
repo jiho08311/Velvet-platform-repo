@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     targetId: post.id,
     orderId: `ppv_${post.id}_${user.id}_${Date.now()}`,
     orderName: post.title || "Paid Post",
-    successUrl: `${appUrl}/payment/success?postId=${post.id}`,
+    successUrl: `${appUrl}/payment/success?postId=${post.id}&creatorUsername=${creator.username}`,
     failUrl: `${appUrl}/payment/fail`,
   })
 

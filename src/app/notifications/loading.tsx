@@ -1,6 +1,6 @@
 export default function NotificationsLoading() {
   return (
-    <div className="px-6 py-10">
+    <main className="min-h-screen bg-zinc-950 px-6 py-10 text-white">
       <div className="mx-auto max-w-3xl animate-pulse space-y-4">
         {Array.from({ length: 6 }).map((_, i) => (
           <div
@@ -17,6 +17,6 @@ export default function NotificationsLoading() {
           </div>
         ))}
       </div>
-    </div>
+    </main>
   )
 }

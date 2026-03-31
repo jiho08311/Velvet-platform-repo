@@ -42,11 +42,22 @@ export function CreatePostComposer({
 
               onCreated?.()
             } catch (submitError) {
-              setError(
-                submitError instanceof Error
-                  ? submitError.message
-                  : "Failed to create post"
-              )
+              if (submitError instanceof Error) {
+                if (submitError.message === "TEXT_BLOCKED") {
+                  setError("부적절한 텍스트가 포함되어 있어 게시글을 올릴 수 없습니다.")
+                  return
+                }
+
+                if (submitError.message === "IMAGE_BLOCKED") {
+                  setError("부적절한 이미지가 포함되어 있어 게시글을 올릴 수 없습니다.")
+                  return
+                }
+
+                setError(submitError.message)
+                return
+              }
+
+              setError("Failed to create post")
             }
           })
         }}

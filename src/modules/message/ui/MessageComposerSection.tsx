@@ -125,9 +125,22 @@ export function MessageComposerSection({
 
       router.refresh()
     } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to send message"
-      )
+      if (error instanceof Error) {
+        if (error.message === "TEXT_BLOCKED") {
+          setError("부적절한 텍스트가 포함되어 있어 메시지를 보낼 수 없습니다.")
+          return
+        }
+
+        if (error.message === "IMAGE_BLOCKED") {
+          setError("부적절한 이미지가 포함되어 있어 메시지를 보낼 수 없습니다.")
+          return
+        }
+
+        setError(error.message)
+        return
+      }
+
+      setError("Failed to send message")
     } finally {
       setIsSending(false)
     }

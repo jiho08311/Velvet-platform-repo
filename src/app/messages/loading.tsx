@@ -1,6 +1,6 @@
 export default function MessagesLoading() {
   return (
-    <div className="px-6 py-10">
+    <main className="min-h-screen bg-zinc-950 px-6 py-10 text-white">
       <div className="mx-auto max-w-3xl animate-pulse space-y-4">
         {[...Array(8)].map((_, i) => (
           <div
@@ -16,6 +16,6 @@ export default function MessagesLoading() {
           </div>
         ))}
       </div>
-    </div>
+    </main>
   )
 }

@@ -7,6 +7,7 @@ type SubscribeButtonProps = {
   creatorId: string
   creatorUserId?: string
   currentUserId?: string
+   creatorUsername?: string 
 }
 
 type SubscriptionCheckResponse = {
@@ -50,6 +51,7 @@ export default function SubscribeButton({
   creatorId,
   creatorUserId,
   currentUserId,
+    creatorUsername, 
 }: SubscribeButtonProps) {
   const [loading, setLoading] = useState(false)
   const [subscribed, setSubscribed] = useState(false)
@@ -145,7 +147,7 @@ const amountCents = data.payment?.amountCents ?? 0
         amount: amountCents,
         orderId,
         orderName,
-        successUrl: `${window.location.origin}/payment/success?paymentId=${paymentId}`,
+       successUrl: `${window.location.origin}/payment/success?paymentId=${paymentId}&creatorUsername=${creatorUsername}`,
         failUrl: `${window.location.origin}/payment/fail?paymentId=${paymentId}`,
       })
     } catch {

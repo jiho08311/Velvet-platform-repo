@@ -86,7 +86,7 @@ export function PostPurchaseButton({
         },
         orderId: payment.id,
         orderName: "Paid post",
-        successUrl: `${window.location.origin}/payment/success?postId=${postId}`,
+       successUrl: `${window.location.origin}/payment/success?postId=${postId}&creatorId=${payment.creatorId}&orderId=${payment.id}`,
         failUrl: `${window.location.origin}/payment/fail`,
       })
 

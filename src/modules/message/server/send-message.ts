@@ -1,7 +1,16 @@
+import OpenAI from "openai"
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { assertValidMessagePrice } from "@/modules/message/lib/message-price"
 import { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"
+import { checkTextSafety } from "@/workflows/create-post-with-media-workflow"
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+})
+
+const MEDIA_BUCKET =
+  process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "media"
 
 type SendMessageInput = {
   conversationId: string
@@ -22,11 +31,6 @@ type CreatorRow = {
   user_id: string
 }
 
-type ProfileRow = {
-  id: string
-  is_deactivated: boolean | null
-}
-
 type MessageRow = {
   id: string
   conversation_id: string
@@ -37,11 +41,83 @@ type MessageRow = {
   price: number | null
 }
 
-type MediaRow = {
+type ExistingMediaRow = {
   id: string
   owner_user_id: string | null
   post_id: string | null
   message_id: string | null
+}
+
+type ModerationMediaRow = {
+  id: string
+  storage_path: string
+  mime_type: string | null
+}
+
+async function checkMessageImageSafety(mediaIds: string[]) {
+  if (mediaIds.length === 0) return
+
+  const { data: mediaRows, error: mediaRowsError } = await supabaseAdmin
+    .from("media")
+    .select("id, storage_path, mime_type")
+    .in("id", mediaIds)
+
+  if (mediaRowsError) {
+    throw mediaRowsError
+  }
+
+  console.log("[checkMessageImageSafety] mediaRows:", mediaRows)
+
+  for (const media of (mediaRows ?? []) as ModerationMediaRow[]) {
+    if (!media.mime_type?.startsWith("image/")) continue
+
+    console.log(
+      "[checkMessageImageSafety] moderating:",
+      media.id,
+      media.mime_type
+    )
+
+    const { data, error: downloadError } = await supabaseAdmin.storage
+      .from(MEDIA_BUCKET)
+      .download(media.storage_path)
+
+    if (downloadError) {
+      console.error("[checkMessageImageSafety] download error:", downloadError)
+      throw downloadError
+    }
+
+    if (!data) {
+      throw new Error("Failed to load image for moderation")
+    }
+
+    const arrayBuffer = await data.arrayBuffer()
+    const base64 = Buffer.from(arrayBuffer).toString("base64")
+    const dataUrl = `data:${media.mime_type};base64,${base64}`
+
+    const response = await openai.moderations.create({
+      model: "omni-moderation-latest",
+      input: [
+        {
+          type: "image_url",
+          image_url: {
+            url: dataUrl,
+          },
+        },
+      ],
+    })
+
+    const result = response.results?.[0]
+
+    console.log("[checkMessageImageSafety] moderation result:", result)
+
+    if (!result) {
+      throw new Error("Failed to moderate image")
+    }
+
+    if (result.flagged) {
+      throw new Error("IMAGE_BLOCKED")
+    }
+  }
 }
 
 export async function sendMessage(input: SendMessageInput) {
@@ -58,6 +134,14 @@ export async function sendMessage(input: SendMessageInput) {
   if (!trimmedContent && !hasMedia) {
     throw new Error("Message content or media is required")
   }
+
+  console.log("[sendMessage] before text moderation")
+  await checkTextSafety(trimmedContent)
+  console.log("[sendMessage] text moderation passed")
+
+  console.log("[sendMessage] before image moderation")
+  await checkMessageImageSafety(mediaIds)
+  console.log("[sendMessage] image moderation passed")
 
   if (messageType !== "text" && messageType !== "ppv") {
     throw new Error("Invalid message type")
@@ -83,7 +167,6 @@ export async function sendMessage(input: SendMessageInput) {
   }
 
   const participantRows = (participants ?? []) as ParticipantRow[]
-
   const participantUserIds = participantRows.map((row) => row.user_id)
 
   const otherUserId =
@@ -125,20 +208,11 @@ export async function sendMessage(input: SendMessageInput) {
       .select("id, owner_user_id, post_id, message_id")
       .in("id", mediaIds)
 
-    console.log("[sendMessage] fetched media rows:", existingMedia)
-
     if (mediaFetchError) {
-      console.error("[sendMessage] media fetch error:", mediaFetchError)
       throw mediaFetchError
     }
 
-    const mediaRows = (existingMedia ?? []) as MediaRow[]
-
-    if (mediaRows.length !== mediaIds.length) {
-      console.error("[sendMessage] media length mismatch", {
-        mediaIds,
-        mediaRows,
-      })
+    if (((existingMedia ?? []) as ExistingMediaRow[]).length !== mediaIds.length) {
       throw new Error("Some media files were not found")
     }
   }
@@ -156,33 +230,8 @@ export async function sendMessage(input: SendMessageInput) {
     .single<MessageRow>()
 
   if (messageError) {
-    console.error("[sendMessage] message insert error:", messageError)
     throw messageError
   }
-
-  console.log("[sendMessage] created message:", message.id)
-
-// notification: ppv_message_received
-try {
-  if (messageType === "ppv" && otherUserId) {
-    const { createNotification } = await import(
-      "@/modules/notification/server/create-notification"
-    )
-
-    await createNotification({
-      userId: otherUserId,
-      type: "ppv_message_received",
-      title: "New PPV message",
-      body: "You received a paid message.",
-      data: {
-        messageId: message.id,
-        conversationId: input.conversationId,
-      },
-    })
-  }
-} catch (e) {
-  console.error("ppv_message_received notification error:", e)
-}
 
   if (mediaIds.length > 0) {
     const { data: updatedMedia, error: mediaUpdateError } = await supabaseAdmin
@@ -193,18 +242,13 @@ try {
       .in("id", mediaIds)
       .select("id, message_id")
 
-    console.log("[sendMessage] updatedMedia:", updatedMedia)
-    console.log("[sendMessage] mediaUpdateError:", mediaUpdateError)
-
     if (mediaUpdateError) {
       throw mediaUpdateError
     }
 
-    if (!updatedMedia || updatedMedia.length !== mediaIds.length) {
-      console.error("[sendMessage] media attach failed", {
-        mediaIds,
-        updatedMedia,
-      })
+    const updatedMediaList = Array.isArray(updatedMedia) ? updatedMedia : []
+
+    if (updatedMediaList.length !== mediaIds.length) {
       throw new Error("Failed to attach media to message")
     }
   }
