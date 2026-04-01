@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { PostPurchaseButton } from "@/modules/post/ui/PostPurchaseButton"
+import PostPurchaseButton from "@/modules/post/ui/PostPurchaseButton"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { getCreatorByUsername } from "@/modules/creator/server/get-creator-by-username"
 import { getCreatorDashboardSummary } from "@/modules/analytics/server/get-creator-dashboard-summary"
