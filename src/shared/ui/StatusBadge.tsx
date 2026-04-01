@@ -25,6 +25,19 @@ function getToneFromLabel(label: string): Tone {
   return "default"
 }
 
+function translateLabel(label: string) {
+  const value = label.toLowerCase()
+
+  if (value === "pending") return "대기중"
+  if (value === "paid") return "완료"
+  if (value === "failed") return "실패"
+  if (value === "success") return "완료"
+  if (value === "unread") return "읽지 않음"
+  if (value === "read") return "읽음"
+
+  return label
+}
+
 export function StatusBadge({ label, tone }: StatusBadgeProps) {
   const resolvedTone: Tone = tone ?? getToneFromLabel(label)
 
@@ -32,7 +45,7 @@ export function StatusBadge({ label, tone }: StatusBadgeProps) {
     <span
       className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium capitalize tracking-wide ${toneClassNameMap[resolvedTone]}`}
     >
-      {label}
+      {translateLabel(label)}
     </span>
   )
 }

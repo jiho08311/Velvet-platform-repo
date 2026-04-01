@@ -102,20 +102,20 @@ export default async function PayoutsPage() {
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
       <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
         <div>
-          <h1 className="text-2xl font-semibold text-white">Payouts</h1>
+          <h1 className="text-2xl font-semibold text-white">정산</h1>
           <p className="mt-1 text-sm text-zinc-500">
-            Manage your earnings and withdrawals
+            수익 확인 및 출금을 관리하세요
           </p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
-            <p className="text-sm text-zinc-500">Subscription price</p>
+            <p className="text-sm text-zinc-500">구독 가격</p>
             <p className="mt-2 text-2xl font-semibold text-white">
               {formatPrice(creator.subscriptionPriceCents)}
             </p>
             <p className="mt-2 text-sm text-zinc-500">
-              Choose one fixed monthly subscription price.
+              월 구독 가격을 설정하세요
             </p>
 
             <form
@@ -154,7 +154,7 @@ export default async function PayoutsPage() {
           </Card>
 
           <Card>
-            <p className="text-sm text-zinc-500">Available balance</p>
+            <p className="text-sm text-zinc-500">출금 가능 금액</p>
             <p className="mt-2 text-2xl font-semibold text-white">
               {formatPrice(available)}
             </p>
@@ -176,7 +176,7 @@ export default async function PayoutsPage() {
                 disabled={available === 0}
                 className="w-full rounded-2xl bg-[#C2185B] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#D81B60] active:bg-[#AD1457] disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500"
               >
-                Request payout
+                출금 요청
               </button>
             </form>
           </Card>
@@ -184,7 +184,7 @@ export default async function PayoutsPage() {
 
         <div className="grid gap-4 md:grid-cols-1">
           <Card>
-            <p className="text-sm text-zinc-500">Pending payouts</p>
+            <p className="text-sm text-zinc-500">출금 대기 금액</p>
             <p className="mt-2 text-2xl font-semibold text-white">
               {formatPrice(pending)}
             </p>
@@ -193,9 +193,9 @@ export default async function PayoutsPage() {
 
         <Card>
           <div className="mb-4">
-            <p className="text-lg font-semibold text-white">Payout history</p>
+            <p className="text-lg font-semibold text-white">출금 내역</p>
             <p className="text-sm text-zinc-500">
-              Track all your payout activity
+              전체 출금 기록을 확인하세요
             </p>
           </div>
 

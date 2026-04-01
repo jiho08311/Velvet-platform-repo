@@ -4,16 +4,16 @@ type PayoutEmptyStateProps = {
 }
 
 export function PayoutEmptyState({
-  title = "No payouts yet",
-  description = "Your payout history will appear here.",
+  title = "출금 내역이 없습니다",
+  description = "출금 요청이 생성되면 여기에 표시됩니다.",
 }: PayoutEmptyStateProps) {
   return (
     <div className="overflow-hidden rounded-[28px] border border-zinc-200 bg-white">
       <div className="border-b border-zinc-200 px-6 py-4">
         <div className="grid grid-cols-[1fr_auto_auto] gap-4 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
-          <span>Payout</span>
-          <span>Amount</span>
-          <span>Status</span>
+          <span>출금</span>
+          <span>금액</span>
+          <span>상태</span>
         </div>
       </div>
 

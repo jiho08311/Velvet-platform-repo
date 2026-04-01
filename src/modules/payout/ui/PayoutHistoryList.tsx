@@ -20,7 +20,7 @@ type PayoutListProps = {
 }
 
 function formatPrice(amountCents: number, currency = "KRW") {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("ko-KR", {
     style: "currency",
     currency: currency.toUpperCase(),
     maximumFractionDigits: 2,
@@ -33,8 +33,8 @@ function formatDate(value: string) {
 
 export function PayoutList({
   payouts,
-  emptyTitle = "No payouts yet",
-  emptyDescription = "Payout history will appear here once payouts are created.",
+  emptyTitle = "출금 내역이 없습니다",
+  emptyDescription = "출금 내역은 생성되면 여기에 표시됩니다.",
 }: PayoutListProps) {
   if (payouts.length === 0) {
     return (
@@ -47,9 +47,9 @@ export function PayoutList({
   return (
     <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
       <div className="hidden grid-cols-[1fr_auto_auto] gap-4 border-b border-zinc-200 bg-zinc-50 px-5 py-3 text-xs font-medium uppercase tracking-[0.16em] text-zinc-500 sm:grid">
-        <span>Payout</span>
-        <span className="text-right">Amount</span>
-        <span className="text-right">Status</span>
+        <span>출금</span>
+        <span className="text-right">금액</span>
+        <span className="text-right">상태</span>
       </div>
 
       <div className="divide-y divide-zinc-200">
@@ -60,12 +60,12 @@ export function PayoutList({
           >
             <div className="min-w-0">
               <p className="text-sm font-medium text-zinc-900">
-                Created {formatDate(payout.createdAt)}
+                생성됨 {formatDate(payout.createdAt)}
               </p>
 
               {payout.status === "paid" && payout.paidAt ? (
                 <p className="mt-1 text-xs text-zinc-500">
-                  Paid {formatDate(payout.paidAt)}
+                  지급됨 {formatDate(payout.paidAt)}
                 </p>
               ) : null}
 
@@ -78,7 +78,7 @@ export function PayoutList({
 
             <div className="sm:text-right">
               <p className="text-xs uppercase tracking-[0.16em] text-zinc-500 sm:hidden">
-                Amount
+                금액
               </p>
               <p className="mt-1 text-sm font-semibold text-zinc-900 sm:mt-0">
                 {formatPrice(payout.amountCents, payout.currency ?? "KRW")}
@@ -87,7 +87,7 @@ export function PayoutList({
 
             <div className="sm:text-right">
               <p className="text-xs uppercase tracking-[0.16em] text-zinc-500 sm:hidden">
-                Status
+                상태
               </p>
               <div className="mt-1 sm:mt-0">
                 <StatusBadge label={payout.status} />
