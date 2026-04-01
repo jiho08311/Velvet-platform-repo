@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 
 import { requireUser } from "@/modules/auth/server/require-user"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { createClient } from "@/infrastructure/supabase/server"
 
 type ProfileStatusRow = {
   is_deactivated: boolean | null
@@ -12,6 +13,7 @@ type ProfileStatusRow = {
 
 export default async function ReactivateAccountPage() {
   const user = await requireUser()
+  const supabase = await createClient()
 
   const { data: profile, error } = await supabaseAdmin
     .from("profiles")
@@ -26,6 +28,7 @@ export default async function ReactivateAccountPage() {
   }
 
   if (profile?.deleted_at) {
+    await supabase.auth.signOut()
     redirect("/account-unavailable")
   }
 
@@ -47,6 +50,7 @@ export default async function ReactivateAccountPage() {
       throw updateError
     }
 
+    await supabase.auth.signOut()
     redirect("/account-unavailable")
   }
 

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { SignInForm } from "@/modules/auth/ui/SignInForm"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { createClient } from "@/infrastructure/supabase/server"
 
 type ProfileStatusRow = {
   is_deactivated: boolean | null
@@ -16,6 +17,8 @@ export default async function SignInPage() {
   const user = await getCurrentUser()
 
   if (user) {
+    const supabase = await createClient()
+
     const { data: profile, error } = await supabaseAdmin
       .from("profiles")
       .select(
@@ -29,6 +32,7 @@ export default async function SignInPage() {
     }
 
     if (profile?.deleted_at) {
+      await supabase.auth.signOut()
       redirect("/account-unavailable")
     }
 
@@ -50,6 +54,7 @@ export default async function SignInPage() {
         throw updateError
       }
 
+      await supabase.auth.signOut()
       redirect("/account-unavailable")
     }
 
