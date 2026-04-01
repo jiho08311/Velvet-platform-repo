@@ -90,7 +90,8 @@ export async function createPostPurchaseSession({
     creatorId: post.creator_id,
     amount: post.price_cents,
     currency: "KRW",
-    orderName:
-      post.title?.trim() || `${creatorProfile.display_name} Paid Post`,
+
+    // 🔥 핵심 수정 (PG 대응)
+    orderName: "프리미엄 콘텐츠 이용권",
   }
 }

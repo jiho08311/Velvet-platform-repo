@@ -32,25 +32,25 @@ export function LockedPostCard({
           <div className="relative aspect-[4/5] overflow-hidden bg-zinc-950">
             <img
               src={previewThumbnailUrl}
-              alt="Locked post preview"
+              alt="콘텐츠 미리보기"
               className="h-full w-full scale-[1.06] object-cover opacity-30 blur-md"
             />
             <div className="absolute inset-0 bg-black/55" />
           </div>
         ) : (
           <div className="flex aspect-[4/5] items-center justify-center bg-zinc-950 text-sm text-zinc-500">
-            Premium content
+            프리미엄 콘텐츠
           </div>
         )}
 
         <div className="absolute left-4 top-4 inline-flex items-center rounded-full border border-white/10 bg-black/60 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur">
-          Locked
+          이용 필요
         </div>
 
         <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
           <div className="max-w-xs">
             <p className="text-lg font-semibold text-white">
-              Unlock this premium post
+              프리미엄 콘텐츠 이용
             </p>
 
             {isPaid ? (
@@ -59,7 +59,7 @@ export function LockedPostCard({
               </p>
             ) : (
               <p className="mt-2 text-sm leading-6 text-zinc-200">
-                Subscribe to view the full content.
+                이용권 구매 후 전체 내용을 볼 수 있습니다.
               </p>
             )}
 

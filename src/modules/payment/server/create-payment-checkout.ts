@@ -37,7 +37,7 @@ export async function createPaymentCheckout({
   targetType = null,
   targetId,
   orderId,
-  orderName,
+  orderName: _orderName, // ❗ 외부 값 무시
   customerEmail,
   successUrl,
   failUrl,
@@ -95,10 +95,13 @@ export async function createPaymentCheckout({
     ? `${successUrl}&paymentId=${payment.id}`
     : `${successUrl}?paymentId=${payment.id}`
 
+  // 🔥 핵심: 무조건 통일
+  const safeOrderName = "프리미엄 콘텐츠 이용권"
+
   const checkout = await paymentProvider.createCheckout({
     paymentId: payment.id,
     orderId,
-    orderName,
+    orderName: safeOrderName,
     amountCents: resolvedAmountCents,
     customerEmail,
     successUrl: successUrlWithPaymentId,

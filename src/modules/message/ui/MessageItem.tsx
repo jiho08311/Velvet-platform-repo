@@ -46,13 +46,13 @@ export function MessageItem({
         {showLockedPpv ? (
           <div className="space-y-3">
             <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
-              <p className="text-sm font-medium text-zinc-900">
-                유료 메시지
+              <p className="text-sm font-semibold text-zinc-900">
+                🔒 프리미엄 메시지
               </p>
               <p className="mt-1 text-xs text-zinc-500">
                 {typeof price === "number" && price > 0
-                  ? `₩${formatPrice(price)} 결제 후 내용을 볼 수 있어요.`
-                  : "결제 후 내용을 볼 수 있어요."}
+                  ? `₩${formatPrice(price)} 결제 후 내용을 확인할 수 있어요`
+                  : "결제 후 내용을 확인할 수 있어요"}
               </p>
             </div>
 

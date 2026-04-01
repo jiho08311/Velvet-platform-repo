@@ -6,7 +6,7 @@ import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
 
 import { LockedPostCard } from "./LockedPostCard"
-import { PostPurchaseButton } from "./PostPurchaseButton"
+import PostPurchaseButton from "./PostPurchaseButton"
 
 type MediaItem = {
   url: string
@@ -199,7 +199,13 @@ export function PostCard({
     if (lockReason === "purchase" && postId) {
       return (
         <div onClick={(event) => event.stopPropagation()}>
-          <PostPurchaseButton postId={postId} embedded />
+          {/* 🔥 핵심 수정 */}
+          <PostPurchaseButton
+            postId={postId}
+            priceCents={priceCents}
+            creatorUsername={creator.username}
+            embedded
+          />
         </div>
       )
     }

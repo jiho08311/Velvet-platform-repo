@@ -57,7 +57,7 @@ export function MessageComposerSection({
         "error" in result &&
         typeof result.error === "string"
           ? result.error
-          : "Failed to upload media"
+          : "파일 업로드에 실패했습니다"
 
       throw new Error(message)
     }
@@ -68,7 +68,7 @@ export function MessageComposerSection({
       !("mediaIds" in result) ||
       !Array.isArray(result.mediaIds)
     ) {
-      throw new Error("Invalid upload response")
+      throw new Error("업로드 응답이 올바르지 않습니다")
     }
 
     return result.mediaIds.filter(
@@ -118,7 +118,7 @@ export function MessageComposerSection({
           "error" in result &&
           typeof result.error === "string"
             ? result.error
-            : "Failed to send message"
+            : "메시지 전송에 실패했습니다"
 
         throw new Error(message)
       }
@@ -140,7 +140,7 @@ export function MessageComposerSection({
         return
       }
 
-      setError("Failed to send message")
+      setError("메시지 전송에 실패했습니다")
     } finally {
       setIsSending(false)
     }
@@ -156,7 +156,7 @@ export function MessageComposerSection({
 
       {isSending ? (
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-300">
-          Sending...
+          전송 중...
         </div>
       ) : null}
 

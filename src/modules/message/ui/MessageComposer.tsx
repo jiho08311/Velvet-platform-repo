@@ -57,7 +57,7 @@ export function MessageComposer({
         value={content}
         onChange={(e) => setContent(e.target.value)}
         className="w-full rounded-xl border border-zinc-800 bg-zinc-900 p-3 text-sm text-white"
-        placeholder="Write a message..."
+        placeholder="메시지를 입력하세요..."
       />
 
       <div className="flex gap-2">
@@ -68,7 +68,7 @@ export function MessageComposer({
             type === "text" ? "bg-white text-black" : "bg-zinc-800 text-white"
           }`}
         >
-          Text
+          일반
         </button>
 
         <button
@@ -78,7 +78,7 @@ export function MessageComposer({
             type === "ppv" ? "bg-[#C2185B] text-white" : "bg-zinc-800 text-white"
           }`}
         >
-          Paid
+          프리미엄
         </button>
       </div>
 
@@ -97,7 +97,7 @@ export function MessageComposer({
       <div className="space-y-2">
         <label className="block">
           <span className="mb-2 block text-xs font-medium text-zinc-400">
-            Attach image or video
+            이미지 또는 동영상 첨부
           </span>
           <input
             type="file"
@@ -141,7 +141,7 @@ export function MessageComposer({
                     onClick={() => handleRemoveFile(index)}
                     className="shrink-0 rounded-lg bg-zinc-800 px-2 py-1 text-xs text-white"
                   >
-                    Remove
+                    삭제
                   </button>
                 </div>
               </div>
@@ -155,7 +155,7 @@ export function MessageComposer({
         onClick={handleSend}
         className="w-full rounded-xl bg-[#C2185B] py-2 text-sm font-medium text-white"
       >
-        Send
+        전송
       </button>
     </div>
   )

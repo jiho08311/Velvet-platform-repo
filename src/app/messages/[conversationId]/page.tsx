@@ -47,7 +47,7 @@ export default async function ConversationDetailPage({
           href="/messages"
           className="inline-flex h-10 items-center justify-center rounded-xl border border-white/10 px-4 text-sm font-medium text-white/80 transition hover:bg-white/5"
         >
-          Back
+          뒤로가기
         </Link>
 
         <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5 text-sm font-semibold text-white/80">
@@ -78,9 +78,11 @@ export default async function ConversationDetailPage({
         {messages.length === 0 ? (
           <div className="flex flex-1 items-center justify-center px-6 py-12 text-center">
             <div>
-              <p className="text-base font-medium text-white">No messages yet</p>
+              <p className="text-base font-medium text-white">
+                아직 대화가 없습니다
+              </p>
               <p className="mt-2 text-sm text-white/60">
-                Start the conversation by sending your first message.
+                첫 메시지를 보내 대화를 시작해보세요
               </p>
             </div>
           </div>
@@ -106,10 +108,10 @@ export default async function ConversationDetailPage({
                         <div className="space-y-3">
                           <div>
                             <p className="text-xs font-medium uppercase tracking-[0.18em] opacity-70">
-                              PPV message
+                              프리미엄 콘텐츠
                             </p>
                             <p className="mt-2 text-sm opacity-80">
-                              Unlock this message to view the content.
+                              이용권 구매 후 내용을 확인할 수 있습니다.
                             </p>
                           </div>
 
@@ -166,7 +168,6 @@ export default async function ConversationDetailPage({
                       </p>
                     </div>
 
-                    {/* 🔥 신고 버튼 */}
                     {!isMine && (
                       <div className="mt-1">
                         <ReportButton

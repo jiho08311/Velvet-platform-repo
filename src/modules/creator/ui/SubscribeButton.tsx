@@ -31,22 +31,22 @@ type CheckoutResponse = {
 
 function getSubscribeErrorMessage(message: string) {
   if (message === "You already have an active subscription") {
-    return "이미 구독 중인 크리에이터입니다"
+    return "이미 이용 중입니다"
   }
 
   if (message === "You cannot subscribe to your own creator page") {
-    return "본인 크리에이터 페이지는 구독할 수 없습니다"
+    return "본인 페이지는 이용할 수 없습니다"
   }
 
   if (message === "Invalid subscription price") {
-    return "구독 가격이 올바르지 않습니다"
+    return "이용 가격이 올바르지 않습니다"
   }
 
   if (message === "Creator not found") {
-    return "크리에이터를 찾을 수 없습니다"
+    return "페이지를 찾을 수 없습니다"
   }
 
-  return "구독 처리에 실패했습니다"
+  return "이용 처리에 실패했습니다"
 }
 
 export default function SubscribeButton({
@@ -65,7 +65,10 @@ export default function SubscribeButton({
   const [errorMessage, setErrorMessage] = useState("")
 
   const nextPath = useMemo(
-    () => encodeURIComponent(pathname || (creatorUsername ? `/creator/${creatorUsername}` : "/feed")),
+    () =>
+      encodeURIComponent(
+        pathname || (creatorUsername ? `/creator/${creatorUsername}` : "/feed")
+      ),
     [pathname, creatorUsername]
   )
 
@@ -158,7 +161,7 @@ export default function SubscribeButton({
       const paymentId = data.payment?.id
       const amountCents = data.payment?.amountCents ?? 0
       const orderId = data.checkout?.orderId ?? paymentId
-      const orderName = data.checkout?.orderName ?? "Creator subscription"
+      const orderName = data.checkout?.orderName ?? "프리미엄 콘텐츠 이용권"
 
       if (!paymentId || !orderId || amountCents <= 0) {
         setErrorMessage("결제 요청 정보가 올바르지 않습니다")
@@ -175,7 +178,7 @@ export default function SubscribeButton({
         failUrl: `${window.location.origin}/payment/fail?paymentId=${paymentId}`,
       })
     } catch {
-      setErrorMessage("구독 처리에 실패했습니다")
+      setErrorMessage("이용 처리에 실패했습니다")
     } finally {
       setLoading(false)
     }
@@ -197,13 +200,13 @@ export default function SubscribeButton({
       const data = await res.json()
 
       if (!res.ok || !data.success) {
-        setErrorMessage(data.error ?? "구독 취소에 실패했습니다")
+        setErrorMessage(data.error ?? "이용 종료에 실패했습니다")
         return
       }
 
       setCancelAtPeriodEnd(true)
     } catch {
-      setErrorMessage("구독 취소에 실패했습니다")
+      setErrorMessage("이용 종료에 실패했습니다")
     } finally {
       setLoading(false)
     }
@@ -223,7 +226,7 @@ export default function SubscribeButton({
             : `${buttonBase} w-full min-w-[220px] bg-zinc-800 text-zinc-300 sm:w-auto`
         }
       >
-        Checking...
+        확인 중...
       </button>
     )
   }
@@ -238,7 +241,7 @@ export default function SubscribeButton({
             : `${buttonBase} w-full min-w-[220px] bg-zinc-800 text-zinc-400 sm:w-auto`
         }
       >
-        Your creator page
+        내 페이지
       </button>
     )
   }
@@ -253,10 +256,10 @@ export default function SubscribeButton({
           className="inline-flex h-12 min-w-[220px] items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 px-6 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {cancelAtPeriodEnd
-            ? "Cancellation scheduled"
+            ? "이용 종료 예정"
             : loading
-              ? "Processing..."
-              : "Cancel subscription"}
+              ? "처리 중..."
+              : "이용 종료 예약"}
         </button>
       )
     }
@@ -265,12 +268,12 @@ export default function SubscribeButton({
       <div className="flex w-full min-w-[220px] flex-col gap-2 sm:w-auto">
         <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3">
           <p className="text-sm font-semibold text-white">
-            {cancelAtPeriodEnd ? "Subscription ending" : "Subscribed"}
+            {cancelAtPeriodEnd ? "이용 종료 예정" : "이용 중"}
           </p>
           <p className="mt-1 text-xs text-zinc-300">
             {cancelAtPeriodEnd
-              ? "Your subscription is scheduled to end at the end of the current period."
-              : "You have access to subscriber-only content."}
+              ? "현재 이용 기간 종료 후 이용이 종료됩니다."
+              : "프리미엄 콘텐츠를 이용할 수 있습니다."}
           </p>
         </div>
 
@@ -280,10 +283,10 @@ export default function SubscribeButton({
           className={`${buttonBase} w-full border border-zinc-700 bg-zinc-950 text-zinc-100 hover:bg-zinc-900`}
         >
           {cancelAtPeriodEnd
-            ? "Cancellation scheduled"
+            ? "이용 종료 예정"
             : loading
-              ? "Processing..."
-              : "Cancel subscription"}
+              ? "처리 중..."
+              : "이용 종료 예약"}
         </button>
 
         {errorMessage ? (
@@ -296,18 +299,28 @@ export default function SubscribeButton({
   }
 
   return (
-    <div className={embedded ? "flex flex-col items-center gap-2" : "flex w-full min-w-[220px] flex-col gap-2 sm:w-auto"}>
+    <div
+      className={
+        embedded
+          ? "flex flex-col items-center gap-2"
+          : "flex w-full min-w-[220px] flex-col gap-2 sm:w-auto"
+      }
+    >
       <button
         onClick={handleSubscribe}
         disabled={loading}
-        className={embedded ? buttonBase : `${buttonBase} w-full bg-[#C2185B] text-white hover:bg-[#D81B60] active:bg-[#AD1457]`}
+        className={
+          embedded
+            ? buttonBase
+            : `${buttonBase} w-full bg-[#C2185B] text-white hover:bg-[#D81B60] active:bg-[#AD1457]`
+        }
       >
-        {loading ? "Processing..." : "Subscribe now"}
+        {loading ? "처리 중..." : "이용권 구매"}
       </button>
 
       {!embedded ? (
         <p className="text-center text-xs text-zinc-500">
-          Cancel anytime
+          현재 이용 기간 종료 후 종료할 수 있습니다
         </p>
       ) : null}
 

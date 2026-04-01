@@ -25,7 +25,7 @@ type MessageListProps = {
 
 export function MessageList({
   messages,
-  emptyMessage = "No messages yet.",
+ emptyMessage = "아직 메시지가 없습니다"
 }: MessageListProps) {
   if (messages.length === 0) {
     return (

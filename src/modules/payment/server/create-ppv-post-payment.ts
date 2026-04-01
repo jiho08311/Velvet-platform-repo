@@ -60,7 +60,7 @@ export async function createPpvPostPayment({
     throw error
   }
 
-  // 🔥 notification 추가 (핵심)
+  // 🔥 notification 추가
   try {
     const { data: creator } = await supabaseAdmin
       .from("creators")
@@ -72,8 +72,8 @@ export async function createPpvPostPayment({
       await createNotification({
         userId: creator.user_id,
         type: "ppv_post_purchased",
-        title: "Post purchased",
-        body: "A user purchased your paid post.",
+        title: "Content unlocked",
+        body: "A user unlocked your content.",
         data: {
           paymentId: data.id,
           buyerId: userId,

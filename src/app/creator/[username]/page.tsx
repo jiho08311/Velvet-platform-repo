@@ -48,9 +48,6 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
   const isOwner = userId === creator.userId
   const pathname = `/creator/${username}`
 
-  // ❌ redirect 제거
-
-  // ✅ 로그인 유저에게만 PASS 검증
   if (userId && !isOwner) {
     try {
       await assertPassVerified({ profileId: userId })
@@ -124,7 +121,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
               <>
                 <p className="text-sm font-medium text-white">
                   {formatPrice(creator.subscriptionPriceCents)}
-                  <span className="ml-1 text-zinc-400">/ month</span>
+                  <span className="ml-1 text-zinc-400">이용권</span>
                 </p>
 
                 <SubscribeButton
@@ -177,12 +174,12 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
 
         {!isOwner ? (
           <p className="mt-2 text-sm text-zinc-500">
-            Subscribe to unlock exclusive content
+            이용권을 통해 콘텐츠를 확인할 수 있어요
           </p>
         ) : null}
 
         <div className="mt-4 flex items-center gap-4 text-xs text-zinc-500">
-          <span>{formatCount(summary?.subscriberCount)} subscribers</span>
+          <span>{formatCount(summary?.subscriberCount)} users</span>
           <span>{formatCount(posts.length)} posts</span>
         </div>
 
@@ -222,10 +219,10 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
             <div className="min-w-0">
               <p className="text-sm font-semibold text-white">
                 {formatPrice(creator.subscriptionPriceCents)}
-                <span className="ml-1 text-zinc-400">/ month</span>
+                <span className="ml-1 text-zinc-400">이용권</span>
               </p>
               <p className="truncate text-xs text-zinc-500">
-                Unlock subscriber-only posts
+                이용권 전용 콘텐츠
               </p>
             </div>
 

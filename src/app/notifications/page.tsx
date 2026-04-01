@@ -31,11 +31,11 @@ function getNotificationLabel(type: NotificationType) {
     case "subscription_started":
       return "Subscription"
     case "ppv_message_received":
-      return "PPV Message"
+      return "Locked message"
     case "ppv_message_purchased":
-      return "Purchase"
+      return "Message unlocked"
     case "ppv_post_purchased":
-      return "Post Purchase"
+      return "Content unlocked"
     case "payment_succeeded":
       return "Payment"
     default:
@@ -73,8 +73,7 @@ export default async function NotificationsPage() {
               </h1>
 
               <p className="mt-2 text-sm text-zinc-400">
-                Stay updated on subscriptions, PPV messages, and successful
-                payments.
+                Stay updated on subscriptions, locked messages, and payments.
               </p>
             </div>
 

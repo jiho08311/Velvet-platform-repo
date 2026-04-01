@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
       currency: "KRW",
       provider: "toss",
       orderId: `sub_${creator.id}_${user.id}_${Date.now()}`,
-      orderName: `${creator.displayName} subscription`,
+      orderName: `프리미엄 콘텐츠 이용권`,
       successUrl: `${appUrl}/payment/success`,
       failUrl: `${appUrl}/payment/fail`,
     })
