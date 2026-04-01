@@ -18,6 +18,7 @@ type ProfileRow = {
   id: string
   username: string
   display_name: string | null
+  avatar_url: string | null
 }
 
 type SubscriptionRow = {
@@ -67,7 +68,7 @@ export async function getRecommendedCreators({
 
   const { data: profileRows, error: profileError } = await supabaseAdmin
     .from("profiles")
-    .select("id, username, display_name")
+    .select("id, username, display_name, avatar_url")
     .in("id", profileIds)
     .eq("is_deactivated", false)
 
@@ -90,8 +91,7 @@ export async function getRecommendedCreators({
         bio: null,
         username: creator.username,
         displayName: profile.display_name ?? profile.username,
-        avatarUrl: null,
-        headline: null,
+        avatarUrl: profile.avatar_url ?? null,
         isVerified: false,
       }
     })

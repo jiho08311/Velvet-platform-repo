@@ -32,6 +32,41 @@ type PostCardProps = {
   }
 }
 
+function getPreviewTitle(text: string) {
+  const normalized = text.trim()
+
+  if (!normalized) {
+    return "Untitled post"
+  }
+
+  const firstLine = normalized.split("\n").find((line) => line.trim().length > 0)
+
+  if (!firstLine) {
+    return "Untitled post"
+  }
+
+  return firstLine.length > 72 ? `${firstLine.slice(0, 72)}...` : firstLine
+}
+
+function getPreviewBody(text: string) {
+  const normalized = text.trim()
+
+  if (!normalized) {
+    return ""
+  }
+
+  const lines = normalized
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+
+  if (lines.length <= 1) {
+    return normalized
+  }
+
+  return lines.slice(1).join(" ")
+}
+
 export function PostCard({
   postId,
   text,
@@ -51,6 +86,8 @@ export function PostCard({
 
   const creatorName = creator.displayName ?? creator.username
   const creatorInitial = creatorName.slice(0, 1).toUpperCase()
+  const previewTitle = getPreviewTitle(text)
+  const previewBody = getPreviewBody(text)
 
   const resolvedMedia =
     media.length > 0
@@ -110,7 +147,7 @@ export function PostCard({
       <img
         src={mediaUrl}
         alt={alt}
-        className="h-full w-full object-cover"
+        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
       />
     )
   }
@@ -122,7 +159,7 @@ export function PostCard({
       const item = resolvedMedia[0]
 
       return (
-        <div className="overflow-hidden rounded-[28px] bg-zinc-950">
+        <div className="overflow-hidden rounded-2xl bg-zinc-950">
           <div className="aspect-[4/5] w-full overflow-hidden">
             {renderSingleMedia(item, "Post media")}
           </div>
@@ -131,7 +168,7 @@ export function PostCard({
     }
 
     return (
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[28px] bg-zinc-950">
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-zinc-950">
         {resolvedMedia.slice(0, 2).map((item, index) => (
           <div
             key={`${item.url}-${index}`}
@@ -173,8 +210,8 @@ export function PostCard({
   return (
     <article
       onClick={handleCardClick}
-      className={`overflow-hidden rounded-[32px] border border-zinc-800 bg-zinc-900/70 p-4 transition sm:p-5 ${
-        isLocked ? "cursor-default" : "cursor-pointer hover:border-zinc-700"
+      className={`group overflow-hidden rounded-[32px] border border-zinc-800 bg-zinc-900/70 p-4 transition-all duration-200 hover:border-zinc-700 hover:shadow-xl sm:p-5 ${
+        isLocked ? "cursor-default" : "cursor-pointer"
       }`}
     >
       <div className="flex flex-col gap-4">
@@ -201,7 +238,7 @@ export function PostCard({
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {isLocked ? (
             <LockedPostCard
               previewText={text}
@@ -219,21 +256,31 @@ export function PostCard({
             <>
               {renderMedia()}
 
-              <p className="whitespace-pre-wrap text-[15px] leading-7 text-zinc-100">
-                {text}
-              </p>
+              <div className="space-y-2">
+                <p className="line-clamp-2 text-base font-semibold leading-7 text-white sm:text-lg">
+                  {previewTitle}
+                </p>
 
-              <p className="text-xs text-zinc-500">{createdAt}</p>
+                {previewBody ? (
+                  <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-zinc-400">
+                    {previewBody}
+                  </p>
+                ) : null}
+              </div>
 
-              {postId && (
-                <div onClick={(e) => e.stopPropagation()}>
-                  <ReportButton
-                    targetType="post"
-                    targetId={postId}
-                    pathname={pathname}
-                  />
-                </div>
-              )}
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs text-zinc-500">{createdAt}</p>
+
+                {postId ? (
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <ReportButton
+                      targetType="post"
+                      targetId={postId}
+                      pathname={pathname}
+                    />
+                  </div>
+                ) : null}
+              </div>
             </>
           )}
         </div>

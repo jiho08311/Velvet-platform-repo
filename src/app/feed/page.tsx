@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-
+import { Avatar } from "@/shared/ui/Avatar"
 import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { getSession } from "@/modules/auth/server/get-session"
 import { requireActiveUser } from "@/modules/auth/server/require-active-user"
@@ -140,11 +140,12 @@ export default async function FeedPage() {
                         className="flex items-center justify-between gap-3"
                       >
                         <div className="flex min-w-0 items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-white">
-                            {(creator.displayName ?? creator.username)
-                              .slice(0, 1)
-                              .toUpperCase()}
-                          </div>
+                         <Avatar
+  src={creator.avatarUrl}
+  alt={creator.username}
+  fallback={creator.displayName ?? creator.username}
+  size="md"
+/>
 
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium text-white">
