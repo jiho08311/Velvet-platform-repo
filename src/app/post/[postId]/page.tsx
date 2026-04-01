@@ -6,7 +6,7 @@ import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 import { getPostById } from "@/modules/post/server/get-post-by-id"
 import { deletePostAction } from "@/modules/post/server/delete-post-action"
-import { PostPurchaseButton } from "@/modules/post/ui/PostPurchaseButton"
+import PostPurchaseButton from "@/modules/post/ui/PostPurchaseButton"
 import { EmptyState } from "@/shared/ui/EmptyState"
 
 type PostDetailPageProps = {
