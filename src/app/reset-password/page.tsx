@@ -1,6 +1,6 @@
-import { ForgotPasswordForm } from "@/modules/auth/ui/ForgotPasswordForm"
+import { ResetPasswordForm } from "@/modules/auth/ui/ResetPasswordForm"
 
-export default function ForgotPasswordPage() {
+export default function ResetPasswordPage() {
   return (
     <main className="min-h-screen bg-white">
       <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
@@ -17,7 +17,7 @@ export default function ForgotPasswordPage() {
               </div>
 
               <p className="text-lg leading-8 text-white/85">
-                비밀번호를 재설정하세요.
+                새로운 비밀번호를 설정하세요.
               </p>
             </div>
           </div>
@@ -34,23 +34,14 @@ export default function ForgotPasswordPage() {
           <div className="w-full max-w-md rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm">
             <div className="mb-6 space-y-2">
               <h1 className="text-3xl font-semibold tracking-tight text-zinc-950">
-                Forgot password
+                Reset password
               </h1>
               <p className="text-sm text-zinc-500">
-                가입한 이메일 주소로 비밀번호 재설정 링크를 보냅니다.
+                새 비밀번호를 입력하고 계정을 다시 보호하세요.
               </p>
             </div>
 
-            <ForgotPasswordForm />
-
-            <div className="mt-6 text-center text-sm text-zinc-600">
-              <a
-                href="/sign-in"
-                className="font-semibold text-[#C2185B] hover:underline"
-              >
-                로그인으로 돌아가기
-              </a>
-            </div>
+            <ResetPasswordForm />
           </div>
         </section>
       </div>

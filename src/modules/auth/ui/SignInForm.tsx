@@ -100,11 +100,11 @@ export function SignInForm() {
 
       <div className="flex justify-end">
         <a
-          href="/forgot-password"
-          className="text-sm text-zinc-500 transition hover:text-zinc-900"
-        >
-          비밀번호를 잊으셨나요?
-        </a>
+  href="/forgot-password"
+  className="text-sm font-medium text-zinc-600 transition hover:text-[#C2185B]"
+>
+  비밀번호를 잊으셨나요?
+</a>
       </div>
 
       <button
