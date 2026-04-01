@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
-import { requireUser } from "@/modules/auth/server/require-user"
+import { requireActiveUser } from "@/modules/auth/server/require-active-user"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { updateCreatorSettings } from "@/modules/creator/server/update-creator-settings"
 import { createPayoutRequest } from "@/modules/payout/server/create-payout-request"
@@ -30,7 +30,7 @@ async function requestPayoutAction(formData: FormData) {
     throw new Error("Invalid amount")
   }
 
-  const user = await requireUser()
+  const user = await requireActiveUser()
   const creator = await getCreatorByUserId(user.id)
 
   if (!creator) {
@@ -56,7 +56,7 @@ async function updateSubscriptionPriceAction(formData: FormData) {
     throw new Error("Invalid subscription price")
   }
 
-  const user = await requireUser()
+  const user = await requireActiveUser()
   const creator = await getCreatorByUserId(user.id)
 
   if (!creator) {
@@ -74,10 +74,10 @@ async function updateSubscriptionPriceAction(formData: FormData) {
 }
 
 export default async function PayoutsPage() {
-  let user: Awaited<ReturnType<typeof requireUser>>
+  let user: Awaited<ReturnType<typeof requireActiveUser>>
 
   try {
-    user = await requireUser()
+    user = await requireActiveUser()
   } catch {
     redirect("/sign-in?next=/dashboard/payouts")
   }
@@ -123,9 +123,7 @@ export default async function PayoutsPage() {
               className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4"
             >
               {SUBSCRIPTION_PRICES.map((price) => {
-                const isActive =
-                  creator.subscriptionPriceCents === price
-
+                const isActive = creator.subscriptionPriceCents === price
                 const isLongPrice = price >= 10000
 
                 return (
@@ -195,9 +193,7 @@ export default async function PayoutsPage() {
 
         <Card>
           <div className="mb-4">
-            <p className="text-lg font-semibold text-white">
-              Payout history
-            </p>
+            <p className="text-lg font-semibold text-white">Payout history</p>
             <p className="text-sm text-zinc-500">
               Track all your payout activity
             </p>

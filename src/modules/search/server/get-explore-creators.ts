@@ -23,10 +23,12 @@ export async function getExploreCreators(
 ): Promise<ExploreCreator[]> {
   const safeLimit = Math.max(1, Math.min(limit, 50))
 
-  const { data: profileRows, error: profileError } = await supabaseAdmin
-    .from("profiles")
-    .select("id")
-    .eq("is_deactivated", false)
+const { data: profileRows, error: profileError } = await supabaseAdmin
+  .from("profiles")
+  .select("id")
+  .eq("is_deactivated", false)
+  .eq("is_delete_pending", false)
+  .is("deleted_at", null)
 
   if (profileError) {
     throw profileError

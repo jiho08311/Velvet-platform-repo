@@ -64,7 +64,11 @@ export default async function FeedPage() {
     redirect("/sign-in?next=/feed")
   }
 
-  await requireActiveUser()
+  try {
+    await requireActiveUser()
+  } catch {
+    redirect("/reactivate-account")
+  }
 
   try {
     await assertPassVerified({ profileId: session.userId })

@@ -132,22 +132,26 @@ export async function getHomeFeed(
     new Set(postList.map((post) => post.creator_id))
   )
 
-  const { data: creators, error: creatorsError } = await supabaseAdmin
-    .from("creators")
-    .select(`
+const { data: creators, error: creatorsError } = await supabaseAdmin
+  .from("creators")
+  .select(`
+    id,
+    user_id,
+    username,
+    display_name,
+    profiles!inner (
       id,
-      user_id,
-      username,
-      display_name,
-      profiles!inner (
-        id,
-        is_deactivated
-      )
-    `)
-    .in("id", creatorIds)
-    .eq("status", "active")
-    .eq("profiles.is_deactivated", false)
-    .returns<CreatorRow[]>()
+      is_deactivated,
+      is_delete_pending,
+      deleted_at
+    )
+  `)
+  .in("id", creatorIds)
+  .eq("status", "active")
+  .eq("profiles.is_deactivated", false)
+  .eq("profiles.is_delete_pending", false)
+  .is("profiles.deleted_at", null)
+  .returns<CreatorRow[]>()
 
   if (creatorsError) {
     throw creatorsError

@@ -34,6 +34,8 @@ const { data: profileRows, error: profileError } = await supabaseAdmin
   .from("profiles")
   .select("id, username, display_name")
   .eq("is_deactivated", false) // ✅ 추가
+  .eq("is_delete_pending", false)
+.is("deleted_at", null)
   .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
   .limit(limit)
 

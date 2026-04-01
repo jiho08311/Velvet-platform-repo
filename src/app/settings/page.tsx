@@ -42,7 +42,6 @@ export default async function SettingsPage() {
         </p>
       </section>
 
-      {/* 계정 정보 */}
       <section className="rounded-2xl border border-white/10 bg-neutral-950 p-6 text-white">
         <div className="flex flex-col gap-6">
           <div className="grid gap-6 md:grid-cols-2">
@@ -69,11 +68,11 @@ export default async function SettingsPage() {
         </div>
       </section>
 
-      {/* Danger zone */}
       <section className="rounded-2xl border border-red-400/20 bg-neutral-950 p-6 text-white">
         <h2 className="text-lg font-semibold text-red-300">Danger zone</h2>
         <p className="mt-2 text-sm text-white/60">
-          Permanently delete or deactivate your account.
+          Deactivate your account temporarily or schedule it for deletion. Deleted
+          accounts will be blocked permanently after 7 days.
         </p>
 
         <div className="mt-4 flex flex-wrap gap-3">
@@ -92,14 +91,16 @@ export default async function SettingsPage() {
             </div>
           )}
 
-          <form action="/api/settings/delete-account" method="post">
-            <button
-              type="submit"
-              className="inline-flex h-10 items-center justify-center rounded-xl border border-red-400/20 px-4 text-sm font-medium text-red-300 transition hover:bg-red-400/10"
-            >
-              Delete account
-            </button>
-          </form>
+          {!isSuperAdmin ? (
+            <form action="/api/settings/delete-account" method="post">
+              <button
+                type="submit"
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-red-400/20 px-4 text-sm font-medium text-red-300 transition hover:bg-red-400/10"
+              >
+                Delete account
+              </button>
+            </form>
+          ) : null}
         </div>
       </section>
     </main>

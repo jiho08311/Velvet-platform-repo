@@ -10,6 +10,9 @@ export async function POST(request: Request) {
     .from("profiles")
     .update({
       is_deactivated: false,
+      is_delete_pending: false,
+      delete_scheduled_for: null,
+      deleted_at: null,
     })
     .eq("id", user.id)
 

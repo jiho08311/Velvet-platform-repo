@@ -5,21 +5,58 @@ import { SignInForm } from "@/modules/auth/ui/SignInForm"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
+type ProfileStatusRow = {
+  is_deactivated: boolean | null
+  is_delete_pending: boolean | null
+  delete_scheduled_for: string | null
+  deleted_at: string | null
+}
+
 export default async function SignInPage() {
   const user = await getCurrentUser()
 
   if (user) {
-    const { data: profile } = await supabaseAdmin
+    const { data: profile, error } = await supabaseAdmin
       .from("profiles")
-      .select("is_deactivated")
+      .select(
+        "is_deactivated, is_delete_pending, delete_scheduled_for, deleted_at"
+      )
       .eq("id", user.id)
-      .single()
+      .single<ProfileStatusRow>()
 
-    if (profile?.is_deactivated) {
+    if (error) {
+      throw error
+    }
+
+    if (profile?.deleted_at) {
+      redirect("/account-unavailable")
+    }
+
+    const now = new Date()
+    const isDeleteExpired =
+      profile?.is_delete_pending &&
+      profile?.delete_scheduled_for &&
+      new Date(profile.delete_scheduled_for).getTime() <= now.getTime()
+
+    if (isDeleteExpired) {
+      const { error: updateError } = await supabaseAdmin
+        .from("profiles")
+        .update({
+          deleted_at: now.toISOString(),
+        })
+        .eq("id", user.id)
+
+      if (updateError) {
+        throw updateError
+      }
+
+      redirect("/account-unavailable")
+    }
+
+    if (profile?.is_deactivated || profile?.is_delete_pending) {
       redirect("/reactivate-account")
     }
 
-    // 이미 로그인된 정상 유저면 홈으로
     redirect("/")
   }
 

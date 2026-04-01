@@ -11,6 +11,7 @@ const HIDE_CHROME_PATHS = [
   "/sign-up",
   "/forgot-password",
   "/reactivate-account",
+  "/account-unavailable", // 추가
   "/verify-pass",
   "/verify-pass-required",
 ]

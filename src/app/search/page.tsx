@@ -1,4 +1,4 @@
-import { requireUser } from "@/modules/auth/server/require-user"
+import { requireActiveUser } from "@/modules/auth/server/require-active-user"
 import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { redirect } from "next/navigation"
 import { searchCreators } from "@/modules/search/server/search-creators"
@@ -14,7 +14,7 @@ type SearchPageProps = {
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
-  const user = await requireUser()
+  const user = await requireActiveUser()
 
   try {
     await assertPassVerified({ profileId: user.id })
@@ -33,10 +33,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     : []
 
   const [explorePosts, exploreCreators] = !query
-    ? await Promise.all([
-        getExplorePosts(24),
-        getExploreCreators(6),
-      ])
+    ? await Promise.all([getExplorePosts(24), getExploreCreators(6)])
     : [[], []]
 
   return (

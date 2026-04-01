@@ -2,7 +2,7 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 
 import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
-import { requireUser } from "@/modules/auth/server/require-user"
+import { requireActiveUser } from "@/modules/auth/server/require-active-user"
 import { listNotifications } from "@/modules/notification/server/list-notifications"
 import type { NotificationType } from "@/modules/notification/types"
 import { Card } from "@/shared/ui/Card"
@@ -44,9 +44,7 @@ function getNotificationLabel(type: NotificationType) {
 }
 
 export default async function NotificationsPage() {
-  const user = await requireUser()
-
-  console.log("[notifications/page] current user id:", user.id)
+  const user = await requireActiveUser()
 
   try {
     await assertPassVerified({ profileId: user.id })
@@ -57,9 +55,6 @@ export default async function NotificationsPage() {
   const notifications = await listNotifications({
     userId: user.id,
   })
-
-  console.log("[notifications/page] notifications count:", notifications.length)
-  console.log("[notifications/page] notifications:", notifications)
 
   const unreadCount = notifications.filter((item) => !item.isRead).length
 
@@ -80,10 +75,6 @@ export default async function NotificationsPage() {
               <p className="mt-2 text-sm text-zinc-400">
                 Stay updated on subscriptions, PPV messages, and successful
                 payments.
-              </p>
-
-              <p className="mt-3 text-xs text-red-400">
-                current user id: {user.id}
               </p>
             </div>
 
@@ -135,10 +126,6 @@ export default async function NotificationsPage() {
 
                         <p className="mt-1.5 text-xs text-zinc-500">
                           {new Date(notification.createdAt).toLocaleString()}
-                        </p>
-
-                        <p className="mt-1 text-[11px] text-zinc-600">
-                          user_id: {notification.userId}
                         </p>
                       </div>
                     </div>
