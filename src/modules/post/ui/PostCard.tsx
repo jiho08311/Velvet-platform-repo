@@ -273,11 +273,9 @@ export function PostCard({
     }
   }, [showComments])
 
-  function handleCardClick() {
-    if (!postId || isLocked) return
-    router.push(`/post/${postId}`)
-  }
-
+function handleCardClick() {
+  return
+}
   function renderSingleMedia(item: MediaItem, alt: string) {
     const mediaUrl = item.url?.trim() ?? ""
     if (!mediaUrl) return null
@@ -395,16 +393,22 @@ export function PostCard({
 
     return comment.profiles?.username ?? "user"
   }
-
+function handleCreatorClick(e: React.MouseEvent) {
+  e.stopPropagation()
+  router.push(`/creator/${creator.username}`)
+}
   return (
     <article
       onClick={handleCardClick}
-      className={`group overflow-hidden rounded-[32px] border border-zinc-800 bg-zinc-900/70 p-4 transition-all duration-200 hover:border-zinc-700 hover:shadow-xl sm:p-5 ${
-        isLocked ? "cursor-default" : "cursor-pointer"
-      }`}
+     className="group overflow-hidden rounded-[32px] border border-zinc-800 bg-zinc-900/70 p-4 transition-all duration-200 hover:border-zinc-700 hover:shadow-xl sm:p-5"
+      
     >
       <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-3">
+       <button
+  type="button"
+  onClick={handleCreatorClick}
+  className="flex items-center gap-3 text-left"
+>
           {creator.avatarUrl ? (
             <img
               src={creator.avatarUrl}
@@ -425,7 +429,7 @@ export function PostCard({
               @{creator.username}
             </p>
           </div>
-        </div>
+        </button>
 
         <div className="space-y-4">
           {isLocked ? (
