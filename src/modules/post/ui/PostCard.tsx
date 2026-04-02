@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
@@ -120,6 +120,9 @@ export function PostCard({
   const [commentError, setCommentError] = useState<string | null>(null)
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null)
   const [expandedComments, setExpandedComments] = useState(false)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+const [isVideoVisible, setIsVideoVisible] = useState(false)
+const [isVideoReady, setIsVideoReady] = useState(false)
 
   const creatorName = creator.displayName ?? creator.username
   const creatorInitial = creatorName.slice(0, 1).toUpperCase()
@@ -133,6 +136,8 @@ export function PostCard({
           url,
           type: "image" as const,
         }))
+
+        const primaryVideo = resolvedMedia.find((item) => item.type === "video")
 
   const visibleComments = expandedComments ? comments : comments.slice(0, 3)
 
@@ -272,6 +277,36 @@ export function PostCard({
       setExpandedComments(false)
     }
   }, [showComments])
+  useEffect(() => {
+  if (!primaryVideo || !videoRef.current) return
+
+  const element = videoRef.current
+
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      setIsVideoVisible(entry.isIntersecting && entry.intersectionRatio >= 0.6)
+    },
+    {
+      threshold: [0.2, 0.6, 1],
+    }
+  )
+
+  observer.observe(element)
+
+  return () => {
+    observer.disconnect()
+  }
+}, [primaryVideo])
+
+useEffect(() => {
+  if (!videoRef.current || !primaryVideo) return
+
+  if (isVideoVisible) {
+    videoRef.current.play().catch(() => {})
+  } else {
+    videoRef.current.pause()
+  }
+}, [isVideoVisible, primaryVideo])
 
 function handleCardClick() {
   return
@@ -280,16 +315,22 @@ function handleCardClick() {
     const mediaUrl = item.url?.trim() ?? ""
     if (!mediaUrl) return null
 
-    if (item.type === "video") {
-      return (
-        <video
-          src={mediaUrl}
-          controls
-          playsInline
-          className="h-full w-full object-cover"
-        />
-      )
-    }
+if (item.type === "video") {
+  return (
+    <video
+      ref={videoRef}
+      src={mediaUrl}
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      onLoadedData={() => setIsVideoReady(true)}
+      className={`h-full w-full object-cover transition-opacity duration-300 ${
+        isVideoReady ? "opacity-100" : "opacity-0"
+      }`}
+    />
+  )
+}
 
     if (item.type === "audio") {
       return (

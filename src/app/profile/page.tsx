@@ -176,13 +176,24 @@ export default async function ProfilePage() {
                   href={`/post/${post.id}`}
                   className="aspect-square overflow-hidden bg-zinc-800"
                 >
-                  {media?.url ? (
-                    <img
-                      src={media.url}
-                      alt=""
-                      className="h-full w-full object-cover hover:opacity-90"
-                    />
-                  ) : (
+         {media?.url ? (
+  media.type === "video" ? (
+    <video
+      src={media.url}
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      className="h-full w-full object-cover"
+    />
+  ) : (
+    <img
+      src={media.url}
+      alt=""
+      className="h-full w-full object-cover hover:opacity-90"
+    />
+  )
+) : (
                     <div className="flex h-full items-center justify-center text-xs text-zinc-500">
                       No media
                     </div>

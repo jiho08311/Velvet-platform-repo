@@ -8,6 +8,7 @@ export type ExplorePostItem = {
   creatorUsername: string
   creatorDisplayName: string | null
   imageUrl: string
+  mediaType?: "image" | "video"
   createdAt: string
 }
 
@@ -22,6 +23,7 @@ type MediaRow = {
   post_id: string
   storage_path: string
   sort_order: number
+  type: "image" | "video" | "audio" | "file" | null
 }
 
 type CreatorRow = {
@@ -67,32 +69,32 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
 
   const postIds = posts.map((post) => post.id)
 
-  const { data: mediaRows, error: mediaError } = await supabaseAdmin
-    .from("media")
-    .select("post_id, storage_path, sort_order")
-    .in("post_id", postIds)
-    .eq("type", "image")
-    .eq("status", "ready")
-    .order("sort_order", { ascending: true })
-    .returns<MediaRow[]>()
+const { data: mediaRows, error: mediaError } = await supabaseAdmin
+  .from("media")
+  .select("post_id, storage_path, sort_order, type")
+  .in("post_id", postIds)
+  .in("type", ["image", "video"])
+  .eq("status", "ready")
+  .order("sort_order", { ascending: true })
+  .returns<MediaRow[]>()
 
   if (mediaError) throw mediaError
 
-  const firstImageMap = new Map<string, MediaRow>()
+const firstMediaMap = new Map<string, MediaRow>()
 
-  for (const media of mediaRows ?? []) {
-    if (!firstImageMap.has(media.post_id)) {
-      firstImageMap.set(media.post_id, media)
-    }
+for (const media of mediaRows ?? []) {
+  if (!firstMediaMap.has(media.post_id)) {
+    firstMediaMap.set(media.post_id, media)
   }
+}
 
-  const postsWithImage = posts.filter((post) => firstImageMap.has(post.id))
+const postsWithMedia = posts.filter((post) => firstMediaMap.has(post.id))
 
-  if (postsWithImage.length === 0) return []
+if (postsWithMedia.length === 0) return []
 
-  const creatorIds = Array.from(
-    new Set(postsWithImage.map((post) => post.creator_id))
-  )
+const creatorIds = Array.from(
+  new Set(postsWithMedia.map((post) => post.creator_id))
+)
 
   const { data: creatorRows, error: creatorError } = await supabaseAdmin
     .from("creators")
@@ -117,9 +119,9 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
     (creatorRows ?? []).map((creator) => [creator.id, creator])
   )
 
-  const filteredPosts = postsWithImage.filter((post) =>
-    creatorMap.has(post.creator_id)
-  )
+const filteredPosts = postsWithMedia.filter((post) =>
+  creatorMap.has(post.creator_id)
+)
 
   if (filteredPosts.length === 0) return []
 
@@ -128,7 +130,7 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
   return Promise.all(
     shuffledPosts.map(async (post) => {
       const creator = creatorMap.get(post.creator_id)
-      const media = firstImageMap.get(post.id)
+    const media = firstMediaMap.get(post.id)
 
       if (!creator || !media) {
         throw new Error("Invalid explore post data")
@@ -142,15 +144,17 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
         hasPurchased: true,
       })
 
-      return {
-        id: `${post.id}:${media.storage_path}`,
-        postId: post.id,
-        creatorId: creator.id,
-        creatorUsername: creator.username,
-        creatorDisplayName: creator.display_name,
-        imageUrl,
-        createdAt: post.published_at ?? post.created_at,
-      }
+    return {
+  id: `${post.id}:${media.storage_path}`,
+  postId: post.id,
+  creatorId: creator.id,
+  creatorUsername: creator.username,
+  creatorDisplayName: creator.display_name,
+  imageUrl,
+  mediaType:
+    media.type === "video" ? "video" : "image",
+  createdAt: post.published_at ?? post.created_at,
+}
     })
   )
 }
