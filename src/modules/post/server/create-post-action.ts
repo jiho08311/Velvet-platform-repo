@@ -1,6 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { redirect } from "next/navigation"
 
 import { createPostWithMediaWorkflow } from "@/workflows/create-post-with-media-workflow"
 
@@ -42,4 +43,7 @@ export async function createPostAction({
   revalidatePath("/feed")
   revalidatePath("/post/new")
   revalidatePath(`/creator/${creatorId}`)
+
+  // 🔥 추가 (핵심)
+  redirect("/profile")
 }
