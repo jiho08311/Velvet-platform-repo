@@ -1,7 +1,7 @@
 import { requireActiveUser } from "@/modules/auth/server/require-active-user"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
-type ReportTargetType = "post" | "message" | "user" | "creator"
+type ReportTargetType = "post" | "message" | "user" | "creator" | "comment"
 
 type CreateReportParams = {
   targetType: ReportTargetType

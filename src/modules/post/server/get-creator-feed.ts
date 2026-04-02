@@ -31,6 +31,10 @@ type MediaRow = {
 
 type PostLockReason = "none" | "subscription" | "purchase"
 
+type PostLikeRow = {
+  post_id: string
+}
+
 function resolveMediaType(row: MediaRow): MediaType {
   if (
     row.type === "image" ||
@@ -118,10 +122,47 @@ export async function getCreatorFeed({
 
   const postIds = resolvedPosts.map((post) => post.id)
 
+  // ✅ likes 추가
+  const { data: likeRows, error: likeRowsError } = await supabaseAdmin
+    .from("post_likes")
+    .select("post_id")
+    .in("post_id", postIds)
+    .returns<PostLikeRow[]>()
+
+  if (likeRowsError) {
+    throw likeRowsError
+  }
+
+  const { data: myLikeRows, error: myLikeRowsError } = await supabaseAdmin
+    .from("post_likes")
+    .select("post_id")
+    .eq("user_id", safeUserId ?? "")
+    .in("post_id", postIds)
+    .returns<PostLikeRow[]>()
+
+  if (myLikeRowsError) {
+    throw myLikeRowsError
+  }
+
+  const likeCountMap = new Map<string, number>()
+
+  for (const row of likeRows ?? []) {
+    likeCountMap.set(
+      row.post_id,
+      (likeCountMap.get(row.post_id) ?? 0) + 1
+    )
+  }
+
+  const myLikeSet = new Set(
+    (myLikeRows ?? []).map((row) => row.post_id)
+  )
+
   if (postIds.length === 0) {
     return resolvedPosts.map((post) => ({
       ...post,
       media: [],
+      likesCount: 0,
+      isLiked: false,
     }))
   }
 
@@ -172,6 +213,10 @@ export async function getCreatorFeed({
       return {
         ...post,
         media,
+
+        // ✅ 추가
+        likesCount: likeCountMap.get(post.id) ?? 0,
+        isLiked: myLikeSet.has(post.id),
       }
     })
   )

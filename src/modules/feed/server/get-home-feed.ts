@@ -17,6 +17,8 @@ export type HomeFeedItem = {
     url: string
     type: MediaType
   }>
+  likesCount: number
+  isLiked: boolean
   creator: {
     username: string
     displayName: string | null
@@ -65,6 +67,10 @@ type MediaRow = {
   mime_type: string | null
   status: "processing" | "ready" | "failed"
   sort_order: number
+}
+
+type PostLikeRow = {
+  post_id: string
 }
 
 function resolveMediaType(row: MediaRow): MediaType {
@@ -132,9 +138,9 @@ export async function getHomeFeed(
     new Set(postList.map((post) => post.creator_id))
   )
 
-const { data: creators, error: creatorsError } = await supabaseAdmin
-  .from("creators")
-  .select(`
+  const { data: creators, error: creatorsError } = await supabaseAdmin
+    .from("creators")
+    .select(`
     id,
     user_id,
     username,
@@ -146,12 +152,12 @@ const { data: creators, error: creatorsError } = await supabaseAdmin
       deleted_at
     )
   `)
-  .in("id", creatorIds)
-  .eq("status", "active")
-  .eq("profiles.is_deactivated", false)
-  .eq("profiles.is_delete_pending", false)
-  .is("profiles.deleted_at", null)
-  .returns<CreatorRow[]>()
+    .in("id", creatorIds)
+    .eq("status", "active")
+    .eq("profiles.is_deactivated", false)
+    .eq("profiles.is_delete_pending", false)
+    .is("profiles.deleted_at", null)
+    .returns<CreatorRow[]>()
 
   if (creatorsError) {
     throw creatorsError
@@ -198,6 +204,35 @@ const { data: creators, error: creatorsError } = await supabaseAdmin
   )
 
   const postIds = filteredPosts.map((post) => post.id)
+
+  const { data: likeRows, error: likeRowsError } = await supabaseAdmin
+    .from("post_likes")
+    .select("post_id")
+    .in("post_id", postIds)
+    .returns<PostLikeRow[]>()
+
+  if (likeRowsError) {
+    throw likeRowsError
+  }
+
+  const { data: myLikeRows, error: myLikeRowsError } = await supabaseAdmin
+    .from("post_likes")
+    .select("post_id")
+    .eq("user_id", viewerUserId)
+    .in("post_id", postIds)
+    .returns<PostLikeRow[]>()
+
+  if (myLikeRowsError) {
+    throw myLikeRowsError
+  }
+
+  const likeCountMap = new Map<string, number>()
+
+  for (const row of likeRows ?? []) {
+    likeCountMap.set(row.post_id, (likeCountMap.get(row.post_id) ?? 0) + 1)
+  }
+
+  const myLikeSet = new Set((myLikeRows ?? []).map((row) => row.post_id))
 
   const { data: mediaRows, error: mediaError } = await supabaseAdmin
     .from("media")
@@ -252,6 +287,8 @@ const { data: creators, error: creatorsError } = await supabaseAdmin
         lockReason: "none",
         priceCents: post.price_cents ?? undefined,
         media,
+        likesCount: likeCountMap.get(post.id) ?? 0,
+        isLiked: myLikeSet.has(post.id),
         creator: {
           username: creator?.username ?? "",
           displayName: creator?.display_name ?? null,

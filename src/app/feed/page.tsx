@@ -26,12 +26,12 @@ function normalizeMedia(item: unknown): FeedMediaItem[] {
     mediaThumbnailUrls?: string[]
   }
 
- if (Array.isArray(maybeItem.media)) {
-  return maybeItem.media.map((m) => ({
-    url: (m as any).url ?? (m as any).storagePath ?? "",
-    type: (m as any).type,
-  }))
-}
+  if (Array.isArray(maybeItem.media)) {
+    return maybeItem.media.map((m) => ({
+      url: (m as any).url ?? (m as any).storagePath ?? "",
+      type: (m as any).type,
+    }))
+  }
 
   if (Array.isArray(maybeItem.mediaThumbnailUrls)) {
     return maybeItem.mediaThumbnailUrls.map((url) => ({
@@ -114,6 +114,8 @@ export default async function FeedPage() {
                 isLocked: item.isLocked,
                 lockReason: item.lockReason,
                 priceCents: normalizePriceCents(item),
+                likesCount: item.likesCount,
+                isLiked: item.isLiked,
                 creator: item.creator,
               }))}
             />
@@ -140,12 +142,12 @@ export default async function FeedPage() {
                         className="flex items-center justify-between gap-3"
                       >
                         <div className="flex min-w-0 items-center gap-3">
-                         <Avatar
-  src={creator.avatarUrl}
-  alt={creator.username}
-  fallback={creator.displayName ?? creator.username}
-  size="md"
-/>
+                          <Avatar
+                            src={creator.avatarUrl}
+                            alt={creator.username}
+                            fallback={creator.displayName ?? creator.username}
+                            size="md"
+                          />
 
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium text-white">

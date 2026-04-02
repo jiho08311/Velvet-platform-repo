@@ -1,23 +1,36 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 
 import { requireUser } from "@/modules/auth/server/require-user"
-import { createClient } from "@/infrastructure/supabase/server"
-
 import { cancelSubscription } from "@/modules/subscription/server/cancel-subscription"
+import { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"
 import { notifySubscriptionCanceledWorkflow } from "@/workflows/subscription/notify-subscription-canceled-workflow"
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   const user = await requireUser()
-  const supabase = await createClient()
 
-  const { data: subscription, error } = await supabase
-    .from("subscriptions")
-    .select("id, user_id, creator_id")
-    .eq("user_id", user.id)
-    .eq("status", "active")
-    .single()
+  let body: { creatorId?: string } = {}
 
-  if (error || !subscription) {
+  try {
+    body = await request.json()
+  } catch {
+    body = {}
+  }
+
+  const creatorId = body.creatorId?.trim()
+
+  if (!creatorId) {
+    return NextResponse.json(
+      { error: "creatorId is required" },
+      { status: 400 }
+    )
+  }
+
+  const subscription = await getActiveSubscription({
+    userId: user.id,
+    creatorId,
+  })
+
+  if (!subscription) {
     return NextResponse.json(
       { error: "No active subscription" },
       { status: 400 }
@@ -25,8 +38,8 @@ export async function POST() {
   }
 
   const updated = await cancelSubscription({
-    userId: subscription.user_id,
-    creatorId: subscription.creator_id,
+    userId: subscription.userId,
+    creatorId: subscription.creatorId,
   })
 
   if (!updated) {
@@ -38,8 +51,8 @@ export async function POST() {
 
   await notifySubscriptionCanceledWorkflow({
     subscriptionId: subscription.id,
-    creatorId: subscription.creator_id,
-    subscriberId: subscription.user_id,
+    creatorId: subscription.creatorId,
+    subscriberId: subscription.userId,
     mode: "period_end",
   })
 

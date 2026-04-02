@@ -1,6 +1,7 @@
 "use client"
 
 import { usePathname, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
@@ -11,6 +12,25 @@ import PostPurchaseButton from "./PostPurchaseButton"
 type MediaItem = {
   url: string
   type?: "image" | "video" | "audio" | "file"
+}
+
+type CommentItem = {
+  id: string
+  content: string
+  created_at?: string
+  user_id?: string
+  likes_count?: number
+  is_liked?: boolean
+  profiles?:
+    | {
+        username?: string | null
+        avatar_url?: string | null
+      }
+    | Array<{
+        username?: string | null
+        avatar_url?: string | null
+      }>
+    | null
 }
 
 type PostCardProps = {
@@ -25,6 +45,8 @@ type PostCardProps = {
   creatorId: string
   creatorUserId?: string
   currentUserId?: string
+  likesCount?: number
+  isLiked?: boolean
   creator: {
     username: string
     displayName: string | null
@@ -79,10 +101,25 @@ export function PostCard({
   creatorId,
   creatorUserId,
   currentUserId,
+  likesCount = 0,
+  isLiked = false,
   creator,
 }: PostCardProps) {
   const router = useRouter()
   const pathname = usePathname()
+
+  const [liked, setLiked] = useState(isLiked)
+  const [count, setCount] = useState(likesCount)
+  const [isLikeLoading, setIsLikeLoading] = useState(false)
+
+  const [comments, setComments] = useState<CommentItem[]>([])
+  const [commentInput, setCommentInput] = useState("")
+  const [isCommentsLoading, setIsCommentsLoading] = useState(false)
+  const [isCommentSubmitting, setIsCommentSubmitting] = useState(false)
+  const [showComments, setShowComments] = useState(true)
+  const [commentError, setCommentError] = useState<string | null>(null)
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null)
+  const [expandedComments, setExpandedComments] = useState(false)
 
   const creatorName = creator.displayName ?? creator.username
   const creatorInitial = creatorName.slice(0, 1).toUpperCase()
@@ -96,6 +133,145 @@ export function PostCard({
           url,
           type: "image" as const,
         }))
+
+  const visibleComments = expandedComments ? comments : comments.slice(0, 3)
+
+  async function handleLike(event: React.MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation()
+
+    if (!postId || isLikeLoading) return
+
+    try {
+      setIsLikeLoading(true)
+
+      const response = await fetch(`/api/post/${postId}/like`, {
+        method: liked ? "DELETE" : "POST",
+      })
+
+      if (!response.ok) {
+        return
+      }
+
+      setLiked((prev) => !prev)
+      setCount((prev) => (liked ? Math.max(0, prev - 1) : prev + 1))
+    } catch {
+      return
+    } finally {
+      setIsLikeLoading(false)
+    }
+  }
+
+  async function loadComments() {
+    if (!postId || isLocked) return
+
+    try {
+      setIsCommentsLoading(true)
+
+      const response = await fetch(`/api/post/${postId}/comments`, {
+        method: "GET",
+      })
+
+      if (!response.ok) {
+        return
+      }
+
+      const data = await response.json()
+      setComments(data.items ?? [])
+    } catch {
+      return
+    } finally {
+      setIsCommentsLoading(false)
+    }
+  }
+
+  async function handleCommentSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    event.stopPropagation()
+
+    const content = commentInput.trim()
+
+    if (!postId || !content || isCommentSubmitting) return
+
+    try {
+      setIsCommentSubmitting(true)
+
+      const response = await fetch(`/api/post/${postId}/comment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content }),
+      })
+
+      if (!response.ok) {
+        setCommentError(
+          "부적절한 텍스트가 포함되어 있어 메시지를 보낼 수 없습니다."
+        )
+        return
+      }
+
+      setCommentInput("")
+      setCommentError(null)
+      await loadComments()
+    } catch {
+      return
+    } finally {
+      setIsCommentSubmitting(false)
+    }
+  }
+
+  async function handleDeleteComment(
+    event: React.MouseEvent<HTMLButtonElement>,
+    commentId: string
+  ) {
+    event.stopPropagation()
+
+    if (!commentId || deletingCommentId) return
+
+    try {
+      setDeletingCommentId(commentId)
+
+      const response = await fetch(`/api/comment/${commentId}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        return
+      }
+
+      await loadComments()
+    } finally {
+      setDeletingCommentId(null)
+    }
+  }
+
+  async function handleLikeComment(
+    event: React.MouseEvent<HTMLButtonElement>,
+    commentId: string,
+    likedByMe: boolean
+  ) {
+    event.stopPropagation()
+
+    const response = await fetch(`/api/comment/${commentId}/like`, {
+      method: likedByMe ? "DELETE" : "POST",
+    })
+
+    if (!response.ok) {
+      return
+    }
+
+    await loadComments()
+  }
+
+  useEffect(() => {
+    loadComments()
+  }, [postId, isLocked])
+
+  useEffect(() => {
+    if (!showComments) {
+      setExpandedComments(false)
+    }
+  }, [showComments])
 
   function handleCardClick() {
     if (!postId || isLocked) return
@@ -199,7 +375,6 @@ export function PostCard({
     if (lockReason === "purchase" && postId) {
       return (
         <div onClick={(event) => event.stopPropagation()}>
-          {/* 🔥 핵심 수정 */}
           <PostPurchaseButton
             postId={postId}
             priceCents={priceCents}
@@ -211,6 +386,14 @@ export function PostCard({
     }
 
     return null
+  }
+
+  function getCommentUsername(comment: CommentItem) {
+    if (Array.isArray(comment.profiles)) {
+      return comment.profiles[0]?.username ?? "user"
+    }
+
+    return comment.profiles?.username ?? "user"
   }
 
   return (
@@ -275,7 +458,31 @@ export function PostCard({
               </div>
 
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs text-zinc-500">{createdAt}</p>
+                <div className="flex items-center gap-3">
+                  <p className="text-xs text-zinc-500">{createdAt}</p>
+
+                  <button
+                    type="button"
+                    onClick={handleLike}
+                    disabled={isLikeLoading}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 px-3 py-1.5 text-xs text-zinc-400 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <span aria-hidden="true">{liked ? "❤️" : "🤍"}</span>
+                    <span>{count}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      setShowComments((prev) => !prev)
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 px-3 py-1.5 text-xs text-zinc-400 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-white"
+                  >
+                    <span aria-hidden="true">💬</span>
+                    <span>{comments.length}</span>
+                  </button>
+                </div>
 
                 {postId ? (
                   <div onClick={(e) => e.stopPropagation()}>
@@ -287,6 +494,118 @@ export function PostCard({
                   </div>
                 ) : null}
               </div>
+
+              {showComments ? (
+                <div
+                  className="space-y-3 border-t border-zinc-800 pt-3"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <form onSubmit={handleCommentSubmit}>
+                    <input
+                      value={commentInput}
+                      onChange={(event) => setCommentInput(event.target.value)}
+                      placeholder="Write a comment..."
+                      className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500 focus:border-zinc-700"
+                      disabled={isCommentSubmitting}
+                    />
+                  </form>
+
+                  {commentError ? (
+                    <p className="text-xs text-red-500">{commentError}</p>
+                  ) : null}
+
+                  {isCommentsLoading ? (
+                    <div className="space-y-2">
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className="animate-pulse rounded-2xl border border-zinc-800 bg-zinc-900/60 px-3 py-3"
+                        >
+                          <div className="mb-2 h-3 w-1/3 rounded bg-zinc-700" />
+                          <div className="h-3 w-2/3 rounded bg-zinc-700" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : comments.length === 0 ? (
+                    <p className="text-xs text-zinc-500">No comments yet.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {visibleComments.map((comment) => (
+                        <div
+                          key={comment.id}
+                          className="rounded-2xl border border-zinc-800 bg-zinc-950/70 px-3 py-2"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="min-w-0 text-xs leading-5 text-zinc-300">
+                              <span className="mr-2 font-semibold text-white">
+                                @{getCommentUsername(comment)}
+                              </span>
+                              {comment.content}
+                            </p>
+
+                            <div className="flex shrink-0 items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={(event) =>
+                                  handleLikeComment(
+                                    event,
+                                    comment.id,
+                                    Boolean(comment.is_liked)
+                                  )
+                                }
+                                className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800"
+                              >
+                                {comment.is_liked ? "❤️" : "🤍"}{" "}
+                                {comment.likes_count ?? 0}
+                              </button>
+
+                              <div onClick={(event) => event.stopPropagation()}>
+                                <ReportButton
+                                  targetType="comment"
+                                  targetId={comment.id}
+                                  pathname={pathname}
+                                  currentUserId={currentUserId}
+                                />
+                              </div>
+
+                              {currentUserId &&
+                              comment.user_id === currentUserId ? (
+                                <button
+                                  type="button"
+                                  onClick={(event) =>
+                                    handleDeleteComment(event, comment.id)
+                                  }
+                                  disabled={deletingCommentId === comment.id}
+                                  className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {deletingCommentId === comment.id
+                                    ? "Deleting..."
+                                    : "Delete"}
+                                </button>
+                              ) : null}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {comments.length > 3 ? (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            setExpandedComments((prev) => !prev)
+                          }}
+                          className="text-xs text-zinc-400 hover:text-white"
+                        >
+                          {expandedComments
+                            ? "Hide comments"
+                            : `View ${comments.length - 3} more comments`}
+                        </button>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              ) : null}
             </>
           )}
         </div>

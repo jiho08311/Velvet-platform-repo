@@ -4,13 +4,13 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createReportAction } from "@/app/actions/create-report-action"
 
-type ReportTargetType = "post" | "message" | "user" | "creator"
+type ReportTargetType = "post" | "message" | "user" | "creator" | "comment"
 
 type ReportButtonProps = {
   targetType: ReportTargetType
   targetId: string
   pathname: string
-  currentUserId?: string // ✅ 추가
+  currentUserId?: string
 }
 
 const REASONS = [
@@ -28,12 +28,12 @@ export function ReportButton({
   targetType,
   targetId,
   pathname,
-  currentUserId, // ✅ 추가
+  currentUserId,
 }: ReportButtonProps) {
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
-  const isGuest = !currentUserId // ✅ 핵심
+  const isGuest = !currentUserId
 
   function handleClick() {
     if (isGuest) {
@@ -48,14 +48,17 @@ export function ReportButton({
     <div className="space-y-2">
       <button
         type="button"
-        onClick={handleClick} // ✅ 변경
+        onClick={handleClick}
         className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800"
       >
         {open ? "Cancel report" : "Report"}
       </button>
 
       {open ? (
-        <form action={createReportAction} className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4">
+        <form
+          action={createReportAction}
+          className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4"
+        >
           <input type="hidden" name="targetType" value={targetType} />
           <input type="hidden" name="targetId" value={targetId} />
           <input type="hidden" name="pathname" value={pathname} />

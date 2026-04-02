@@ -199,6 +199,8 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                 isLocked={post.isLocked}
                 lockReason={post.lockReason}
                 priceCents={post.priceCents}
+                likesCount={post.likesCount}
+                isLiked={post.isLiked}
                 creatorId={creator.id}
                 creatorUserId={creator.userId}
                 currentUserId={userId ?? undefined}

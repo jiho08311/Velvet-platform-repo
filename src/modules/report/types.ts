@@ -9,6 +9,7 @@ export type ReportTargetType =
   | "creator"
   | "post"
   | "message"
+  | "comment"
 
 export type Report = {
   id: ReportId

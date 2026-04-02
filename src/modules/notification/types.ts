@@ -4,6 +4,11 @@ export const NOTIFICATION_TYPES = [
   "ppv_message_purchased",
   "ppv_post_purchased",
   "payment_succeeded",
+
+  // 🔥 추가
+  "post_liked",
+  "comment_created",
+  "comment_liked",
 ] as const
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number]
@@ -24,6 +29,10 @@ export type NotificationData = {
   messageId?: string
   paymentId?: string
   subscriptionId?: string
+
+  // 🔥 추가 (optional)
+  postId?: string
+  commentId?: string
 }
 
 export type NotificationRow = {

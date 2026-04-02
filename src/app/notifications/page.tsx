@@ -21,6 +21,15 @@ function getNotificationTone(type: NotificationType) {
       return "success"
     case "payment_succeeded":
       return "success"
+
+    // 🔥 추가
+    case "post_liked":
+      return "default"
+    case "comment_created":
+      return "default"
+    case "comment_liked":
+      return "default"
+
     default:
       return "default"
   }
@@ -38,6 +47,15 @@ function getNotificationLabel(type: NotificationType) {
       return "Content unlocked"
     case "payment_succeeded":
       return "Payment"
+
+    // 🔥 추가
+    case "post_liked":
+      return "Like"
+    case "comment_created":
+      return "Comment"
+    case "comment_liked":
+      return "Comment like"
+
     default:
       return "Notification"
   }
