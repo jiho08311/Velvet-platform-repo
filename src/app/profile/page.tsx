@@ -176,10 +176,11 @@ export default async function ProfilePage() {
                   href={`/post/${post.id}`}
                   className="aspect-square overflow-hidden bg-zinc-800"
                 >
-         {media?.url ? (
+       {media?.url ? (
   media.type === "video" ? (
     <video
       src={media.url}
+      autoPlay
       muted
       loop
       playsInline
