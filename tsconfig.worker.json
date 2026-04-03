@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "rootDir": "src",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/modules/moderation/server/video-moderation-worker.ts",
+    "src/modules/moderation/server/enqueue-video-moderation.ts",
+    "src/modules/moderation/server/video-moderation-queue.ts",
+    "src/workflows/process-video-moderation.ts",
+    "src/infrastructure/supabase/**/*.ts"   // 🔥 이거 추가
+  ]
+}

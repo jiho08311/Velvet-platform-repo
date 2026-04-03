@@ -1,9 +1,11 @@
 import OpenAI from "openai"
-import { updatePostStatus } from "@/modules/post/server/update-post-status"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createPost } from "@/modules/post/server/create-post"
 import { uploadMedia } from "@/modules/media/server/upload-media"
 import { createMedia } from "@/modules/media/server/create-media"
-
+import { updatePostStatus } from "@/modules/post/server/update-post-status"
+import { processVideoModeration } from "./process-video-moderation"
+import { enqueueVideoModeration } from "@/modules/moderation/server/enqueue-video-moderation"
 type CreatePostWithMediaWorkflowInput = {
   creatorId: string
   title?: string | null
@@ -15,6 +17,12 @@ type CreatePostWithMediaWorkflowInput = {
 }
 
 type MediaType = "image" | "video" | "audio" | "file"
+
+type CreatedMedia = {
+  id: string
+  type: MediaType
+  storagePath: string
+}
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -228,6 +236,15 @@ async function moderatePostAsync({
       postId,
       status: "archived",
     })
+
+    await supabaseAdmin
+      .from("posts")
+      .update({
+        visibility_status: "rejected",
+        moderation_status: "rejected",
+        moderation_completed_at: new Date().toISOString(),
+      })
+      .eq("id", postId)
   }
 }
 
@@ -242,18 +259,49 @@ export async function createPostWithMediaWorkflow({
 }: CreatePostWithMediaWorkflowInput) {
   const resolvedPriceCents = visibility === "paid" ? priceCents : 0
 
+  console.log(
+    "[createPostWithMediaWorkflow] files",
+    files.map((file) => ({
+      name: file.name,
+      type: file.type,
+      size: file.size,
+    }))
+  )
+
+  const hasVideo = files.some((file) => getMediaType(file) === "video")
+
+  console.log("[createPostWithMediaWorkflow] hasVideo", hasVideo)
+
   const post = await createPost({
     creatorId,
     title,
     content,
-    status,
+    status: hasVideo ? "draft" : status,
     visibility,
     priceCents: resolvedPriceCents,
   })
 
-  const media = []
+  if (hasVideo) {
+    await supabaseAdmin
+      .from("posts")
+      .update({
+        visibility_status: "processing",
+        moderation_status: "pending",
+      })
+      .eq("id", post.id)
+  }
+
+  const media: CreatedMedia[] = []
 
   for (const [index, file] of files.entries()) {
+    const type = getMediaType(file)
+
+    console.log("[createPostWithMediaWorkflow] detected media type", {
+      name: file.name,
+      fileType: file.type,
+      detectedType: type,
+    })
+
     const storagePath = await uploadMedia({
       uploaderUserId: creatorId,
       file,
@@ -261,14 +309,29 @@ export async function createPostWithMediaWorkflow({
 
     const mediaRow = await createMedia({
       postId: post.id,
-      type: getMediaType(file),
+      type,
       storagePath,
       mimeType: file.type || undefined,
       sortOrder: index,
-      status: "ready",
+      status: type === "video" ? "processing" : "ready",
     })
 
-    media.push(mediaRow)
+    if (type === "video") {
+      await supabaseAdmin
+        .from("media")
+        .update({
+          processing_status: "processing",
+          moderation_status: "pending",
+          moderation_summary: null,
+        })
+        .eq("id", mediaRow.id)
+    }
+
+    media.push({
+      id: mediaRow.id,
+      type: mediaRow.type,
+      storagePath: mediaRow.storagePath,
+    })
   }
 
   void moderatePostAsync({
@@ -276,6 +339,18 @@ export async function createPostWithMediaWorkflow({
     content,
     files,
   })
+
+  if (hasVideo) {
+    console.log("🔥 CALL processVideoModeration", {
+      postId: post.id,
+      media,
+    })
+
+    await enqueueVideoModeration({
+  postId: post.id,
+  media,
+})
+  }
 
   return {
     post,

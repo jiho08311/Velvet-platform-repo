@@ -134,7 +134,7 @@ postQuery = postQuery
     .from("media")
     .select("post_id, storage_path, type, mime_type, sort_order, status")
     .in("post_id", postIds)
-    .eq("status", "ready")
+    .in("status", ["processing", "ready"])
     .order("sort_order", { ascending: true })
     .returns<MediaRow[]>()
 

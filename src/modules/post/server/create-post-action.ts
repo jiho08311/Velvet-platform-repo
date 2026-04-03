@@ -43,7 +43,7 @@ export async function createPostAction({
   revalidatePath("/feed")
   revalidatePath("/post/new")
   revalidatePath(`/creator/${creatorId}`)
-
+revalidatePath("/profile")
   // 🔥 추가 (핵심)
   redirect("/profile")
 }

@@ -170,7 +170,7 @@ export async function getCreatorFeed({
     .from("media")
     .select("post_id, storage_path, type, mime_type, status, sort_order")
     .in("post_id", postIds)
-    .eq("status", "ready")
+    .in("status", ["processing", "ready"])
     .order("sort_order", { ascending: true })
     .returns<MediaRow[]>()
 
