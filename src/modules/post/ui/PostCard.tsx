@@ -54,6 +54,16 @@ type PostCardProps = {
   }
 }
 
+function formatPostDate(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+  }).format(date)
+}
+
 function getPreviewTitle(text: string) {
   const normalized = text.trim()
 
@@ -463,13 +473,10 @@ function handleCreatorClick(e: React.MouseEvent) {
           )}
 
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-white">
-              {creatorName}
-            </p>
-            <p className="truncate text-xs text-zinc-400">
-              @{creator.username}
-            </p>
-          </div>
+  <p className="truncate text-sm font-semibold text-white">
+    {creatorName}
+  </p>
+</div>
         </button>
 
         <div className="space-y-4">
@@ -504,7 +511,9 @@ function handleCreatorClick(e: React.MouseEvent) {
 
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <p className="text-xs text-zinc-500">{createdAt}</p>
+                <p className="text-xs text-zinc-500">
+  {formatPostDate(createdAt)}
+</p>
 
                   <button
                     type="button"
@@ -546,13 +555,13 @@ function handleCreatorClick(e: React.MouseEvent) {
                   onClick={(event) => event.stopPropagation()}
                 >
                   <form onSubmit={handleCommentSubmit}>
-                    <input
-                      value={commentInput}
-                      onChange={(event) => setCommentInput(event.target.value)}
-                      placeholder="Write a comment..."
-                      className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500 focus:border-zinc-700"
-                      disabled={isCommentSubmitting}
-                    />
+                   <input
+  value={commentInput}
+  onChange={(event) => setCommentInput(event.target.value)}
+  placeholder="Write a comment..."
+  className="w-full rounded-full border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-white outline-none placeholder:text-zinc-500 focus:border-zinc-700"
+  disabled={isCommentSubmitting}
+/>
                   </form>
 
                   {commentError ? (
@@ -576,72 +585,71 @@ function handleCreatorClick(e: React.MouseEvent) {
                   ) : (
                     <div className="space-y-2">
                       {visibleComments.map((comment) => (
-                        <div
-                          key={comment.id}
-                          className="rounded-2xl border border-zinc-800 bg-zinc-950/70 px-3 py-2"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <p className="min-w-0 text-xs leading-5 text-zinc-300">
-                              <span className="mr-2 font-semibold text-white">
-                                @{getCommentUsername(comment)}
-                              </span>
-                              {comment.content}
-                            </p>
+              <div
+  key={comment.id}
+  className="rounded-2xl border border-zinc-800 bg-zinc-950/70 px-3.5 py-3"
+>
+  <div className="flex items-start justify-between gap-3">
+    <p className="min-w-0 text-sm leading-6 text-zinc-300">
+      <span className="mr-2 text-sm font-semibold text-white">
+        @{getCommentUsername(comment)}
+      </span>
+      {comment.content}
+    </p>
 
-                            <div className="flex shrink-0 items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={(event) =>
-                                  handleLikeComment(
-                                    event,
-                                    comment.id,
-                                    Boolean(comment.is_liked)
-                                  )
-                                }
-                                className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800"
-                              >
-                                {comment.is_liked ? "❤️" : "🤍"}{" "}
-                                {comment.likes_count ?? 0}
-                              </button>
+    <div className="flex shrink-0 items-center gap-2">
+      <button
+        type="button"
+        onClick={(event) =>
+          handleLikeComment(
+            event,
+            comment.id,
+            Boolean(comment.is_liked)
+          )
+        }
+        className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
+      >
+        {comment.is_liked ? "❤️" : "🤍"} {comment.likes_count ?? 0}
+      </button>
 
-                              <div onClick={(event) => event.stopPropagation()}>
-                                <ReportButton
-                                  targetType="comment"
-                                  targetId={comment.id}
-                                  pathname={pathname}
-                                  currentUserId={currentUserId}
-                                />
-                              </div>
+      <div onClick={(event) => event.stopPropagation()}>
+        <ReportButton
+          targetType="comment"
+          targetId={comment.id}
+          pathname={pathname}
+          currentUserId={currentUserId}
+        />
+      </div>
 
-                              {currentUserId &&
-                              comment.user_id === currentUserId ? (
-                                <button
-                                  type="button"
-                                  onClick={(event) =>
-                                    handleDeleteComment(event, comment.id)
-                                  }
-                                  disabled={deletingCommentId === comment.id}
-                                  className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                  {deletingCommentId === comment.id
-                                    ? "Deleting..."
-                                    : "Delete"}
-                                </button>
-                              ) : null}
-                            </div>
-                          </div>
-                        </div>
+      {currentUserId &&
+      comment.user_id === currentUserId ? (
+        <button
+          type="button"
+          onClick={(event) =>
+            handleDeleteComment(event, comment.id)
+          }
+          disabled={deletingCommentId === comment.id}
+          className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {deletingCommentId === comment.id
+            ? "Deleting..."
+            : "Delete"}
+        </button>
+      ) : null}
+    </div>
+  </div>
+</div>
                       ))}
 
                       {comments.length > 3 ? (
                         <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            setExpandedComments((prev) => !prev)
-                          }}
-                          className="text-xs text-zinc-400 hover:text-white"
-                        >
+  type="button"
+  onClick={(event) => {
+    event.stopPropagation()
+    setExpandedComments((prev) => !prev)
+  }}
+  className="text-sm text-zinc-400 hover:text-white"
+>
                           {expandedComments
                             ? "Hide comments"
                             : `View ${comments.length - 3} more comments`}

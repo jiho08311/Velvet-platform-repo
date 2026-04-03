@@ -19,6 +19,8 @@ type PostRow = {
 type CreatorRow = {
   id: string
   user_id: string
+  username: string
+  display_name: string | null
 }
 
 type SubscriptionRow = {
@@ -29,6 +31,10 @@ export type PostDetail = {
   id: string
   creatorId: string
   creatorUserId: string
+  creator: {
+    username: string
+    displayName: string | null
+  }
   title: string | null
   content: string | null
   visibility: "public" | "subscribers" | "paid"
@@ -38,6 +44,8 @@ export type PostDetail = {
   publishedAt: string | null
   isLocked: boolean
   lockReason: "none" | "subscription" | "purchase"
+  likesCount: number
+  commentsCount: number
   media: {
     id: string
     postId: string
@@ -81,7 +89,7 @@ export async function getPostById(
 
   const { data: creator, error: creatorError } = await supabaseAdmin
     .from("creators")
-    .select("id, user_id")
+    .select("id, user_id, username, display_name")
     .eq("id", post.creator_id)
     .maybeSingle<CreatorRow>()
 
@@ -92,6 +100,18 @@ export async function getPostById(
   if (!creator) {
     throw new Error("Creator not found")
   }
+
+  const [{ count: likesCount }, { count: commentsCount }] = await Promise.all([
+    supabaseAdmin
+      .from("post_likes")
+      .select("*", { count: "exact", head: true })
+      .eq("post_id", post.id),
+    supabaseAdmin
+      .from("comments")
+      .select("*", { count: "exact", head: true })
+      .eq("post_id", post.id)
+      .is("deleted_at", null),
+  ])
 
   let isSubscribed = false
   let hasPurchasedResult = false
@@ -151,6 +171,10 @@ export async function getPostById(
     id: post.id,
     creatorId: post.creator_id,
     creatorUserId: creator.user_id,
+    creator: {
+      username: creator.username,
+      displayName: creator.display_name,
+    },
     title: post.title,
     content: access.canView ? post.content : null,
     visibility: post.visibility,
@@ -160,6 +184,8 @@ export async function getPostById(
     publishedAt: post.published_at,
     isLocked: !access.canView,
     lockReason,
+    likesCount: likesCount ?? 0,
+    commentsCount: commentsCount ?? 0,
     media,
   }
 }

@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import { PostCard } from "@/modules/post/ui/PostCard"
 
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
@@ -139,8 +140,8 @@ export default async function PostDetailPage({
           <EmptyState
             title="Post not found"
             description="This post does not exist or is no longer available."
-            actionLabel="Back to feed"
-            actionHref="/feed"
+            actionLabel="Back to search"
+            actionHref="/search"
           />
         </div>
       </main>
@@ -155,16 +156,28 @@ export default async function PostDetailPage({
     <main className="min-h-screen bg-zinc-950 px-4 py-8 text-white sm:px-6 sm:py-10">
       <div className="mx-auto flex max-w-3xl flex-col gap-5">
         <Link
-          href="/feed"
+          href="/search"
           className="inline-flex w-fit items-center rounded-full border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
         >
-          ← Back to feed
+          ← Back to search
         </Link>
 
         <article className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/70">
           <div className="border-b border-zinc-800 px-5 py-4 sm:px-6">
             <div className="flex items-start justify-between gap-4">
-              <div>
+              <div className="min-w-0">
+                <Link
+                  href={`/creator/${post.creator.username}`}
+                  className="mb-3 block w-fit"
+                >
+                  <p className="text-sm font-semibold text-white">
+                    {post.creator.displayName ?? post.creator.username}
+                  </p>
+                  <p className="text-xs text-zinc-400">
+                    @{post.creator.username}
+                  </p>
+                </Link>
+
                 <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 sm:text-sm">
                   <span>{formatDate(post.publishedAt ?? post.createdAt)}</span>
                   <span>•</span>
@@ -200,94 +213,72 @@ export default async function PostDetailPage({
             </div>
           </div>
 
-          {isLocked ? (
-            <div className="relative">
-              {post.media.length > 0 ? (
-                <div className="grid grid-cols-1 gap-px bg-zinc-950 sm:grid-cols-2">
-                  {post.media.map((media) => (
-                    <div
-                      key={media.id}
-                      className="relative overflow-hidden bg-zinc-900"
-                    >
-                      {renderLockedMedia(media)}
-                      <div className="absolute inset-0 bg-black/40" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex h-[360px] items-center justify-center bg-zinc-900 text-sm text-zinc-500">
-                  Locked content
-                </div>
-              )}
+         {isLocked ? (
+  // 🔒 기존 locked UI 그대로 유지 (건드리지 마)
+  <div className="relative">
+    {post.media.length > 0 ? (
+      <div className="grid grid-cols-1 gap-px bg-zinc-950 sm:grid-cols-2">
+        {post.media.map((media) => (
+          <div
+            key={media.id}
+            className="relative overflow-hidden bg-zinc-900"
+          >
+            {renderLockedMedia(media)}
+            <div className="absolute inset-0 bg-black/40" />
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div className="flex h-[360px] items-center justify-center bg-zinc-900 text-sm text-zinc-500">
+        Locked content
+      </div>
+    )}
 
-              <div className="absolute inset-0 flex items-center justify-center px-6">
-                <div className="flex flex-col items-center gap-3 text-center">
-                  <div className="rounded-full bg-black/70 px-3 py-1 text-xs font-medium text-white backdrop-blur">
-                    🔒 Locked
-                  </div>
+    <div className="absolute inset-0 flex items-center justify-center px-6">
+      <div className="flex flex-col items-center gap-3 text-center">
+        <div className="rounded-full bg-black/70 px-3 py-1 text-xs font-medium text-white backdrop-blur">
+          🔒 Locked
+        </div>
 
-                  <p className="text-sm font-medium text-white">
-                    This content is locked
-                  </p>
+        <p className="text-sm font-medium text-white">
+          This content is locked
+        </p>
 
-                  {lockReason === "subscription" ? (
-                    <SubscribeButton
-                      creatorId={post.creatorId}
-                      creatorUserId={post.creatorUserId}
-                      currentUserId={user.id}
-                    />
-                  ) : (
-                    <PostPurchaseButton postId={post.id} />
-                  )}
-                </div>
-              </div>
-
-              <div className="border-t border-zinc-800 px-5 py-5 sm:px-6">
-                <p className="whitespace-pre-wrap text-sm leading-7 text-zinc-500 sm:text-base sm:leading-8">
-                  Locked post
-                </p>
-              </div>
-            </div>
-          ) : (
-            <>
-              {post.media.length > 0 ? (
-                post.media.length === 1 ? (
-                  <div className="bg-zinc-950">
-                    <div className="relative overflow-hidden bg-zinc-900">
-                      {renderUnlockedMedia(post.media[0])}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-px bg-zinc-950 sm:grid-cols-2">
-                    {post.media.map((media) => (
-                      <div
-                        key={media.id}
-                        className="relative overflow-hidden bg-zinc-900"
-                      >
-                        {renderUnlockedMedia(media)}
-                      </div>
-                    ))}
-                  </div>
-                )
-              ) : (
-                <div className="flex h-[360px] items-center justify-center bg-zinc-900 text-sm text-zinc-500">
-                  No media
-                </div>
-              )}
-
-              <div className="px-5 py-5 sm:px-6">
-                <p className="whitespace-pre-wrap text-sm leading-7 text-zinc-200 sm:text-base sm:leading-8">
-                  {post.content ?? ""}
-                </p>
-
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <div className="inline-flex items-center rounded-full border border-zinc-800 bg-zinc-950 px-4 py-2 text-xs text-zinc-400 sm:text-sm">
-                    Creator ID: {post.creatorId}
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
+        {lockReason === "subscription" ? (
+          <SubscribeButton
+            creatorId={post.creatorId}
+            creatorUserId={post.creatorUserId}
+            currentUserId={user.id}
+          />
+        ) : (
+          <PostPurchaseButton postId={post.id} />
+        )}
+      </div>
+    </div>
+  </div>
+) : (
+  // ✅ 여기 핵심
+  <PostCard
+    postId={post.id}
+    text={post.content ?? ""}
+    createdAt={post.publishedAt ?? post.createdAt}
+    media={post.media.map((m) => ({
+      url: m.url,
+      type: m.type,
+    }))}
+    isLocked={false}
+    creatorId={post.creatorId}
+    creatorUserId={post.creatorUserId}
+    currentUserId={user.id}
+    likesCount={post.likesCount}
+    isLiked={false}
+    creator={{
+      username: post.creator.username,
+      displayName: post.creator.displayName,
+      avatarUrl: null,
+    }}
+  />
+)}
         </article>
       </div>
     </main>
