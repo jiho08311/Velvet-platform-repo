@@ -15,7 +15,7 @@ type PaymentRow = {
   type: PaymentType
   status: PaymentStatus
   currency: string | null
-  amount_cents: number | null
+  amount: number | null
   confirmed_at: string | null
 }
 
@@ -25,10 +25,10 @@ type EarningRow = {
   payment_id: string
   payout_id: string | null
   source_type: EarningSourceType
-  gross_amount_cents: number
+  gross_amount: number
   fee_rate_bps: number
-  fee_amount_cents: number
-  net_amount_cents: number
+  fee_amount: number
+  net_amount: number
   currency: string
   status: "pending" | "available" | "paid_out" | "reversed"
   available_at: string | null
@@ -55,10 +55,10 @@ function toEarning(row: EarningRow): Earning {
     paymentId: row.payment_id,
     payoutId: row.payout_id,
     sourceType: row.source_type,
-    grossAmountCents: row.gross_amount_cents,
+    grossamount: row.gross_amount,
     feeRateBps: row.fee_rate_bps,
-    feeAmountCents: row.fee_amount_cents,
-    netAmountCents: row.net_amount_cents,
+    feeamount: row.fee_amount,
+    netamount: row.net_amount,
     currency: row.currency,
     status: row.status,
     availableAt: row.available_at,
@@ -88,6 +88,12 @@ function toEarningSourceType(type: PaymentType): EarningSourceType | null {
   return null
 }
 
+function addDays(isoString: string, days: number): string {
+  const date = new Date(isoString)
+  date.setDate(date.getDate() + days)
+  return date.toISOString()
+}
+
 export async function createEarning({
   paymentId,
 }: CreateEarningInput): Promise<Earning | null> {
@@ -101,7 +107,7 @@ export async function createEarning({
     await supabaseAdmin
       .from("earnings")
       .select(
-        "id, creator_id, payment_id, payout_id, source_type, gross_amount_cents, fee_rate_bps, fee_amount_cents, net_amount_cents, currency, status, available_at, paid_out_at, reversed_at, created_at"
+        "id, creator_id, payment_id, payout_id, source_type, gross_amount, fee_rate_bps, fee_amount, net_amount, currency, status, available_at, paid_out_at, reversed_at, created_at"
       )
       .eq("payment_id", id)
       .maybeSingle<EarningRow>()
@@ -116,7 +122,7 @@ export async function createEarning({
 
   const { data: payment, error: paymentError } = await supabaseAdmin
     .from("payments")
-    .select("id, creator_id, type, status, currency, amount_cents, confirmed_at")
+    .select("id, creator_id, type, status, currency, amount, confirmed_at")
     .eq("id", id)
     .maybeSingle<PaymentRow>()
 
@@ -142,15 +148,17 @@ export async function createEarning({
     return null
   }
 
-  const grossAmountCents = payment.amount_cents ?? 0
+  const grossamount = payment.amount ?? 0
 
-  if (grossAmountCents <= 0) {
+  if (grossamount <= 0) {
     throw new Error("INVALID_PAYMENT_AMOUNT")
   }
 
   const feeRateBps = getFeeRateBps(sourceType)
-  const feeAmountCents = Math.floor((grossAmountCents * feeRateBps) / 10000)
-  const netAmountCents = grossAmountCents - feeAmountCents
+  const feeamount = Math.floor((grossamount * feeRateBps) / 10000)
+  const netamount = grossamount - feeamount
+  const confirmedAt = payment.confirmed_at ?? new Date().toISOString()
+  const availableAt = addDays(confirmedAt, 7)
 
   const { data, error } = await supabaseAdmin
     .from("earnings")
@@ -159,19 +167,19 @@ export async function createEarning({
       payment_id: payment.id,
       payout_id: null,
       source_type: sourceType,
-      gross_amount_cents: grossAmountCents,
+      gross_amount: grossamount,
       fee_rate_bps: feeRateBps,
-      fee_amount_cents: feeAmountCents,
-      net_amount_cents: netAmountCents,
+      fee_amount: feeamount,
+      net_amount: netamount,
       currency: payment.currency ?? "KRW",
       status: "pending",
-      available_at: null,
+      available_at: availableAt,
       paid_out_at: null,
       reversed_at: null,
-      created_at: payment.confirmed_at ?? new Date().toISOString(),
+      created_at: confirmedAt,
     })
     .select(
-      "id, creator_id, payment_id, payout_id, source_type, gross_amount_cents, fee_rate_bps, fee_amount_cents, net_amount_cents, currency, status, available_at, paid_out_at, reversed_at, created_at"
+      "id, creator_id, payment_id, payout_id, source_type, gross_amount, fee_rate_bps, fee_amount, net_amount, currency, status, available_at, paid_out_at, reversed_at, created_at"
     )
     .single<EarningRow>()
 

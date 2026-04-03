@@ -7,12 +7,12 @@ import { listCreatorPayments } from "@/modules/payment/server/list-creator-payme
 import { Card } from "@/shared/ui/Card"
 import { EmptyState } from "@/shared/ui/EmptyState"
 
-function formatPrice(amountCents: number) {
+function formatPrice(amount: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "KRW",
     maximumFractionDigits: 2,
-  }).format(amountCents)
+  }).format(amount)
 }
 
 export default async function DashboardPaymentsPage() {
@@ -71,7 +71,7 @@ export default async function DashboardPaymentsPage() {
                   </div>
 
                   <span className="shrink-0 text-sm font-semibold text-[#F472B6] tabular-nums">
-                    {formatPrice(payment.amount_cents ?? 0)}
+                    {formatPrice(payment.amount ?? 0)}
                   </span>
                 </div>
               ))}

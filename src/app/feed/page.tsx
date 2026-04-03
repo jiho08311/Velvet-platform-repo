@@ -43,17 +43,17 @@ function normalizeMedia(item: unknown): FeedMediaItem[] {
   return []
 }
 
-function normalizePriceCents(item: unknown): number | undefined {
+function normalizePrice(item: unknown): number | undefined {
   if (!item || typeof item !== "object") {
     return undefined
   }
 
   const maybeItem = item as {
-    priceCents?: number
+    price?: number
   }
 
-  return typeof maybeItem.priceCents === "number"
-    ? maybeItem.priceCents
+  return typeof maybeItem.price === "number"
+    ? maybeItem.price
     : undefined
 }
 
@@ -113,7 +113,7 @@ export default async function FeedPage() {
                 media: normalizeMedia(item),
                 isLocked: item.isLocked,
                 lockReason: item.lockReason,
-                priceCents: normalizePriceCents(item),
+                price: normalizePrice(item),
                 likesCount: item.likesCount,
                 isLiked: item.isLiked,
                 creator: item.creator,

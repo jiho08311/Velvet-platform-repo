@@ -11,7 +11,7 @@ type PostRow = {
   title: string | null
   content: string | null
   visibility: "public" | "subscribers" | "paid"
-  price_cents: number
+  price: number
 }
 
 type CreatorRow = {
@@ -37,7 +37,7 @@ export type PostPurchasePaymentIntent = {
 async function getPost(postId: string): Promise<PostRow> {
   const { data, error } = await supabaseAdmin
     .from("posts")
-    .select("id, creator_id, title, content, visibility, price_cents")
+    .select("id, creator_id, title, content, visibility, price")
     .eq("id", postId)
     .single<PostRow>()
 
@@ -77,7 +77,7 @@ export async function createPostPurchaseSession({
     throw new Error("Post is not purchasable")
   }
 
-  if (post.price_cents <= 0) {
+  if (post.price <= 0) {
     throw new Error("Post price is invalid")
   }
 
@@ -88,7 +88,7 @@ export async function createPostPurchaseSession({
     postId: post.id,
     userId,
     creatorId: post.creator_id,
-    amount: post.price_cents,
+    amount: post.price,
     currency: "KRW",
 
     // 🔥 핵심 수정 (PG 대응)

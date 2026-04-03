@@ -17,7 +17,7 @@ export async function getCreatorPayoutHistory() {
   const { data: payouts, error: payoutsError } = await supabaseAdmin
     .from("payouts")
     .select(
-      "id, amount_cents, currency, status, paid_at, failure_reason, created_at"
+      "id, amount, currency, status, paid_at, failure_reason, created_at"
     )
     .eq("creator_id", creator.id)
     .order("created_at", { ascending: false })

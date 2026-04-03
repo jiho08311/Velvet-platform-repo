@@ -48,7 +48,7 @@ export async function createPpvPostPayment({
       type: "ppv_post",
       target_type: "post",
       target_id: postId,
-      amount_cents: amount,
+      amount: amount,
       currency,
       status: "succeeded",
       provider: "mock",

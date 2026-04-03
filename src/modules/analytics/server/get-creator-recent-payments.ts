@@ -7,7 +7,7 @@ export async function getCreatorRecentPayments(creatorId: string) {
     .from("payments")
     .select(`
       id,
-      amount_cents,
+      amount,
       currency,
       created_at,
       user_id

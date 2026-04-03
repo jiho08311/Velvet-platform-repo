@@ -7,7 +7,7 @@ type GetCreatorEarningsBalanceInput = {
 }
 
 type EarningAmountRow = {
-  net_amount_cents: number | null
+  net_amount: number | null
   status: EarningStatus
   currency: string
 }
@@ -25,7 +25,7 @@ export async function getCreatorEarningsBalance({
 
   const { data, error } = await supabase
     .from("earnings")
-    .select("net_amount_cents, status, currency")
+    .select("net_amount, status, currency")
     .eq("creator_id", id)
     .returns<EarningAmountRow[]>()
 
@@ -35,40 +35,40 @@ export async function getCreatorEarningsBalance({
 
   const rows = data ?? []
 
-  let pendingAmountCents = 0
-  let availableAmountCents = 0
-  let paidOutAmountCents = 0
-  let reversedAmountCents = 0
+  let pendingamount = 0
+  let availableamount = 0
+  let paidOutamount = 0
+  let reversedamount = 0
 
   for (const row of rows) {
-    const amount = row.net_amount_cents ?? 0
+    const amount = row.net_amount ?? 0
 
     if (row.status === "pending") {
-      pendingAmountCents += amount
+      pendingamount += amount
       continue
     }
 
     if (row.status === "available") {
-      availableAmountCents += amount
+      availableamount += amount
       continue
     }
 
     if (row.status === "paid_out") {
-      paidOutAmountCents += amount
+      paidOutamount += amount
       continue
     }
 
     if (row.status === "reversed") {
-      reversedAmountCents += amount
+      reversedamount += amount
     }
   }
 
   return {
     creatorId: id,
     currency: rows[0]?.currency ?? "KRW",
-    pendingAmountCents,
-    availableAmountCents,
-    paidOutAmountCents,
-    reversedAmountCents,
+    pendingamount,
+    availableamount,
+    paidOutamount,
+    reversedamount,
   }
 }

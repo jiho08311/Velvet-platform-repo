@@ -3,13 +3,13 @@ import { getCreatorBalance } from "./get-creator-balance"
 
 type PayoutRow = {
   id: string
-  amount_cents: number | null
+  amount: number | null
   status: "pending" | "processing" | "paid" | "failed"
   created_at: string
 }
 
 type PendingPayoutRequestRow = {
-  amount_cents: number | null
+  amount: number | null
 }
 
 export type PayoutSummary = {
@@ -40,7 +40,7 @@ export async function getPayoutSummary(
 
   const { data: payouts, error: payoutsError } = await supabase
     .from("payouts")
-    .select("id, amount_cents, status, created_at")
+    .select("id, amount, status, created_at")
     .eq("creator_id", id)
     .order("created_at", { ascending: false })
     .returns<PayoutRow[]>()
@@ -51,7 +51,7 @@ export async function getPayoutSummary(
 
   const { data: pendingRequests, error: pendingRequestsError } = await supabase
     .from("payout_requests")
-    .select("amount_cents")
+    .select("amount")
     .eq("creator_id", id)
     .eq("status", "pending")
     .returns<PendingPayoutRequestRow[]>()
@@ -61,17 +61,17 @@ export async function getPayoutSummary(
   }
 
   const pendingAmount =
-    pendingRequests?.reduce((sum, row) => sum + (row.amount_cents ?? 0), 0) ?? 0
+    pendingRequests?.reduce((sum, row) => sum + (row.amount ?? 0), 0) ?? 0
 
   return {
     creatorId: id,
     currency: "KRW",
-    availableBalance: balance.availableBalanceCents,
+    availableBalance: balance.availableBalance,
     pendingAmount,
     recentPayouts:
       payouts?.slice(0, 5).map((payout) => ({
         id: payout.id,
-        amount: payout.amount_cents ?? 0,
+        amount: payout.amount ?? 0,
         status: payout.status,
         createdAt: payout.created_at,
       })) ?? [],

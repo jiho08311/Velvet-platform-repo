@@ -4,7 +4,7 @@ export type CreateProviderCheckoutInput = {
   paymentId: string
   orderId: string
   orderName: string
-  amountCents: number
+  amount: number
   customerEmail?: string
   successUrl: string
   failUrl: string

@@ -7,7 +7,7 @@ type PostVisibility = "public" | "subscribers" | "paid"
 type SubmitPostInput = {
   text: string
   visibility: PostVisibility
-  priceCents?: number
+  price?: number
   files: File[]
 }
 
@@ -22,7 +22,7 @@ export function CreatePostForm({
 }: CreatePostFormProps) {
   const [text, setText] = useState("")
   const [visibility, setVisibility] = useState<PostVisibility>("subscribers")
-  const [priceCents, setPriceCents] = useState<number>(4900)
+  const [price, setprice] = useState<number>(4900)
   const [files, setFiles] = useState<File[]>([])
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -32,13 +32,13 @@ export function CreatePostForm({
     onSubmitPost({
       text,
       visibility,
-      priceCents: visibility === "paid" ? priceCents : 0,
+      price: visibility === "paid" ? price : 0,
       files,
     })
 
     setText("")
     setVisibility("subscribers")
-    setPriceCents(4900)
+    setprice(4900)
     setFiles([])
 
     if (fileInputRef.current) {
@@ -68,8 +68,8 @@ export function CreatePostForm({
 
       {visibility === "paid" && (
         <select
-          value={priceCents}
-          onChange={(e) => setPriceCents(Number(e.target.value))}
+          value={price}
+          onChange={(e) => setprice(Number(e.target.value))}
         >
           <option value={4900}>₩4,900</option>
           <option value={9900}>₩9,900</option>

@@ -28,7 +28,7 @@ export async function getAdminAnalytics(): Promise<AdminAnalyticsSummary> {
       .eq("status", "pending"),
     supabase
       .from("payments")
-      .select("amount_cents")
+      .select("amount")
       .eq("status", "succeeded"),
   ])
 
@@ -39,9 +39,9 @@ export async function getAdminAnalytics(): Promise<AdminAnalyticsSummary> {
 
   const totalRevenue = (paymentsResult.data ?? []).reduce((sum, row) => {
     const amount =
-      typeof row.amount_cents === "number"
-        ? row.amount_cents
-        : Number(row.amount_cents ?? 0)
+      typeof row.amount === "number"
+        ? row.amount
+        : Number(row.amount ?? 0)
 
     return sum + (Number.isFinite(amount) ? amount : 0)
   }, 0)

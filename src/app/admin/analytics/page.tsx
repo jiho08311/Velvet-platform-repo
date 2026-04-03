@@ -1,12 +1,12 @@
 import { Card } from "@/shared/ui/Card"
 import { getAnalytics } from "@/modules/payment/server/get-analytics"
 
-function formatMoney(amountCents: number) {
+function formatMoney(amount: number) {
   return new Intl.NumberFormat("ko-KR", {
     style: "currency",
     currency: "KRW",
     maximumFractionDigits: 0,
-  }).format(amountCents / 100)
+  }).format(amount)
 }
 
 export default async function AdminAnalyticsPage() {
@@ -28,21 +28,21 @@ export default async function AdminAnalyticsPage() {
         <Card>
           <p className="text-sm text-zinc-500">Total revenue</p>
           <p className="mt-2 text-2xl font-semibold text-white">
-            {formatMoney(analytics.totalNetRevenueCents)}
+           formatMoney(analytics.totalNetRevenue)
           </p>
         </Card>
 
         <Card>
           <p className="text-sm text-zinc-500">Available</p>
           <p className="mt-2 text-2xl font-semibold text-white">
-            {formatMoney(analytics.availableRevenueCents)}
+         formatMoney(analytics.availableRevenue)
           </p>
         </Card>
 
         <Card>
           <p className="text-sm text-zinc-500">Paid out</p>
           <p className="mt-2 text-2xl font-semibold text-white">
-            {formatMoney(analytics.paidOutRevenueCents)}
+          formatMoney(analytics.paidOutRevenue)
           </p>
         </Card>
 
@@ -97,7 +97,7 @@ export default async function AdminAnalyticsPage() {
                     <td className="py-3 text-white">{p.type}</td>
                     <td className="py-3 text-zinc-400">{p.status}</td>
                     <td className="py-3 text-zinc-300">
-                      {formatMoney(p.amount_cents)}
+                      {formatMoney(p.amount)}
                     </td>
                     <td className="py-3 text-zinc-500">
                       {p.user_id.slice(0, 8)}

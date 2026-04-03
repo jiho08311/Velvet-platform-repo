@@ -5,7 +5,7 @@ type PayoutStatus = "pending" | "paid" | "failed"
 
 type PayoutListItem = {
   id: string
-  amountCents: number
+  amount: number
   currency?: string | null
   status: PayoutStatus
   createdAt: string
@@ -19,12 +19,12 @@ type PayoutListProps = {
   emptyDescription?: string
 }
 
-function formatPrice(amountCents: number, currency = "KRW") {
+function formatPrice(amount: number, currency = "KRW") {
   return new Intl.NumberFormat("ko-KR", {
     style: "currency",
     currency: currency.toUpperCase(),
     maximumFractionDigits: 2,
-  }).format(amountCents)
+  }).format(amount)
 }
 
 function formatDate(value: string) {
@@ -81,7 +81,7 @@ export function PayoutList({
                 금액
               </p>
               <p className="mt-1 text-sm font-semibold text-zinc-900 sm:mt-0">
-                {formatPrice(payout.amountCents, payout.currency ?? "KRW")}
+                {formatPrice(payout.amount, payout.currency ?? "KRW")}
               </p>
             </div>
 

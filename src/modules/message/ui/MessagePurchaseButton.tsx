@@ -70,7 +70,7 @@ export function MessagePurchaseButton({
         method: "CARD",
         amount: {
           currency: "KRW",
-          value: payment.amountCents,
+          value: payment.amount,
         },
         orderId: payment.id,
         orderName: "프리미엄 콘텐츠 이용권", // 🔥 핵심 변경

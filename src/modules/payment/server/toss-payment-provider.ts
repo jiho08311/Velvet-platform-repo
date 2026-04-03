@@ -21,7 +21,7 @@ export const tossPaymentProvider: PaymentProvider = {
     // 🔥 기존 구조 유지 + URL만 정상화
     const params = new URLSearchParams({
       clientKey,
-      amount: String(input.amountCents),
+      amount: String(input.amount),
       orderId: input.orderId,
       orderName: input.orderName,
       successUrl: input.successUrl,

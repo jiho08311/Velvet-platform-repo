@@ -18,7 +18,7 @@ export type Payment = {
   userId: string
   creatorId: string | null
   subscriptionId: string | null
-  amountCents: number
+  amount: number
   currency: string
   status: PaymentStatus
   type: PaymentType

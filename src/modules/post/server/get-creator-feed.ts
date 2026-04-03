@@ -13,7 +13,7 @@ type PostRow = {
   creator_id: string
   content: string | null
   visibility: "public" | "subscribers" | "paid"
-  price_cents: number
+  price: number
   status: string
   created_at: string
 }
@@ -72,7 +72,7 @@ export async function getCreatorFeed({
 
   const { data: posts, error } = await supabaseAdmin
     .from("posts")
-    .select("id, creator_id, content, visibility, price_cents, status, created_at")
+    .select("id, creator_id, content, visibility, price, status, created_at")
     .eq("creator_id", creatorId)
     .eq("status", "published")
     .is("deleted_at", null)
@@ -86,7 +86,7 @@ export async function getCreatorFeed({
   const resolvedPosts = await Promise.all(
     (posts ?? []).map(async (post) => {
       const isSubscribersOnly = post.visibility === "subscribers"
-      const isPaidPost = post.visibility === "paid" && post.price_cents > 0
+      const isPaidPost = post.visibility === "paid" && post.price > 0
 
       let hasPurchased = false
 
@@ -111,7 +111,7 @@ export async function getCreatorFeed({
 
       return {
         ...post,
-        priceCents: post.price_cents,
+        price: post.price,
         hasPurchased,
         isLocked,
         lockReason,

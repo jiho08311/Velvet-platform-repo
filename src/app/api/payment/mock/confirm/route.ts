@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (!creator.subscriptionPriceCents || creator.subscriptionPriceCents <= 0) {
+    if (!creator.subscriptionPrice || creator.subscriptionPrice <= 0) {
       return NextResponse.json(
         { error: "Invalid subscription price" },
         { status: 400 }
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       creatorId: creator.id,
       type: "subscription",
       status: "succeeded",
-      amountCents: creator.subscriptionPriceCents,
+      amount: creator.subscriptionPrice,
       currency: creator.subscriptionCurrency,
       provider: "mock",
     })

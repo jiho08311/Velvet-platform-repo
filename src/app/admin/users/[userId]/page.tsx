@@ -50,7 +50,7 @@ export default async function AdminUserDetailPage({ params }: Props) {
             <>
               <StatusBadge label={creator.status} />
               <p className="text-white mt-2">
-                Subscription: ₩{creator.subscription_price_cents}
+              Subscription: ₩{creator.subscription_price}
               </p>
             </>
           ) : (

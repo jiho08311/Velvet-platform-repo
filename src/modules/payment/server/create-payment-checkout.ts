@@ -13,7 +13,7 @@ type CreatePaymentCheckoutInput = {
   userId: string
   creatorId?: string
   type: PaymentType
-  amountCents: number
+  amount: number
   currency?: string
   provider?: PaymentProviderName
   providerReferenceId?: string
@@ -30,7 +30,7 @@ export async function createPaymentCheckout({
   userId,
   creatorId,
   type,
-  amountCents,
+  amount,
   currency = "KRW",
   provider = "mock",
   providerReferenceId,
@@ -42,10 +42,10 @@ export async function createPaymentCheckout({
   successUrl,
   failUrl,
 }: CreatePaymentCheckoutInput) {
-  let resolvedAmountCents = amountCents
+  let resolvedamount = amount
 
   if (type === "subscription") {
-    resolvedAmountCents = assertValidSubscriptionPrice(amountCents)
+    resolvedamount = assertValidSubscriptionPrice(amount)
 
     if (!creatorId) {
       throw new Error("CREATOR_ID_REQUIRED")
@@ -62,7 +62,7 @@ export async function createPaymentCheckout({
   }
 
   if (type === "ppv_message") {
-    resolvedAmountCents = assertValidMessagePrice(amountCents)
+    resolvedamount = assertValidMessagePrice(amount)
   }
 
   if (type === "ppv_post" && targetType === "post" && targetId) {
@@ -81,7 +81,7 @@ export async function createPaymentCheckout({
     creatorId,
     type,
     status: "pending",
-    amountCents: resolvedAmountCents,
+    amount: resolvedamount,
     currency,
     provider,
     providerReferenceId,
@@ -102,7 +102,7 @@ export async function createPaymentCheckout({
     paymentId: payment.id,
     orderId,
     orderName: safeOrderName,
-    amountCents: resolvedAmountCents,
+    amount: resolvedamount,
     customerEmail,
     successUrl: successUrlWithPaymentId,
     failUrl,

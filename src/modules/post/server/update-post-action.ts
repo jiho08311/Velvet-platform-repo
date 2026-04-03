@@ -15,7 +15,7 @@ type UpdatePostActionInput = {
   postId: string
   text: string
   visibility: "public" | "subscribers" | "paid"
-  priceCents?: number
+  price?: number
   files?: File[]
   removedMediaIds?: string[]
 }
@@ -39,7 +39,7 @@ export async function updatePostAction({
   postId,
   text,
   visibility: _visibility,
-  priceCents = 0,
+  price = 0,
   files = [],
   removedMediaIds = [],
 }: UpdatePostActionInput) {
@@ -64,7 +64,7 @@ export async function updatePostAction({
     throw new Error("Post not found")
   }
 
-  if (currentPost.visibility === "paid" && priceCents <= 0) {
+  if (currentPost.visibility === "paid" && price <= 0) {
     throw new Error("Paid post price must be greater than 0")
   }
 
@@ -73,7 +73,7 @@ export async function updatePostAction({
     creatorId: creator.id,
     content: text.trim() || null,
     visibility: currentPost.visibility,
-    priceCents: currentPost.visibility === "paid" ? priceCents : 0,
+    price: currentPost.visibility === "paid" ? price : 0,
   })
 
   const validRemovedMediaIds = removedMediaIds

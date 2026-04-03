@@ -7,7 +7,7 @@ type GetPostAccessInput = {
     creatorId: string
     content?: string
     visibility: "public" | "subscribers" | "paid"
-    priceCents: number
+    price: number
     createdAt: string
   }
   creator: {

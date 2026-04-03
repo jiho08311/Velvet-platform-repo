@@ -41,7 +41,7 @@ type PostCardProps = {
   media?: MediaItem[]
   isLocked?: boolean
   lockReason?: "none" | "subscription" | "purchase"
-  priceCents?: number
+  price?: number
   creatorId: string
   creatorUserId?: string
   currentUserId?: string
@@ -107,7 +107,7 @@ export function PostCard({
   media = [],
   isLocked = false,
   lockReason = "none",
-  priceCents,
+  price,
   creatorId,
   creatorUserId,
   currentUserId,
@@ -426,7 +426,7 @@ if (item.type === "video") {
         <div onClick={(event) => event.stopPropagation()}>
           <PostPurchaseButton
             postId={postId}
-            priceCents={priceCents}
+            price={price}
             creatorUsername={creator.username}
             embedded
           />
@@ -485,7 +485,7 @@ function handleCreatorClick(e: React.MouseEvent) {
               previewText={text}
               createdAt={createdAt}
               previewThumbnailUrl={resolvedMedia[0]?.url ?? null}
-              priceCents={priceCents}
+              price={price}
               lockReason={
                 lockReason === "subscription" || lockReason === "purchase"
                   ? lockReason

@@ -4,7 +4,7 @@ export type PaymentDetails = {
   id: string
   viewerUserId: string
   creatorId: string | null
-  amountCents: number
+  amount: number
   status: "pending" | "succeeded" | "failed" | "refunded"
   createdAt: string
 }
@@ -19,7 +19,7 @@ export async function getPaymentById(
 
   const { data, error } = await supabase
     .from("payments")
-    .select("id, user_id, creator_id, amount_cents, status, created_at")
+    .select("id, user_id, creator_id, amount, status, created_at")
     .eq("id", id)
     .maybeSingle()
 
@@ -30,7 +30,7 @@ export async function getPaymentById(
     id: data.id,
     viewerUserId: data.user_id,
     creatorId: data.creator_id,
-    amountCents: data.amount_cents,
+    amount: data.amount,
     status: data.status,
     createdAt: data.created_at,
   }

@@ -20,7 +20,7 @@ type SubscriptionCheckResponse = {
 type CheckoutResponse = {
   payment?: {
     id?: string
-    amountCents?: number
+    amount?: number
   }
   checkout?: {
     orderId?: string
@@ -159,11 +159,11 @@ export default function SubscribeButton({
       }
 
       const paymentId = data.payment?.id
-      const amountCents = data.payment?.amountCents ?? 0
+      const amount = data.payment?.amount ?? 0
       const orderId = data.checkout?.orderId ?? paymentId
       const orderName = data.checkout?.orderName ?? "프리미엄 콘텐츠 이용권"
 
-      if (!paymentId || !orderId || amountCents <= 0) {
+      if (!paymentId || !orderId || amount <= 0) {
         setErrorMessage("결제 요청 정보가 올바르지 않습니다")
         return
       }
@@ -171,7 +171,7 @@ export default function SubscribeButton({
       const tossPayments = await loadTossPayments(clientKey)
 
       await tossPayments.requestPayment("카드", {
-        amount: amountCents,
+        amount: amount,
         orderId,
         orderName,
         successUrl: `${window.location.origin}/payment/success?paymentId=${paymentId}&creatorUsername=${creatorUsername}`,

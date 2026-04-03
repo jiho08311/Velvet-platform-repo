@@ -132,7 +132,7 @@ export async function POST(request: Request) {
       userId: user.id,
       creatorId: creator.id,
       type: "ppv_message",
-      amountCents: validatedPrice,
+      amount: validatedPrice,
       provider: "toss",
       targetType: "message",
       targetId: message.id,

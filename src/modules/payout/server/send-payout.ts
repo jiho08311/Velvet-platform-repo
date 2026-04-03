@@ -14,7 +14,7 @@ export async function sendPayout({ payoutId }: SendPayoutParams) {
 
   const { data: payout, error: payoutError } = await supabaseAdmin
     .from("payouts")
-    .select("id, creator_id, amount_cents, currency, status")
+    .select("id, creator_id, amount, currency, status")
     .eq("id", safePayoutId)
     .single()
 

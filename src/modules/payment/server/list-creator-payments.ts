@@ -11,7 +11,7 @@ export async function listCreatorPayments({
 
   const { data, error } = await supabase
     .from("payments")
-    .select("id, amount_cents, currency, user_id, created_at")
+    .select("id, amount, currency, user_id, created_at")
     .eq("creator_id", creatorId)
     .order("created_at", { ascending: false })
 

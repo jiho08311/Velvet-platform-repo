@@ -12,7 +12,7 @@ type CreatePostWithMediaWorkflowInput = {
   content?: string | null
   status?: "draft" | "published" | "archived"
   visibility?: "public" | "subscribers" | "paid"
-  priceCents?: number
+  price?: number
   files: File[]
 }
 
@@ -254,10 +254,10 @@ export async function createPostWithMediaWorkflow({
   content,
   status = "draft",
   visibility = "subscribers",
-  priceCents = 0,
+  price = 0,
   files,
 }: CreatePostWithMediaWorkflowInput) {
-  const resolvedPriceCents = visibility === "paid" ? priceCents : 0
+  const resolvedprice = visibility === "paid" ? price : 0
 
   console.log(
     "[createPostWithMediaWorkflow] files",
@@ -278,7 +278,7 @@ export async function createPostWithMediaWorkflow({
     content,
     status: hasVideo ? "draft" : status,
     visibility,
-    priceCents: resolvedPriceCents,
+    price: resolvedprice,
   })
 
   if (hasVideo) {

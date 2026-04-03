@@ -12,7 +12,7 @@ export type HomeFeedItem = {
   createdAt: string
   isLocked: boolean
   lockReason?: "none" | "subscription" | "purchase"
-  priceCents?: number
+  price?: number
   media?: Array<{
     url: string
     type: MediaType
@@ -55,7 +55,7 @@ type PostRow = {
   title: string | null
   content: string | null
   visibility: "public" | "subscribers" | "paid"
-  price_cents: number | null
+  price: number | null
   created_at: string
   published_at: string | null
 }
@@ -106,7 +106,7 @@ export async function getHomeFeed(
   let publicPostsQuery = supabaseAdmin
     .from("posts")
     .select(
-      "id, creator_id, title, content, visibility, price_cents, created_at, published_at"
+      "id, creator_id, title, content, visibility, price, created_at, published_at"
     )
     .eq("status", "published")
     .eq("visibility", "public")
@@ -285,7 +285,7 @@ export async function getHomeFeed(
         createdAt: post.published_at ?? post.created_at,
         isLocked: false,
         lockReason: "none",
-        priceCents: post.price_cents ?? undefined,
+        price: post.price ?? undefined,
         media,
         likesCount: likeCountMap.get(post.id) ?? 0,
         isLiked: myLikeSet.has(post.id),

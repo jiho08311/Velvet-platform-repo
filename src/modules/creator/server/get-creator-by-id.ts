@@ -10,7 +10,7 @@ type CreatorRow = {
   id: string;
   user_id: string;
   username: string | null;
-  subscription_price_cents: number | null;
+  subscription_price: number | null;
   subscription_currency: string | null;
   status: "active" | "banned" | "suspended";
   created_at: string;
@@ -21,7 +21,7 @@ export type CreatorAdminDetail = {
   userId: string;
   username: string;
   displayName: string;
-  subscriptionPriceCents: number;
+  subscriptionPrice: number;
   subscriptionCurrency: string;
   status: "active" | "banned" | "suspended";
   createdAt: string;
@@ -44,7 +44,7 @@ export async function getCreatorById(
       user_id,
       username,
       status,
-      subscription_price_cents,
+      subscription_price,
       subscription_currency,
       created_at
     `
@@ -75,7 +75,7 @@ export async function getCreatorById(
     userId: creator.user_id,
     username: profile?.username ?? creator.username ?? "",
     displayName: profile?.display_name ?? "",
-    subscriptionPriceCents: creator.subscription_price_cents ?? 0,
+    subscriptionPrice: creator.subscription_price ?? 0,
     subscriptionCurrency: creator.subscription_currency ?? "KRW",
     status: creator.status,
     createdAt: creator.created_at,

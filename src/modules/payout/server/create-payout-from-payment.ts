@@ -3,21 +3,21 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 type CreatePayoutFromPaymentParams = {
   id: string
   creator_id: string
-  amount_cents: number
+  amount: number
   currency: string
 }
 
 export async function createPayoutFromPayment(
   payment: CreatePayoutFromPaymentParams
 ) {
-  const platformFee = Math.floor(payment.amount_cents * 0.2)
-  const creatorAmount = payment.amount_cents - platformFee
+  const platformFee = Math.floor(payment.amount * 0.2)
+  const creatorAmount = payment.amount - platformFee
 
   const { data, error } = await supabaseAdmin
     .from("payouts")
     .insert({
       creator_id: payment.creator_id,
-      amount_cents: creatorAmount,
+      amount: creatorAmount,
       currency: payment.currency,
       status: "paid",
       provider: "mock",
@@ -26,7 +26,7 @@ export async function createPayoutFromPayment(
       paid_at: new Date().toISOString(),
     })
     .select(
-      "id, creator_id, amount_cents, currency, status, paid_at, created_at"
+      "id, creator_id, amount, currency, status, paid_at, created_at"
     )
     .single()
 

@@ -10,7 +10,7 @@ type PostRow = {
   title: string | null
   content: string | null
   visibility: "public" | "subscribers" | "paid"
-  price_cents: number | null
+  price: number | null
   status: "draft" | "published" | "archived"
   created_at: string
   published_at: string | null
@@ -38,7 +38,7 @@ export type PostDetail = {
   title: string | null
   content: string | null
   visibility: "public" | "subscribers" | "paid"
-  priceCents: number | null
+  price: number | null
   status: "draft" | "published" | "archived"
   createdAt: string
   publishedAt: string | null
@@ -73,7 +73,7 @@ export async function getPostById(
   const { data: post, error: postError } = await supabaseAdmin
     .from("posts")
     .select(
-      "id, creator_id, title, content, visibility, price_cents, status, created_at, published_at"
+      "id, creator_id, title, content, visibility, price, status, created_at, published_at"
     )
     .eq("id", resolvedPostId)
     .is("deleted_at", null)
@@ -132,7 +132,7 @@ export async function getPostById(
 
     isSubscribed = Boolean(subscriptionRow)
 
-    if (post.visibility === "paid" && (post.price_cents ?? 0) > 0) {
+    if (post.visibility === "paid" && (post.price?? 0) > 0) {
       hasPurchasedResult = await hasPurchasedPost({
         userId: resolvedViewerUserId,
         postId: post.id,
@@ -147,7 +147,7 @@ export async function getPostById(
       creatorId: post.creator_id,
       content: post.content ?? undefined,
       visibility: post.visibility,
-      priceCents: post.price_cents ?? 0,
+      price: post.price ?? 0,
       createdAt: post.created_at,
     },
     creator: {
@@ -178,7 +178,7 @@ export async function getPostById(
     title: post.title,
     content: access.canView ? post.content : null,
     visibility: post.visibility,
-    priceCents: post.price_cents,
+    price: post.price,
     status: post.status,
     createdAt: post.created_at,
     publishedAt: post.published_at,

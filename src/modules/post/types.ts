@@ -12,7 +12,7 @@ export type Post = {
   content: string | null
   status: PostStatus
   visibility: PostVisibility
-  priceCents: number
+  price: number
   publishedAt: string | null
   createdAt: string
   updatedAt: string
@@ -23,6 +23,6 @@ export type CreatePostInput = {
   title?: string | null
   content?: string | null
   visibility?: PostVisibility
-  priceCents?: number
+  price?: number
   publishedAt?: string | null
 }

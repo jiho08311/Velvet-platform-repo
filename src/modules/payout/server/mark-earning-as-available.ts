@@ -10,10 +10,10 @@ type AvailableEarningRow = {
   payment_id: string
   payout_id: string | null
   source_type: "subscription" | "ppv_post" | "ppv_message"
-  gross_amount_cents: number
+  gross_amount: number
   fee_rate_bps: number
-  fee_amount_cents: number
-  net_amount_cents: number
+  fee_amount: number
+  net_amount: number
   currency: string
   status: "pending" | "available" | "paid_out" | "reversed"
   available_at: string | null
@@ -42,7 +42,7 @@ export async function markEarningAsAvailable({
     .eq("id", id)
     .eq("status", "pending")
     .select(
-      "id, creator_id, payment_id, payout_id, source_type, gross_amount_cents, fee_rate_bps, fee_amount_cents, net_amount_cents, currency, status, available_at, paid_out_at, reversed_at, created_at"
+      "id, creator_id, payment_id, payout_id, source_type, gross_amount, fee_rate_bps, fee_amount, net_amount, currency, status, available_at, paid_out_at, reversed_at, created_at"
     )
     .maybeSingle<AvailableEarningRow>()
 
@@ -57,7 +57,7 @@ export async function markEarningAsAvailable({
   const { data: existing, error: existingError } = await supabaseAdmin
     .from("earnings")
     .select(
-      "id, creator_id, payment_id, payout_id, source_type, gross_amount_cents, fee_rate_bps, fee_amount_cents, net_amount_cents, currency, status, available_at, paid_out_at, reversed_at, created_at"
+      "id, creator_id, payment_id, payout_id, source_type, gross_amount, fee_rate_bps, fee_amount, net_amount, currency, status, available_at, paid_out_at, reversed_at, created_at"
     )
     .eq("id", id)
     .maybeSingle<AvailableEarningRow>()

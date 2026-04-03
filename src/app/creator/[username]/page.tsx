@@ -120,7 +120,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
             ) : (
               <>
                 <p className="text-sm font-medium text-white">
-                  {formatPrice(creator.subscriptionPriceCents)}
+                  {formatPrice(creator.subscriptionPrice)}
                   <span className="ml-1 text-zinc-400">이용권</span>
                 </p>
 
@@ -198,7 +198,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                 media={post.media ?? []}
                 isLocked={post.isLocked}
                 lockReason={post.lockReason}
-                priceCents={post.priceCents}
+                price={post.price}
                 likesCount={post.likesCount}
                 isLiked={post.isLiked}
                 creatorId={creator.id}
@@ -220,7 +220,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
           <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-sm font-semibold text-white">
-                {formatPrice(creator.subscriptionPriceCents)}
+                {formatPrice(creator.subscriptionPrice)}
                 <span className="ml-1 text-zinc-400">이용권</span>
               </p>
               <p className="truncate text-xs text-zinc-500">

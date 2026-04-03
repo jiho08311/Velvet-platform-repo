@@ -3,7 +3,7 @@ import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 type CreatorAnalytics = {
   postCount: number
   subscriberCount: number
-  totalRevenueCents: number
+  totalRevenue: number
 }
 
 export async function getCreatorAnalytics(
@@ -27,7 +27,7 @@ export async function getCreatorAnalytics(
 
       supabase
         .from("payments")
-        .select("amount_cents")
+        .select("amount")
         .eq("creator_id", creatorId)
         .eq("status", "succeeded"),
     ])
@@ -36,15 +36,15 @@ export async function getCreatorAnalytics(
     throw paymentsResult.error
   }
 
-  const totalRevenueCents =
+  const totalRevenue =
     paymentsResult.data?.reduce(
-      (sum, payment) => sum + (payment.amount_cents ?? 0),
+      (sum, payment) => sum + (payment.amount ?? 0),
       0
     ) ?? 0
 
   return {
     postCount: postCount ?? 0,
     subscriberCount: subscriberCount ?? 0,
-    totalRevenueCents,
+    totalRevenue,
   }
 }

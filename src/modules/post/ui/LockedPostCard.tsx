@@ -3,7 +3,7 @@ type LockedPostCardProps = {
   createdAt: string
   previewThumbnailUrl?: string | null
 
-  priceCents?: number
+  price?: number
   lockReason?: "subscription" | "purchase"
   action?: React.ReactNode
 }
@@ -16,14 +16,14 @@ export function LockedPostCard({
   previewText,
   createdAt,
   previewThumbnailUrl = null,
-  priceCents,
+  price,
   lockReason,
   action,
 }: LockedPostCardProps) {
   const isPaid =
     lockReason === "purchase" &&
-    typeof priceCents === "number" &&
-    priceCents > 0
+    typeof price === "number" &&
+    price > 0
 
   return (
     <article className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/70 text-white">
@@ -55,7 +55,7 @@ export function LockedPostCard({
 
             {isPaid ? (
               <p className="mt-2 text-base font-semibold text-white">
-                ₩{formatPrice(priceCents)}
+                ₩{formatPrice(price)}
               </p>
             ) : (
               <p className="mt-2 text-sm leading-6 text-zinc-200">

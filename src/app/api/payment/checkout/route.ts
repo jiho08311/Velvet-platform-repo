@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     let price: number
 
     try {
-      price = assertValidSubscriptionPrice(creator.subscriptionPriceCents)
+      price = assertValidSubscriptionPrice(creator.subscriptionPrice)
     } catch {
       return NextResponse.json(
         { error: "Invalid subscription price" },
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       creatorId: creator.id,
       type: "subscription",
-      amountCents: price,
+      amount: price,
       currency: "KRW",
       provider: "toss",
       orderId: `sub_${creator.id}_${user.id}_${Date.now()}`,

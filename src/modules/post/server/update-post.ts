@@ -7,7 +7,7 @@ type UpdatePostInput = {
   content?: string | null;
   status?: "draft" | "published" | "archived";
   visibility?: "public" | "subscribers" | "paid";
-  priceCents?: number;
+  price?: number;
   publishedAt?: string | null;
 };
 
@@ -18,7 +18,7 @@ type PostRow = {
   content: string | null;
   status: "draft" | "published" | "archived";
   visibility: "public" | "subscribers" | "paid";
-  price_cents: number;
+  price: number;
   published_at: string | null;
   created_at: string;
   updated_at: string;
@@ -32,7 +32,7 @@ export async function updatePost({
   content,
   status,
   visibility,
-  priceCents,
+  price,
   publishedAt,
 }: UpdatePostInput): Promise<{
   id: string;
@@ -41,7 +41,7 @@ export async function updatePost({
   content?: string;
   status: "draft" | "published" | "archived";
   visibility: "public" | "subscribers" | "paid";
-  priceCents: number;
+  price: number;
   publishedAt?: string;
   createdAt: string;
   updatedAt: string;
@@ -74,8 +74,8 @@ export async function updatePost({
     updateData.visibility = visibility;
   }
 
-  if (priceCents !== undefined) {
-    updateData.price_cents = priceCents;
+  if (price !== undefined) {
+    updateData.price = price;
   }
 
   if (publishedAt !== undefined) {
@@ -89,7 +89,7 @@ export async function updatePost({
     .eq("creator_id", creatorId)
     .is("deleted_at", null)
     .select(
-      "id, creator_id, title, content, status, visibility, price_cents, published_at, created_at, updated_at, deleted_at"
+      "id, creator_id, title, content, status, visibility, price, published_at, created_at, updated_at, deleted_at"
     )
     .single<PostRow>();
 
@@ -104,7 +104,7 @@ export async function updatePost({
     content: data.content ?? undefined,
     status: data.status,
     visibility: data.visibility,
-    priceCents: data.price_cents,
+    price: data.price,
     publishedAt: data.published_at ?? undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at,

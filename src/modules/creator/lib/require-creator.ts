@@ -4,7 +4,7 @@ export type CreatorInfo = {
   id: string
   userId: string
   status: "pending" | "active" | "suspended"
-  subscriptionPriceCents: number
+  subscriptionPrice: number
 }
 
 export type RequireCreatorOptions = {

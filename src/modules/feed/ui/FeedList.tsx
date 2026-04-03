@@ -15,7 +15,7 @@ type FeedListPost = {
   }>
   isLocked?: boolean
   lockReason?: "none" | "subscription" | "purchase"
-  priceCents?: number
+  price?: number
   likesCount?: number
   isLiked?: boolean
   creator: {
@@ -54,7 +54,7 @@ export function FeedList({
           media={post.media ?? []}
           isLocked={post.isLocked}
           lockReason={post.lockReason}
-          priceCents={post.priceCents}
+          price={post.price}
           likesCount={post.likesCount}
           isLiked={post.isLiked}
           creatorId={post.creatorId}

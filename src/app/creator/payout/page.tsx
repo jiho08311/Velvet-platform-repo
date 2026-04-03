@@ -1,42 +1,55 @@
-import { notFound } from "next/navigation"
-import { requireUser } from "@/modules/auth/server/require-user"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
-import { getPayoutSummary } from "@/modules/payout/server/get-payout-summary"
-import { listPayouts } from "@/modules/payout/server/list-payouts"
+import { notFound } from "next/navigation";
+import { requireUser } from "@/modules/auth/server/require-user";
+import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id";
+import { getPayoutSummary } from "@/modules/payout/server/get-payout-summary";
+import { listPayouts } from "@/modules/payout/server/list-payouts";
 
 type PayoutSummaryView = {
-  availableAmountCents?: number
-  pendingAmountCents?: number
-  currency?: string
-} | null
+  availableamount?: number | string;
+  pendingamount?: number | string;
+  currency?: string;
+} | null;
 
 type PayoutView = {
-  id: string
-  amountCents?: number
-  currency?: string
-  status: string
-  createdAt: string
-}
+  id: string;
+  amount?: number | string;
+  currency?: string;
+  status: string;
+  createdAt: string;
+};
 
 export default async function CreatorPayoutPage() {
-  const user = await requireUser()
-  const creator = await getCreatorByUserId(user.id)
+  const user = await requireUser();
+  const creator = await getCreatorByUserId(user.id);
 
   if (!creator) {
-    notFound()
+    notFound();
   }
 
   const [summaryResult, payoutsResult] = await Promise.all([
     getPayoutSummary(creator.id),
     listPayouts({ creatorId: creator.id }),
-  ])
+  ]);
 
-  const summary = summaryResult as PayoutSummaryView
-  const payouts = payoutsResult as PayoutView[]
+  const rawSummary = summaryResult as PayoutSummaryView;
+  const rawPayouts = payoutsResult as PayoutView[];
 
-  const currency = summary?.currency?.toUpperCase() ?? "KRW"
-  const availableAmountCents = summary?.availableAmountCents ?? 0
-  const pendingAmountCents = summary?.pendingAmountCents ?? 0
+  const summary = rawSummary
+    ? {
+        availableamount: Number(rawSummary.availableamount ?? 0),
+        pendingamount: Number(rawSummary.pendingamount ?? 0),
+        currency: rawSummary.currency ?? "KRW",
+      }
+    : null;
+
+  const payouts = (rawPayouts ?? []).map((payout) => ({
+    ...payout,
+    amount: Number(payout.amount ?? 0),
+  }));
+
+  const currency = summary?.currency?.toUpperCase() ?? "KRW";
+  const availableamount = summary?.availableamount ?? 0;
+  const pendingamount = summary?.pendingamount ?? 0;
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
@@ -51,14 +64,14 @@ export default async function CreatorPayoutPage() {
         <div className="rounded-2xl border border-white/10 bg-neutral-950 p-5 text-white">
           <p className="text-sm text-white/50">Available balance</p>
           <p className="mt-2 text-2xl font-semibold">
-        {availableAmountCents} {currency}
+            {availableamount.toLocaleString()} {currency}
           </p>
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-neutral-950 p-5 text-white">
           <p className="text-sm text-white/50">Pending payout</p>
           <p className="mt-2 text-2xl font-semibold">
-          {pendingAmountCents} {currency}
+            {pendingamount.toLocaleString()} {currency}
           </p>
         </div>
 
@@ -105,7 +118,7 @@ export default async function CreatorPayoutPage() {
                   className="grid grid-cols-[1fr_140px_180px] gap-4 px-5 py-4 text-white"
                 >
                   <div className="text-sm font-medium">
-                   ₩{(payout.amountCents ?? 0).toLocaleString()}
+                    ₩{Number(payout.amount ?? 0).toLocaleString()}
                   </div>
 
                   <div>
@@ -124,5 +137,5 @@ export default async function CreatorPayoutPage() {
         )}
       </section>
     </main>
-  )
+  );
 }

@@ -27,7 +27,7 @@ export function CreatePostComposer({
 
       <CreatePostForm
         isSubmitting={isPending}
-        onSubmitPost={({ text, visibility, priceCents, files }) => {
+        onSubmitPost={({ text, visibility, price, files }) => {
           startTransition(async () => {
             try {
               setError(null)
@@ -36,7 +36,7 @@ export function CreatePostComposer({
                 creatorId,
                 text,
                 visibility,
-                priceCents,
+                price,
                 files,
               })
 

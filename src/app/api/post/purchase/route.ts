@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Post not found" }, { status: 404 })
   }
 
-  if (post.priceCents === null) {
+  if (post.price === null) {
     return NextResponse.json(
       { error: "This post is not a PPV post" },
       { status: 400 }
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     userId: user.id,
     creatorId: post.creatorId,
     type: "ppv_post",
-    amountCents: post.priceCents,
+    amount: post.price,
     currency: "KRW",
     provider: "toss",
     targetType: "post",

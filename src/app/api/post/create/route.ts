@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const textValue = formData.get("text")
     const statusValue = formData.get("status")
     const visibilityValue = formData.get("visibility")
-    const priceCentsValue = formData.get("priceCents")
+    const priceValue = formData.get("price")
 
     const text = typeof textValue === "string" ? textValue.trim() : ""
 
@@ -37,20 +37,20 @@ export async function POST(request: Request) {
         ? visibilityValue
         : "subscribers"
 
-    const parsedPriceCents =
-      typeof priceCentsValue === "string" && priceCentsValue.trim().length > 0
-        ? Number(priceCentsValue)
+    const parsedPrice =
+      typeof priceValue === "string" && priceValue.trim().length > 0
+        ? Number(priceValue)
         : 0
 
-    const rawPriceCents = Number.isFinite(parsedPriceCents)
-      ? Math.max(0, Math.floor(parsedPriceCents))
+    const rawPrice = Number.isFinite(parsedPrice)
+      ? Math.max(0, Math.floor(parsedPrice))
       : 0
 
     let finalPrice = 0
 
     if (visibility === "paid") {
       try {
-        finalPrice = assertValidPpvPrice(rawPriceCents)
+        finalPrice = assertValidPpvPrice(rawPrice)
       } catch {
         return NextResponse.json(
           { error: "Invalid post price" },
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
       files,
       status,
       visibility,
-      priceCents: finalPrice,
+      price: finalPrice,
     })
 
     return NextResponse.json(

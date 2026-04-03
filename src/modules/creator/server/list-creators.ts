@@ -4,7 +4,7 @@ type CreatorRow = {
   id: string
   user_id: string
   status: "pending" | "active" | "suspended"
-  subscription_price_cents: number
+  subscription_price: number
   subscription_currency: string
   created_at: string
   updated_at: string
@@ -34,7 +34,7 @@ export async function listCreators({
     avatarUrl: string
     bio: string
     status: "pending" | "active" | "suspended"
-    subscriptionPriceCents: number
+    subscriptionPrice: number
     subscriptionCurrency: string
     createdAt: string
     updatedAt: string
@@ -43,7 +43,7 @@ export async function listCreators({
   const { data: creators, error: creatorsError } = await supabaseAdmin
     .from("creators")
     .select(
-      "id, user_id, status, subscription_price_cents, subscription_currency, created_at, updated_at"
+      "id, user_id, status, subscription_price, subscription_currency, created_at, updated_at"
     )
     .eq("status", "active")
     .order("created_at", { ascending: false })
@@ -81,7 +81,7 @@ export async function listCreators({
         avatarUrl: profile.avatar_url ?? "",
         bio: profile.bio ?? "",
         status: creator.status,
-        subscriptionPriceCents: creator.subscription_price_cents,
+        subscriptionPrice: creator.subscription_price,
         subscriptionCurrency: creator.subscription_currency,
         createdAt: creator.created_at,
         updatedAt: creator.updated_at,

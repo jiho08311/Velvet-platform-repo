@@ -7,7 +7,7 @@ type GetPayoutRequestParams = {
 type PayoutRequestRow = {
   id: string
   creator_id: string
-  amount_cents: number
+  amount: number
   currency: string
   status: string
   created_at: string
@@ -17,7 +17,7 @@ type PayoutRequestRow = {
 export type PayoutRequest = {
   id: string
   creatorId: string
-  amountCents: number
+  amount: number
   currency: string
   status: string
   createdAt: string
@@ -32,7 +32,7 @@ export async function getPayoutRequest({
   const { data, error } = await supabase
     .from("payout_requests")
     .select(
-      "id, creator_id, amount_cents, currency, status, created_at, approved_at"
+      "id, creator_id, amount, currency, status, created_at, approved_at"
     )
     .eq("id", payoutRequestId)
     .maybeSingle<PayoutRequestRow>()
@@ -48,7 +48,7 @@ export async function getPayoutRequest({
   return {
     id: data.id,
     creatorId: data.creator_id,
-    amountCents: data.amount_cents,
+    amount: data.amount,
     currency: data.currency,
     status: data.status,
     createdAt: data.created_at,

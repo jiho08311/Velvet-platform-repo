@@ -10,7 +10,7 @@ type PostRow = {
   content: string | null
   status: "draft" | "published" | "archived"
   visibility: "public" | "subscribers" | "paid"
-  price_cents: number
+  price: number
   published_at: string | null
   created_at: string
   updated_at: string
@@ -44,7 +44,7 @@ export async function listCreatorPosts({
     content?: string
     status: "draft" | "published" | "archived"
     visibility: "public" | "subscribers" | "paid"
-    priceCents: number
+    price: number
     publishedAt?: string
     createdAt: string
     updatedAt: string
@@ -60,7 +60,7 @@ export async function listCreatorPosts({
   let query = supabaseAdmin
     .from("posts")
     .select(
-      "id, creator_id, title, content, status, visibility, price_cents, published_at, created_at, updated_at"
+      "id, creator_id, title, content, status, visibility, price, published_at, created_at, updated_at"
     )
     .eq("creator_id", creatorId)
     .order("created_at", { ascending: false })
@@ -188,7 +188,7 @@ export async function listCreatorPosts({
         content: post.content ?? undefined,
         status: post.status,
         visibility: post.visibility,
-        priceCents: post.price_cents,
+        price: post.price,
         publishedAt: post.published_at ?? undefined,
         createdAt: post.created_at,
         updatedAt: post.updated_at,

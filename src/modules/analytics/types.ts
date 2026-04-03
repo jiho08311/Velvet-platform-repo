@@ -1,6 +1,6 @@
 export type RecentPayment = {
   id: string
-  amountCents: number
+  amount: number
   type: "subscription" | "tip" | "ppv_message" | "ppv_post"
   createdAt: string
 }

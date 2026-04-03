@@ -41,7 +41,7 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
     "use server"
 
     const text = String(formData.get("text") ?? "")
-    const rawPrice = Number(formData.get("priceCents") ?? 0)
+    const rawPrice = Number(formData.get("price") ?? 0)
 
     const files = formData
       .getAll("files")
@@ -55,7 +55,7 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
       postId,
       text,
    visibility: fixedVisibility,
-      priceCents: Number.isFinite(rawPrice) ? rawPrice : 0,
+      price: Number.isFinite(rawPrice) ? rawPrice : 0,
       files,
       removedMediaIds,
     })
@@ -100,8 +100,8 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
               <label className="space-y-2">
                 <span className="text-sm text-zinc-400">Price (paid only)</span>
                 <select
-                  name="priceCents"
-                  defaultValue={String(post.priceCents > 0 ? post.priceCents : 4900)}
+                  name="price"
+                  defaultValue={String(post.price> 0 ? post.price : 4900)}
                   disabled={post.visibility !== "paid"}
                   className="h-11 w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-3 text-sm text-white outline-none disabled:cursor-not-allowed disabled:text-zinc-500 disabled:opacity-70"
                 >

@@ -4,7 +4,7 @@ type CreatorRow = {
   id: string
   user_id: string
   status: "pending" | "active" | "suspended"
-  subscription_price_cents: number
+  subscription_price: number
   subscription_currency: string
   created_at: string
   updated_at: string
@@ -30,7 +30,7 @@ export async function getCreatorByUsername(username?: string) {
   const { data: creator, error: creatorError } = await supabaseAdmin
     .from("creators")
     .select(
-      "id, user_id, status, subscription_price_cents, subscription_currency, created_at, updated_at, username"
+      "id, user_id, status, subscription_price, subscription_currency, created_at, updated_at, username"
     )
     .ilike("username", name)
     .maybeSingle<CreatorRow>()
@@ -65,7 +65,7 @@ export async function getCreatorByUsername(username?: string) {
     avatarUrl: profile.avatar_url ?? null,
     bio: profile.bio ?? "",
     status: creator.status,
-    subscriptionPriceCents: creator.subscription_price_cents,
+    subscriptionPrice: creator.subscription_price,
     subscriptionCurrency: creator.subscription_currency,
     createdAt: creator.created_at,
     updatedAt: creator.updated_at,

@@ -9,7 +9,7 @@ type CreatePostActionInput = {
   creatorId: string
   text: string
   visibility: "public" | "subscribers" | "paid"
-  priceCents?: number
+  price?: number
   files?: File[]
 }
 
@@ -17,7 +17,7 @@ export async function createPostAction({
   creatorId,
   text,
   visibility,
-  priceCents = 0,
+  price = 0,
   files = [],
 }: CreatePostActionInput): Promise<void> {
   const content = text.trim()
@@ -27,7 +27,7 @@ export async function createPostAction({
     throw new Error("Post must have text or media")
   }
 
-  if (visibility === "paid" && priceCents <= 0) {
+  if (visibility === "paid" && price <= 0) {
     throw new Error("Paid post price must be greater than 0")
   }
 
@@ -35,7 +35,7 @@ export async function createPostAction({
     creatorId,
     content: content || null,
     visibility,
-    priceCents: visibility === "paid" ? priceCents : 0,
+    price: visibility === "paid" ? price : 0,
     status: "published",
     files,
   })

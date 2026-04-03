@@ -3,12 +3,12 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 type AttachEarningsToPayoutInput = {
   payoutId: string
   creatorId: string
-  amountCents: number
+  amount: number
 }
 
 type EarningRow = {
   id: string
-  net_amount_cents: number | null
+  net_amount: number | null
   payout_id: string | null
   status: "pending" | "available" | "paid_out" | "reversed"
 }
@@ -16,15 +16,15 @@ type EarningRow = {
 export type AttachedEarningsToPayout = {
   payoutId: string
   creatorId: string
-  requestedAmountCents: number
-  attachedAmountCents: number
+  requestedamount: number
+  attachedamount: number
   earningIds: string[]
 }
 
 export async function attachEarningsToPayout({
   payoutId,
   creatorId,
-  amountCents,
+  amount,
 }: AttachEarningsToPayoutInput): Promise<AttachedEarningsToPayout> {
   const safePayoutId = payoutId.trim()
   const safeCreatorId = creatorId.trim()
@@ -37,13 +37,13 @@ export async function attachEarningsToPayout({
     throw new Error("Invalid creator id")
   }
 
-  if (amountCents <= 0) {
+  if (amount <= 0) {
     throw new Error("Amount must be greater than 0")
   }
 
   const { data: earnings, error: earningsError } = await supabaseAdmin
     .from("earnings")
-    .select("id, net_amount_cents, payout_id, status")
+    .select("id, net_amount, payout_id, status")
     .eq("creator_id", safeCreatorId)
     .eq("status", "available")
     .is("payout_id", null)
@@ -56,29 +56,29 @@ export async function attachEarningsToPayout({
 
   const availableEarnings = earnings ?? []
 
-  let attachedAmountCents = 0
+  let attachedamount = 0
   const earningIds: string[] = []
 
   for (const earning of availableEarnings) {
-    const amount = earning.net_amount_cents ?? 0
+    const amount = earning.net_amount ?? 0
 
     if (amount <= 0) {
       continue
     }
 
-    if (attachedAmountCents + amount > amountCents) {
+    if (attachedamount + amount > amount) {
       continue
     }
 
-    attachedAmountCents += amount
+    attachedamount += amount
     earningIds.push(earning.id)
 
-    if (attachedAmountCents === amountCents) {
+    if (attachedamount === amount) {
       break
     }
   }
 
-  if (attachedAmountCents !== amountCents) {
+  if (attachedamount !== amount) {
     throw new Error("INSUFFICIENT_AVAILABLE_EARNINGS")
   }
 
@@ -98,8 +98,8 @@ export async function attachEarningsToPayout({
   return {
     payoutId: safePayoutId,
     creatorId: safeCreatorId,
-    requestedAmountCents: amountCents,
-    attachedAmountCents,
+    requestedamount: amount,
+    attachedamount,
     earningIds,
   }
 }

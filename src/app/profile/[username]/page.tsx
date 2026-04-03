@@ -13,12 +13,12 @@ type CreatorPageProps = {
   }>
 }
 
-function formatPrice(amountCents: number, currency: string) {
+function formatPrice(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: currency.toUpperCase(),
     maximumFractionDigits: 2,
-  }).format(amountCents)
+  }).format(amount)
 }
 
 export default async function CreatorPage({ params }: CreatorPageProps) {
@@ -96,7 +96,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                         <p className="mt-2 text-sm text-zinc-600">
                           {post.visibility === "paid"
                             ? `Purchase this post for ${formatPrice(
-                                post.price_cents ?? 0,
+                                post.price ?? 0,
                                 "KRW"
                               )}.`
                             : "Subscribe to unlock this post."}

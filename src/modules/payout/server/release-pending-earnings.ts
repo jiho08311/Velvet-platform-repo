@@ -9,6 +9,7 @@ type ReleasePendingEarningsInput = {
 type PendingEarningRow = {
   id: string
   created_at: string
+  available_at: string | null
 }
 
 type ReleasePendingEarningsResult = {
@@ -29,10 +30,11 @@ export async function releasePendingEarnings({
 
   const { data, error } = await supabaseAdmin
     .from("earnings")
-    .select("id, created_at")
+    .select("id, created_at, available_at")
     .eq("status", "pending")
-    .lte("created_at", threshold)
-    .order("created_at", { ascending: true })
+    .not("available_at", "is", null)
+    .lte("available_at", new Date().toISOString())
+    .order("available_at", { ascending: true })
     .limit(safeLimit)
     .returns<PendingEarningRow[]>()
 
@@ -40,7 +42,14 @@ export async function releasePendingEarnings({
     throw error
   }
 
-  const rows = data ?? []
+  const rows = (data ?? []).filter((row) => {
+    if (row.available_at) {
+      return true
+    }
+
+    return row.created_at <= threshold
+  })
+
   const earningIds: string[] = []
 
   for (const row of rows) {

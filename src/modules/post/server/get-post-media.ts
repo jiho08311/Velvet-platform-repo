@@ -27,7 +27,7 @@ type PostAccessRow = {
   id: string
   creator_id: string
   visibility: "public" | "subscribers" | "paid"
-  price_cents: number
+  price: number
 }
 
 type CreatorRow = {
@@ -47,7 +47,7 @@ export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
 
   const { data: post, error: postError } = await supabaseAdmin
     .from("posts")
-    .select("id, creator_id, visibility, price_cents")
+    .select("id, creator_id, visibility, price")
     .eq("id", resolvedPostId)
     .maybeSingle<PostAccessRow>()
 
@@ -80,7 +80,7 @@ export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
       : false
 
   const hasPurchased =
-    viewerUserId && post.visibility === "paid" && post.price_cents > 0
+    viewerUserId && post.visibility === "paid" && post.price > 0
       ? await hasPurchasedPost({
           userId: viewerUserId,
           postId: post.id,

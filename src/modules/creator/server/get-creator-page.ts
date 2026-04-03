@@ -56,7 +56,7 @@ export async function getCreatorPage({
   const { data: posts } = await supabaseAdmin
     .from("posts")
     .select(
-      "id, creator_id, content, visibility, price_cents, created_at, published_at"
+      "id, creator_id, content, visibility, price, created_at, published_at"
     )
     .eq("creator_id", creator.id)
     .eq("status", "published")
@@ -124,7 +124,7 @@ export async function getCreatorPage({
         id: post.id,
         text: hasAccess ? post.content ?? "" : "",
         isLocked: !hasAccess,
-        price: post.price_cents,
+        price: post.price,
         media,
         createdAt: post.published_at ?? post.created_at,
 

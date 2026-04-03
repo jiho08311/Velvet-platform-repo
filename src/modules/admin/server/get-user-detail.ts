@@ -20,7 +20,7 @@ export async function getUserDetail({ userId }: GetUserDetailParams) {
 
   const { data: creator } = await supabaseAdmin
     .from("creators")
-    .select("id, status, subscription_price_cents")
+    .select("id, status, subscription_price")
     .eq("user_id", userId)
     .maybeSingle()
 

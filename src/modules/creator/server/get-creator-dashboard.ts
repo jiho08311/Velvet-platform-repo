@@ -41,7 +41,7 @@ export async function getCreatorDashboard(
 
     supabase
       .from("payments")
-      .select("amount_cents, created_at, currency")
+      .select("amount, created_at, currency")
       .eq("creator_id", id)
       .eq("status", "succeeded")
       .gte(
@@ -51,7 +51,7 @@ export async function getCreatorDashboard(
 
     supabase
       .from("payments")
-      .select("amount_cents, currency")
+      .select("amount, currency")
       .eq("creator_id", id)
       .eq("status", "succeeded"),
   ])
@@ -64,9 +64,9 @@ export async function getCreatorDashboard(
   const monthlyRevenue = (monthlyPaymentsResult.data ?? []).reduce(
     (sum, row) => {
       const amount =
-        typeof row.amount_cents === "number"
-          ? row.amount_cents
-          : Number(row.amount_cents ?? 0)
+        typeof row.amount === "number"
+          ? row.amount
+          : Number(row.amount ?? 0)
 
       return sum + (Number.isFinite(amount) ? amount : 0)
     },
@@ -76,9 +76,9 @@ export async function getCreatorDashboard(
   const totalRevenue = (totalPaymentsResult.data ?? []).reduce(
     (sum, row) => {
       const amount =
-        typeof row.amount_cents === "number"
-          ? row.amount_cents
-          : Number(row.amount_cents ?? 0)
+        typeof row.amount === "number"
+          ? row.amount
+          : Number(row.amount ?? 0)
 
       return sum + (Number.isFinite(amount) ? amount : 0)
     },

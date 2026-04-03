@@ -10,7 +10,7 @@ type CreatePaymentInput = {
   creatorId?: string
   type: PaymentType
   status?: PaymentStatus
-  amountCents: number
+  amount: number
   currency?: string
   provider?: PaymentProvider
   providerReferenceId?: string
@@ -24,7 +24,7 @@ type PaymentRow = {
   creator_id: string | null
   type: PaymentType
   status: PaymentStatus
-  amount_cents: number
+  amount: number
   currency: string
   provider: PaymentProvider
   provider_reference_id: string | null
@@ -39,7 +39,7 @@ export default async function createPayment({
   creatorId,
   type,
   status = "pending",
-  amountCents,
+  amount,
   currency = "KRW",
   provider = "mock",
   providerReferenceId,
@@ -51,7 +51,7 @@ export default async function createPayment({
       await supabaseAdmin
         .from("payments")
         .select(
-          "id, user_id, creator_id, type, status, amount_cents, currency, provider, provider_reference_id, target_type, target_id, created_at, updated_at"
+          "id, user_id, creator_id, type, status, amount, currency, provider, provider_reference_id, target_type, target_id, created_at, updated_at"
         )
         .eq("provider_reference_id", providerReferenceId)
         .maybeSingle<PaymentRow>()
@@ -67,7 +67,7 @@ export default async function createPayment({
         creatorId: existingPayment.creator_id ?? undefined,
         type: existingPayment.type,
         status: existingPayment.status,
-        amountCents: existingPayment.amount_cents,
+        amount: existingPayment.amount,
         currency: existingPayment.currency,
         provider: existingPayment.provider,
         providerReferenceId:
@@ -87,7 +87,7 @@ export default async function createPayment({
       creator_id: creatorId ?? null,
       type,
       status,
-      amount_cents: amountCents,
+      amount: amount,
       currency,
       provider,
       provider_reference_id: providerReferenceId ?? null,
@@ -95,7 +95,7 @@ export default async function createPayment({
       target_id: targetId ?? null,
     })
     .select(
-      "id, user_id, creator_id, type, status, amount_cents, currency, provider, provider_reference_id, target_type, target_id, created_at, updated_at"
+      "id, user_id, creator_id, type, status, amount, currency, provider, provider_reference_id, target_type, target_id, created_at, updated_at"
     )
     .single<PaymentRow>()
 
@@ -109,7 +109,7 @@ export default async function createPayment({
     creatorId: data.creator_id ?? undefined,
     type: data.type,
     status: data.status,
-    amountCents: data.amount_cents,
+    amount: data.amount,
     currency: data.currency,
     provider: data.provider,
     providerReferenceId: data.provider_reference_id ?? undefined,

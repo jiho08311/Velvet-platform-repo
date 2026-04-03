@@ -58,11 +58,6 @@ async function processSettlement(payment: {
       paymentId: payment.id,
     })
 
-    if (earning) {
-      await markEarningAsAvailable({
-        earningId: earning.id,
-      })
-    }
   } catch (error) {
     console.error("earning settlement failed:", error)
   }

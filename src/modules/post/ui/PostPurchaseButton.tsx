@@ -5,14 +5,14 @@ import { loadTossPayments } from "@tosspayments/tosspayments-sdk"
 
 type Props = {
   postId: string
-  priceCents?: number
+  price?: number
   creatorUsername?: string
   embedded?: boolean
 }
 
 export default function PostPurchaseButton({
   postId,
-  priceCents,
+  price,
   creatorUsername,
   embedded = false,
 }: Props) {
@@ -24,7 +24,7 @@ export default function PostPurchaseButton({
       setLoading(true)
       setError("")
 
-      if (typeof priceCents !== "number" || priceCents <= 0) {
+      if (typeof price !== "number" || price <= 0) {
         setError("콘텐츠 가격이 올바르지 않습니다")
         return
       }
@@ -60,7 +60,7 @@ export default function PostPurchaseButton({
 
       const payment = data.payment
 
-      if (!payment?.id || !payment?.amountCents) {
+      if (!payment?.id || !payment?.amount) {
         setError("결제 정보가 올바르지 않습니다")
         return
       }
@@ -75,7 +75,7 @@ export default function PostPurchaseButton({
         method: "CARD",
         amount: {
           currency: "KRW",
-          value: payment.amountCents,
+          value: payment.amount,
         },
         orderId: data.orderId ?? payment.id,
         orderName: data.orderName ?? "프리미엄 콘텐츠 이용권",

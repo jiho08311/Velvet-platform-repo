@@ -18,10 +18,10 @@ export async function POST(request: Request) {
 
     const body = await request.json()
 
-    const amountCents = body.amountCents
+    const amount = body.amount
     const currency = body.currency
 
-    if (typeof amountCents !== "number" || !currency) {
+    if (typeof amount !== "number" || !currency) {
       return NextResponse.json(
         { error: "Invalid payout request payload" },
         { status: 400 }
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
     const payoutRequest = await createPayoutRequest({
       creatorId: creator.id,
-      amount: amountCents,
+      amount: amount,
       currency,
     })
 

@@ -8,7 +8,7 @@ type ApprovePayoutRequestResultRow = {
   payout_request_id: string
   payout_id: string
   creator_id: string
-  amount_cents: number
+  amount: number
   currency: string
   status: string
 }
@@ -22,6 +22,9 @@ export async function approvePayoutRequest({
     throw new Error("Invalid payout request id")
   }
 
+  // 🔥 1. 어떤 id 눌렸는지
+  console.log("[APPROVE] payoutRequestId:", safePayoutRequestId)
+
   const { data, error } = await supabaseAdmin.rpc(
     "approve_payout_request_and_create_payout",
     {
@@ -29,11 +32,18 @@ export async function approvePayoutRequest({
     }
   )
 
+  // 🔥 2. RPC 결과 raw
+  console.log("[APPROVE] rpc result:", data)
+
   if (error) {
+    console.error("[APPROVE] rpc error:", error)
     throw error
   }
 
   const rows = (data ?? []) as ApprovePayoutRequestResultRow[]
+
+  // 🔥 3. rows length 확인
+  console.log("[APPROVE] rows length:", rows.length)
 
   if (rows.length === 0) {
     throw new Error("Failed to approve payout request")

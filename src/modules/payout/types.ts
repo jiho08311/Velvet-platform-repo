@@ -7,7 +7,7 @@ export type PayoutStatus =
 export type Payout = {
   id: PayoutId
   creatorId: string
-  amountCents: number
+  amount: number
   currency: string
   status: PayoutStatus
   createdAt: string
@@ -35,10 +35,10 @@ export type Earning = {
   paymentId: string
   payoutId: string | null
   sourceType: EarningSourceType
-  grossAmountCents: number
+  grossamount: number
   feeRateBps: number
-  feeAmountCents: number
-  netAmountCents: number
+  feeamount: number
+  netamount: number
   currency: string
   status: EarningStatus
   availableAt: string | null
@@ -50,8 +50,8 @@ export type Earning = {
 export type CreatorEarningsBalance = {
   creatorId: string
   currency: string
-  pendingAmountCents: number
-  availableAmountCents: number
-  paidOutAmountCents: number
-  reversedAmountCents: number
+  pendingamount: number
+  availableamount: number
+  paidOutamount: number
+  reversedamount: number
 }

@@ -7,15 +7,15 @@ type RecentPaymentRow = {
   creator_id: string | null
   type: string
   status: string
-  amount_cents: number
+  amount: number
   currency: string
   created_at: string
 }
 
 export type AdminAnalytics = {
-  totalNetRevenueCents: number
-  availableRevenueCents: number
-  paidOutRevenueCents: number
+  totalNetrevenue: number
+  availablerevenue: number
+  paidOutrevenue: number
   activeSubscriptionsCount: number
   totalSubscriptionsCount: number
   successfulPaymentsCount: number
@@ -34,7 +34,7 @@ export async function getAnalytics(): Promise<AdminAnalytics> {
   ] = await Promise.all([
     supabaseAdmin
       .from("earnings")
-      .select("net_amount_cents, status"),
+      .select("net_amount, status"),
 
     supabaseAdmin
       .from("subscriptions")
@@ -52,7 +52,7 @@ export async function getAnalytics(): Promise<AdminAnalytics> {
 
     supabaseAdmin
       .from("payments")
-      .select("id, user_id, creator_id, type, status, amount_cents, currency, created_at")
+      .select("id, user_id, creator_id, type, status, amount, currency, created_at")
       .order("created_at", { ascending: false })
       .limit(10),
   ])
@@ -65,23 +65,23 @@ export async function getAnalytics(): Promise<AdminAnalytics> {
 
   const earnings = earningsResult.data ?? []
 
-  const totalNetRevenueCents = earnings.reduce(
-    (sum, row) => sum + (row.net_amount_cents ?? 0),
+  const totalNetrevenue = earnings.reduce(
+    (sum, row) => sum + (row.net_amount ?? 0),
     0
   )
 
-  const availableRevenueCents = earnings
+  const availablerevenue = earnings
     .filter((row) => row.status === "available")
-    .reduce((sum, row) => sum + (row.net_amount_cents ?? 0), 0)
+    .reduce((sum, row) => sum + (row.net_amount ?? 0), 0)
 
-  const paidOutRevenueCents = earnings
+  const paidOutrevenue = earnings
     .filter((row) => row.status === "paid_out")
-    .reduce((sum, row) => sum + (row.net_amount_cents ?? 0), 0)
+    .reduce((sum, row) => sum + (row.net_amount ?? 0), 0)
 
   return {
-    totalNetRevenueCents,
-    availableRevenueCents,
-    paidOutRevenueCents,
+    totalNetrevenue,
+    availablerevenue,
+    paidOutrevenue,
     activeSubscriptionsCount: activeSubscriptionsResult.count ?? 0,
     totalSubscriptionsCount: totalSubscriptionsResult.count ?? 0,
     successfulPaymentsCount: successfulPaymentsResult.count ?? 0,

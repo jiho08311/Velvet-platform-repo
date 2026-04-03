@@ -5,7 +5,7 @@ type CreatorRow = {
   user_id: string
   username: string | null
   status: "pending" | "active" | "suspended"
-  subscription_price_cents: number | null
+  subscription_price: number | null
   subscription_currency: string | null
   created_at: string
   updated_at: string
@@ -26,7 +26,7 @@ export async function getCreatorByUserId(userId: string) {
       user_id,
       username,
       status,
-      subscription_price_cents,
+      subscription_price,
       subscription_currency,
       created_at,
       updated_at
@@ -44,7 +44,7 @@ export async function getCreatorByUserId(userId: string) {
     userId: data.user_id,
     username: data.username ?? "",
     status: data.status,
-    subscriptionPriceCents: data.subscription_price_cents ?? 0,
+    subscriptionPrice: data.subscription_price ?? 0,
     subscriptionCurrency: data.subscription_currency ?? "KRW",
     createdAt: data.created_at,
     updatedAt: data.updated_at,

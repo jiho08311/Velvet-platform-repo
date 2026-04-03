@@ -3,7 +3,7 @@ type CreatorHeaderProps = {
   displayName: string
   username: string
   bio: string
-  subscriptionPriceCents: number
+  subscriptionprice: number
   status: "pending" | "active" | "suspended"
 }
 
@@ -12,7 +12,7 @@ export function CreatorHeader({
   displayName,
   username,
   bio,
-  subscriptionPriceCents,
+  subscriptionprice,
 }: CreatorHeaderProps) {
   return (
     <section className="rounded-2xl border border-white/10 bg-neutral-950 p-6 text-white shadow-sm">
@@ -43,7 +43,7 @@ export function CreatorHeader({
           </p>
 
           <div className="mt-4 inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/85">
-            ₩{subscriptionPriceCents.toLocaleString()} 이용권
+            ₩{subscriptionprice.toLocaleString()} 이용권
           </div>
         </div>
       </div>

@@ -4,7 +4,7 @@ type PlatformAnalytics = {
   userCount: number
   creatorCount: number
   postCount: number
-  totalRevenueCents: number
+  totalRevenue: number
 }
 
 export async function getPlatformAnalytics(): Promise<PlatformAnalytics> {
@@ -27,15 +27,15 @@ export async function getPlatformAnalytics(): Promise<PlatformAnalytics> {
 
     supabase
       .from("payments")
-      .select("amount_cents")
+      .select("amount")
       .eq("status", "succeeded"),
   ])
 
   if (paymentsResult.error) throw paymentsResult.error
 
-  const totalRevenueCents =
+  const totalRevenue =
     paymentsResult.data?.reduce(
-      (sum, payment) => sum + (payment.amount_cents ?? 0),
+      (sum, payment) => sum + (payment.amount ?? 0),
       0
     ) ?? 0
 
@@ -43,6 +43,6 @@ export async function getPlatformAnalytics(): Promise<PlatformAnalytics> {
     userCount: usersResult.count ?? 0,
     creatorCount: creatorsResult.count ?? 0,
     postCount: postsResult.count ?? 0,
-    totalRevenueCents,
+    totalRevenue,
   }
 }

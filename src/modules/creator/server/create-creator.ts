@@ -8,7 +8,7 @@ type CreatorRow = {
   id: string
   user_id: string
   status: "pending" | "active" | "suspended"
-  subscription_price_cents: number
+  subscription_price: number
   subscription_currency: string
   created_at: string
   updated_at: string
@@ -20,7 +20,7 @@ export async function createCreator({
   id: string
   userId: string
   status: "pending" | "active" | "suspended"
-  subscriptionPriceCents: number
+  subscriptionPrice: number
   subscriptionCurrency: string
   createdAt: string
   updatedAt: string
@@ -39,11 +39,11 @@ export async function createCreator({
     .insert({
       user_id: userId,
       status: "pending",
-      subscription_price_cents: 0,
+      subscription_price: 0,
       subscription_currency: "KRW",
     })
     .select(
-      "id, user_id, status, subscription_price_cents, subscription_currency, created_at, updated_at"
+      "id, user_id, status, subscription_price, subscription_currency, created_at, updated_at"
     )
     .single<CreatorRow>()
 
@@ -55,7 +55,7 @@ export async function createCreator({
     id: data.id,
     userId: data.user_id,
     status: data.status,
-    subscriptionPriceCents: data.subscription_price_cents,
+    subscriptionPrice: data.subscription_price,
     subscriptionCurrency: data.subscription_currency,
     createdAt: data.created_at,
     updatedAt: data.updated_at,

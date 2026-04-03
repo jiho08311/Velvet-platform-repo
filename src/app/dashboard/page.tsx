@@ -112,7 +112,7 @@ export default async function PayoutsPage() {
           <Card>
             <p className="text-sm text-zinc-500">구독 가격</p>
             <p className="mt-2 text-2xl font-semibold text-white">
-              {formatPrice(creator.subscriptionPriceCents)}
+              {formatPrice(creator.subscriptionPrice)}
             </p>
             <p className="mt-2 text-sm text-zinc-500">
               월 구독 가격을 설정하세요
@@ -123,7 +123,7 @@ export default async function PayoutsPage() {
               className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4"
             >
               {SUBSCRIPTION_PRICES.map((price) => {
-                const isActive = creator.subscriptionPriceCents === price
+                const isActive = creator.subscriptionPrice === price
                 const isLongPrice = price >= 10000
 
                 return (
@@ -205,7 +205,7 @@ export default async function PayoutsPage() {
             <PayoutList
               payouts={payouts.map((p) => ({
                 id: p.id,
-                amountCents: p.amount_cents ?? 0,
+                amount: p.amount ?? 0,
                 currency: p.currency,
                 status: p.status,
                 createdAt: p.created_at,

@@ -19,7 +19,7 @@ export async function updateCreatorSettings(
 
   const { data: debugCreators } = await supabase
     .from("creators")
-    .select("id, user_id, subscription_price_cents")
+    .select("id, user_id, subscription_price")
     .limit(5)
 
   console.log("DEBUG creators table:", debugCreators)
@@ -30,11 +30,11 @@ export async function updateCreatorSettings(
   const { data, error } = await supabase
     .from("creators")
     .update({
-      subscription_price_cents: price,
+      subscription_price: price,
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", input.creatorId)
-    .select("id, user_id, subscription_price_cents, updated_at")
+    .select("id, user_id, subscription_price, updated_at")
     .maybeSingle()
 
   if (error) {

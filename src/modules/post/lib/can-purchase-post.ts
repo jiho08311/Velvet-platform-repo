@@ -25,7 +25,7 @@ export function canPurchasePost({
     return false
   }
 
-  if (post.priceCents <= 0) {
+  if (post.price <= 0) {
     return false
   }
 
