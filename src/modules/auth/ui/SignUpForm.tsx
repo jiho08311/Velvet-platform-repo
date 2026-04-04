@@ -49,18 +49,23 @@ export function SignUpForm() {
   }
 
   async function handleGoogleSignUp() {
+    console.log("GOOGLE BUTTON CLICKED >>>");
+
     if (googleLoading) return;
     setGoogleLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/feed`,
         },
       });
 
+      console.log("GOOGLE OAUTH RESPONSE >>>", data);
+
       if (error) {
+        console.error("GOOGLE OAUTH ERROR >>>", error);
         alert(error.message || "Google sign up failed");
       }
     } catch (error) {
