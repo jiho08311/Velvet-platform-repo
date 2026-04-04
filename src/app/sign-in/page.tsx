@@ -109,15 +109,7 @@ export default async function SignInPage() {
               <SignInForm />
             </Suspense>
 
-            <div className="mt-6 text-center text-sm text-zinc-600">
-              계정이 없으신가요?{" "}
-              <a
-                href="/sign-up"
-                className="font-semibold text-[#C2185B] hover:underline"
-              >
-                회원가입
-              </a>
-            </div>
+        
           </div>
         </section>
       </div>
