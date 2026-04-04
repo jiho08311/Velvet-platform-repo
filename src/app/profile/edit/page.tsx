@@ -1,3 +1,4 @@
+// src/app/profile/edit/page.tsx
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 
@@ -5,7 +6,7 @@ import { getSession } from "@/modules/auth/server/get-session"
 import { getProfileByUserId } from "@/modules/profile/server/get-profile-by-user-id"
 import { updateProfile } from "@/modules/profile/server/update-profile"
 import { createClient } from "@/infrastructure/supabase/server"
-import { EditProfileForm } from "@/modules/profile/ui/EditProfileForm" // ✅ 추가
+import { EditProfileForm } from "@/modules/profile/ui/EditProfileForm"
 
 type ProfileEditFormData = {
   displayName: string
@@ -87,38 +88,52 @@ export default async function ProfileEditPage() {
 
     const supabase = await createClient()
 
-    const displayName = String(formData.get("displayName") || "")
-    const bio = String(formData.get("bio") || "")
+    const displayName = String(formData.get("displayName") || "").trim()
+    const bio = String(formData.get("bio") || "").trim()
     const file = formData.get("avatar") as File | null
 
     let avatarUrl = profile.avatarUrl
 
-    if (file && file.size > 0) {
-      const safeFileName = sanitizeFileName(file.name)
-      const filePath = `${userId}/${Date.now()}-${safeFileName}`
+    try {
+      if (file && file.size > 0) {
+        const safeFileName = sanitizeFileName(file.name)
+        const filePath = `${userId}/${Date.now()}-${safeFileName}`
 
-      const { error } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file, { upsert: true })
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(filePath, file, { upsert: true })
 
-      if (error) throw error
+        if (uploadError) {
+          console.error("PROFILE AVATAR UPLOAD ERROR:", uploadError)
+          redirect("/profile/edit?error=profile_update_failed")
+        }
 
-      const { data } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(filePath)
+        const { data } = supabase.storage.from("avatars").getPublicUrl(filePath)
+        avatarUrl = data.publicUrl
+      }
 
-      avatarUrl = data.publicUrl
+      await updateProfile({
+        userId,
+        displayName,
+        bio,
+        avatarUrl,
+      })
+    } catch (error) {
+      console.error("PROFILE UPDATE ACTION ERROR:", error)
+      redirect("/profile/edit?error=profile_update_failed")
     }
 
-    await updateProfile({
-      userId,
-      displayName,
-      bio,
-      avatarUrl,
-    })
-
     revalidatePath("/profile")
-    revalidatePath(`/creator/${profileData?.username ?? ""}`)
+
+    if (
+      profileData &&
+      typeof profileData === "object" &&
+      "username" in profileData &&
+      typeof profileData.username === "string" &&
+      profileData.username
+    ) {
+      revalidatePath(`/creator/${profileData.username}`)
+    }
 
     redirect("/profile")
   }
@@ -133,7 +148,6 @@ export default async function ProfileEditPage() {
           </p>
         </div>
 
-        {/* ✅ 핵심 교체 */}
         <EditProfileForm
           defaultDisplayName={profile.displayName}
           defaultBio={profile.bio}
