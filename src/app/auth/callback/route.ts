@@ -49,7 +49,11 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.redirect(new URL(next, request.url), {
-    headers: response.headers,
-  });
+  const redirectResponse = NextResponse.redirect(new URL(next, request.url));
+
+  for (const cookie of response.cookies.getAll()) {
+    redirectResponse.cookies.set(cookie);
+  }
+
+  return redirectResponse;
 }
