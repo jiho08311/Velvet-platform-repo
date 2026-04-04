@@ -38,14 +38,12 @@ async function handleKakaoSignUp() {
 
   try {
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: "kakao",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/`,
-        queryParams: {
-          prompt: "login",
-        },
-      },
-    });
+  provider: "kakao",
+  options: {
+    redirectTo: `${window.location.origin}/auth/callback?next=/`,
+    scopes: "", 
+  },
+});
 
     if (error) {
       console.error("KAKAO OAUTH ERROR >>>", error);
