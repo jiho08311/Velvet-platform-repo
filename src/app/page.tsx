@@ -19,13 +19,17 @@ export default async function HomePage() {
     .from("profiles")
     .select("is_deactivated")
     .eq("id", user.id)
-    .single()
+    .maybeSingle()
 
   if (error) {
     throw error
   }
 
-  if (profile?.is_deactivated) {
+  if (!profile) {
+    redirect("/feed")
+  }
+
+  if (profile.is_deactivated) {
     redirect("/reactivate-account")
   }
 
