@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -7,53 +8,35 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get("code");
   const next = requestUrl.searchParams.get("next") || "/feed";
 
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
+  if (!code) {
+    return NextResponse.redirect(new URL("/sign-in?next=/feed", request.url));
+  }
+
+  const cookieStore = await cookies();
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
+        getAll() {
+          return cookieStore.getAll();
         },
-        set(name: string, value: string, options: CookieOptions) {
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-        },
-        remove(name: string, options: CookieOptions) {
-          response.cookies.set({
-            name,
-            value: "",
-            ...options,
-            maxAge: 0,
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
           });
         },
       },
     }
   );
 
-  if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
 
-    if (error) {
-      console.error("GOOGLE CALLBACK EXCHANGE ERROR >>>", error);
-      return NextResponse.redirect(new URL("/sign-in?next=/feed", request.url));
-    }
+  if (error) {
+    console.error("GOOGLE CALLBACK EXCHANGE ERROR >>>", error);
+    return NextResponse.redirect(new URL("/sign-in?next=/feed", request.url));
   }
 
-  const redirectResponse = NextResponse.redirect(new URL(next, request.url));
-
-  for (const cookie of response.cookies.getAll()) {
-    redirectResponse.cookies.set(cookie);
-  }
-
-  return redirectResponse;
+  return NextResponse.redirect(new URL(next, request.url));
 }
