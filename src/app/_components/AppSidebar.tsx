@@ -35,16 +35,13 @@ export function AppSidebar() {
     if (isAuthenticated === false) {
       return `/sign-in?next=${encodeURIComponent(href)}`
     }
-
     return href
   }
 
   useEffect(() => {
     async function fetchAuthAndUnread() {
       try {
-        const res = await fetch("/api/notifications", {
-          cache: "no-store",
-        })
+        const res = await fetch("/api/notifications", { cache: "no-store" })
 
         if (!res.ok) {
           setIsAuthenticated(false)
@@ -97,9 +94,9 @@ export function AppSidebar() {
   }, [isAuthenticated])
 
   return (
-    <aside className="hidden w-24 shrink-0 xl:block">
-      <div className="sticky top-[73px] flex h-[calc(100vh-73px)] flex-col items-center px-3 py-6">
-        <nav className="flex w-full flex-col items-center gap-3">
+    <aside className="w-16 shrink-0">
+      <div className="sticky top-[73px] flex h-[calc(100vh-73px)] flex-col items-center px-2 py-4">
+        <nav className="flex w-full flex-col items-center gap-2">
           {navigationItems.map((item) => {
             const isActive =
               pathname === item.href ||
@@ -112,49 +109,43 @@ export function AppSidebar() {
                 href={resolveHref(item.href)}
                 aria-label={item.label}
                 title={item.label}
-                className={`relative flex h-14 w-14 items-center justify-center rounded-2xl border transition ${
+                className={`relative flex h-12 w-12 items-center justify-center rounded-xl border transition ${
                   isActive
-                    ? "border-[#C2185B]/40 bg-[#C2185B] text-white shadow-sm"
-                    : "border-transparent bg-transparent text-zinc-500 hover:border-zinc-800 hover:bg-zinc-900 hover:text-white"
+                    ? "border-[#C2185B]/40 bg-[#C2185B] text-white"
+                    : "border-transparent text-zinc-500 hover:bg-zinc-900 hover:text-white"
                 }`}
               >
                 <Icon className="h-5 w-5" />
 
                 {item.href === "/notifications" && isAuthenticated && hasUnread ? (
-                  <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-red-500" />
+                  <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
                 ) : null}
               </Link>
             )
           })}
         </nav>
 
-        <div className="mt-auto flex w-full flex-col items-center gap-3">
+        <div className="mt-auto flex w-full flex-col items-center gap-2">
           {isAuthenticated === null || isCreator === null ? (
-            <div className="h-14 w-14 animate-pulse rounded-2xl bg-zinc-800" />
+            <div className="h-12 w-12 animate-pulse rounded-xl bg-zinc-800" />
           ) : isAuthenticated === false ? (
             <Link
               href="/sign-in?next=%2Fbecome-creator"
-              aria-label="Become creator"
-              title="Become creator"
-              className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#C2185B] text-white transition hover:bg-[#D81B60] active:bg-[#AD1457]"
+              className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#C2185B] text-white"
             >
               <Sparkles className="h-5 w-5" />
             </Link>
           ) : isCreator ? (
             <Link
               href="/dashboard"
-              aria-label="Creator dashboard"
-              title="Creator dashboard"
-              className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white transition hover:bg-white/10"
+              className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white"
             >
               <LayoutDashboard className="h-5 w-5" />
             </Link>
           ) : (
             <Link
               href="/become-creator"
-              aria-label="Become creator"
-              title="Become creator"
-              className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#C2185B] text-white transition hover:bg-[#D81B60] active:bg-[#AD1457]"
+              className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#C2185B] text-white"
             >
               <Sparkles className="h-5 w-5" />
             </Link>

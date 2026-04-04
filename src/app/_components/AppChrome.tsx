@@ -4,15 +4,14 @@ import { usePathname } from "next/navigation"
 import { AppHeader } from "@/app/_components/AppHeader"
 import { AppSidebar } from "@/app/_components/AppSidebar"
 import Footer from "@/shared/ui/Footer"
-import { MobileNavigation } from "@/app/_components/MobileNavigation"
 
 const HIDE_CHROME_PATHS = [
   "/sign-in",
   "/sign-up",
   "/forgot-password",
-  "/reset-password", 
+  "/reset-password",
   "/reactivate-account",
-  "/account-unavailable", // 추가
+  "/account-unavailable",
   "/verify-pass",
   "/verify-pass-required",
 ]
@@ -39,7 +38,7 @@ export function AppChrome({
       <div className="mx-auto flex w-full max-w-[1600px]">
         <AppSidebar />
 
-        <main className="min-w-0 flex-1 px-4 pb-24 pt-4 md:px-6 md:pb-10 md:pt-6">
+        <main className="min-w-0 flex-1 px-4 pb-20 pt-4 md:px-6 md:pb-10 md:pt-6">
           <div className="mx-auto w-full max-w-6xl">
             {children}
           </div>
@@ -47,7 +46,6 @@ export function AppChrome({
       </div>
 
       <Footer />
-      <MobileNavigation />
     </div>
   )
 }
