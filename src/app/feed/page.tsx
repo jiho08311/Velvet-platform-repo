@@ -10,10 +10,15 @@ import { FeedEmptyState } from "@/modules/feed/ui/FeedEmptyState"
 import { FeedList } from "@/modules/feed/ui/FeedList"
 import { getRecommendedCreators } from "@/modules/search/server/get-recommended-creators"
 import { Card } from "@/shared/ui/Card"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 type FeedMediaItem = {
   url: string
   type?: "image" | "video" | "audio" | "file"
+}
+
+type ProfileRow = {
+  username: string | null
 }
 
 function normalizeMedia(item: unknown): FeedMediaItem[] {
@@ -74,6 +79,20 @@ export default async function FeedPage() {
     await assertPassVerified({ profileId: session.userId })
   } catch {
     redirect("/verify-pass")
+  }
+
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select("username")
+    .eq("id", session.userId)
+    .maybeSingle<ProfileRow>()
+
+  if (profileError) {
+    throw profileError
+  }
+
+  if (!profile?.username) {
+    redirect("/onboarding")
   }
 
   await getCreatorByUserId(session.userId)

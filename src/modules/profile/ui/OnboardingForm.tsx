@@ -1,118 +1,90 @@
-"use client";
+// src/modules/profile/ui/OnboardingForm.tsx
+"use client"
 
-import { useState } from "react";
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 
 export function OnboardingForm() {
-  const [displayName, setDisplayName] = useState("");
-  const [username, setUsername] = useState("");
-  const [birthDate, setBirthDate] = useState("");
-  const [loading, setLoading] = useState(false);
+  const router = useRouter()
+  const [username, setUsername] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
+  const [isPending, setIsPending] = useState(false)
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+    event.preventDefault()
 
-    if (loading) return;
-    setLoading(true);
+    setErrorMessage("")
+    setIsPending(true)
 
     try {
-      const response = await fetch("/api/account/onboarding", {
+      const response = await fetch("/api/profile/onboarding", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          displayName,
           username,
-          birthDate,
         }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null)
 
       if (!response.ok) {
-        alert(data.error || "Failed to complete onboarding");
-        return;
+        setErrorMessage(data?.error || "Onboarding failed.")
+        return
       }
 
-      window.location.href = "/feed";
+      router.replace("/")
+      router.refresh()
     } catch (error) {
-      console.error("ONBOARDING ERROR >>>", error);
-      alert("Unexpected error occurred");
+      setErrorMessage(
+        error instanceof Error ? error.message : "Something went wrong."
+      )
     } finally {
-      setLoading(false);
+      setIsPending(false)
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-zinc-700">
-          Display name
-        </label>
-        <input
-          type="text"
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
-          placeholder="Your display name"
-          required
-          className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/10"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-zinc-700">
+        <label
+          htmlFor="username"
+          className="block text-sm font-medium text-zinc-700"
+        >
           Username
         </label>
+
         <input
+          id="username"
           type="text"
           value={username}
-          onChange={(e) =>
-            setUsername(
-              e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "")
-            )
-          }
-          placeholder="username"
+          onChange={(event) => setUsername(event.target.value)}
+          placeholder="yourname"
+          autoComplete="off"
+          className="w-full rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/10"
+          disabled={isPending}
           required
-          className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/10"
         />
+
         <p className="text-xs text-zinc-500">
-          영문 소문자, 숫자, 밑줄(_)만 사용할 수 있습니다.
+          소문자, 숫자, ., _ 사용 가능 / 3~20자
         </p>
       </div>
 
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-zinc-700">
-          Birth date
-        </label>
-        <input
-          type="text"
-          value={birthDate}
-          onChange={(e) => {
-            let value = e.target.value.replace(/[^0-9]/g, "");
-
-            if (value.length > 8) return;
-
-            if (value.length >= 5) {
-              value = `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`;
-            } else if (value.length >= 3) {
-              value = `${value.slice(0, 4)}-${value.slice(4)}`;
-            }
-
-            setBirthDate(value);
-          }}
-          placeholder="YYYY-MM-DD"
-          required
-          className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/10"
-        />
-      </div>
+      {errorMessage ? (
+        <div className="rounded-2xl border border-red-300 bg-red-50 px-4 py-3">
+          <p className="text-sm text-red-600">{errorMessage}</p>
+        </div>
+      ) : null}
 
       <button
         type="submit"
-        disabled={loading}
-        className="w-full rounded-full bg-[#C2185B] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#D81B60] disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={isPending}
+        className="w-full rounded-2xl bg-[#C2185B] px-5 py-4 text-base font-semibold text-white transition hover:bg-[#D81B60] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {loading ? "Saving..." : "Continue"}
+        {isPending ? "Saving..." : "Continue"}
       </button>
     </form>
-  );
+  )
 }

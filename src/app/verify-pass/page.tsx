@@ -1,23 +1,15 @@
-import { cookies } from "next/headers"
+// src/app/verify-pass/page.tsx
 import { redirect } from "next/navigation"
-import { createServerClient } from "@supabase/ssr"
-import { getAdultVerificationStatus } from "@/modules/profile/server/get-adult-verification-status"
+import { createClient } from "@/infrastructure/supabase/server"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { VerifyPassPage } from "@/modules/auth/ui/VerifyPassPage"
 
-export default async function VerifyPassPage() {
-  const cookieStore = await cookies()
+type ProfileRow = {
+  is_adult_verified: boolean | null
+}
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll() {},
-      },
-    }
-  )
+export default async function VerifyPassRoute() {
+  const supabase = await createClient()
 
   const {
     data: { user },
@@ -27,45 +19,19 @@ export default async function VerifyPassPage() {
     redirect("/sign-in")
   }
 
-  const verification = await getAdultVerificationStatus({
-    profileId: user.id,
-  })
+  const { data: profile, error } = await supabaseAdmin
+    .from("profiles")
+    .select("is_adult_verified")
+    .eq("id", user.id)
+    .maybeSingle<ProfileRow>()
 
-  return (
-    <div className="mx-auto max-w-md space-y-6 p-6 text-white">
-      <div className="space-y-2">
-        <h1 className="text-xl font-semibold">Verify with PASS</h1>
-        <p className="text-sm text-zinc-400">
-          Complete PASS verification to access adult-only features.
-        </p>
-      </div>
+  if (error) {
+    throw error
+  }
 
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4">
-        <p className="text-sm font-medium text-white">Current status</p>
-        <p className="mt-1 text-xs text-zinc-400">
-          {verification.isAdultVerified &&
-          verification.adultVerificationMethod === "pass"
-            ? "PASS verification completed"
-            : "PASS verification not completed"}
-        </p>
-      </div>
+  if (profile?.is_adult_verified) {
+    redirect("/")
+  }
 
-      {verification.isAdultVerified &&
-      verification.adultVerificationMethod === "pass" ? (
-        <a
-          href="/"
-          className="block w-full rounded-full bg-[#C2185B] px-4 py-3 text-center text-sm font-medium text-white hover:bg-[#D81B60]"
-        >
-          Continue
-        </a>
-      ) : (
-        <a
-          href={`/api/auth/pass/start?profileId=${user.id}`}
-          className="block w-full rounded-full bg-[#C2185B] px-4 py-3 text-center text-sm font-medium text-white hover:bg-[#D81B60]"
-        >
-          Verify with PASS
-        </a>
-      )}
-    </div>
-  )
+  return <VerifyPassPage profileId={user.id} />
 }

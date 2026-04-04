@@ -1,3 +1,4 @@
+// src/app/creator/[username]/page.tsx
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 
@@ -12,11 +13,16 @@ import { PostCard } from "@/modules/post/ui/PostCard"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
 import { getViewerSubscription } from "@/modules/subscription/server/get-viewer-subscription"
 import { SubscriptionStatusCard } from "@/modules/subscription/ui/SubscriptionStatusCard"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 type CreatorPageProps = {
   params: Promise<{
     username: string
   }>
+}
+
+type ProfileRow = {
+  username: string | null
 }
 
 function formatPrice(amount: number) {
@@ -53,6 +59,20 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
       await assertPassVerified({ profileId: userId })
     } catch {
       redirect("/verify-pass")
+    }
+
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .select("username")
+      .eq("id", userId)
+      .maybeSingle<ProfileRow>()
+
+    if (profileError) {
+      throw profileError
+    }
+
+    if (!profile?.username) {
+      redirect("/onboarding")
     }
   }
 

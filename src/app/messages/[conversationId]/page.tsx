@@ -1,13 +1,16 @@
+// src/app/messages/[conversationId]/page.tsx
 import Link from "next/link"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 
 import { requireUser } from "@/modules/auth/server/require-user"
+import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { getConversationById } from "@/modules/message/server/get-conversation-by-id"
 import { listMessages } from "@/modules/message/server/list-messages"
 import { MessagePurchaseButton } from "@/modules/message/ui/MessagePurchaseButton"
 import { MessageComposerSection } from "@/modules/message/ui/MessageComposerSection"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 type ConversationDetailPageProps = {
   params: Promise<{
@@ -15,10 +18,35 @@ type ConversationDetailPageProps = {
   }>
 }
 
+type ProfileRow = {
+  username: string | null
+}
+
 export default async function ConversationDetailPage({
   params,
 }: ConversationDetailPageProps) {
   const user = await requireUser()
+
+  try {
+    await assertPassVerified({ profileId: user.id })
+  } catch {
+    redirect("/verify-pass")
+  }
+
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select("username")
+    .eq("id", user.id)
+    .maybeSingle<ProfileRow>()
+
+  if (profileError) {
+    throw profileError
+  }
+
+  if (!profile?.username) {
+    redirect("/onboarding")
+  }
+
   const { conversationId } = await params
   const pathname = `/messages/${conversationId}`
 

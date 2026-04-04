@@ -1,3 +1,4 @@
+// src/app/notifications/page.tsx
 import Link from "next/link"
 import { redirect } from "next/navigation"
 
@@ -8,6 +9,11 @@ import type { NotificationType } from "@/modules/notification/types"
 import { Card } from "@/shared/ui/Card"
 import { EmptyState } from "@/shared/ui/EmptyState"
 import { StatusBadge } from "@/shared/ui/StatusBadge"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+
+type ProfileRow = {
+  username: string | null
+}
 
 function getNotificationTone(type: NotificationType) {
   switch (type) {
@@ -21,15 +27,12 @@ function getNotificationTone(type: NotificationType) {
       return "success"
     case "payment_succeeded":
       return "success"
-
-    // 🔥 추가
     case "post_liked":
       return "default"
     case "comment_created":
       return "default"
     case "comment_liked":
       return "default"
-
     default:
       return "default"
   }
@@ -47,27 +50,44 @@ function getNotificationLabel(type: NotificationType) {
       return "Content unlocked"
     case "payment_succeeded":
       return "Payment"
-
-    // 🔥 추가
     case "post_liked":
       return "Like"
     case "comment_created":
       return "Comment"
     case "comment_liked":
       return "Comment like"
-
     default:
       return "Notification"
   }
 }
 
 export default async function NotificationsPage() {
-  const user = await requireActiveUser()
+  let user: Awaited<ReturnType<typeof requireActiveUser>>
+
+  try {
+    user = await requireActiveUser()
+  } catch {
+    redirect("/sign-in?next=/notifications")
+  }
 
   try {
     await assertPassVerified({ profileId: user.id })
   } catch {
     redirect("/verify-pass")
+  }
+
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select("username")
+    .eq("id", user.id)
+    .maybeSingle<ProfileRow>()
+
+  if (profileError) {
+    throw profileError
+  }
+
+  if (!profile?.username) {
+    redirect("/onboarding")
   }
 
   const notifications = await listNotifications({

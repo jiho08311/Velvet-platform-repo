@@ -6,9 +6,8 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 type ProfileRow = {
   is_deactivated: boolean | null
+  is_adult_verified: boolean | null
   username: string | null
-  display_name: string | null
-  birth_date: string | null
 }
 
 export default async function HomePage() {
@@ -24,7 +23,7 @@ export default async function HomePage() {
 
   const { data: profile, error } = await supabaseAdmin
     .from("profiles")
-    .select("is_deactivated, username, display_name, birth_date")
+    .select("is_deactivated, is_adult_verified, username")
     .eq("id", user.id)
     .maybeSingle<ProfileRow>()
 
@@ -33,14 +32,18 @@ export default async function HomePage() {
   }
 
   if (!profile) {
-    redirect("/onboarding")
+    redirect("/verify-pass")
   }
 
   if (profile.is_deactivated) {
     redirect("/reactivate-account")
   }
 
-  if (!profile.username || !profile.display_name || !profile.birth_date) {
+  if (!profile.is_adult_verified) {
+    redirect("/verify-pass")
+  }
+
+  if (!profile.username) {
     redirect("/onboarding")
   }
 

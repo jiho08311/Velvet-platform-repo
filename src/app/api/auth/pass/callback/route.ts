@@ -1,9 +1,10 @@
+// src/app/api/auth/pass/callback/route.ts
 import { NextResponse } from "next/server";
 import { completePassVerification } from "@/modules/auth/server/complete-pass-verification";
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams, origin } = new URL(request.url);
 
     const requestId = searchParams.get("requestId");
     const profileId = searchParams.get("profileId");
@@ -11,7 +12,7 @@ export async function GET(request: Request) {
 
     if (!requestId || !profileId) {
       return NextResponse.redirect(
-        new URL("/sign-up?error=missing_pass_params", request.url)
+        new URL("/verify-pass?error=missing_pass_params", origin)
       );
     }
 
@@ -21,14 +22,12 @@ export async function GET(request: Request) {
       mock,
     });
 
-    return NextResponse.redirect(
-      new URL("/sign-up?passVerified=true", request.url)
-    );
+    return NextResponse.redirect(new URL("/", origin));
   } catch (error) {
     console.error("PASS CALLBACK ERROR", error);
 
     return NextResponse.redirect(
-      new URL("/sign-up?error=pass_verification_failed", request.url)
+      new URL("/verify-pass?error=pass_verification_failed", request.url)
     );
   }
 }

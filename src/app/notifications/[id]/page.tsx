@@ -1,26 +1,41 @@
+// src/app/notifications/page.tsx
 import Link from "next/link"
 import { redirect } from "next/navigation"
 
 import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
-import { getSession } from "@/modules/auth/server/get-session"
-import { getNotificationById } from "@/modules/notification/server/get-notification-by-id"
-import { markNotificationRead } from "@/modules/notification/server/mark-notification-read"
+import { requireActiveUser } from "@/modules/auth/server/require-active-user"
+import { listNotifications } from "@/modules/notification/server/list-notifications"
 import type { NotificationType } from "@/modules/notification/types"
 import { Card } from "@/shared/ui/Card"
 import { EmptyState } from "@/shared/ui/EmptyState"
 import { StatusBadge } from "@/shared/ui/StatusBadge"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
-type NotificationDetailPageProps = {
-  params: Promise<{
-    id: string
-  }>
+type ProfileRow = {
+  username: string | null
 }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value))
+function getNotificationTone(type: NotificationType) {
+  switch (type) {
+    case "subscription_started":
+      return "success"
+    case "ppv_message_received":
+      return "warning"
+    case "ppv_message_purchased":
+      return "success"
+    case "ppv_post_purchased":
+      return "success"
+    case "payment_succeeded":
+      return "success"
+    case "post_liked":
+      return "default"
+    case "comment_created":
+      return "default"
+    case "comment_liked":
+      return "default"
+    default:
+      return "default"
+  }
 }
 
 function getNotificationLabel(type: NotificationType) {
@@ -28,118 +43,134 @@ function getNotificationLabel(type: NotificationType) {
     case "subscription_started":
       return "Subscription"
     case "ppv_message_received":
-      return "PPV Message"
+      return "Locked message"
     case "ppv_message_purchased":
-      return "Purchase"
+      return "Message unlocked"
     case "ppv_post_purchased":
-      return "Post Purchase"
+      return "Content unlocked"
     case "payment_succeeded":
       return "Payment"
+    case "post_liked":
+      return "Like"
+    case "comment_created":
+      return "Comment"
+    case "comment_liked":
+      return "Comment like"
     default:
       return "Notification"
   }
 }
 
-export default async function NotificationDetailPage({
-  params,
-}: NotificationDetailPageProps) {
-  const { id } = await params
+export default async function NotificationsPage() {
+  let user: Awaited<ReturnType<typeof requireActiveUser>>
 
-  const session = await getSession()
-
-  if (!session) {
-    redirect("/sign-in?next=/notifications")
-  }
-
-  const userId =
-    (session as any)?.userId ?? (session as any)?.user?.id ?? null
-
-  if (!userId) {
+  try {
+    user = await requireActiveUser()
+  } catch {
     redirect("/sign-in?next=/notifications")
   }
 
   try {
-    await assertPassVerified({ profileId: userId })
+    await assertPassVerified({ profileId: user.id })
   } catch {
     redirect("/verify-pass")
   }
 
-  let notification = await getNotificationById({
-    notificationId: id,
-    userId,
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select("username")
+    .eq("id", user.id)
+    .maybeSingle<ProfileRow>()
+
+  if (profileError) {
+    throw profileError
+  }
+
+  if (!profile?.username) {
+    redirect("/onboarding")
+  }
+
+  const notifications = await listNotifications({
+    userId: user.id,
   })
 
-  if (notification && !notification.isRead) {
-    await markNotificationRead(notification.id, userId)
-
-    notification = await getNotificationById({
-      notificationId: id,
-      userId,
-    })
-  }
-
-  if (!notification) {
-    return (
-      <main className="min-h-screen bg-zinc-950 px-6 py-10 text-zinc-100">
-        <div className="mx-auto flex max-w-3xl flex-col gap-6">
-          <Link
-            href="/notifications"
-            className="inline-flex w-fit items-center rounded-full border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-zinc-300 transition hover:bg-zinc-800"
-          >
-            ← Back
-          </Link>
-
-          <Card className="p-10">
-            <EmptyState
-              title="Notification not found"
-              description="This notification does not exist or is no longer available."
-            />
-          </Card>
-        </div>
-      </main>
-    )
-  }
+  const unreadCount = notifications.filter((item) => !item.isRead).length
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-10 text-zinc-100">
-      <div className="mx-auto flex max-w-3xl flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <Link
-            href="/notifications"
-            className="inline-flex items-center rounded-full border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-zinc-300 transition hover:bg-zinc-800"
-          >
-            ← Back
-          </Link>
-
-          <StatusBadge label={notification.isRead ? "read" : "unread"} />
-        </div>
-
-        <Card className="overflow-hidden p-0">
-          <div className="border-b border-zinc-800 bg-gradient-to-r from-zinc-900 via-zinc-950 to-zinc-900 p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#F472B6]">
-              Notification
-            </p>
-
-            <h1 className="mt-3 text-2xl font-semibold text-white">
-              {getNotificationLabel(notification.type)}
-            </h1>
-
-            <p className="mt-3 text-sm text-zinc-400">
-              {formatDate(notification.createdAt)}
-            </p>
-          </div>
-
-          <div className="p-6">
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
-              <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-                Content
+    <main className="min-h-screen bg-zinc-950 text-white">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
+        <Card className="p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-zinc-400">
+                Notifications
               </p>
 
-              <p className="mt-3 whitespace-pre-wrap text-base leading-7 text-zinc-200">
-                {notification.body}
+              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">
+                Notifications
+              </h1>
+
+              <p className="mt-2 text-sm text-zinc-400">
+                Stay updated on subscriptions, locked messages, and payments.
               </p>
             </div>
+
+            <div className="rounded-full border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-zinc-300">
+              {unreadCount} unread
+            </div>
           </div>
+        </Card>
+
+        <Card className="overflow-hidden p-0">
+          {notifications.length === 0 ? (
+            <div className="p-6">
+              <EmptyState
+                title="No notifications yet"
+                description="New updates will appear here as they happen."
+              />
+            </div>
+          ) : (
+            <ul className="divide-y divide-zinc-800">
+              {notifications.map((notification) => (
+                <li key={notification.id}>
+                  <Link
+                    href={`/notifications/${notification.id}`}
+                    className={`block px-5 py-4 transition hover:bg-zinc-900/80 ${
+                      notification.isRead ? "bg-transparent" : "bg-zinc-800/70"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <StatusBadge
+                            label={getNotificationLabel(notification.type)}
+                            tone={getNotificationTone(notification.type)}
+                          />
+                          {!notification.isRead ? (
+                            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-[#C2185B]" />
+                          ) : null}
+                        </div>
+
+                        <p
+                          className={`mt-2 whitespace-pre-wrap text-sm leading-6 ${
+                            notification.isRead
+                              ? "font-normal text-zinc-400"
+                              : "font-semibold text-white"
+                          }`}
+                        >
+                          {notification.body}
+                        </p>
+
+                        <p className="mt-1.5 text-xs text-zinc-500">
+                          {new Date(notification.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </Card>
       </div>
     </main>

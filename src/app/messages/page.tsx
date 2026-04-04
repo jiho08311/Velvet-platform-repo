@@ -1,3 +1,4 @@
+// src/app/messages/page.tsx
 import { redirect } from "next/navigation"
 import { Card } from "@/shared/ui/Card"
 import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
@@ -6,11 +7,16 @@ import { listConversations } from "@/modules/message/server/list-conversations"
 import { ConversationList } from "@/modules/message/ui/ConversationList"
 import { getOrCreateConversation } from "@/modules/message/server/get-or-create-conversation"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 type MessagesPageProps = {
   searchParams: Promise<{
     creatorId?: string
   }>
+}
+
+type ProfileRow = {
+  username: string | null
 }
 
 export default async function MessagesPage({
@@ -28,6 +34,20 @@ export default async function MessagesPage({
     await assertPassVerified({ profileId: user.id })
   } catch {
     redirect("/verify-pass")
+  }
+
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select("username")
+    .eq("id", user.id)
+    .maybeSingle<ProfileRow>()
+
+  if (profileError) {
+    throw profileError
+  }
+
+  if (!profile?.username) {
+    redirect("/onboarding")
   }
 
   const { creatorId } = await searchParams
