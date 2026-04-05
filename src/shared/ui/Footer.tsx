@@ -19,10 +19,13 @@ export default function Footer() {
             이용약관
           </a>
           <a href="/privacy" className="transition hover:text-white">
-            개인정보처리방침
+            개인정보 처리방침
           </a>
-          <a href="/refund" className="transition hover:text-white">
-            환불/구독 해지 정책
+          <a href="/policy" className="transition hover:text-white">
+            운영정책
+          </a>
+          <a href="/youth" className="transition hover:text-white">
+            청소년 보호정책
           </a>
         </div>
       </div>
