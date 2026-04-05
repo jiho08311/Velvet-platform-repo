@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-
+import Link from "next/link"
 import { requireActiveUser } from "@/modules/auth/server/require-active-user"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { updateCreatorSettings } from "@/modules/creator/server/update-creator-settings"
@@ -190,7 +190,22 @@ export default async function PayoutsPage() {
             </p>
           </Card>
         </div>
-
+<div className="grid gap-4 md:grid-cols-1">
+  <Card>
+    <Link
+      href="/dashboard/subscribers"
+      className="block rounded-2xl p-4 transition hover:bg-zinc-900"
+    >
+      <p className="text-sm text-zinc-500">구독자 관리</p>
+      <p className="mt-2 text-2xl font-semibold text-white">
+        Subscribers
+      </p>
+      <p className="mt-1 text-sm text-zinc-500">
+        구독자 목록 확인 및 메시지 보내기
+      </p>
+    </Link>
+  </Card>
+</div>
         <Card>
           <div className="mb-4">
             <p className="text-lg font-semibold text-white">출금 내역</p>
