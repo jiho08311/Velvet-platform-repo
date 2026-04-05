@@ -4,8 +4,7 @@ import { useMemo, useState } from "react"
 
 type MessageComposerSendData = {
   content: string
-  type: "text" | "ppv"
-  price?: number
+  type: "text"
   files: File[]
 }
 
@@ -15,8 +14,6 @@ export function MessageComposer({
   onSend: (data: MessageComposerSendData) => void | Promise<void>
 }) {
   const [content, setContent] = useState("")
-  const [type, setType] = useState<"text" | "ppv">("text")
-  const [price, setPrice] = useState<number>(1000)
   const [files, setFiles] = useState<File[]>([])
 
   const previews = useMemo(() => {
@@ -30,7 +27,6 @@ export function MessageComposer({
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const selectedFiles = Array.from(event.target.files ?? [])
     setFiles(selectedFiles)
-    console.log("[MessageComposer] selectedFiles:", selectedFiles)
   }
 
   function handleRemoveFile(targetIndex: number) {
@@ -38,12 +34,9 @@ export function MessageComposer({
   }
 
   async function handleSend() {
-    console.log("[MessageComposer] sending files:", files)
-
     await onSend({
       content,
-      type,
-      price: type === "ppv" ? price : undefined,
+      type: "text",
       files,
     })
 
@@ -59,40 +52,6 @@ export function MessageComposer({
         className="w-full rounded-xl border border-zinc-800 bg-zinc-900 p-3 text-sm text-white"
         placeholder="메시지를 입력하세요..."
       />
-
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => setType("text")}
-          className={`rounded-lg px-3 py-1 text-sm ${
-            type === "text" ? "bg-white text-black" : "bg-zinc-800 text-white"
-          }`}
-        >
-          일반
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setType("ppv")}
-          className={`rounded-lg px-3 py-1 text-sm ${
-            type === "ppv" ? "bg-[#C2185B] text-white" : "bg-zinc-800 text-white"
-          }`}
-        >
-          프리미엄
-        </button>
-      </div>
-
-      {type === "ppv" ? (
-        <select
-          value={price}
-          onChange={(e) => setPrice(Number(e.target.value))}
-          className="w-full rounded-xl border border-zinc-800 bg-zinc-900 p-2 text-sm text-white"
-        >
-          <option value={1000}>₩1,000</option>
-          <option value={3000}>₩3,000</option>
-          <option value={5000}>₩5,000</option>
-        </select>
-      ) : null}
 
       <div className="space-y-2">
         <label className="block">

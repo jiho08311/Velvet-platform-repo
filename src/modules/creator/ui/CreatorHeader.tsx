@@ -43,7 +43,7 @@ export function CreatorHeader({
           </p>
 
           <div className="mt-4 inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/85">
-            ₩{subscriptionprice.toLocaleString()} 이용권
+            ₩{subscriptionprice.toLocaleString()} 구독
           </div>
         </div>
       </div>

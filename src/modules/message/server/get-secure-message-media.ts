@@ -40,23 +40,6 @@ export async function getSecureMessageMedia({
 
   if (!isParticipant) throw new Error("Unauthorized")
 
-  let canAccess = true
-
-  if (message.type === "ppv" && message.sender_id !== userId) {
-    const { data: payment } = await supabase
-      .from("payments")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("target_type", "message")
-      .eq("target_id", messageId)
-      .eq("status", "succeeded")
-      .maybeSingle()
-
-    if (!payment) canAccess = false
-  }
-
-  if (!canAccess) return []
-
   const { data: mediaRows } = await supabase
     .from("media")
     .select("id, message_id, storage_path, mime_type")

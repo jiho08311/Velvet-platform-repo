@@ -9,11 +9,6 @@ export async function POST(request: Request) {
 
     const conversationId = body?.conversationId
     const content = body?.content
-    const type = body?.type === "ppv" ? "ppv" : "text"
-    const price =
-      body?.price === null || body?.price === undefined || body?.price === ""
-        ? null
-        : Number(body.price)
 
     if (!conversationId || !content) {
       return NextResponse.json(
@@ -26,8 +21,8 @@ export async function POST(request: Request) {
       conversationId,
       senderId: user.id,
       content,
-      type,
-      price,
+      type: "text",
+      price: null,
     })
 
     return NextResponse.json({ message }, { status: 200 })

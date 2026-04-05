@@ -148,13 +148,6 @@ export async function listConversations({
       const profile = profileMap.get(participantUserId)
       const lastMessage = lastMessageMap.get(row.id)
 
-      const hasIncomingPpv = messageRows.some(
-        (m) =>
-          m.conversation_id === row.id &&
-          (m.type ?? "text") === "ppv" &&
-          m.sender_id !== userId
-      )
-
       return {
         id: row.id,
         createdAt: row.created_at,
@@ -169,9 +162,7 @@ export async function listConversations({
         lastMessage: lastMessage
           ? {
               id: lastMessage.id,
-              content: hasIncomingPpv
-                ? "유료 메시지입니다"
-                : lastMessage.content,
+              content: lastMessage.content,
               createdAt: lastMessage.created_at,
             }
           : null,

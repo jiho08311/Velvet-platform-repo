@@ -10,8 +10,7 @@ type MessageComposerSectionProps = {
 
 type MessageComposerSendData = {
   content: string
-  type: "text" | "ppv"
-  price?: number
+  type: "text"
   files: File[]
 }
 
@@ -23,8 +22,6 @@ export function MessageComposerSection({
   const [isSending, setIsSending] = useState(false)
 
   async function uploadFiles(files: File[]) {
-    console.log("[MessageComposerSection] uploadFiles input:", files)
-
     if (files.length === 0) {
       return []
     }
@@ -47,8 +44,6 @@ export function MessageComposerSection({
     } catch {
       result = null
     }
-
-    console.log("[MessageComposerSection] upload response:", result)
 
     if (!response.ok) {
       const message =
@@ -81,11 +76,7 @@ export function MessageComposerSection({
     setIsSending(true)
 
     try {
-      console.log("[MessageComposerSection] handleSend files:", data.files)
-
       const mediaIds = await uploadFiles(data.files)
-
-      console.log("[MessageComposerSection] mediaIds:", mediaIds)
 
       const response = await fetch(`/api/messages/${conversationId}/send`, {
         method: "POST",
@@ -95,8 +86,7 @@ export function MessageComposerSection({
         body: JSON.stringify({
           conversationId,
           content: data.content,
-          type: data.type,
-          price: data.price,
+          type: "text",
           mediaIds,
         }),
       })
@@ -108,8 +98,6 @@ export function MessageComposerSection({
       } catch {
         result = null
       }
-
-      console.log("[MessageComposerSection] send response:", result)
 
       if (!response.ok) {
         const message =

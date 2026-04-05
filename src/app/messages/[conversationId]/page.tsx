@@ -139,7 +139,7 @@ export default async function ConversationDetailPage({
                               프리미엄 콘텐츠
                             </p>
                             <p className="mt-2 text-sm opacity-80">
-                              이용권 구매 후 내용을 확인할 수 있습니다.
+                              구독자 전용 콘텐츠를 확인할 수 있어요.
                             </p>
                           </div>
 

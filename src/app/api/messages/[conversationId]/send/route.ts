@@ -16,13 +16,8 @@ export async function POST(request: Request, context: RouteContext) {
     const { conversationId } = await context.params
 
     const content = body?.content
-    const type = body?.type === "ppv" ? "ppv" : "text"
-    const price =
-      body?.price === null || body?.price === undefined || body?.price === ""
-        ? null
-        : Number(body.price)
+    const type = "text"
 
-    // 🔥 핵심 추가
     const mediaIds = Array.isArray(body?.mediaIds)
       ? body.mediaIds
       : []
@@ -39,8 +34,8 @@ export async function POST(request: Request, context: RouteContext) {
       senderId: user.id,
       content: content ?? "",
       type,
-      price,
-      mediaIds, // 🔥 여기 추가
+      price: null,
+      mediaIds,
     })
 
     return NextResponse.json({ message }, { status: 200 })

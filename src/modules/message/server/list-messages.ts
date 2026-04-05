@@ -16,10 +16,6 @@ type MessageRow = {
   price: number | null
 }
 
-type PaymentRow = {
-  target_id: string
-}
-
 type MediaRow = {
   id: string
   message_id: string
@@ -40,9 +36,9 @@ export type Message = {
   senderId: string
   content: string
   createdAt: string
-  type: "text" | "ppv"
-  price: number | null
-  isLocked: boolean
+  type: "text"
+  price: null
+  isLocked: false
   media: MessageMedia[]
 }
 
@@ -56,7 +52,6 @@ export async function listMessages({
 }: ListMessagesParams): Promise<Message[]> {
   const supabase = await createSupabaseServerClient()
 
-  // ✅ 🔥 participant 체크 추가 (핵심)
   const { data: participants, error: participantError } = await supabase
     .from("conversation_participants")
     .select("user_id")
@@ -89,30 +84,6 @@ export async function listMessages({
   const messageRows = (messagesData ?? []) as MessageRow[]
   const messageIds = messageRows.map((message) => message.id)
 
-  const ppvMessageIds = messageRows
-    .filter((message) => message.type === "ppv")
-    .map((message) => message.id)
-
-  let purchasedSet = new Set<string>()
-
-  if (ppvMessageIds.length > 0) {
-    const { data: payments, error: paymentsError } = await supabase
-      .from("payments")
-      .select("target_id")
-      .eq("user_id", userId)
-      .eq("target_type", "message")
-      .eq("status", "succeeded")
-      .in("target_id", ppvMessageIds)
-
-    if (paymentsError) {
-      throw paymentsError
-    }
-
-    purchasedSet = new Set(
-      (payments ?? []).map((payment: PaymentRow) => payment.target_id)
-    )
-  }
-
   let mediaRows: MediaRow[] = []
 
   if (messageIds.length > 0) {
@@ -129,24 +100,22 @@ export async function listMessages({
     mediaRows = (mediaData ?? []) as MediaRow[]
   }
 
-  // 기존 코드 유지 + signed url 부분만 수정
+  const signedMediaEntries = await Promise.all(
+    mediaRows.map(async (media) => {
+      const url = await createMediaSignedUrl({
+        storagePath: media.storage_path,
+        viewerUserId: userId,
+        creatorUserId: userId,
+        visibility: "paid",
+        hasPurchased: true,
+      })
 
-const signedMediaEntries = await Promise.all(
-  mediaRows.map(async (media) => {
-    const url = await createMediaSignedUrl({
-      storagePath: media.storage_path,
-      viewerUserId: userId,
-      creatorUserId: userId,
-      visibility: "paid",
-      hasPurchased: true,
+      return {
+        ...media,
+        signedUrl: url,
+      }
     })
-
-    return {
-      ...media,
-      signedUrl: url,
-    }
-  })
-)
+  )
 
   const mediaMap = new Map<string, MessageMedia[]>()
 
@@ -163,21 +132,15 @@ const signedMediaEntries = await Promise.all(
     mediaMap.set(media.message_id, current)
   }
 
-  return messageRows.map((row) => {
-    const type = (row.type as "text" | "ppv") ?? "text"
-    const isPurchased = purchasedSet.has(row.id)
-    const isOwn = row.sender_id === userId
-
-    return {
-      id: row.id,
-      conversationId: row.conversation_id,
-      senderId: row.sender_id,
-      content: row.content,
-      createdAt: row.created_at,
-      type,
-      price: row.price,
-      isLocked: type === "ppv" && !isPurchased && !isOwn,
-      media: mediaMap.get(row.id) ?? [],
-    }
-  })
+  return messageRows.map((row) => ({
+    id: row.id,
+    conversationId: row.conversation_id,
+    senderId: row.sender_id,
+    content: row.content,
+    createdAt: row.created_at,
+    type: "text",
+    price: null,
+    isLocked: false,
+    media: mediaMap.get(row.id) ?? [],
+  }))
 }

@@ -1,4 +1,3 @@
-// src/app/creator/[username]/page.tsx
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 
@@ -141,7 +140,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
               <>
                 <p className="text-sm font-medium text-white">
                   {formatPrice(creator.subscriptionPrice)}
-                  <span className="ml-1 text-zinc-400">이용권</span>
+                  <span className="ml-1 text-zinc-400">구독</span>
                 </p>
 
                 <SubscribeButton
@@ -150,15 +149,6 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                   currentUserId={userId ?? undefined}
                   creatorUsername={creator.username}
                 />
-
-                {viewerSubscription.isActive && (
-                  <Link
-                    href={`/messages?creatorId=${creator.userId}`}
-                    className="inline-flex h-12 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 px-5 text-sm font-semibold text-white transition hover:bg-zinc-800"
-                  >
-                    Message
-                  </Link>
-                )}
               </>
             )}
           </div>
@@ -194,7 +184,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
 
         {!isOwner ? (
           <p className="mt-2 text-sm text-zinc-500">
-            이용권을 통해 콘텐츠를 확인할 수 있어요
+            구독자 전용 콘텐츠를 확인할 수 있어요
           </p>
         ) : null}
 
@@ -241,10 +231,10 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
             <div className="min-w-0">
               <p className="text-sm font-semibold text-white">
                 {formatPrice(creator.subscriptionPrice)}
-                <span className="ml-1 text-zinc-400">이용권</span>
+                <span className="ml-1 text-zinc-400">구독</span>
               </p>
               <p className="truncate text-xs text-zinc-500">
-                이용권 전용 콘텐츠
+                구독자 전용 콘텐츠
               </p>
             </div>
 
@@ -255,15 +245,6 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                 currentUserId={userId ?? undefined}
                 creatorUsername={creator.username}
               />
-
-              {viewerSubscription.isActive && (
-                <Link
-                  href={`/messages?creatorId=${creator.userId}`}
-                  className="inline-flex h-11 items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-900 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800"
-                >
-                  Message
-                </Link>
-              )}
             </div>
           </div>
         </div>

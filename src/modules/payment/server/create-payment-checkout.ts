@@ -96,7 +96,7 @@ export async function createPaymentCheckout({
     : `${successUrl}?paymentId=${payment.id}`
 
   // 🔥 핵심: 무조건 통일
-  const safeOrderName = "프리미엄 콘텐츠 이용권"
+ const safeOrderName = "크리에이터 멤버십"
 
   const checkout = await paymentProvider.createCheckout({
     paymentId: payment.id,
