@@ -49,9 +49,15 @@ async function broadcastMessageAction(formData: FormData) {
       content,
     })
   }
+
+  redirect("/dashboard/subscribers?sent=1")
 }
 
-export default async function SubscribersPage() {
+export default async function SubscribersPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ sent?: string }>
+}) {
   let user: Awaited<ReturnType<typeof requireActiveUser>>
 
   try {
@@ -65,6 +71,9 @@ export default async function SubscribersPage() {
   if (!creator) {
     redirect("/become-creator")
   }
+
+  const params = searchParams ? await searchParams : undefined
+  const isSent = params?.sent === "1"
 
   const { items: subscribers } = await getCreatorSubscribers({
     creatorId: creator.id,
@@ -80,6 +89,19 @@ export default async function SubscribersPage() {
             현재 활성 구독자 목록을 확인하고 바로 메시지를 시작하세요
           </p>
         </div>
+
+        {isSent ? (
+          <Card className="border border-green-500/30 bg-green-500/10">
+            <div className="py-1">
+              <p className="text-sm font-semibold text-green-400">
+                발송 완료
+              </p>
+              <p className="mt-1 text-sm text-zinc-300">
+                전체 구독자에게 메시지를 보냈습니다
+              </p>
+            </div>
+          </Card>
+        ) : null}
 
         <Card>
           <form action={broadcastMessageAction} className="space-y-3">
