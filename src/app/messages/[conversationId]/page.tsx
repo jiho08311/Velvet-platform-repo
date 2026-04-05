@@ -1,4 +1,3 @@
-// src/app/messages/[conversationId]/page.tsx
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 
@@ -7,7 +6,6 @@ import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { getConversationById } from "@/modules/message/server/get-conversation-by-id"
 import { listMessages } from "@/modules/message/server/list-messages"
-import { MessagePurchaseButton } from "@/modules/message/ui/MessagePurchaseButton"
 import { MessageComposerSection } from "@/modules/message/ui/MessageComposerSection"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
@@ -66,7 +64,6 @@ export default async function ConversationDetailPage({
 
   const participant = conversation.participant
   const meAsCreator = await getCreatorByUserId(user.id)
-  const canSendPpv = Boolean(meAsCreator)
 
   return (
     <main className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-4xl flex-col gap-4 px-4 py-6">
@@ -132,60 +129,37 @@ export default async function ConversationDetailPage({
                           : "border border-white/10 bg-white/5 text-white"
                       }`}
                     >
-                      {message.isLocked ? (
-                        <div className="space-y-3">
-                          <div>
-                            <p className="text-xs font-medium uppercase tracking-[0.18em] opacity-70">
-                              프리미엄 콘텐츠
-                            </p>
-                            <p className="mt-2 text-sm opacity-80">
-                              구독자 전용 콘텐츠를 확인할 수 있어요.
-                            </p>
+                      <div className="space-y-3">
+                        {message.content ? (
+                          <p className="whitespace-pre-wrap text-sm leading-6">
+                            {message.content}
+                          </p>
+                        ) : null}
+
+                        {message.media.length > 0 ? (
+                          <div className="space-y-3">
+                            {message.media.map((media) =>
+                              media.type === "image" ? (
+                                <img
+                                  key={media.id}
+                                  src={media.url}
+                                  alt=""
+                                  className="w-full rounded-xl object-cover"
+                                />
+                              ) : (
+                                <video
+                                  key={media.id}
+                                  src={media.url}
+                                  controls
+                                  playsInline
+                                  preload="metadata"
+                                  className="w-full rounded-xl"
+                                />
+                              )
+                            )}
                           </div>
-
-                          {message.price ? (
-                            <p className="text-sm font-medium">
-                              ₩{message.price.toLocaleString()}
-                            </p>
-                          ) : null}
-
-                          {!isMine ? (
-                            <MessagePurchaseButton messageId={message.id} />
-                          ) : null}
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {message.content ? (
-                            <p className="whitespace-pre-wrap text-sm leading-6">
-                              {message.content}
-                            </p>
-                          ) : null}
-
-                          {message.media.length > 0 ? (
-                            <div className="space-y-3">
-                              {message.media.map((media) =>
-                                media.type === "image" ? (
-                                  <img
-                                    key={media.id}
-                                    src={media.url}
-                                    alt=""
-                                    className="w-full rounded-xl object-cover"
-                                  />
-                                ) : (
-                                  <video
-                                    key={media.id}
-                                    src={media.url}
-                                    controls
-                                    playsInline
-                                    preload="metadata"
-                                    className="w-full rounded-xl"
-                                  />
-                                )
-                              )}
-                            </div>
-                          ) : null}
-                        </div>
-                      )}
+                        ) : null}
+                      </div>
 
                       <p
                         className={`mt-2 text-xs ${
