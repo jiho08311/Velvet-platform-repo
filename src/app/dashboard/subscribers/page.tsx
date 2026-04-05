@@ -62,11 +62,11 @@ export default async function SubscribersPage() {
               const initial = name.slice(0, 1).toUpperCase()
 
               return (
-                <Link
-                  key={subscriber.subscriptionId}
-                  href={`/messages?creatorId=${subscriber.viewerUserId}`}
-                  className="block"
-                >
+            <Link
+  key={subscriber.subscriptionId}
+  href={`/messages?userId=${subscriber.viewerUserId}`}
+  className="block"
+>
                   <Card className="transition hover:border-zinc-700 hover:bg-zinc-900/70">
                     <div className="flex items-center gap-4">
                       <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-zinc-800 bg-zinc-900 text-sm font-semibold text-white">

@@ -1,4 +1,3 @@
-// src/app/messages/page.tsx
 import { redirect } from "next/navigation"
 import { Card } from "@/shared/ui/Card"
 import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
@@ -12,6 +11,7 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 type MessagesPageProps = {
   searchParams: Promise<{
     creatorId?: string
+    userId?: string
   }>
 }
 
@@ -50,7 +50,16 @@ export default async function MessagesPage({
     redirect("/onboarding")
   }
 
-  const { creatorId } = await searchParams
+  const { creatorId, userId } = await searchParams
+
+  if (userId) {
+    const conversation = await getOrCreateConversation({
+      userAId: user.id,
+      userBId: userId,
+    })
+
+    redirect(`/messages/${conversation.id}`)
+  }
 
   if (creatorId) {
     const creator = await getCreatorByUserId(creatorId)
