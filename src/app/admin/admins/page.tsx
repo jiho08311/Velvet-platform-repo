@@ -56,17 +56,19 @@ export default async function AdminDashboardPage() {
   const recentCreators = creators.slice(0, 5)
   const recentPayments = payments.slice(0, 5)
 
-  const monthlyRevenue = recentPayments.reduce((sum, payment) => {
-    const amount = Number(
-      String(payment.amount).replace(/[^0-9.-]/g, "") || "0"
-    )
+const monthlyRevenue = recentPayments.reduce((sum, payment) => {
+  if (payment.status !== "succeeded") {
+    return sum
+  }
 
-    if (!Number.isFinite(amount)) {
-      return sum
-    }
+  const amount = Number(payment.amount ?? 0)
 
-    return payment.status === "succeeded" ? sum + amount : sum
-  }, 0)
+  if (!Number.isFinite(amount)) {
+    return sum
+  }
+
+  return sum + amount
+}, 0)
 
   return (
     <div className="space-y-6">
