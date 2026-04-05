@@ -1,4 +1,4 @@
-type PostComposerVisibility = "public" | "subscribers" | "paid"
+type PostComposerVisibility = "public" | "subscribers"
 
 type PostComposerProps = {
   text: string
@@ -55,16 +55,12 @@ export function PostComposer({
             >
               <option value="public">Public</option>
               <option value="subscribers">Subscribers</option>
-              <option value="paid">Paid</option>
             </select>
 
-            {/* ✅ 설명만 추가 (UX 개선) */}
             <p className="text-xs text-white/40">
               {visibility === "public" && "Anyone can view this post."}
               {visibility === "subscribers" &&
                 "Only your subscribers can view this post."}
-              {visibility === "paid" &&
-                "Users must purchase this post to view it."}
             </p>
           </label>
         </div>
