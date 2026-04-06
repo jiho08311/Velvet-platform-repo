@@ -49,6 +49,7 @@ export async function getRecommendedCreators({
     .from("creators")
     .select("id, user_id, username, created_at")
     .neq("user_id", viewerUserId)
+    .eq("status", "active")
     .order("created_at", { ascending: false })
     .limit(30)
 

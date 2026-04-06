@@ -11,6 +11,7 @@ type CreatorRow = {
   id: string
   user_id: string
   username: string
+  status: "active" | "pending" | "suspended"
 }
 
 type ProfileRow = {
@@ -30,14 +31,14 @@ export async function searchCreators(
 
   const limit = Math.max(1, Math.min(input.limit ?? 10, 50))
 
-const { data: profileRows, error: profileError } = await supabaseAdmin
-  .from("profiles")
-  .select("id, username, display_name")
-  .eq("is_deactivated", false) // ✅ 추가
-  .eq("is_delete_pending", false)
-.is("deleted_at", null)
-  .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
-  .limit(limit)
+  const { data: profileRows, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select("id, username, display_name")
+    .eq("is_deactivated", false)
+    .eq("is_delete_pending", false)
+    .is("deleted_at", null)
+    .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
+    .limit(limit)
 
   if (profileError) {
     throw profileError
@@ -53,8 +54,9 @@ const { data: profileRows, error: profileError } = await supabaseAdmin
 
   const { data: creatorRows, error: creatorError } = await supabaseAdmin
     .from("creators")
-    .select("id, user_id, username")
+    .select("id, user_id, username, status")
     .in("user_id", profileIds)
+    .eq("status", "active") // 🔥 추가
 
   if (creatorError) {
     throw creatorError
