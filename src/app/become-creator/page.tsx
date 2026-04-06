@@ -74,6 +74,63 @@ export default async function BecomeCreatorPage() {
                 />
               </div>
 
+              <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-4">
+                <label
+                  htmlFor="bankName"
+                  className="text-sm font-medium text-zinc-900"
+                >
+                  Bank name
+                </label>
+                <p className="mt-1 text-sm leading-6 text-zinc-600">
+                  정산 받을 은행명을 입력하세요.
+                </p>
+                <input
+                  id="bankName"
+                  name="bankName"
+                  type="text"
+                  placeholder="신한은행"
+                  className="mt-3 w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B]"
+                />
+              </div>
+
+              <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-4">
+                <label
+                  htmlFor="accountHolderName"
+                  className="text-sm font-medium text-zinc-900"
+                >
+                  Account holder name
+                </label>
+                <p className="mt-1 text-sm leading-6 text-zinc-600">
+                  예금주명을 입력하세요.
+                </p>
+                <input
+                  id="accountHolderName"
+                  name="accountHolderName"
+                  type="text"
+                  placeholder="홍길동"
+                  className="mt-3 w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B]"
+                />
+              </div>
+
+              <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-4">
+                <label
+                  htmlFor="accountNumber"
+                  className="text-sm font-medium text-zinc-900"
+                >
+                  Account number
+                </label>
+                <p className="mt-1 text-sm leading-6 text-zinc-600">
+                  정산 받을 계좌번호를 입력하세요.
+                </p>
+                <input
+                  id="accountNumber"
+                  name="accountNumber"
+                  type="text"
+                  placeholder="123-456-789012"
+                  className="mt-3 w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B]"
+                />
+              </div>
+
               <button
                 type="submit"
                 className="w-full rounded-full bg-[#C2185B] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#D81B60]"

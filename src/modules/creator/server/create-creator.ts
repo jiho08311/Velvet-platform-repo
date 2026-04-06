@@ -1,8 +1,12 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { createPayoutAccount } from "@/modules/payout/server/create-payout-account"
 
 type CreateCreatorInput = {
   userId: string
   instagramUsername?: string
+  bankName: string
+  accountHolderName: string
+  accountNumber: string
 }
 
 type CreatorRow = {
@@ -19,6 +23,9 @@ type CreatorRow = {
 export async function createCreator({
   userId,
   instagramUsername,
+  bankName,
+  accountHolderName,
+  accountNumber,
 }: CreateCreatorInput): Promise<{
   id: string
   userId: string
@@ -55,6 +62,13 @@ export async function createCreator({
   if (error) {
     throw error
   }
+
+  await createPayoutAccount({
+    creatorId: data.id,
+    bankName,
+    accountHolderName,
+    accountNumber,
+  })
 
   return {
     id: data.id,

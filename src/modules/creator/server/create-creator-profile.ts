@@ -1,13 +1,20 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { createPayoutAccount } from "@/modules/payout/server/create-payout-account"
 
 type CreateCreatorProfileInput = {
   userId: string
   instagramUsername?: string
+  bankName: string
+  accountHolderName: string
+  accountNumber: string
 }
 
 export async function createCreatorProfile({
   userId,
   instagramUsername,
+  bankName,
+  accountHolderName,
+  accountNumber,
 }: CreateCreatorProfileInput) {
   const { data: profile, error: profileError } = await supabaseAdmin
     .from("profiles")
@@ -30,10 +37,10 @@ export async function createCreatorProfile({
       user_id: userId,
       username: profile.username,
       display_name: profile.display_name ?? profile.username,
-      status: "pending", // 🔥 여기 active → pending으로 수정
+      status: "pending",
       subscription_price: 0,
       subscription_currency: "KRW",
-      instagram_username: instagramUsername ?? null, // 🔥 추가
+      instagram_username: instagramUsername ?? null,
     })
     .select()
     .single()
@@ -58,6 +65,13 @@ export async function createCreatorProfile({
     console.error("createCreatorProfile error:", error)
     throw error
   }
+
+  await createPayoutAccount({
+    creatorId: data.id,
+    bankName,
+    accountHolderName,
+    accountNumber,
+  })
 
   return data
 }
