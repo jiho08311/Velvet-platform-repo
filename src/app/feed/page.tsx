@@ -99,16 +99,25 @@ export default async function FeedPage() {
     await getCreatorByUserId(session.userId)
   }
 
-  const [feed, recommendedCreators] = await Promise.all([
-    getHomeFeed({
-     viewerUserId: session?.userId ?? "",
-      limit: 20,
-    }),
-    getRecommendedCreators({
-      viewerUserId: session?.userId ?? "",
-      limit: 3,
-    }),
-  ])
+const [feed, recommendedCreators] = session
+  ? await Promise.all([
+      getHomeFeed({
+        viewerUserId: session.userId,
+        limit: 20,
+      }),
+      getRecommendedCreators({
+        viewerUserId: session.userId,
+        limit: 3,
+      }),
+    ])
+  : await Promise.all([
+      getHomeFeed({
+        limit: 20,
+      } as any),
+      getRecommendedCreators({
+        limit: 3,
+      } as any),
+    ])
 
   return (
     <main className="min-h-screen">
