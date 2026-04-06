@@ -72,18 +72,45 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 })
     }
 
-    const files = formData
-      .getAll("files")
-      .filter((value): value is File => value instanceof File && value.size > 0)
+const files = formData
+  .getAll("files")
+  .map((value) => {
+    if (typeof value === "string") {
+      try {
+        return JSON.parse(value)
+      } catch {
+        return null
+      }
+    }
 
-    await createPostWithMediaWorkflow({
-      creatorId: creator.id,
-      content: text,
-      files,
-      status,
-      visibility,
-      price: finalPrice,
-    })
+    return null
+  })
+  .filter(
+    (
+      value
+    ): value is {
+      path: string
+      type: string
+      mimeType: string
+      size: number
+      originalName: string
+    } =>
+      !!value &&
+      typeof value.path === "string" &&
+      typeof value.type === "string" &&
+      typeof value.mimeType === "string" &&
+      typeof value.size === "number" &&
+      typeof value.originalName === "string"
+  )
+
+await createPostWithMediaWorkflow({
+  creatorId: creator.id,
+  content: text,
+  files,
+  status,
+  visibility,
+  price: finalPrice,
+})
 
     return NextResponse.json(
       {
