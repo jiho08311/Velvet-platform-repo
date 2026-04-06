@@ -6,6 +6,7 @@ import { createMedia } from "@/modules/media/server/create-media"
 import { updatePostStatus } from "@/modules/post/server/update-post-status"
 import { processVideoModeration } from "./process-video-moderation"
 import { enqueueVideoModeration } from "@/modules/moderation/server/enqueue-video-moderation"
+
 type CreatePostWithMediaWorkflowInput = {
   creatorId: string
   title?: string | null
@@ -259,6 +260,22 @@ export async function createPostWithMediaWorkflow({
 }: CreatePostWithMediaWorkflowInput) {
   const resolvedprice = visibility === "paid" ? price : 0
 
+  const { data: creatorRow, error: creatorRowError } = await supabaseAdmin
+    .from("creators")
+    .select("user_id")
+    .eq("id", creatorId)
+    .single()
+
+  if (creatorRowError) {
+    throw creatorRowError
+  }
+
+  if (!creatorRow?.user_id) {
+    throw new Error("Creator user not found")
+  }
+
+  const uploaderUserId = creatorRow.user_id
+
   console.log(
     "[createPostWithMediaWorkflow] files",
     files.map((file) => ({
@@ -303,7 +320,7 @@ export async function createPostWithMediaWorkflow({
     })
 
     const storagePath = await uploadMedia({
-      uploaderUserId: creatorId,
+      uploaderUserId,
       file,
     })
 
@@ -347,9 +364,9 @@ export async function createPostWithMediaWorkflow({
     })
 
     await enqueueVideoModeration({
-  postId: post.id,
-  media,
-})
+      postId: post.id,
+      media,
+    })
   }
 
   return {
