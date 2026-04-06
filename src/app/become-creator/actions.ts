@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/modules/auth/server/require-user";
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id";
-import { createCreator } from "@/modules/creator/server/create-creator";
+import { createCreatorProfile } from "@/modules/creator/server/create-creator-profile";
 
 export async function becomeCreatorAction(formData: FormData) {
   const user = await requireUser();
@@ -23,7 +23,7 @@ export async function becomeCreatorAction(formData: FormData) {
   const accountNumber =
     formData.get("accountNumber")?.toString().trim() || "";
 
-  await createCreator({
+  await createCreatorProfile({
     userId: user.id,
     instagramUsername,
     bankName,
