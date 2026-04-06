@@ -4,6 +4,9 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"
 import { checkTextSafety } from "@/workflows/create-post-with-media-workflow"
 
+// 🔥 추가
+import { createNotification } from "@/modules/notification/server/create-notification"
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
@@ -191,6 +194,20 @@ export async function sendMessage(input: SendMessageInput) {
 
   if (messageError) {
     throw messageError
+  }
+
+  // 🔥🔥🔥 여기 핵심 추가 (알림)
+  if (otherUserId) {
+    await createNotification({
+      userId: otherUserId,
+      type: "message_received",
+      title: "New message",
+      body: "새로운 메시지가 도착했어요",
+      data: {
+        conversationId: input.conversationId,
+        messageId: message.id,
+      },
+    })
   }
 
   if (mediaIds.length > 0) {

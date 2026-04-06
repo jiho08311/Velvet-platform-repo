@@ -9,6 +9,7 @@ export const NOTIFICATION_TYPES = [
   "post_liked",
   "comment_created",
   "comment_liked",
+  "message_received",
 ] as const
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number]
