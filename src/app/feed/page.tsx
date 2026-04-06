@@ -65,45 +65,47 @@ function normalizePrice(item: unknown): number | undefined {
 export default async function FeedPage() {
   const session = await getSession()
 
-  if (!session) {
-    redirect("/sign-in?next=/feed")
+  // 로그인 있을 때만 체크
+  if (session) {
+    try {
+      await requireActiveUser()
+    } catch {
+      redirect("/reactivate-account")
+    }
+
+    try {
+      await assertPassVerified({ profileId: session.userId })
+    } catch {
+      redirect("/verify-pass")
+    }
   }
 
-  try {
-    await requireActiveUser()
-  } catch {
-    redirect("/reactivate-account")
+  // 로그인 있을 때만 profile 체크
+  if (session) {
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .select("username")
+      .eq("id", session.userId)
+      .maybeSingle<ProfileRow>()
+
+    if (profileError) {
+      throw profileError
+    }
+
+    if (!profile?.username) {
+      redirect("/onboarding")
+    }
+
+    await getCreatorByUserId(session.userId)
   }
-
-  try {
-    await assertPassVerified({ profileId: session.userId })
-  } catch {
-    redirect("/verify-pass")
-  }
-
-  const { data: profile, error: profileError } = await supabaseAdmin
-    .from("profiles")
-    .select("username")
-    .eq("id", session.userId)
-    .maybeSingle<ProfileRow>()
-
-  if (profileError) {
-    throw profileError
-  }
-
-  if (!profile?.username) {
-    redirect("/onboarding")
-  }
-
-  await getCreatorByUserId(session.userId)
 
   const [feed, recommendedCreators] = await Promise.all([
     getHomeFeed({
-      viewerUserId: session.userId,
+     viewerUserId: session?.userId ?? "",
       limit: 20,
     }),
     getRecommendedCreators({
-      viewerUserId: session.userId,
+      viewerUserId: session?.userId ?? "",
       limit: 3,
     }),
   ])
@@ -112,7 +114,8 @@ export default async function FeedPage() {
     <main className="min-h-screen">
       <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-0 py-2 sm:px-0 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section className="min-w-0 space-y-4">
-          <FeedComposer />
+
+          {session ? <FeedComposer /> : null}
 
           {feed.items.length === 0 ? (
             <FeedEmptyState
@@ -126,7 +129,7 @@ export default async function FeedPage() {
                 postId: item.id,
                 creatorId: item.creatorId,
                 creatorUserId: item.creatorUserId,
-                currentUserId: item.currentUserId,
+                currentUserId: session?.userId ?? undefined,
                 text: item.text,
                 createdAt: item.createdAt,
                 media: normalizeMedia(item),
