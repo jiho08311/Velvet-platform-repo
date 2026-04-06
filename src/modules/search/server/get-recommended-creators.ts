@@ -31,6 +31,10 @@ export async function getRecommendedCreators({
 }: GetRecommendedCreatorsInput): Promise<CreatorSearchResult[]> {
   const safeLimit = Math.max(1, Math.min(limit, 12))
 
+  if (!viewerUserId) {
+    return []
+  }
+
   const { data: subscriptionRows, error: subscriptionError } = await supabaseAdmin
     .from("subscriptions")
     .select("creator_id")

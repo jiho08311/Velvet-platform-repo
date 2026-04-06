@@ -96,12 +96,6 @@ export async function getHomeFeed(
   input: GetHomeFeedInput
 ): Promise<GetHomeFeedResult> {
   const viewerUserId = input.viewerUserId?.trim() ?? ""
-
-if (!viewerUserId) {
-  // 비로그인: public feed만 허용
-}
-
-
   const limit = Math.max(1, Math.min(input.limit ?? 20, 100))
 
   let publicPostsQuery = supabaseAdmin
@@ -216,12 +210,20 @@ if (!viewerUserId) {
     throw likeRowsError
   }
 
-  const { data: myLikeRows, error: myLikeRowsError } = await supabaseAdmin
-    .from("post_likes")
-    .select("post_id")
-    .eq("user_id", viewerUserId)
-    .in("post_id", postIds)
-    .returns<PostLikeRow[]>()
+  let myLikeRows: PostLikeRow[] | null = null
+  let myLikeRowsError: unknown = null
+
+  if (viewerUserId) {
+    const result = await supabaseAdmin
+      .from("post_likes")
+      .select("post_id")
+      .eq("user_id", viewerUserId)
+      .in("post_id", postIds)
+      .returns<PostLikeRow[]>()
+
+    myLikeRows = result.data
+    myLikeRowsError = result.error
+  }
 
   if (myLikeRowsError) {
     throw myLikeRowsError
@@ -281,7 +283,7 @@ if (!viewerUserId) {
         id: post.id,
         creatorId: post.creator_id,
         creatorUserId,
-        currentUserId: viewerUserId,
+        currentUserId: viewerUserId || undefined,
         text: post.content ?? post.title ?? "",
         createdAt: post.published_at ?? post.created_at,
         isLocked: false,
