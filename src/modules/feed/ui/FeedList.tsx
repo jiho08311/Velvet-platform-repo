@@ -14,8 +14,7 @@ type FeedListPost = {
     type?: "image" | "video" | "audio" | "file"
   }>
   isLocked?: boolean
-  lockReason?: "none" | "subscription" | "purchase"
-  price?: number
+ 
   likesCount?: number
   isLiked?: boolean
   creator: {
@@ -53,8 +52,7 @@ export function FeedList({
           createdAt={post.createdAt}
           media={post.media ?? []}
           isLocked={post.isLocked}
-          lockReason={post.lockReason}
-          price={post.price}
+         
           likesCount={post.likesCount}
           isLiked={post.isLiked}
           creatorId={post.creatorId}
