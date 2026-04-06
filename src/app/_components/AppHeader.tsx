@@ -125,6 +125,14 @@ export function AppHeader({
                 <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
               ) : null}
             </Link>
+
+            {/* 🔥 About 추가 */}
+            <Link
+              href="/about"
+              className="rounded-full px-3 py-2 text-sm font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
+            >
+              About
+            </Link>
           </nav>
 
           <Link
