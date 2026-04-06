@@ -61,6 +61,14 @@ export default async function ConversationDetailPage({
     conversationId,
     userId: user.id,
   })
+  
+  await supabaseAdmin
+  .from("conversation_participants")
+  .update({
+    last_read_at: new Date().toISOString(),
+  })
+  .eq("conversation_id", conversationId)
+  .eq("user_id", user.id)
 
   const participant = conversation.participant
   const meAsCreator = await getCreatorByUserId(user.id)
