@@ -123,14 +123,7 @@ if (session?.userId) {
     } as any),
   ])
 }
-   await Promise.all([
-      getHomeFeed({
-        limit: 20,
-      } as any),
-      getRecommendedCreators({
-        limit: 3,
-      } as any),
-    ])
+
 
   return (
     <main className="min-h-screen">
