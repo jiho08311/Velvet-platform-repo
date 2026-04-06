@@ -146,7 +146,7 @@ export function SignUpForm() {
           placeholder="이메일"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-md border p-3"
+         className="w-full rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/10"
         />
 
         <input
@@ -154,16 +154,16 @@ export function SignUpForm() {
           placeholder="비밀번호"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-md border p-3"
+         className="w-full rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/10"
         />
 
-        <input
-          type="date"
-          value={birthDate}
-          onChange={(e) => setBirthDate(e.target.value)}
-          className="w-full rounded-md border p-3"
-        />
-
+       <input
+  type="date"
+  max={new Date().toISOString().split("T")[0]}
+  value={birthDate}
+  onChange={(e) => setBirthDate(e.target.value)}
+  className="..."
+/>
         <button
           type="button"
           onClick={handleEmailSignUp}
