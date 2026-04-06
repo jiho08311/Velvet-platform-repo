@@ -179,57 +179,27 @@ export default async function PostDetailPage({
         >
           ← Back to search
         </Link>
+{isOwner ? (
+  <div className="flex justify-end gap-2">
+    <Link
+      href={`/post/${post.id}/edit`}
+      className="inline-flex h-10 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-white transition hover:bg-zinc-800"
+    >
+      Edit
+    </Link>
 
+    <form action={deletePostAction.bind(null, post.id)}>
+      <button
+        type="submit"
+        className="inline-flex h-10 items-center justify-center rounded-full border border-red-900/60 bg-red-950/60 px-4 text-sm font-medium text-red-300 transition hover:bg-red-950"
+      >
+        Delete
+      </button>
+    </form>
+  </div>
+) : null}
         <article className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/70">
-          <div className="border-b border-zinc-800 px-5 py-4 sm:px-6">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <Link
-                  href={`/creator/${post.creator.username}`}
-                  className="mb-3 block w-fit"
-                >
-                  <p className="text-sm font-semibold text-white">
-                    {post.creator.displayName ?? post.creator.username}
-                  </p>
-                  <p className="text-xs text-zinc-400">
-                    @{post.creator.username}
-                  </p>
-                </Link>
-
-                <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 sm:text-sm">
-                  <span>{formatDate(post.publishedAt ?? post.createdAt)}</span>
-                  <span>•</span>
-                  <span className="capitalize">{post.visibility}</span>
-                </div>
-
-                {post.title ? (
-                  <h1 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                    {post.title}
-                  </h1>
-                ) : null}
-              </div>
-
-              {isOwner ? (
-                <div className="flex items-center gap-2">
-                  <Link
-                    href={`/post/${post.id}/edit`}
-                    className="inline-flex h-10 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-white transition hover:bg-zinc-800"
-                  >
-                    Edit
-                  </Link>
-
-                  <form action={deletePostAction.bind(null, post.id)}>
-                    <button
-                      type="submit"
-                      className="inline-flex h-10 items-center justify-center rounded-full border border-red-900/60 bg-red-950/60 px-4 text-sm font-medium text-red-300 transition hover:bg-red-950"
-                    >
-                      Delete
-                    </button>
-                  </form>
-                </div>
-              ) : null}
-            </div>
-          </div>
+        
 
          {isLocked ? (
   // 🔒 기존 locked UI 그대로 유지 (건드리지 마)
@@ -285,11 +255,11 @@ export default async function PostDetailPage({
       type: m.type,
     }))}
     isLocked={false}
-     creator={{
-    username: post.creator.username,
-    displayName: "",
-    avatarUrl: null,
-  }}
+  creator={{
+  username: post.creator.username,
+  displayName: post.creator.displayName,
+  avatarUrl: null,
+}}
     creatorId={post.creatorId}
     creatorUserId={post.creatorUserId}
     currentUserId={user.id}
