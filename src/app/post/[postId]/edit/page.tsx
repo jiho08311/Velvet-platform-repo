@@ -41,7 +41,6 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
     "use server"
 
     const text = String(formData.get("text") ?? "")
-    const rawPrice = Number(formData.get("price") ?? 0)
 
     const files = formData
       .getAll("files")
@@ -54,8 +53,7 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
     await updatePostAction({
       postId,
       text,
-   visibility: fixedVisibility,
-      price: Number.isFinite(rawPrice) ? rawPrice : 0,
+      visibility: fixedVisibility,
       files,
       removedMediaIds,
     })
@@ -83,35 +81,17 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
               placeholder="Write something..."
             />
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="space-y-2">
-                <span className="text-sm text-zinc-400">Visibility</span>
-                <select
-                  value={post.visibility}
-                  disabled
-                  className="h-11 w-full cursor-not-allowed rounded-2xl border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-500 outline-none opacity-70"
-                >
-                  <option value="public">Public</option>
-                  <option value="subscribers">Subscribers</option>
-                  <option value="paid">Paid</option>
-                </select>
-              </label>
-
-              <label className="space-y-2">
-                <span className="text-sm text-zinc-400">Price (paid only)</span>
-                <select
-                  name="price"
-                  defaultValue={String(post.price> 0 ? post.price : 4900)}
-                  disabled={post.visibility !== "paid"}
-                  className="h-11 w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-3 text-sm text-white outline-none disabled:cursor-not-allowed disabled:text-zinc-500 disabled:opacity-70"
-                >
-                  <option value={4900}>₩4,900</option>
-                  <option value={9900}>₩9,900</option>
-                  <option value={15900}>₩15,900</option>
-                  <option value={19900}>₩19,900</option>
-                </select>
-              </label>
-            </div>
+            <label className="space-y-2">
+              <span className="text-sm text-zinc-400">Visibility</span>
+              <select
+                value={post.visibility}
+                disabled
+                className="h-11 w-full cursor-not-allowed rounded-2xl border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-500 outline-none opacity-70"
+              >
+                <option value="public">Public</option>
+                <option value="subscribers">Subscribers</option>
+              </select>
+            </label>
 
             {post.media.length > 0 ? (
               <div className="space-y-3">
