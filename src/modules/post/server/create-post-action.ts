@@ -44,7 +44,7 @@ export async function createPostAction({
     console.error("[createPostAction]", error)
 
     if (error instanceof Error) {
-      throw error
+      throw new Error(`DEBUG: ${error.message}`)
     }
 
     if (
@@ -53,10 +53,10 @@ export async function createPostAction({
       "message" in error &&
       typeof (error as { message: unknown }).message === "string"
     ) {
-      throw new Error((error as { message: string }).message)
+      throw new Error(`DEBUG: ${(error as { message: string }).message}`)
     }
 
-    throw new Error("Failed to create post")
+    throw new Error("DEBUG: Failed to create post")
   }
 
   revalidatePath("/feed")
