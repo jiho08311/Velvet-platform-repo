@@ -98,8 +98,11 @@ export async function getHomeFeed(
   const viewerUserId = input.viewerUserId.trim()
 
   if (!viewerUserId) {
-    throw new Error("Viewer user id is required")
+  return {
+    items: [],
+    nextCursor: null,
   }
+}
 
   const limit = Math.max(1, Math.min(input.limit ?? 20, 100))
 
