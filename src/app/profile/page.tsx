@@ -171,11 +171,12 @@ export default async function ProfilePage() {
               const media = post.media?.[0]
 
               return (
-                <Link
-                  key={post.id}
-                  href={`/post/${post.id}`}
-                  className="aspect-square overflow-hidden bg-zinc-800"
-                >
+              <a
+  key={post.id}
+  href={`/post/${post.id}`}
+  className="aspect-square overflow-hidden bg-zinc-800"
+>
+
        {media?.url ? (
   media.type === "video" ? (
     <video
@@ -199,7 +200,7 @@ export default async function ProfilePage() {
                       No media
                     </div>
                   )}
-                </Link>
+                </a>
               )
             })}
           </section>

@@ -151,9 +151,27 @@ export default async function PostDetailPage({
   const isLocked = post.isLocked
   const lockReason = post.lockReason ?? "none"
   const isOwner = myCreator?.id === post.creatorId
+  const shouldAutoReloadOnce = !isLocked && post.media.length === 0
 
   return (
     <main className="min-h-screen bg-zinc-950 px-4 py-8 text-white sm:px-6 sm:py-10">
+      {shouldAutoReloadOnce ? (
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function () {
+                var key = "post-detail-autoreload:${post.id}";
+                if (sessionStorage.getItem(key)) return;
+                sessionStorage.setItem(key, "1");
+                setTimeout(function () {
+                  window.location.reload();
+                }, 2000);
+              })();
+            `,
+          }}
+        />
+      ) : null}
+
       <div className="mx-auto flex max-w-3xl flex-col gap-5">
         <Link
           href="/search"
