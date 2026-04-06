@@ -331,6 +331,7 @@ export async function createPostWithMediaWorkflow({
 
     const mediaRow = await createMedia({
       postId: post.id,
+      ownerUserId: creatorRow.user_id, 
       type,
       storagePath: file.path,
       mimeType: file.mimeType || undefined,
