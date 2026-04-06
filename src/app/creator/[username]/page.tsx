@@ -200,8 +200,7 @@ const posts = userId
                 createdAt={new Date(post.created_at).toLocaleString()}
                 media={post.media ?? []}
                 isLocked={post.isLocked}
-                lockReason={post.lockReason}
-                price={post.price}
+             
                 likesCount={post.likesCount}
                 isLiked={post.isLiked}
                 creatorId={creator.id}
