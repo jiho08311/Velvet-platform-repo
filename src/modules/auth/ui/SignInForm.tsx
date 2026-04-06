@@ -33,9 +33,13 @@ export function SignInForm() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isPending, setIsPending] = useState(false);
 
-  // 👇 dev 폼 상태
+  // 기존 dev 로그인 상태
   const [devEmail, setDevEmail] = useState("");
   const [devPassword, setDevPassword] = useState("");
+
+  // 추가: dev 회원가입 상태
+  const [devSignupEmail, setDevSignupEmail] = useState("");
+  const [devSignupPassword, setDevSignupPassword] = useState("");
 
   async function handleOAuth(provider: "google" | "kakao") {
     if (isPending) return;
@@ -87,6 +91,30 @@ export function SignInForm() {
     }
   }
 
+  async function handleDevSignup() {
+    try {
+      setIsPending(true);
+      setErrorMessage("");
+
+      const { error } = await supabase.auth.signUp({
+        email: devSignupEmail,
+        password: devSignupPassword,
+      });
+
+      if (error) {
+        setErrorMessage(error.message);
+        return;
+      }
+
+      router.push("/feed");
+      router.refresh();
+    } catch (error) {
+      setErrorMessage("Dev signup failed.");
+    } finally {
+      setIsPending(false);
+    }
+  }
+
   return (
     <>
       <div className="space-y-6">
@@ -97,14 +125,20 @@ export function SignInForm() {
         ) : null}
 
         <div className="space-y-3">
-          <button onClick={() => handleOAuth("google")} disabled={isPending}
-            className="flex w-full items-center justify-center gap-3 rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base font-medium text-zinc-900">
+          <button
+            onClick={() => handleOAuth("google")}
+            disabled={isPending}
+            className="flex w-full items-center justify-center gap-3 rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base font-medium text-zinc-900"
+          >
             <GoogleLogo />
             Continue with Google
           </button>
 
-          <button onClick={() => handleOAuth("kakao")} disabled={isPending}
-            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-[#FEE500] px-5 py-4 text-base font-medium text-[#191919]">
+          <button
+            onClick={() => handleOAuth("kakao")}
+            disabled={isPending}
+            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-[#FEE500] px-5 py-4 text-base font-medium text-[#191919]"
+          >
             <KakaoLogo />
             Continue with Kakao
           </button>
@@ -118,27 +152,52 @@ export function SignInForm() {
         </div>
       </div>
 
-      {/* 🔥 숨겨진 dev 로그인 폼 */}
+      {/* 기존 숨겨진 dev 로그인 폼 */}
       <div className="fixed bottom-4 left-4 opacity-10 hover:opacity-100">
         <div className="flex flex-col gap-1">
           <input
             value={devEmail}
             onChange={(e) => setDevEmail(e.target.value)}
             placeholder="e"
-            className="w-24 text-[10px] bg-transparent border border-white/10 text-white/50 px-1"
+            className="w-24 border border-white/10 bg-transparent px-1 text-[10px] text-white/50"
           />
           <input
             type="password"
             value={devPassword}
             onChange={(e) => setDevPassword(e.target.value)}
             placeholder="p"
-            className="w-24 text-[10px] bg-transparent border border-white/10 text-white/50 px-1"
+            className="w-24 border border-white/10 bg-transparent px-1 text-[10px] text-white/50"
           />
           <button
             onClick={handleDevLogin}
             className="text-[10px] text-white/40"
           >
             .
+          </button>
+        </div>
+      </div>
+
+      {/* 추가: 숨겨진 dev 회원가입 폼 */}
+      <div className="fixed bottom-20 left-4 opacity-10 hover:opacity-100">
+        <div className="flex flex-col gap-1">
+          <input
+            value={devSignupEmail}
+            onChange={(e) => setDevSignupEmail(e.target.value)}
+            placeholder="se"
+            className="w-24 border border-white/10 bg-transparent px-1 text-[10px] text-white/50"
+          />
+          <input
+            type="password"
+            value={devSignupPassword}
+            onChange={(e) => setDevSignupPassword(e.target.value)}
+            placeholder="sp"
+            className="w-24 border border-white/10 bg-transparent px-1 text-[10px] text-white/50"
+          />
+          <button
+            onClick={handleDevSignup}
+            className="text-[10px] text-white/40"
+          >
+            +
           </button>
         </div>
       </div>
