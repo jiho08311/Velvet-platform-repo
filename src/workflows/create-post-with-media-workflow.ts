@@ -1,11 +1,17 @@
 import OpenAI from "openai"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createPost } from "@/modules/post/server/create-post"
-import { uploadMedia } from "@/modules/media/server/upload-media"
 import { createMedia } from "@/modules/media/server/create-media"
 import { updatePostStatus } from "@/modules/post/server/update-post-status"
-import { processVideoModeration } from "./process-video-moderation"
 import { enqueueVideoModeration } from "@/modules/moderation/server/enqueue-video-moderation"
+
+type UploadedFileInput = {
+  path: string
+  type: string
+  mimeType: string
+  size: number
+  originalName: string
+}
 
 type CreatePostWithMediaWorkflowInput = {
   creatorId: string
@@ -14,7 +20,7 @@ type CreatePostWithMediaWorkflowInput = {
   status?: "draft" | "published" | "archived"
   visibility?: "public" | "subscribers" | "paid"
   price?: number
-  files: File[]
+  files: UploadedFileInput[]
 }
 
 type MediaType = "image" | "video" | "audio" | "file"
@@ -119,10 +125,10 @@ function containsBadWords(text: string): boolean {
   return KOREAN_BAD_WORDS.some((word) => normalized.includes(word))
 }
 
-function getMediaType(file: File): MediaType {
-  if (file.type.startsWith("image/")) return "image"
-  if (file.type.startsWith("video/")) return "video"
-  if (file.type.startsWith("audio/")) return "audio"
+function resolveUploadedMediaType(type: string): MediaType {
+  if (type === "image") return "image"
+  if (type === "video") return "video"
+  if (type === "audio") return "audio"
   return "file"
 }
 
@@ -207,12 +213,14 @@ async function checkPostSafety({
   files,
 }: {
   text?: string | null
-  files: File[]
+  files: Array<File | UploadedFileInput>
 }) {
   await checkTextSafety(text)
 
   for (const file of files) {
-    await checkImageSafety(file)
+    if (file instanceof File) {
+      await checkImageSafety(file)
+    }
   }
 }
 
@@ -223,7 +231,7 @@ async function moderatePostAsync({
 }: {
   postId: string
   content?: string | null
-  files: File[]
+  files: Array<File | UploadedFileInput>
 }) {
   try {
     await checkPostSafety({
@@ -274,18 +282,19 @@ export async function createPostWithMediaWorkflow({
     throw new Error("Creator user not found")
   }
 
-  const uploaderUserId = creatorRow.user_id
-
   console.log(
     "[createPostWithMediaWorkflow] files",
     files.map((file) => ({
-      name: file.name,
+      name: file.originalName,
       type: file.type,
       size: file.size,
+      path: file.path,
     }))
   )
 
-  const hasVideo = files.some((file) => getMediaType(file) === "video")
+  const hasVideo = files.some(
+    (file) => resolveUploadedMediaType(file.type) === "video"
+  )
 
   console.log("[createPostWithMediaWorkflow] hasVideo", hasVideo)
 
@@ -311,24 +320,20 @@ export async function createPostWithMediaWorkflow({
   const media: CreatedMedia[] = []
 
   for (const [index, file] of files.entries()) {
-    const type = getMediaType(file)
+    const type = resolveUploadedMediaType(file.type)
 
     console.log("[createPostWithMediaWorkflow] detected media type", {
-      name: file.name,
-      fileType: file.type,
+      name: file.originalName,
+      fileType: file.mimeType,
       detectedType: type,
-    })
-
-    const storagePath = await uploadMedia({
-      uploaderUserId,
-      file,
+      path: file.path,
     })
 
     const mediaRow = await createMedia({
       postId: post.id,
       type,
-      storagePath,
-      mimeType: file.type || undefined,
+      storagePath: file.path,
+      mimeType: file.mimeType || undefined,
       sortOrder: index,
       status: type === "video" ? "processing" : "ready",
     })

@@ -2,12 +2,80 @@
 
 import { useState, useTransition } from "react"
 
+import { createSupabaseBrowserClient } from "@/infrastructure/supabase/client"
+
 import { createPostAction } from "../server/create-post-action"
 import { CreatePostForm } from "./CreatePostForm"
+
+type UploadedFileInput = {
+  path: string
+  type: string
+  mimeType: string
+  size: number
+  originalName: string
+}
 
 type CreatePostComposerProps = {
   creatorId: string
   onCreated?: () => void
+}
+
+const MEDIA_BUCKET =
+  process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "media"
+
+function getFileExtension(fileName: string): string {
+  const parts = fileName.split(".")
+  return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : ""
+}
+
+function buildClientUploadPath(file: File) {
+  const now = Date.now()
+  const random = Math.random().toString(36).slice(2, 10)
+  const extension = getFileExtension(file.name)
+  const safeExtension = extension ? `.${extension}` : ""
+
+  return `creator/${now}-${random}${safeExtension}`
+}
+
+async function uploadFilesDirect(files: File[]): Promise<UploadedFileInput[]> {
+  if (files.length === 0) {
+    return []
+  }
+
+  const supabase = createSupabaseBrowserClient()
+  const uploaded: UploadedFileInput[] = []
+
+  for (const file of files) {
+    const path = buildClientUploadPath(file)
+
+    const { error } = await supabase.storage
+      .from(MEDIA_BUCKET)
+      .upload(path, file, {
+        cacheControl: "3600",
+        contentType: file.type || undefined,
+        upsert: false,
+      })
+
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    uploaded.push({
+      path,
+      type: file.type.startsWith("image/")
+        ? "image"
+        : file.type.startsWith("video/")
+          ? "video"
+          : file.type.startsWith("audio/")
+            ? "audio"
+            : "file",
+      mimeType: file.type || "",
+      size: file.size,
+      originalName: file.name,
+    })
+  }
+
+  return uploaded
 }
 
 export function CreatePostComposer({
@@ -32,11 +100,13 @@ export function CreatePostComposer({
             try {
               setError(null)
 
+              const uploadedFiles = await uploadFilesDirect(files)
+
               await createPostAction({
                 creatorId,
                 text,
                 visibility,
-                files,
+                files: uploadedFiles as never,
               })
 
               onCreated?.()

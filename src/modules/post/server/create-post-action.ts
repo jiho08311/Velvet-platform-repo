@@ -5,12 +5,20 @@ import { redirect } from "next/navigation"
 
 import { createPostWithMediaWorkflow } from "@/workflows/create-post-with-media-workflow"
 
+type UploadedFileInput = {
+  path: string
+  type: string
+  mimeType: string
+  size: number
+  originalName: string
+}
+
 type CreatePostActionInput = {
   creatorId: string
   text: string
   visibility: "public" | "subscribers" | "paid"
   price?: number
-  files?: File[]
+  files?: UploadedFileInput[]
 }
 
 export async function createPostAction({
@@ -45,15 +53,6 @@ export async function createPostAction({
 
     if (error instanceof Error) {
       throw new Error(`DEBUG: ${error.message}`)
-    }
-
-    if (
-      error &&
-      typeof error === "object" &&
-      "message" in error &&
-      typeof (error as { message: unknown }).message === "string"
-    ) {
-      throw new Error(`DEBUG: ${(error as { message: string }).message}`)
     }
 
     throw new Error("DEBUG: Failed to create post")
