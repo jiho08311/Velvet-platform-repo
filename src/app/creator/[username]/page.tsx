@@ -56,10 +56,12 @@ if (creator.status !== "active") {
 
   const summary = await getCreatorDashboardSummary(creator.id)
 
-  const posts = await getCreatorFeed({
-    creatorId: creator.id,
-    userId: userId ?? "",
-  })
+const posts = userId
+  ? await getCreatorFeed({
+      creatorId: creator.id,
+      userId,
+    })
+  : []
 
   const viewerSubscription = userId
     ? await getViewerSubscription(userId, creator.id)
