@@ -1,13 +1,10 @@
-import OpenAI from "openai"
 import { NextResponse } from "next/server"
 
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { createNotification } from "@/modules/notification/server/create-notification"
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+export const dynamic = "force-dynamic"
 
 type RouteContext = {
   params: Promise<{
@@ -53,6 +50,13 @@ export async function POST(
   if (!content) {
     return NextResponse.json({ error: "Content is required" }, { status: 400 })
   }
+
+  // 🔥 여기로 이동
+  const { default: OpenAI } = await import("openai")
+
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  })
 
   const moderation = await openai.moderations.create({
     model: "omni-moderation-latest",
@@ -100,7 +104,7 @@ export async function POST(
 
     if (creator?.user_id && creator.user_id !== user.id) {
       await createNotification({
-        userId: creator.user_id, // 🔥 핵심 수정
+        userId: creator.user_id,
         type: "comment_created",
         title: "New comment",
         body: "Someone commented on your post",

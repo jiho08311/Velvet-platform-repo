@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server"
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { getCreatorById } from "@/modules/creator/server/get-creator-by-id"
-import { createPaymentCheckout } from "@/modules/payment/server/create-payment-checkout"
+export const dynamic = "force-dynamic"
 
 export async function POST(request: Request) {
   try {
+    const [{ requireUser }, { getCreatorById }, { createPaymentCheckout }] =
+      await Promise.all([
+        import("@/modules/auth/server/require-user"),
+        import("@/modules/creator/server/get-creator-by-id"),
+        import("@/modules/payment/server/create-payment-checkout"),
+      ])
+
     const user = await requireUser()
     const body = await request.json()
 
