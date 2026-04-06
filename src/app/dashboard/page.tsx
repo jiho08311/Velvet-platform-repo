@@ -88,6 +88,21 @@ export default async function PayoutsPage() {
     redirect("/become-creator")
   }
 
+if (creator.status !== "active") {
+  return (
+    <main className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
+      <div className="max-w-md text-center">
+        <h1 className="text-2xl font-semibold text-white">
+          승인 대기중입니다
+        </h1>
+        <p className="mt-3 text-sm text-zinc-500">
+          현재 크리에이터 신청이 검토 중입니다. 승인 후 기능을 이용할 수 있습니다.
+        </p>
+      </div>
+    </main>
+  )
+}
+
   const summary = await getPayoutSummary(creator.id)
   const payouts = await listCreatorPayouts({ creatorId: creator.id })
 

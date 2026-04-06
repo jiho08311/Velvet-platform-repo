@@ -2,12 +2,11 @@
 
 import { FormEvent, useRef, useState } from "react"
 
-type PostVisibility = "public" | "subscribers" | "paid"
+type PostVisibility = "public" | "subscribers"
 
 type SubmitPostInput = {
   text: string
   visibility: PostVisibility
-  price?: number
   files: File[]
 }
 
@@ -22,7 +21,6 @@ export function CreatePostForm({
 }: CreatePostFormProps) {
   const [text, setText] = useState("")
   const [visibility, setVisibility] = useState<PostVisibility>("subscribers")
-  const [price, setprice] = useState<number>(4900)
   const [files, setFiles] = useState<File[]>([])
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -32,13 +30,11 @@ export function CreatePostForm({
     onSubmitPost({
       text,
       visibility,
-      price: visibility === "paid" ? price : 0,
       files,
     })
 
     setText("")
     setVisibility("subscribers")
-    setprice(4900)
     setFiles([])
 
     if (fileInputRef.current) {
@@ -63,20 +59,7 @@ export function CreatePostForm({
       >
         <option value="public">Public</option>
         <option value="subscribers">Subscribers</option>
-        <option value="paid">Paid</option>
       </select>
-
-      {visibility === "paid" && (
-        <select
-          value={price}
-          onChange={(e) => setprice(Number(e.target.value))}
-        >
-          <option value={4900}>₩4,900</option>
-          <option value={9900}>₩9,900</option>
-          <option value={15900}>₩15,900</option>
-          <option value={19900}>₩19,900</option>
-        </select>
-      )}
 
       <input
         ref={fileInputRef}
