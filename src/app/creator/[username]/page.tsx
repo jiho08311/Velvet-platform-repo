@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { notFound, redirect } from "next/navigation"
+import { notFound } from "next/navigation"
 
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { getCreatorByUsername } from "@/modules/creator/server/get-creator-by-username"
