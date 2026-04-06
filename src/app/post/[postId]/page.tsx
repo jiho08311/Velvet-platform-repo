@@ -285,16 +285,17 @@ export default async function PostDetailPage({
       type: m.type,
     }))}
     isLocked={false}
+     creator={{
+    username: post.creator.username,
+    displayName: "",
+    avatarUrl: null,
+  }}
     creatorId={post.creatorId}
     creatorUserId={post.creatorUserId}
     currentUserId={user.id}
     likesCount={post.likesCount}
     isLiked={false}
-    creator={{
-      username: post.creator.username,
-      displayName: post.creator.displayName,
-      avatarUrl: null,
-    }}
+    
   />
 )}
         </article>

@@ -123,6 +123,11 @@ export default function SubscribeButton({
     checkCreatorSubscription()
   }, [creatorId, isOwner, isGuest])
 
+  // ✅ 페이지 돌아올 때 상태 다시 확인 (핵심)
+  useEffect(() => {
+    checkCreatorSubscription()
+  }, [pathname])
+
   async function handleSubscribe() {
     if (isGuest) {
       router.push(`/sign-in?next=${nextPath}`)
@@ -177,6 +182,11 @@ export default function SubscribeButton({
         successUrl: `${window.location.origin}/payment/success?paymentId=${paymentId}&creatorUsername=${creatorUsername}`,
         failUrl: `${window.location.origin}/payment/fail?paymentId=${paymentId}`,
       })
+
+      // ✅ 즉시 상태 반영 (핵심)
+      setSubscribed(true)
+      setCancelAtPeriodEnd(false)
+      router.refresh()
     } catch {
       setErrorMessage("구독 처리에 실패했습니다")
     } finally {
@@ -205,6 +215,10 @@ export default function SubscribeButton({
       }
 
       setCancelAtPeriodEnd(true)
+
+      // ✅ 즉시 반영
+      setSubscribed(true)
+      router.refresh()
     } catch {
       setErrorMessage("구독 종료에 실패했습니다")
     } finally {
@@ -218,14 +232,7 @@ export default function SubscribeButton({
 
   if (checking) {
     return (
-      <button
-        disabled
-        className={
-          embedded
-            ? "inline-flex h-12 min-w-[220px] items-center justify-center rounded-full bg-zinc-800 px-6 text-sm font-semibold text-zinc-300"
-            : `${buttonBase} w-full min-w-[220px] bg-zinc-800 text-zinc-300 sm:w-auto`
-        }
-      >
+      <button disabled className="inline-flex h-12 min-w-[220px] items-center justify-center rounded-full bg-zinc-800 px-6 text-sm font-semibold text-zinc-300">
         확인 중...
       </button>
     )
@@ -233,102 +240,35 @@ export default function SubscribeButton({
 
   if (isOwner) {
     return (
-      <button
-        disabled
-        className={
-          embedded
-            ? "inline-flex h-12 min-w-[220px] items-center justify-center rounded-full bg-zinc-800 px-6 text-sm font-semibold text-zinc-400"
-            : `${buttonBase} w-full min-w-[220px] bg-zinc-800 text-zinc-400 sm:w-auto`
-        }
-      >
+      <button disabled className="inline-flex h-12 min-w-[220px] items-center justify-center rounded-full bg-zinc-800 px-6 text-sm font-semibold text-zinc-400">
         내 페이지
       </button>
     )
   }
 
   if (subscribed) {
-    if (embedded) {
-      return (
-        <button
-          type="button"
-          onClick={handleCancel}
-          disabled={loading || cancelAtPeriodEnd}
-          className="inline-flex h-12 min-w-[220px] items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 px-6 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {cancelAtPeriodEnd
-            ? "구독 종료 예정"
-            : loading
-              ? "처리 중..."
-              : "구독 종료 예약"}
-        </button>
-      )
-    }
-
     return (
-      <div className="flex w-full min-w-[220px] flex-col gap-2 sm:w-auto">
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3">
-          <p className="text-sm font-semibold text-white">
-            {cancelAtPeriodEnd ? "구독 종료 예정" : "구독 중"}
-          </p>
-          <p className="mt-1 text-xs text-zinc-300">
-            {cancelAtPeriodEnd
-              ? "현재 구독 기간 종료 후 구독이 종료됩니다."
-              : "구독자 전용 콘텐츠를 확인할 수 있습니다."}
-          </p>
-        </div>
-
-        <button
-          onClick={handleCancel}
-          disabled={loading || cancelAtPeriodEnd}
-          className={`${buttonBase} w-full border border-zinc-700 bg-zinc-950 text-zinc-100 hover:bg-zinc-900`}
-        >
-          {cancelAtPeriodEnd
-            ? "구독 종료 예정"
-            : loading
-              ? "처리 중..."
-              : "구독 종료 예약"}
-        </button>
-
-        {errorMessage ? (
-          <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-3 py-2">
-            <p className="text-xs text-red-300">{errorMessage}</p>
-          </div>
-        ) : null}
-      </div>
+      <button
+        onClick={handleCancel}
+        disabled={loading || cancelAtPeriodEnd}
+        className="inline-flex h-12 min-w-[220px] items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 px-6 text-sm font-semibold text-zinc-100"
+      >
+        {cancelAtPeriodEnd
+          ? "구독 종료 예정"
+          : loading
+            ? "처리 중..."
+            : "구독 중"}
+      </button>
     )
   }
 
   return (
-    <div
-      className={
-        embedded
-          ? "flex flex-col items-center gap-2"
-          : "flex w-full min-w-[220px] flex-col gap-2 sm:w-auto"
-      }
+    <button
+      onClick={handleSubscribe}
+      disabled={loading}
+      className={`${buttonBase} w-full bg-[#C2185B] text-white`}
     >
-      <button
-        onClick={handleSubscribe}
-        disabled={loading}
-        className={
-          embedded
-            ? buttonBase
-            : `${buttonBase} w-full bg-[#C2185B] text-white hover:bg-[#D81B60] active:bg-[#AD1457]`
-        }
-      >
-        {loading ? "처리 중..." : "구독하기"}
-      </button>
-
-      {!embedded ? (
-        <p className="text-center text-xs text-zinc-500">
-          현재 구독 기간 종료 후 종료할 수 있습니다
-        </p>
-      ) : null}
-
-      {errorMessage ? (
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-3 py-2">
-          <p className="text-xs text-red-300">{errorMessage}</p>
-        </div>
-      ) : null}
-    </div>
+      {loading ? "처리 중..." : "구독하기"}
+    </button>
   )
 }
