@@ -22,7 +22,7 @@ export async function GET(request: Request) {
       mock,
     });
 
-    return NextResponse.redirect(new URL("/", origin));
+   return NextResponse.redirect(new URL("/feed", origin));
   } catch (error) {
     console.error("PASS CALLBACK ERROR", error);
 

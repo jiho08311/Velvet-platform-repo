@@ -113,7 +113,7 @@ export function SignUpForm() {
         return;
       }
 
-      alert("회원가입 완료");
+    window.location.href = "/verify-pass";
     } catch (e) {
       alert("에러 발생");
     } finally {

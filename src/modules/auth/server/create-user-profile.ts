@@ -31,9 +31,9 @@ export async function createUserProfile({
     display_name: displayName,
     username,
     birth_date: birthDate,
-    is_adult_verified: true,
-    adult_verified_at: new Date().toISOString(),
-    adult_verification_method: "self_reported",
+    is_adult_verified: false,
+    adult_verified_at: null,
+    adult_verification_method: null,
   },
   { onConflict: "id" }
 )
