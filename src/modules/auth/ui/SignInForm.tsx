@@ -30,16 +30,10 @@ export function SignInForm() {
 
   const next = searchParams.get("next") || "/feed";
 
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isPending, setIsPending] = useState(false);
-
-  // 기존 dev 로그인 상태
-  const [devEmail, setDevEmail] = useState("");
-  const [devPassword, setDevPassword] = useState("");
-
-  // 추가: dev 회원가입 상태
-  const [devSignupEmail, setDevSignupEmail] = useState("");
-  const [devSignupPassword, setDevSignupPassword] = useState("");
 
   async function handleOAuth(provider: "google" | "kakao") {
     if (isPending) return;
@@ -62,145 +56,140 @@ export function SignInForm() {
       setErrorMessage(
         error instanceof Error ? error.message : "Something went wrong."
       );
-    } finally {
       setIsPending(false);
     }
   }
 
-  async function handleDevLogin() {
+  async function handleEmailSignIn(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (isPending) return;
+
     try {
       setIsPending(true);
       setErrorMessage("");
 
-      const { error } = await supabase.auth.signInWithPassword({
-        email: devEmail,
-        password: devPassword,
+      const response = await fetch("/api/auth/sign-in", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
       });
 
-      if (error) {
-        setErrorMessage(error.message);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setErrorMessage(data?.error || "로그인에 실패했습니다.");
         return;
       }
 
-      router.push("/feed");
+      router.replace(next);
       router.refresh();
     } catch (error) {
-      setErrorMessage("Dev login failed.");
-    } finally {
-      setIsPending(false);
-    }
-  }
-
-  async function handleDevSignup() {
-    try {
-      setIsPending(true);
-      setErrorMessage("");
-
-      const { error } = await supabase.auth.signUp({
-        email: devSignupEmail,
-        password: devSignupPassword,
-      });
-
-      if (error) {
-        setErrorMessage(error.message);
-        return;
-      }
-
-      router.push("/feed");
-      router.refresh();
-    } catch (error) {
-      setErrorMessage("Dev signup failed.");
+      setErrorMessage(
+        error instanceof Error ? error.message : "로그인에 실패했습니다."
+      );
     } finally {
       setIsPending(false);
     }
   }
 
   return (
-    <>
-      <div className="space-y-6">
-        {errorMessage ? (
-          <div className="rounded-2xl border border-red-300 bg-red-50 px-4 py-3">
-            <p className="text-sm text-red-600">{errorMessage}</p>
-          </div>
-        ) : null}
+    <div className="space-y-6">
+      {errorMessage ? (
+        <div className="rounded-2xl border border-red-300 bg-red-50 px-4 py-3">
+          <p className="text-sm text-red-600">{errorMessage}</p>
+        </div>
+      ) : null}
 
-        <div className="space-y-3">
-          <button
-            onClick={() => handleOAuth("google")}
+      <div className="space-y-3">
+        <button
+          type="button"
+          onClick={() => handleOAuth("google")}
+          disabled={isPending}
+          className="flex w-full items-center justify-center gap-3 rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base font-medium text-zinc-900 transition hover:bg-zinc-50 disabled:opacity-60"
+        >
+          <GoogleLogo />
+          Continue with Google
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleOAuth("kakao")}
+          disabled={isPending}
+          className="flex w-full items-center justify-center gap-3 rounded-2xl bg-[#FEE500] px-5 py-4 text-base font-medium text-[#191919] transition hover:brightness-95 disabled:opacity-60"
+        >
+          <KakaoLogo />
+          Continue with Kakao
+        </button>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-zinc-200" />
+        <span className="text-sm text-zinc-400">또는</span>
+        <div className="h-px flex-1 bg-zinc-200" />
+      </div>
+
+      <form onSubmit={handleEmailSignIn} className="space-y-4">
+        <div className="space-y-2">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-zinc-700"
+          >
+            이메일
+          </label>
+
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="you@example.com"
+            className="w-full rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/10"
             disabled={isPending}
-            className="flex w-full items-center justify-center gap-3 rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base font-medium text-zinc-900"
-          >
-            <GoogleLogo />
-            Continue with Google
-          </button>
+            required
+          />
+        </div>
 
-          <button
-            onClick={() => handleOAuth("kakao")}
+        <div className="space-y-2">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-zinc-700"
+          >
+            비밀번호
+          </label>
+
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="비밀번호를 입력하세요"
+            className="w-full rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/10"
             disabled={isPending}
-            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-[#FEE500] px-5 py-4 text-base font-medium text-[#191919]"
-          >
-            <KakaoLogo />
-            Continue with Kakao
-          </button>
+            required
+          />
         </div>
 
-        <div className="text-center text-sm text-zinc-600">
-          계정이 없으신가요?{" "}
-          <a href="/sign-up" className="font-medium text-[#C2185B] hover:underline">
-            회원가입
-          </a>
-        </div>
-      </div>
+        <button
+          type="submit"
+          disabled={isPending}
+          className="w-full rounded-2xl bg-[#C2185B] px-5 py-4 text-base font-semibold text-white transition hover:bg-[#D81B60] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isPending ? "Signing in..." : "이메일로 로그인"}
+        </button>
+      </form>
 
-      {/* 기존 숨겨진 dev 로그인 폼 */}
-      <div className="fixed bottom-4 left-4 opacity-10 hover:opacity-100">
-        <div className="flex flex-col gap-1">
-          <input
-            value={devEmail}
-            onChange={(e) => setDevEmail(e.target.value)}
-            placeholder="e"
-            className="w-24 border border-white/10 bg-transparent px-1 text-[10px] text-white/50"
-          />
-          <input
-            type="password"
-            value={devPassword}
-            onChange={(e) => setDevPassword(e.target.value)}
-            placeholder="p"
-            className="w-24 border border-white/10 bg-transparent px-1 text-[10px] text-white/50"
-          />
-          <button
-            onClick={handleDevLogin}
-            className="text-[10px] text-white/40"
-          >
-            .
-          </button>
-        </div>
+      <div className="text-center text-sm text-zinc-600">
+        계정이 없으신가요?{" "}
+        <a href="/sign-up" className="font-medium text-[#C2185B] hover:underline">
+          회원가입
+        </a>
       </div>
-
-      {/* 추가: 숨겨진 dev 회원가입 폼 */}
-      <div className="fixed bottom-20 left-4 opacity-10 hover:opacity-100">
-        <div className="flex flex-col gap-1">
-          <input
-            value={devSignupEmail}
-            onChange={(e) => setDevSignupEmail(e.target.value)}
-            placeholder="se"
-            className="w-24 border border-white/10 bg-transparent px-1 text-[10px] text-white/50"
-          />
-          <input
-            type="password"
-            value={devSignupPassword}
-            onChange={(e) => setDevSignupPassword(e.target.value)}
-            placeholder="sp"
-            className="w-24 border border-white/10 bg-transparent px-1 text-[10px] text-white/50"
-          />
-          <button
-            onClick={handleDevSignup}
-            className="text-[10px] text-white/40"
-          >
-            +
-          </button>
-        </div>
-      </div>
-    </>
+    </div>
   );
 }
