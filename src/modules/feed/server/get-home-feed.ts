@@ -95,14 +95,12 @@ function resolveMediaType(row: MediaRow): MediaType {
 export async function getHomeFeed(
   input: GetHomeFeedInput
 ): Promise<GetHomeFeedResult> {
-  const viewerUserId = input.viewerUserId.trim()
+  const viewerUserId = input.viewerUserId?.trim() ?? ""
 
-  if (!viewerUserId) {
-  return {
-    items: [],
-    nextCursor: null,
-  }
+if (!viewerUserId) {
+  // 비로그인: public feed만 허용
 }
+
 
   const limit = Math.max(1, Math.min(input.limit ?? 20, 100))
 
