@@ -162,7 +162,8 @@ export function SignUpForm() {
   max={new Date().toISOString().split("T")[0]}
   value={birthDate}
   onChange={(e) => setBirthDate(e.target.value)}
-  className="..."
+  className="w-full rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base text-zinc-900 outline-none transition focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/10"
+  style={{ colorScheme: "light" }}
 />
         <button
           type="button"
