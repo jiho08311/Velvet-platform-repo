@@ -33,6 +33,8 @@ function getNotificationTone(type: NotificationType) {
       return "default"
     case "comment_liked":
       return "default"
+    case "message_received":
+      return "default"
     default:
       return "default"
   }
@@ -56,6 +58,8 @@ function getNotificationLabel(type: NotificationType) {
       return "Comment"
     case "comment_liked":
       return "Comment like"
+    case "message_received":
+      return "Message"
     default:
       return "Notification"
   }
