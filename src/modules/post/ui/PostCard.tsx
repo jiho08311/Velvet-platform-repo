@@ -7,7 +7,6 @@ import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
 
 import { LockedPostCard } from "./LockedPostCard"
-import PostPurchaseButton from "./PostPurchaseButton"
 
 type MediaItem = {
   url: string
@@ -40,8 +39,8 @@ type PostCardProps = {
   mediaThumbnailUrls?: string[]
   media?: MediaItem[]
   isLocked?: boolean
-  lockReason?: "none" | "subscription" | "purchase"
-  price?: number
+  lockReason?: "none" | "subscription" 
+
   creatorId: string
   creatorUserId?: string
   currentUserId?: string
@@ -107,7 +106,7 @@ export function PostCard({
   media = [],
   isLocked = false,
   lockReason = "none",
-  price,
+
   creatorId,
   creatorUserId,
   currentUserId,
@@ -423,18 +422,6 @@ export function PostCard({
       )
     }
 
-    if (lockReason === "purchase" && postId) {
-      return (
-        <div onClick={(event) => event.stopPropagation()}>
-          <PostPurchaseButton
-            postId={postId}
-            price={price}
-            creatorUsername={creator.username}
-            embedded
-          />
-        </div>
-      )
-    }
 
     return null
   }
@@ -488,12 +475,7 @@ export function PostCard({
               previewText={text}
               createdAt={createdAt}
               previewThumbnailUrl={resolvedMedia[0]?.url ?? null}
-              price={price}
-              lockReason={
-                lockReason === "subscription" || lockReason === "purchase"
-                  ? lockReason
-                  : undefined
-              }
+          
               action={renderLockedAction()}
             />
           ) : (
