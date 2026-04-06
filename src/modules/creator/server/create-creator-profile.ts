@@ -2,10 +2,12 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 type CreateCreatorProfileInput = {
   userId: string
+  instagramUsername?: string
 }
 
 export async function createCreatorProfile({
   userId,
+  instagramUsername,
 }: CreateCreatorProfileInput) {
   const { data: profile, error: profileError } = await supabaseAdmin
     .from("profiles")
@@ -28,9 +30,10 @@ export async function createCreatorProfile({
       user_id: userId,
       username: profile.username,
       display_name: profile.display_name ?? profile.username,
-      status: "active",
+      status: "pending", // 🔥 여기 active → pending으로 수정
       subscription_price: 0,
       subscription_currency: "KRW",
+      instagram_username: instagramUsername ?? null, // 🔥 추가
     })
     .select()
     .single()

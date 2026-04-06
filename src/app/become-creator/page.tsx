@@ -55,6 +55,25 @@ export default async function BecomeCreatorPage() {
                 </p>
               </div>
 
+              <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-4">
+                <label
+                  htmlFor="instagram"
+                  className="text-sm font-medium text-zinc-900"
+                >
+                  Instagram username
+                </label>
+                <p className="mt-1 text-sm leading-6 text-zinc-600">
+                  승인 검토를 위해 사용하는 계정을 입력하세요.
+                </p>
+                <input
+                  id="instagram"
+                  name="instagram"
+                  type="text"
+                  placeholder="@yourinstagram"
+                  className="mt-3 w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B]"
+                />
+              </div>
+
               <button
                 type="submit"
                 className="w-full rounded-full bg-[#C2185B] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#D81B60]"

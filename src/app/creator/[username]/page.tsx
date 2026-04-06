@@ -42,12 +42,18 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
     notFound()
   }
 
-  const creator = await getCreatorByUsername(username)
+const creator = await getCreatorByUsername(username)
 
-  if (!creator) {
-    notFound()
-  }
+if (!creator) {
+  notFound()
+}
 
+if (creator.status !== "active") {
+  notFound()
+}
+
+
+  
   const user = await getCurrentUser()
   const userId = user?.id ?? null
   const isOwner = userId === creator.userId
