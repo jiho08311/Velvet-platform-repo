@@ -1,7 +1,6 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 
-import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { getCreatorByUsername } from "@/modules/creator/server/get-creator-by-username"
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
@@ -12,7 +11,6 @@ import { PostCard } from "@/modules/post/ui/PostCard"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
 import { getViewerSubscription } from "@/modules/subscription/server/get-viewer-subscription"
 import { SubscriptionStatusCard } from "@/modules/subscription/ui/SubscriptionStatusCard"
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 type CreatorPageProps = {
   params: Promise<{
@@ -20,9 +18,6 @@ type CreatorPageProps = {
   }>
 }
 
-type ProfileRow = {
-  username: string | null
-}
 
 function formatPrice(amount: number) {
   return new Intl.NumberFormat("ko-KR", {
@@ -58,28 +53,6 @@ if (creator.status !== "active") {
   const userId = user?.id ?? null
   const isOwner = userId === creator.userId
   const pathname = `/creator/${username}`
-
-  if (userId && !isOwner) {
-    try {
-      await assertPassVerified({ profileId: userId })
-    } catch {
-      redirect("/verify-pass")
-    }
-
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .select("username")
-      .eq("id", userId)
-      .maybeSingle<ProfileRow>()
-
-    if (profileError) {
-      throw profileError
-    }
-
-    if (!profile?.username) {
-      redirect("/onboarding")
-    }
-  }
 
   const summary = await getCreatorDashboardSummary(creator.id)
 
