@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-
+import { getCreatorPage } from "@/modules/creator/server/get-creator-page"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { getCreatorByUsername } from "@/modules/creator/server/get-creator-by-username"
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
@@ -61,7 +61,19 @@ const posts = userId
       creatorId: creator.id,
       userId,
     })
-  : []
+  : ((await getCreatorPage({ username, viewerUserId: null }))?.posts ?? []).map(
+      (post) => ({
+        id: post.id,
+        content: post.text ?? "",
+        created_at: post.createdAt,
+        media: post.media ?? [],
+        isLocked: post.isLocked,
+   lockReason: undefined,
+        price: post.price ?? 0,
+        likesCount: 0,
+        isLiked: false,
+      })
+    )
 
   const viewerSubscription = userId
     ? await getViewerSubscription(userId, creator.id)
