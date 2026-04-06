@@ -498,18 +498,20 @@ function handleCreatorClick(e: React.MouseEvent) {
               {renderMedia()}
 
               <div className="space-y-2">
-                <p className="line-clamp-2 text-base font-semibold leading-7 text-white sm:text-lg">
-                  {previewTitle}
-                </p>
+    <p className="line-clamp-2 text-base font-semibold leading-7 text-white sm:text-lg">
+      {previewTitle}
+    </p>
 
-                {previewBody ? (
-                  <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-zinc-400">
-                    {previewBody}
-                  </p>
-                ) : null}
-              </div>
+    {previewBody ? (
+      <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-zinc-400">
+        {previewBody}
+      </p>
+    ) : null}
+  </div>
 
-              <div className="flex items-center justify-between gap-3">
+  {renderMedia()}
+
+  <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                 <p className="text-xs text-zinc-500">
   {formatPostDate(createdAt)}
