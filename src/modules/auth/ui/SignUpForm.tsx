@@ -27,6 +27,12 @@ export function SignUpForm() {
 
   const [agreed, setAgreed] = useState(false);
 
+  // ✅ 추가된 state (기존 로직 영향 없음)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [emailLoading, setEmailLoading] = useState(false);
+
   async function handleGoogleSignUp() {
     if (!agreed) {
       alert("약관에 동의해주세요.");
@@ -73,6 +79,48 @@ export function SignUpForm() {
     }
   }
 
+  // ✅ 이메일 회원가입 (추가만)
+  async function handleEmailSignUp() {
+    if (!agreed) {
+      alert("약관에 동의해주세요.");
+      return;
+    }
+
+    if (!email || !password || !birthDate) {
+      alert("모든 값을 입력해주세요.");
+      return;
+    }
+
+    setEmailLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/sign-up", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          birthDate,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "회원가입 실패");
+        return;
+      }
+
+      alert("회원가입 완료");
+    } catch (e) {
+      alert("에러 발생");
+    } finally {
+      setEmailLoading(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* 약관 동의 */}
@@ -90,6 +138,40 @@ export function SignUpForm() {
           <a href="/youth" className="underline">청소년 보호정책</a>에 동의합니다.
         </span>
       </label>
+
+      {/* ✅ 이메일 회원가입 UI (추가) */}
+      <div className="space-y-2">
+        <input
+          type="email"
+          placeholder="이메일"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full rounded-md border p-3"
+        />
+
+        <input
+          type="password"
+          placeholder="비밀번호"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full rounded-md border p-3"
+        />
+
+        <input
+          type="date"
+          value={birthDate}
+          onChange={(e) => setBirthDate(e.target.value)}
+          className="w-full rounded-md border p-3"
+        />
+
+        <button
+          type="button"
+          onClick={handleEmailSignUp}
+          className="w-full rounded-full bg-black text-white py-3"
+        >
+          {emailLoading ? "처리중..." : "이메일로 회원가입"}
+        </button>
+      </div>
 
       {/* Google */}
       <button
