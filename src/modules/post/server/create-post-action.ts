@@ -31,17 +31,36 @@ export async function createPostAction({
     throw new Error("Paid post price must be greater than 0")
   }
 
-  await createPostWithMediaWorkflow({
-    creatorId,
-    content: content || null,
-    visibility,
-    price: visibility === "paid" ? price : 0,
-    status: "published",
-    files,
-  })
+  try {
+    await createPostWithMediaWorkflow({
+      creatorId,
+      content: content || null,
+      visibility,
+      price: visibility === "paid" ? price : 0,
+      status: "published",
+      files,
+    })
+  } catch (error) {
+    console.error("[createPostAction]", error)
+
+    if (error instanceof Error) {
+      throw error
+    }
+
+    if (
+      error &&
+      typeof error === "object" &&
+      "message" in error &&
+      typeof (error as { message: unknown }).message === "string"
+    ) {
+      throw new Error((error as { message: string }).message)
+    }
+
+    throw new Error("Failed to create post")
+  }
 
   revalidatePath("/feed")
   revalidatePath("/post/new")
   revalidatePath(`/creator/${creatorId}`)
-revalidatePath("/profile")
+  revalidatePath("/profile")
 }
