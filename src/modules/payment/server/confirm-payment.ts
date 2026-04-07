@@ -29,6 +29,9 @@ type PaymentRow = {
 
 type ConfirmPaymentInput = {
   paymentId: string
+  paymentKey?: string
+  orderId?: string
+  amount?: number
 }
 
 function isSettlablePaymentType(type: PaymentType): boolean {
@@ -54,10 +57,9 @@ async function processSettlement(payment: {
   if (!isSettlablePaymentType(payment.type)) return
 
   try {
-    const earning = await createEarning({
+    await createEarning({
       paymentId: payment.id,
     })
-
   } catch (error) {
     console.error("earning settlement failed:", error)
   }
@@ -65,6 +67,9 @@ async function processSettlement(payment: {
 
 export async function confirmPayment({
   paymentId,
+  paymentKey,
+  orderId,
+  amount,
 }: ConfirmPaymentInput): Promise<ConfirmedPayment | null> {
   const id = paymentId.trim()
   if (!id) return null
@@ -79,7 +84,6 @@ export async function confirmPayment({
   if (existingPaymentError) throw existingPaymentError
   if (!existingPayment) return null
 
-  // 🔥 이미 성공된 결제
   if (existingPayment.status === "succeeded") {
     if (existingPayment.type === "subscription" && existingPayment.creator_id) {
       const currentPeriodStart =
@@ -103,7 +107,6 @@ export async function confirmPayment({
       type: existingPayment.type,
     })
 
-    // 🔥 PPV MESSAGE unlock (추가)
     if (existingPayment.type === "ppv_message") {
       await supabaseAdmin
         .from("payments")
@@ -113,7 +116,6 @@ export async function confirmPayment({
         .eq("id", existingPayment.id)
     }
 
-    // ✅ notification 유지
     try {
       await createNotification({
         userId: existingPayment.user_id,
@@ -169,17 +171,17 @@ export async function confirmPayment({
       id: existingPayment.id,
       status: "succeeded",
       provider: existingPayment.provider,
-      confirmedAt:
-        existingPayment.confirmed_at ?? new Date().toISOString(),
+      confirmedAt: existingPayment.confirmed_at ?? new Date().toISOString(),
     }
   }
 
-  // 🔥 신규 결제 confirm
   const provider = getPaymentProvider(existingPayment.provider)
 
   const providerResult = await provider.confirmPayment({
     paymentId: existingPayment.id,
-    providerReferenceId: existingPayment.id,
+    providerReferenceId: paymentKey,
+    orderId,
+    amount,
   })
 
   if (providerResult.status !== "succeeded") {
@@ -223,7 +225,6 @@ export async function confirmPayment({
     type: data.type,
   })
 
-  // 🔥 PPV MESSAGE unlock (추가)
   if (data.type === "ppv_message") {
     await supabaseAdmin
       .from("payments")
@@ -233,7 +234,6 @@ export async function confirmPayment({
       .eq("id", data.id)
   }
 
-  // ✅ notification 유지
   try {
     await createNotification({
       userId: data.user_id,

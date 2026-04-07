@@ -19,6 +19,8 @@ export type CreateProviderCheckoutResult = {
 export type ConfirmProviderPaymentInput = {
   paymentId: string
   providerReferenceId?: string
+  orderId?: string
+  amount?: number
 }
 
 export type ConfirmProviderPaymentResult = {

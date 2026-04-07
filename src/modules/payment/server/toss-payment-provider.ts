@@ -12,27 +12,9 @@ export const tossPaymentProvider: PaymentProvider = {
   async createCheckout(
     input: CreateProviderCheckoutInput
   ): Promise<CreateProviderCheckoutResult> {
-    const clientKey = process.env.TOSS_CLIENT_KEY
-
-    if (!clientKey) {
-      throw new Error("Missing TOSS_CLIENT_KEY")
-    }
-
-    // 🔥 기존 구조 유지 + URL만 정상화
-    const params = new URLSearchParams({
-      clientKey,
-      amount: String(input.amount),
-      orderId: input.orderId,
-      orderName: input.orderName,
-      successUrl: input.successUrl,
-      failUrl: input.failUrl,
-    })
-
-    const url = `https://api.tosspayments.com/v1/payments/redirect?${params.toString()}`
-
     return {
       provider: "toss",
-      checkoutUrl: url,
+      checkoutUrl: null,
       providerReferenceId: input.paymentId,
     }
   },
@@ -40,10 +22,43 @@ export const tossPaymentProvider: PaymentProvider = {
   async confirmPayment(
     input: ConfirmProviderPaymentInput
   ): Promise<ConfirmProviderPaymentResult> {
+    const secretKey = process.env.TOSS_SECRET_KEY
+
+    if (!secretKey) {
+      throw new Error("Missing TOSS_SECRET_KEY")
+    }
+
+    const paymentKey = input.providerReferenceId
+    const orderId = input.orderId
+    const amount = input.amount
+
+    if (!paymentKey || !orderId || amount == null) {
+      throw new Error("Missing toss confirm params")
+    }
+
+    const res = await fetch("https://api.tosspayments.com/v1/payments/confirm", {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${Buffer.from(secretKey + ":").toString("base64")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        paymentKey,
+        orderId,
+        amount,
+      }),
+    })
+
+    if (!res.ok) {
+      const text = await res.text()
+      console.error("Toss confirm error:", text)
+      throw new Error("TOSS_CONFIRM_FAILED")
+    }
+
     return {
       provider: "toss",
       status: "succeeded",
-      providerReferenceId: input.paymentId,
+      providerReferenceId: paymentKey,
     }
   },
 }
