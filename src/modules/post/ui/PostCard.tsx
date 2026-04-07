@@ -527,14 +527,19 @@ return (
                     <span>{count}</span>
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      setShowComments((prev) => !prev)
-                    }}
-                    className="inline-flex items-center gap-1.5 px-0 py-1 text-xs text-zinc-400 transition hover:text-white"
-                  >
+          <button
+  type="button"
+  onClick={async (event) => {
+    event.stopPropagation()
+
+    if (!showComments && comments.length === 0) {
+      await loadComments()
+    }
+
+    setShowComments((prev) => !prev)
+  }}
+  className="inline-flex items-center gap-1.5 px-0 py-1 text-xs text-zinc-400 transition hover:text-white"
+>
                     <span aria-hidden="true">💬</span>
                     <span>{comments.length}</span>
                   </button>
@@ -644,26 +649,20 @@ return (
                           </div>
                         </div>
                       ))}
-
-                      {comments.length > 3 ? (
-             <button
-  type="button"
-  onClick={async (event) => {
-    event.stopPropagation()
-
-    if (!showComments && comments.length === 0) {
-      await loadComments()
-    }
-
-    setShowComments((prev) => !prev)
-  }}
-                          className="text-sm text-zinc-400 hover:text-white"
-                        >
-                          {expandedComments
-                            ? "Hide comments"
-                            : `View ${comments.length - 3} more comments`}
-                        </button>
-                      ) : null}
+{comments.length > 3 ? (
+  <button
+    type="button"
+    onClick={(event) => {
+      event.stopPropagation()
+      setExpandedComments((prev) => !prev)
+    }}
+    className="text-sm text-zinc-400 hover:text-white"
+  >
+    {expandedComments
+      ? "Hide comments"
+      : `View ${comments.length - 3} more comments`}
+  </button>
+) : null}
                     </div>
                   )}
                 </div>
