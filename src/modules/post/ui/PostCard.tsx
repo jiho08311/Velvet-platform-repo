@@ -33,6 +33,7 @@ type CommentItem = {
 }
 
 type PostCardProps = {
+  commentsCount?: number
   postId?: string
   text: string
   createdAt: string
@@ -111,6 +112,7 @@ export function PostCard({
   creatorUserId,
   currentUserId,
   likesCount = 0,
+  commentsCount = 0,
   isLiked = false,
   creator,
 }: PostCardProps) {
@@ -527,22 +529,23 @@ return (
                     <span>{count}</span>
                   </button>
 
-          <button
+<button
   type="button"
-  onClick={async (event) => {
+  onClick={(event) => {
     event.stopPropagation()
 
-    if (!showComments && comments.length === 0) {
-      await loadComments()
-    }
+    const nextShow = !showComments
+    setShowComments(nextShow)
 
-    setShowComments((prev) => !prev)
+    if (nextShow && comments.length === 0) {
+      loadComments()
+    }
   }}
   className="inline-flex items-center gap-1.5 px-0 py-1 text-xs text-zinc-400 transition hover:text-white"
 >
-                    <span aria-hidden="true">💬</span>
-                    <span>{comments.length}</span>
-                  </button>
+  <span aria-hidden="true">💬</span>
+<span>{commentsCount || comments.length}</span>
+</button>
                 </div>
 
                 {postId ? (

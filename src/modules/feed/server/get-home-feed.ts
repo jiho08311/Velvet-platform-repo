@@ -19,6 +19,7 @@ export type HomeFeedItem = {
   }>
   likesCount: number
   isLiked: boolean
+  commentsCount: number
   creator: {
     username: string
     displayName: string | null
@@ -70,6 +71,10 @@ type MediaRow = {
 }
 
 type PostLikeRow = {
+  post_id: string
+}
+
+type CommentRow = {
   post_id: string
 }
 
@@ -237,6 +242,26 @@ export async function getHomeFeed(
 
   const myLikeSet = new Set((myLikeRows ?? []).map((row) => row.post_id))
 
+  const { data: commentRows, error: commentError } = await supabaseAdmin
+    .from("comments")
+    .select("post_id")
+    .in("post_id", postIds)
+    .is("deleted_at", null)
+    .returns<CommentRow[]>()
+
+  if (commentError) {
+    throw commentError
+  }
+
+  const commentCountMap = new Map<string, number>()
+
+  for (const row of commentRows ?? []) {
+    commentCountMap.set(
+      row.post_id,
+      (commentCountMap.get(row.post_id) ?? 0) + 1
+    )
+  }
+
   const { data: mediaRows, error: mediaError } = await supabaseAdmin
     .from("media")
     .select("post_id, storage_path, type, mime_type, status, sort_order")
@@ -292,6 +317,7 @@ export async function getHomeFeed(
         media,
         likesCount: likeCountMap.get(post.id) ?? 0,
         isLiked: myLikeSet.has(post.id),
+        commentsCount: commentCountMap.get(post.id) ?? 0,
         creator: {
           username: creator?.username ?? "",
           displayName: creator?.display_name ?? null,

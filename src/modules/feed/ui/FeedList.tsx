@@ -6,6 +6,7 @@ type FeedListPost = {
   postId?: string
   creatorId: string
   creatorUserId?: string
+  commentsCount?: number
   currentUserId?: string
   text: string
   createdAt: string
@@ -52,7 +53,7 @@ export function FeedList({
           createdAt={post.createdAt}
           media={post.media ?? []}
           isLocked={post.isLocked}
-         
+         commentsCount={post.commentsCount}
           likesCount={post.likesCount}
           isLiked={post.isLiked}
           creatorId={post.creatorId}

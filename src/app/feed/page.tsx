@@ -151,6 +151,7 @@ if (session?.userId) {
                 isLocked: item.isLocked,
                 lockReason: item.lockReason,
                 price: normalizePrice(item),
+                commentsCount: item.commentsCount,
                 likesCount: item.likesCount,
                 isLiked: item.isLiked,
                 creator: item.creator,

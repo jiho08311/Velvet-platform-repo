@@ -1,6 +1,7 @@
 export type FeedItemId = string
 
 export type FeedItem = {
+  commentsCount?: number 
   id: FeedItemId
   postId: string
   creatorId: string
