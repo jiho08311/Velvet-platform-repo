@@ -11,6 +11,7 @@ type CreatorFeedPost = {
   isLocked: boolean
   likesCount: number
   isLiked: boolean
+  visibility: "public" | "subscribers" | "paid"
   commentsCount: number
 }
 
