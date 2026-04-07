@@ -1,6 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { redirect } from "next/navigation"
 import { createReport } from "@/modules/report/server/create-report"
 
 type ReportTargetType = "post" | "message" | "user" | "creator"
@@ -32,4 +33,7 @@ export async function createReportAction(formData: FormData) {
   })
 
   revalidatePath(pathname)
+
+  // 🔥 핵심 추가
+  redirect(pathname)
 }

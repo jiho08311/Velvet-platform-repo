@@ -146,11 +146,28 @@ export default async function ProfilePage() {
     <main className="min-h-screen bg-zinc-950 px-6 py-10 text-zinc-100">
       <div className="mx-auto max-w-4xl flex flex-col gap-8">
         <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-2xl">{profile.displayName}</h2>
-              <p className="text-sm text-zinc-400">@{profile.username}</p>
-            </div>
+      <div className="flex justify-between items-center">
+  <div className="flex items-center gap-4">
+    {/* 🔥 avatar 추가 */}
+    <div className="h-16 w-16 overflow-hidden rounded-full bg-zinc-800">
+      {profile.avatarUrl ? (
+        <img
+          src={profile.avatarUrl}
+          alt={profile.displayName}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-lg font-semibold text-white">
+          {profile.displayName.slice(0, 1).toUpperCase()}
+        </div>
+      )}
+    </div>
+
+    <div>
+      <h2 className="text-2xl">{profile.displayName}</h2>
+      <p className="text-sm text-zinc-400">@{profile.username}</p>
+    </div>
+  </div>
 
             <Link
               href="/profile/edit"
