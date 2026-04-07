@@ -16,6 +16,14 @@ type ProfileRow = {
   is_deactivated: boolean
 }
 
+type PostLikeRow = {
+  post_id: string
+}
+
+type CommentRow = {
+  post_id: string
+}
+
 export async function getCreatorPage({
   username,
   viewerUserId,
@@ -65,6 +73,49 @@ export async function getCreatorPage({
 
   const postList = posts ?? []
   const postIds = postList.map((post) => post.id)
+
+  const { data: likeRows } = await supabaseAdmin
+    .from("post_likes")
+    .select("post_id")
+    .in("post_id", postIds)
+
+  const likeCountMap = new Map<string, number>()
+
+  for (const row of (likeRows ?? []) as PostLikeRow[]) {
+    likeCountMap.set(
+      row.post_id,
+      (likeCountMap.get(row.post_id) ?? 0) + 1
+    )
+  }
+
+  let myLikeSet = new Set<string>()
+
+  if (viewerUserId) {
+    const { data: myLikeRows } = await supabaseAdmin
+      .from("post_likes")
+      .select("post_id")
+      .eq("user_id", viewerUserId)
+      .in("post_id", postIds)
+
+    myLikeSet = new Set(
+      ((myLikeRows ?? []) as PostLikeRow[]).map((row) => row.post_id)
+    )
+  }
+
+  const { data: commentRows } = await supabaseAdmin
+    .from("comments")
+    .select("post_id")
+    .eq("deleted_at", null)
+    .in("post_id", postIds)
+
+  const commentCountMap = new Map<string, number>()
+
+  for (const row of (commentRows ?? []) as CommentRow[]) {
+    commentCountMap.set(
+      row.post_id,
+      (commentCountMap.get(row.post_id) ?? 0) + 1
+    )
+  }
 
   let purchasedSet = new Set<string>()
 
@@ -127,6 +178,9 @@ export async function getCreatorPage({
         price: post.price,
         media,
         createdAt: post.published_at ?? post.created_at,
+        likesCount: likeCountMap.get(post.id) ?? 0,
+        isLiked: myLikeSet.has(post.id),
+        commentsCount: commentCountMap.get(post.id) ?? 0,
 
         creatorId: creator.id,
         creatorUserId: creator.user_id,
