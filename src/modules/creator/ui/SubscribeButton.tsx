@@ -247,20 +247,37 @@ export default function SubscribeButton({
   }
 
   if (subscribed) {
-    return (
+  return (
+    <div className="flex flex-col gap-2 w-full">
+      {/* 상태 표시 */}
       <button
-        onClick={handleCancel}
-        disabled={loading || cancelAtPeriodEnd}
-        className="inline-flex h-12 min-w-[220px] items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 px-6 text-sm font-semibold text-zinc-100"
+        disabled
+        className="inline-flex h-12 w-full items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 px-6 text-sm font-semibold text-zinc-100"
       >
-        {cancelAtPeriodEnd
-          ? "구독 종료 예정"
-          : loading
-            ? "처리 중..."
-            : "구독 중"}
+        {cancelAtPeriodEnd ? "구독 종료 예정" : "구독 중"}
       </button>
-    )
-  }
+
+      {/* 🔥 핵심: 취소 버튼 분리 */}
+      {!cancelAtPeriodEnd && (
+        <button
+          onClick={handleCancel}
+          disabled={loading}
+          className="inline-flex h-10 w-full items-center justify-center rounded-full bg-red-600 px-4 text-sm font-semibold text-white transition hover:bg-red-500 active:bg-red-700"
+        >
+          {loading ? "처리 중..." : "구독 취소"}
+        </button>
+      )}
+
+      {/* 안내 문구 (심사용 핵심) */}
+      {cancelAtPeriodEnd && (
+        <p className="text-xs text-zinc-500 text-center">
+          이번 결제 주기 종료 후 자동으로 해지됩니다
+        </p>
+      )}
+    </div>
+  )
+}
+  
 
   return (
     <button
