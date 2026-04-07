@@ -93,47 +93,13 @@ export function AppHeader({
           </Link>
         </div>
 
-        <div className="flex items-center gap-2">
-          <nav className="hidden items-center gap-1 md:flex">
-            <Link
-              href={resolveHref("/feed")}
-              className="rounded-full px-3 py-2 text-sm font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
-            >
-              Feed
-            </Link>
-
-            <Link
-              href={resolveHref("/search")}
-              className="rounded-full px-3 py-2 text-sm font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
-            >
-              Search
-            </Link>
-
-            <Link
-              href={resolveHref("/messages")}
-              className="rounded-full px-3 py-2 text-sm font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
-            >
-              Messages
-            </Link>
-
-            <Link
-              href={resolveHref("/notifications")}
-              className="relative rounded-full px-3 py-2 text-sm font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
-            >
-              Notifications
-              {isAuthenticated && hasUnread ? (
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
-              ) : null}
-            </Link>
-
-            {/* 🔥 About 추가 */}
-            <Link
-              href="/about"
-              className="rounded-full px-3 py-2 text-sm font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
-            >
-              About
-            </Link>
-          </nav>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/about"
+            className="text-sm text-zinc-400 transition hover:text-white"
+          >
+            About
+          </Link>
 
           <Link
             href={resolveHref("/post/new")}

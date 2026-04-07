@@ -29,7 +29,7 @@ export function SignOutButton() {
       disabled={isPending}
       className="px-0 py-2 text-sm font-medium text-zinc-400 transition hover:text-white disabled:opacity-60"
     >
-      {isPending ? "Signing out..." : "Logout"}
+      {isPending ? "Signing out..." : "Sign out"}
     </button>
   )
 }

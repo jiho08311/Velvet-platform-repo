@@ -94,7 +94,7 @@ className="w-full border-b border-zinc-800 bg-black px-0 py-2 text-sm text-white
 
           <button
             type="submit"
-            className="rounded-xl bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-500"
+            className="px-0 py-2 text-sm font-semibold text-red-500 hover:text-red-400"
           >
             Submit report
           </button>

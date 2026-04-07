@@ -95,7 +95,7 @@ export function AppSidebar() {
 
   return (
     <aside className="w-16 shrink-0">
-      <div className="sticky top-[73px] flex h-[calc(100vh-73px)] flex-col items-center px-2 py-4">
+      <div className="flex flex-col items-center px-2 py-4">
         <nav className="flex w-full flex-col items-center gap-2">
           {navigationItems.map((item) => {
             const isActive =
@@ -125,7 +125,7 @@ export function AppSidebar() {
           })}
         </nav>
 
-        <div className="mt-auto flex w-full flex-col items-center gap-2">
+        <div className="mt-6 flex w-full flex-col items-center gap-2">
           {isAuthenticated === null || isCreator === null ? (
             <div className="h-12 w-12 animate-pulse rounded-xl bg-zinc-800" />
           ) : isAuthenticated === false ? (
