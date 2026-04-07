@@ -2,15 +2,29 @@ type LockedPostCardProps = {
   previewText: string
   createdAt: string
   previewThumbnailUrl?: string | null
+
+  price?: number
+  lockReason?: "subscription" | "purchase"
   action?: React.ReactNode
+}
+
+function formatPrice(amount: number) {
+  return new Intl.NumberFormat("ko-KR").format(amount)
 }
 
 export function LockedPostCard({
   previewText,
   createdAt,
   previewThumbnailUrl = null,
+  price,
+  lockReason,
   action,
 }: LockedPostCardProps) {
+  const isPaid =
+    lockReason === "purchase" &&
+    typeof price === "number" &&
+    price > 0
+
   return (
     <article className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/70 text-white">
       <div className="relative">
@@ -25,23 +39,29 @@ export function LockedPostCard({
           </div>
         ) : (
           <div className="flex aspect-[4/5] items-center justify-center bg-zinc-950 text-sm text-zinc-500">
-            구독자 전용 콘텐츠
+            프리미엄 콘텐츠
           </div>
         )}
 
         <div className="absolute left-4 top-4 inline-flex items-center rounded-full border border-white/10 bg-black/60 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur">
-          Subscribers only
+          이용 필요
         </div>
 
         <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
           <div className="max-w-xs">
             <p className="text-lg font-semibold text-white">
-              구독자 전용 콘텐츠
+              프리미엄 콘텐츠 이용
             </p>
 
-            <p className="mt-2 text-sm leading-6 text-zinc-200">
-              구독 후 전체 내용을 볼 수 있습니다.
-            </p>
+            {isPaid ? (
+              <p className="mt-2 text-base font-semibold text-white">
+                ₩{formatPrice(price)}
+              </p>
+            ) : (
+              <p className="mt-2 text-sm leading-6 text-zinc-200">
+                이용권 구매 후 전체 내용을 볼 수 있습니다.
+              </p>
+            )}
 
             {action ? <div className="mt-4">{action}</div> : null}
           </div>
