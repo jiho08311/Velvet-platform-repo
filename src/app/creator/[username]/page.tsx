@@ -202,7 +202,7 @@ const posts = userId
                 createdAt={new Date(post.created_at).toLocaleString()}
                 media={post.media ?? []}
                 isLocked={post.isLocked}
-         commentsCount: commentCountMap.get(post.id) ?? 0,
+             commentsCount={post.commentsCount}
                 likesCount={post.likesCount}
                 isLiked={post.isLiked}
                 creatorId={creator.id}
