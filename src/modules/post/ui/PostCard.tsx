@@ -304,15 +304,7 @@ const [currentIndex, setCurrentIndex] = useState(0)
     }
   }, [primaryVideo])
 
-  useEffect(() => {
-    if (!videoRef.current || !primaryVideo) return
-
-    if (isVideoVisible) {
-      videoRef.current.play().catch(() => {})
-    } else {
-      videoRef.current.pause()
-    }
-  }, [isVideoVisible, primaryVideo])
+  
 
   function handleCardClick() {
     return

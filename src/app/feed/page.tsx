@@ -106,7 +106,7 @@ if (session?.userId) {
   ;[feed, recommendedCreators] = await Promise.all([
     getHomeFeed({
       viewerUserId: session.userId,
-      limit: 20,
+      limit: 10,
     }),
     getRecommendedCreators({
       viewerUserId: session.userId,
@@ -116,7 +116,7 @@ if (session?.userId) {
 } else {
   ;[feed, recommendedCreators] = await Promise.all([
     getHomeFeed({
-      limit: 20,
+      limit: 10,
     } as any),
     getRecommendedCreators({
       limit: 3,

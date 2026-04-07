@@ -18,7 +18,6 @@ export function AppHeader({
   action,
 }: AppHeaderProps) {
   const pathname = usePathname()
-  const [hasUnread, setHasUnread] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
 
   const nextParam = useMemo(
@@ -34,38 +33,27 @@ export function AppHeader({
     return href
   }
 
-  useEffect(() => {
-    async function fetchAuthAndUnread() {
-      try {
-        const res = await fetch("/api/notifications", {
-          cache: "no-store",
-        })
+useEffect(() => {
+  async function fetchAuth() {
+    try {
+      const res = await fetch("/api/notifications", {
+        method: "HEAD",
+        cache: "no-store",
+      })
 
-        if (!res.ok) {
-          setIsAuthenticated(false)
-          setHasUnread(false)
-          return
-        }
-
-        setIsAuthenticated(true)
-
-        const data = await res.json()
-        const unread = Array.isArray(data?.notifications)
-          ? data.notifications.some(
-              (notification: { isRead?: boolean }) =>
-                notification.isRead === false
-            )
-          : false
-
-        setHasUnread(unread)
-      } catch {
+      if (!res.ok) {
         setIsAuthenticated(false)
-        setHasUnread(false)
+        return
       }
-    }
 
-    fetchAuthAndUnread()
-  }, [])
+      setIsAuthenticated(true)
+    } catch {
+      setIsAuthenticated(false)
+    }
+  }
+
+  fetchAuth()
+}, [])
 
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-900/80 bg-zinc-950/90 backdrop-blur-xl">
