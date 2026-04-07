@@ -6,6 +6,8 @@ import { getProfileByUserId } from "@/modules/profile/server/get-profile-by-user
 import { getUserById } from "@/modules/user/server/get-user-by-id"
 import { getMyPosts } from "@/modules/post/server/get-my-posts"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
+import { ReportButton } from "@/modules/report/ui/ReportButton"
+
 
 type ProfileData = {
   id: string
@@ -180,6 +182,14 @@ export default async function ProfilePage() {
           <p className="mt-4 text-sm text-zinc-300">
             {profile.bio || "No bio yet"}
           </p>
+
+          <div className="mt-3">
+  <ReportButton
+    targetType="user"
+    targetId={profile.id}
+    pathname="/profile"
+  />
+</div>
         </section>
 
         {profile.isCreator && posts.length > 0 && (

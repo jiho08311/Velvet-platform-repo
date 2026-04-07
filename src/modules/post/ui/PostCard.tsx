@@ -528,7 +528,7 @@ export function PostCard({
                     <ReportButton
                       targetType="post"
                       targetId={postId}
-                      pathname={pathname}
+                  pathname={`/post/${postId}`}
                     />
                   </div>
                 ) : null}
@@ -602,7 +602,7 @@ export function PostCard({
                                 <ReportButton
                                   targetType="comment"
                                   targetId={comment.id}
-                                  pathname={pathname}
+                              pathname={`/post/${postId}`}
                                   currentUserId={currentUserId}
                                 />
                               </div>
