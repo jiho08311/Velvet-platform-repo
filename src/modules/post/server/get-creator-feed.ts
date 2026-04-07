@@ -3,6 +3,17 @@ import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed
 import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 import { checkSubscription } from "@/modules/subscription/server/check-subscription"
 
+type CreatorFeedPost = {
+  id: string
+  content: string | null
+  created_at: string
+  media: any[]
+  isLocked: boolean
+  likesCount: number
+  isLiked: boolean
+  commentsCount: number
+}
+
 type GetCreatorFeedInput = {
   creatorId: string
   userId?: string | null
@@ -57,7 +68,7 @@ function resolveMediaType(row: MediaRow): MediaType {
 export async function getCreatorFeed({
   creatorId,
   userId,
-}: GetCreatorFeedInput) {
+}: GetCreatorFeedInput): Promise<CreatorFeedPost[]> {
   const safeUserId =
     typeof userId === "string" && userId.trim().length > 0
       ? userId.trim()
@@ -156,6 +167,24 @@ export async function getCreatorFeed({
   const myLikeSet = new Set(
     (myLikeRows ?? []).map((row) => row.post_id)
   )
+// ✅ comments 추가
+const { data: commentRows, error: commentRowsError } = await supabaseAdmin
+  .from("comments")
+  .select("post_id")
+  .in("post_id", postIds)
+
+if (commentRowsError) {
+  throw commentRowsError
+}
+
+const commentCountMap = new Map<string, number>()
+
+for (const row of commentRows ?? []) {
+  commentCountMap.set(
+    row.post_id,
+    (commentCountMap.get(row.post_id) ?? 0) + 1
+  )
+}
 
   if (postIds.length === 0) {
     return resolvedPosts.map((post) => ({
@@ -163,6 +192,7 @@ export async function getCreatorFeed({
       media: [],
       likesCount: 0,
       isLiked: false,
+       commentsCount: 0, 
     }))
   }
 
@@ -217,6 +247,7 @@ export async function getCreatorFeed({
         // ✅ 추가
         likesCount: likeCountMap.get(post.id) ?? 0,
         isLiked: myLikeSet.has(post.id),
+        commentsCount: commentCountMap.get(post.id) ?? 0,
       }
     })
   )
