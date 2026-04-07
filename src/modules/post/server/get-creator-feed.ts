@@ -8,6 +8,7 @@ type CreatorFeedPost = {
   content: string | null
   created_at: string
   media: any[]
+  price: number
   isLocked: boolean
   likesCount: number
   isLiked: boolean
