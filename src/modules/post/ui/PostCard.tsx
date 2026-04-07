@@ -125,7 +125,7 @@ export function PostCard({
   const [commentInput, setCommentInput] = useState("")
   const [isCommentsLoading, setIsCommentsLoading] = useState(false)
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false)
-  const [showComments, setShowComments] = useState(true)
+  const [showComments, setShowComments] = useState(false)
   const [commentError, setCommentError] = useState<string | null>(null)
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null)
   const [expandedComments, setExpandedComments] = useState(false)
@@ -276,10 +276,6 @@ const [currentIndex, setCurrentIndex] = useState(0)
 
     await loadComments()
   }
-
-  useEffect(() => {
-    loadComments()
-  }, [postId, isLocked])
 
   useEffect(() => {
     if (!showComments) {
@@ -658,12 +654,17 @@ return (
                       ))}
 
                       {comments.length > 3 ? (
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            setExpandedComments((prev) => !prev)
-                          }}
+             <button
+  type="button"
+  onClick={async (event) => {
+    event.stopPropagation()
+
+    if (!showComments && comments.length === 0) {
+      await loadComments()
+    }
+
+    setShowComments((prev) => !prev)
+  }}
                           className="text-sm text-zinc-400 hover:text-white"
                         >
                           {expandedComments
