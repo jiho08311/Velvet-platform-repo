@@ -306,7 +306,17 @@ const [currentIndex, setCurrentIndex] = useState(0)
     }
   }, [primaryVideo])
 
-  
+  useEffect(() => {
+  if (!videoRef.current) return
+
+  const video = videoRef.current
+
+  if (isVideoVisible) {
+    video.play().catch(() => {})
+  } else {
+    video.pause()
+  }
+}, [isVideoVisible])
 
   function handleCardClick() {
     return
@@ -325,7 +335,11 @@ const [currentIndex, setCurrentIndex] = useState(0)
       loop
       playsInline
       autoPlay
-      controls
+     onClick={(e) => {
+    const video = e.currentTarget
+    if (video.paused) video.play()
+    else video.pause()
+  }}
       preload="metadata"
       onLoadedData={() => setIsVideoReady(true)}
       className={`h-full w-full object-cover transition-opacity duration-300 ${
