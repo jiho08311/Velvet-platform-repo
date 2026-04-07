@@ -316,22 +316,24 @@ const [currentIndex, setCurrentIndex] = useState(0)
     const mediaUrl = item.url?.trim() ?? ""
     if (!mediaUrl) return null
 
-    if (item.type === "video") {
-      return (
-        <video
-          ref={videoRef}
-          src={mediaUrl}
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          onLoadedData={() => setIsVideoReady(true)}
-          className={`h-full w-full object-cover transition-opacity duration-300 ${
-            isVideoReady ? "opacity-100" : "opacity-0"
-          }`}
-        />
-      )
-    }
+  if (item.type === "video") {
+  return (
+    <video
+      ref={videoRef}
+      src={mediaUrl}
+      muted
+      loop
+      playsInline
+      autoPlay
+      controls
+      preload="metadata"
+      onLoadedData={() => setIsVideoReady(true)}
+      className={`h-full w-full object-cover transition-opacity duration-300 ${
+        isVideoReady ? "opacity-100" : "opacity-0"
+      }`}
+    />
+  )
+}
 
     if (item.type === "audio") {
       return (
