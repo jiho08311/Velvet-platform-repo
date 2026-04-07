@@ -132,7 +132,7 @@ export function PostCard({
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [isVideoVisible, setIsVideoVisible] = useState(false)
   const [isVideoReady, setIsVideoReady] = useState(false)
-
+const [currentIndex, setCurrentIndex] = useState(0)
   const creatorName = creator.displayName ?? creator.username
   const creatorInitial = creatorName.slice(0, 1).toUpperCase()
   const previewTitle = getPreviewTitle(text)
@@ -385,7 +385,7 @@ export function PostCard({
       const item = resolvedMedia[0]
 
       return (
-        <div className="overflow-hidden rounded-2xl bg-zinc-950">
+        <div className="overflow-hidden bg-black">
           <div className="aspect-[4/5] w-full overflow-hidden">
             {renderSingleMedia(item, "Post media")}
           </div>
@@ -393,18 +393,47 @@ export function PostCard({
       )
     }
 
-    return (
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-zinc-950">
-        {resolvedMedia.slice(0, 2).map((item, index) => (
-          <div
-            key={`${item.url}-${index}`}
-            className="aspect-square overflow-hidden bg-zinc-900"
-          >
+
+
+function handleScroll(e: React.UIEvent<HTMLDivElement>) {
+  const scrollLeft = e.currentTarget.scrollLeft
+  const width = e.currentTarget.clientWidth
+  const index = Math.round(scrollLeft / width)
+  setCurrentIndex(index)
+}
+
+return (
+  <div className="relative">
+    {/* 🔥 swipe container */}
+    <div
+      onScroll={handleScroll}
+      className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+    >
+      {resolvedMedia.map((item, index) => (
+        <div
+          key={`${item.url}-${index}`}
+          className="min-w-full snap-center"
+        >
+          <div className="aspect-[4/5] w-full overflow-hidden bg-zinc-900">
             {renderSingleMedia(item, `Post media ${index + 1}`)}
           </div>
-        ))}
-      </div>
-    )
+        </div>
+      ))}
+    </div>
+
+    {/* 🔥 dot indicator */}
+    <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1">
+      {resolvedMedia.map((_, i) => (
+        <div
+          key={i}
+          className={`h-1.5 w-1.5 rounded-full ${
+            i === currentIndex ? "bg-white" : "bg-white/40"
+          }`}
+        />
+      ))}
+    </div>
+  </div>
+)
   }
 
   function renderLockedAction() {
@@ -442,9 +471,9 @@ export function PostCard({
   return (
     <article
       onClick={handleCardClick}
-      className="group overflow-hidden rounded-[32px] border border-zinc-800 bg-zinc-900/70 p-4 transition-all duration-200 hover:border-zinc-700 hover:shadow-xl sm:p-5"
+      className="group w-full bg-black"
     >
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
         <button
           type="button"
           onClick={handleCreatorClick}
@@ -454,7 +483,7 @@ export function PostCard({
             <img
               src={creator.avatarUrl}
               alt={creatorName}
-              className="h-11 w-11 rounded-full object-cover"
+              className="flex h-11 w-11 items-center justify-center bg-zinc-800 text-sm font-semibold text-white"
             />
           ) : (
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-white">
@@ -469,7 +498,7 @@ export function PostCard({
           </div>
         </button>
 
-        <div className="space-y-4">
+        <div className="space-y-2 px-1">
           {isLocked ? (
             <LockedPostCard
               previewText={text}
@@ -504,7 +533,7 @@ export function PostCard({
                     type="button"
                     onClick={handleLike}
                     disabled={isLikeLoading}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 px-3 py-1.5 text-xs text-zinc-400 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center gap-1.5 px-0 py-1 text-xs text-zinc-400 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <span aria-hidden="true">{liked ? "❤️" : "🤍"}</span>
                     <span>{count}</span>
@@ -516,7 +545,7 @@ export function PostCard({
                       event.stopPropagation()
                       setShowComments((prev) => !prev)
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 px-3 py-1.5 text-xs text-zinc-400 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-white"
+                    className="inline-flex items-center gap-1.5 px-0 py-1 text-xs text-zinc-400 transition hover:text-white"
                   >
                     <span aria-hidden="true">💬</span>
                     <span>{comments.length}</span>
@@ -537,7 +566,7 @@ export function PostCard({
 
               {showComments ? (
                 <div
-                  className="space-y-3 border-t border-zinc-800 pt-3"
+                  className="space-y-3 pt-3"
                   onClick={(event) => event.stopPropagation()}
                 >
                   <form onSubmit={handleCommentSubmit}>
@@ -545,7 +574,7 @@ export function PostCard({
                       value={commentInput}
                       onChange={(event) => setCommentInput(event.target.value)}
                       placeholder="Write a comment..."
-                      className="w-full rounded-full border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-white outline-none placeholder:text-zinc-500 focus:border-zinc-700"
+                      className="w-full border-b border-zinc-800 bg-black px-0 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
                       disabled={isCommentSubmitting}
                     />
                   </form>
@@ -559,7 +588,7 @@ export function PostCard({
                       {[1, 2, 3].map((i) => (
                         <div
                           key={i}
-                          className="animate-pulse rounded-2xl border border-zinc-800 bg-zinc-900/60 px-3 py-3"
+                          className="animate-pulse px-0 py-3"
                         >
                           <div className="mb-2 h-3 w-1/3 rounded bg-zinc-700" />
                           <div className="h-3 w-2/3 rounded bg-zinc-700" />
@@ -573,7 +602,7 @@ export function PostCard({
                       {visibleComments.map((comment) => (
                         <div
                           key={comment.id}
-                          className="rounded-2xl border border-zinc-800 bg-zinc-950/70 px-3.5 py-3"
+                          className="bg-black px-1 py-2"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <p className="min-w-0 text-sm leading-6 text-zinc-300">
@@ -593,7 +622,7 @@ export function PostCard({
                                     Boolean(comment.is_liked)
                                   )
                                 }
-                                className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
+                                className="px-0 py-1 text-sm font-medium text-zinc-400 transition hover:text-white"
                               >
                                 {comment.is_liked ? "❤️" : "🤍"}{" "}
                                 {comment.likes_count ?? 0}
@@ -616,7 +645,7 @@ export function PostCard({
                                     handleDeleteComment(event, comment.id)
                                   }
                                   disabled={deletingCommentId === comment.id}
-                                  className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+                                  className="px-0 py-1 text-sm font-medium text-zinc-400 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                   {deletingCommentId === comment.id
                                     ? "Deleting..."

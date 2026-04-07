@@ -99,21 +99,21 @@ export async function getMyPosts(
     }
   }
 
-let postQuery = supabaseAdmin
-  .from("posts")
-  .select(
-    "id, creator_id, content, status, visibility, created_at, published_at"
-  )
-  .eq("creator_id", creator.id)
-  .is("deleted_at", null)
+  let postQuery = supabaseAdmin
+    .from("posts")
+    .select(
+      "id, creator_id, content, status, visibility, created_at, published_at"
+    )
+    .eq("creator_id", creator.id)
+    .is("deleted_at", null)
 
-if (input.status) {
-  postQuery = postQuery.eq("status", input.status)
-}
+  if (input.status) {
+    postQuery = postQuery.eq("status", input.status)
+  }
 
-postQuery = postQuery
-  .order("created_at", { ascending: false })
-  .limit(limit)
+  postQuery = postQuery
+    .order("created_at", { ascending: false })
+    .limit(limit)
 
   const { data: posts, error: postsError } = await postQuery
 
@@ -152,10 +152,10 @@ postQuery = postQuery
 
   const items = await Promise.all(
     (posts ?? []).map(async (post) => {
-      const previewRows = (mediaMap.get(post.id) ?? []).slice(0, 1)
+      const mediaRowsForPost = mediaMap.get(post.id) ?? []
 
       const media = await Promise.all(
-        previewRows.map(async (item) => {
+        mediaRowsForPost.map(async (item) => {
           const url = await createMediaSignedUrl({
             storagePath: item.storage_path,
             viewerUserId: creator.user_id,

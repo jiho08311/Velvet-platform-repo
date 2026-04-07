@@ -8,7 +8,6 @@ import { getMyPosts } from "@/modules/post/server/get-my-posts"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
 
-
 type ProfileData = {
   id: string
   displayName: string
@@ -116,11 +115,9 @@ export default async function ProfilePage() {
   const userId = getSessionUserId(session)
   if (!userId) redirect("/login")
 
-  // ✅ 먼저 creator 가져오기
   const creator = await getCreatorByUserId(userId)
   const creatorId = creator?.id
 
-  // ✅ 그 다음 posts
   const [profileData, userData, postResult] = await Promise.all([
     getProfileByUserId(userId),
     getUserById(userId),
@@ -148,28 +145,27 @@ export default async function ProfilePage() {
     <main className="min-h-screen bg-zinc-950 px-6 py-10 text-zinc-100">
       <div className="mx-auto max-w-4xl flex flex-col gap-8">
         <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-6">
-      <div className="flex justify-between items-center">
-  <div className="flex items-center gap-4">
-    {/* 🔥 avatar 추가 */}
-    <div className="h-16 w-16 overflow-hidden rounded-full bg-zinc-800">
-      {profile.avatarUrl ? (
-        <img
-          src={profile.avatarUrl}
-          alt={profile.displayName}
-          className="h-full w-full object-cover"
-        />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center text-lg font-semibold text-white">
-          {profile.displayName.slice(0, 1).toUpperCase()}
-        </div>
-      )}
-    </div>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 overflow-hidden rounded-full bg-zinc-800">
+                {profile.avatarUrl ? (
+                  <img
+                    src={profile.avatarUrl}
+                    alt={profile.displayName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-lg font-semibold text-white">
+                    {profile.displayName.slice(0, 1).toUpperCase()}
+                  </div>
+                )}
+              </div>
 
-    <div>
-      <h2 className="text-2xl">{profile.displayName}</h2>
-      <p className="text-sm text-zinc-400">@{profile.username}</p>
-    </div>
-  </div>
+              <div>
+                <h2 className="text-2xl">{profile.displayName}</h2>
+                <p className="text-sm text-zinc-400">@{profile.username}</p>
+              </div>
+            </div>
 
             <Link
               href="/profile/edit"
@@ -184,50 +180,57 @@ export default async function ProfilePage() {
           </p>
 
           <div className="mt-3">
-  <ReportButton
-    targetType="user"
-    targetId={profile.id}
-    pathname="/profile"
-     currentUserId={userId}
-  />
-</div>
+            <ReportButton
+              targetType="user"
+              targetId={profile.id}
+              pathname="/profile"
+              currentUserId={userId}
+            />
+          </div>
         </section>
 
         {profile.isCreator && posts.length > 0 && (
           <section className="grid grid-cols-3 gap-[2px] bg-zinc-900">
             {posts.map((post: MyPostListItem) => {
               const media = post.media?.[0]
+              const mediaCount = post.media?.length ?? 0
+              const extraMediaCount = mediaCount > 1 ? mediaCount - 1 : 0
 
               return (
-              <a
-  key={post.id}
-  href={`/post/${post.id}`}
-  className="aspect-square overflow-hidden bg-zinc-800"
->
-
-       {media?.url ? (
-  media.type === "video" ? (
-    <video
-      src={media.url}
-      autoPlay
-      muted
-      loop
-      playsInline
-      preload="metadata"
-      className="h-full w-full object-cover"
-    />
-  ) : (
-    <img
-      src={media.url}
-      alt=""
-      className="h-full w-full object-cover hover:opacity-90"
-    />
-  )
-) : (
+                <a
+                  key={post.id}
+                  href={`/post/${post.id}`}
+                  className="relative aspect-square overflow-hidden bg-zinc-800"
+                >
+                  {media?.url ? (
+                    media.type === "video" ? (
+                      <video
+                        src={media.url}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        preload="metadata"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <img
+                        src={media.url}
+                        alt=""
+                        className="h-full w-full object-cover hover:opacity-90"
+                      />
+                    )
+                  ) : (
                     <div className="flex h-full items-center justify-center text-xs text-zinc-500">
                       No media
                     </div>
                   )}
+
+                  {extraMediaCount > 0 ? (
+                    <div className="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
+                      +{extraMediaCount}
+                    </div>
+                  ) : null}
                 </a>
               )
             })}

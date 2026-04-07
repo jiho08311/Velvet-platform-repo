@@ -6,7 +6,8 @@ type ExplorePostGridItem = {
   creatorUsername: string
   creatorDisplayName: string | null
   imageUrl: string
-  mediaType?: "image" | "video"   // 🔥 추가
+  mediaType?: "image" | "video"
+  mediaCount?: number
 }
 
 type ExplorePostGridProps = {
@@ -39,22 +40,28 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
           className="group block overflow-hidden bg-zinc-900"
         >
           <div className="relative aspect-square overflow-hidden bg-zinc-950">
-           {post.mediaType === "video" ? (
-  <video
-    src={post.imageUrl}
-    autoPlay
-    muted
-    loop
-    playsInline
-    className="h-full w-full object-cover"
-  />
-) : (
-  <img
-    src={post.imageUrl}
-    alt={post.creatorDisplayName ?? post.creatorUsername}
-    className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.05]"
-  />
-)}
+            {post.mediaType === "video" ? (
+              <video
+                src={post.imageUrl}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <img
+                src={post.imageUrl}
+                alt={post.creatorDisplayName ?? post.creatorUsername}
+                className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.05]"
+              />
+            )}
+
+            {post.mediaCount && post.mediaCount > 1 ? (
+              <div className="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
+                +{post.mediaCount - 1}
+              </div>
+            ) : null}
 
             <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-2">
               <p className="truncate text-xs font-medium text-white">

@@ -49,7 +49,7 @@ export function ReportButton({
       <button
         type="button"
         onClick={handleClick}
-        className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800"
+        className="px-0 py-1 text-xs text-zinc-500 hover:text-white"
       >
         {open ? "Cancel report" : "Report"}
       </button>
@@ -57,7 +57,7 @@ export function ReportButton({
       {open ? (
         <form
           action={createReportAction}
-          className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4"
+          className="space-y-3 px-0 py-2"
         >
           <input type="hidden" name="targetType" value={targetType} />
           <input type="hidden" name="targetId" value={targetId} />
@@ -68,7 +68,7 @@ export function ReportButton({
             <select
               name="reason"
               required
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-white outline-none"
+             className="w-full border-b border-zinc-800 bg-black px-0 py-2 text-sm text-white outline-none"
               defaultValue=""
             >
               <option value="" disabled>
@@ -88,7 +88,7 @@ export function ReportButton({
               name="description"
               rows={3}
               placeholder="Add details"
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-500"
+className="w-full border-b border-zinc-800 bg-black px-0 py-2 text-sm text-white outline-none"
             />
           </div>
 

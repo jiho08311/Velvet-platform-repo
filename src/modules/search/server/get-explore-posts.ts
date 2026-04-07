@@ -9,6 +9,7 @@ export type ExplorePostItem = {
   creatorDisplayName: string | null
   imageUrl: string
   mediaType?: "image" | "video"
+  mediaCount: number  
   createdAt: string
 }
 
@@ -79,6 +80,13 @@ const { data: mediaRows, error: mediaError } = await supabaseAdmin
   .returns<MediaRow[]>()
 
   if (mediaError) throw mediaError
+  const mediaMap = new Map<string, MediaRow[]>()
+
+for (const media of mediaRows ?? []) {
+  const current = mediaMap.get(media.post_id) ?? []
+  current.push(media)
+  mediaMap.set(media.post_id, current)
+}
 
 const firstMediaMap = new Map<string, MediaRow>()
 
@@ -130,7 +138,8 @@ const filteredPosts = postsWithMedia.filter((post) =>
   return Promise.all(
     shuffledPosts.map(async (post) => {
       const creator = creatorMap.get(post.creator_id)
-    const media = firstMediaMap.get(post.id)
+const media = firstMediaMap.get(post.id)
+const mediaCount = (mediaMap.get(post.id) ?? []).length
 
       if (!creator || !media) {
         throw new Error("Invalid explore post data")
@@ -151,6 +160,7 @@ const filteredPosts = postsWithMedia.filter((post) =>
   creatorUsername: creator.username,
   creatorDisplayName: creator.display_name,
   imageUrl,
+  mediaCount,
   mediaType:
     media.type === "video" ? "video" : "image",
   createdAt: post.published_at ?? post.created_at,
