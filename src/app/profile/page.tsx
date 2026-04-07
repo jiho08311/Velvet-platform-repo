@@ -188,6 +188,7 @@ export default async function ProfilePage() {
     targetType="user"
     targetId={profile.id}
     pathname="/profile"
+     currentUserId={userId}
   />
 </div>
         </section>

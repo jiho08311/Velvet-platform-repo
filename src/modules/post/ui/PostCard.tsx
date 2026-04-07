@@ -529,6 +529,7 @@ export function PostCard({
                       targetType="post"
                       targetId={postId}
                   pathname={`/post/${postId}`}
+                   currentUserId={currentUserId}
                     />
                   </div>
                 ) : null}
