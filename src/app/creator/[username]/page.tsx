@@ -157,6 +157,7 @@ const posts = userId
               targetType="creator"
               targetId={creator.id}
               pathname={pathname}
+                currentUserId={userId ?? undefined}
             />
           </div>
         ) : null}
