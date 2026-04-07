@@ -70,8 +70,8 @@ const posts = userId
         isLocked: post.isLocked,
    lockReason: undefined,
         price: post.price ?? 0,
-        likesCount: 0,
-        commentsCount: 0,
+       likesCount: post.likesCount ?? 0,
+       commentsCount: post.commentsCount ?? 0,
         isLiked: false,
       })
     )

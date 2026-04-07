@@ -105,7 +105,7 @@ export async function getCreatorPage({
   const { data: commentRows } = await supabaseAdmin
     .from("comments")
     .select("post_id")
-    .eq("deleted_at", null)
+   .is("deleted_at", null)
     .in("post_id", postIds)
 
   const commentCountMap = new Map<string, number>()
