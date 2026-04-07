@@ -81,7 +81,7 @@ export default async function SignInPage() {
               </div>
 
               <p className="text-lg leading-8 text-white/85">
-                크리에이터가 되어보세요.
+                일상을 구독해보세요.
               </p>
             </div>
           </div>
