@@ -190,7 +190,7 @@ export default async function ProfilePage() {
         </section>
 
         {profile.isCreator && posts.length > 0 && (
-          <section className="grid grid-cols-3 gap-[2px] bg-zinc-900">
+          <section className="grid grid-cols-2 md:grid-cols-3 gap-[2px] bg-zinc-900">
             {posts.map((post: MyPostListItem) => {
               const media = post.media?.[0]
               const mediaCount = post.media?.length ?? 0
