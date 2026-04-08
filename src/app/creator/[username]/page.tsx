@@ -122,7 +122,7 @@ const posts = userId
             </div>
           </div>
 
-          <div className="hidden flex-col items-end gap-2 md:flex">
+          <div className="flex flex-col items-end gap-2 md:flex">
             {isOwner ? (
               <Link
                 href="/profile/edit"
