@@ -1,5 +1,5 @@
 "use client"
-
+import { MobileNavigation } from "@/app/_components/MobileNavigation"
 import { usePathname } from "next/navigation"
 import { AppHeader } from "@/app/_components/AppHeader"
 import { AppSidebar } from "@/app/_components/AppSidebar"
@@ -36,7 +36,7 @@ export function AppChrome({
    
 <AppHeader />
       <div className="mx-auto flex w-full max-w-[1600px]">
-       <div className="self-start">
+ <div className="hidden md:block self-start">
   <AppSidebar />
 </div>
 
@@ -46,7 +46,7 @@ export function AppChrome({
           </div>
         </main>
       </div>
-
+<MobileNavigation />
       <Footer />
     </div>
   )
