@@ -1,21 +1,12 @@
 "use client"
 
-import { useEffect, useRef } from "react"
-
 type SearchInputProps = {
   defaultValue?: string
 }
 
 export function SearchInput({ defaultValue }: SearchInputProps) {
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
-
   return (
     <input
-      ref={inputRef}
       type="text"
       name="q"
       defaultValue={defaultValue}
