@@ -3,18 +3,20 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
+import { Bell, Home, Mail, Search, User } from "lucide-react"
 
 type NavigationItem = {
   href: string
   label: string
+  icon: React.ComponentType<{ className?: string }>
 }
 
 const navigationItems: NavigationItem[] = [
-  { href: "/feed", label: "Feed" },
-  { href: "/search", label: "Search" },
-  { href: "/messages", label: "Messages" },
-  { href: "/notifications", label: "Alerts" },
-  { href: "/profile", label: "Profile" },
+  { href: "/feed", label: "Feed", icon: Home },
+  { href: "/search", label: "Search", icon: Search },
+  { href: "/messages", label: "Messages", icon: Mail },
+  { href: "/notifications", label: "Alerts", icon: Bell },
+  { href: "/profile", label: "Profile", icon: User },
 ]
 
 export function MobileNavigation() {
@@ -62,25 +64,28 @@ export function MobileNavigation() {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-900 bg-zinc-950/95 backdrop-blur-xl md:hidden">
-      <div className="mx-auto grid max-w-3xl grid-cols-5 gap-1 px-3 py-3">
+      <div className="mx-auto grid max-w-3xl grid-cols-5 gap-1 px-3 py-2">
         {navigationItems.map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(`${item.href}/`)
+
+          const Icon = item.icon
 
           return (
             <Link
               key={item.href}
               href={resolveHref(item.href)}
-              className={`relative flex min-h-[56px] items-center justify-center rounded-2xl px-2 text-center text-[11px] font-semibold transition ${
+              className={`relative flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-2xl px-2 text-center text-[10px] font-semibold transition ${
                 isActive
                   ? "bg-zinc-100 text-zinc-950"
                   : "text-zinc-500 hover:bg-zinc-900 hover:text-white"
               }`}
             >
-              {item.label}
+              <Icon className="h-5 w-5" />
+              <span>{item.label}</span>
 
               {item.href === "/notifications" && isAuthenticated && hasUnread ? (
-                <span className="absolute right-3 top-2 h-2 w-2 rounded-full bg-red-500" />
+                <span className="absolute right-4 top-2 h-2 w-2 rounded-full bg-red-500" />
               ) : null}
             </Link>
           )
