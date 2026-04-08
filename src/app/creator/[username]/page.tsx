@@ -232,7 +232,7 @@ const posts = userId
               </p>
             </div>
 
-            <div className="shrink-0 flex flex-col gap-2">
+     <div className="shrink-0 flex flex-col gap-2 w-full">
               <SubscribeButton
                 creatorId={creator.id}
                 creatorUserId={creator.userId}
