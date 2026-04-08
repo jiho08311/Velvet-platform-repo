@@ -76,13 +76,19 @@ export function MobileNavigation() {
               key={item.href}
               href={resolveHref(item.href)}
               className={`relative flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-2xl px-2 text-center text-[10px] font-semibold transition ${
-                isActive
-                  ? "bg-zinc-100 text-zinc-950"
-                  : "text-zinc-500 hover:bg-zinc-900 hover:text-white"
+             isActive
+  ? "bg-zinc-100"
+  : "text-zinc-500 hover:bg-zinc-900 hover:text-white"
               }`}
             >
-              <Icon className="h-5 w-5" />
-              <span>{item.label}</span>
+           <Icon
+  className={`h-5 w-5 ${
+    isActive ? "text-zinc-950" : "text-zinc-500"
+  }`}
+/>
+            <span className={isActive ? "text-zinc-950" : "text-zinc-500"}>
+  {item.label}
+</span>
 
               {item.href === "/notifications" && isAuthenticated && hasUnread ? (
                 <span className="absolute right-4 top-2 h-2 w-2 rounded-full bg-red-500" />
