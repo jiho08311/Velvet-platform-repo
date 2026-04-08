@@ -283,7 +283,8 @@ export default function SubscribeButton({
     <button
       onClick={handleSubscribe}
       disabled={loading}
-      className={`${buttonBase} w-full bg-[#C2185B] text-white`}
+   
+      className={`${buttonBase} w-full bg-[#C2185B] text-white whitespace-nowrap`}
     >
       {loading ? "처리 중..." : "구독하기"}
     </button>
