@@ -59,7 +59,7 @@ export function LockedPostCard({
               </p>
             ) : (
               <p className="mt-2 text-sm leading-6 text-zinc-200">
-                이용권 구매 후 전체 내용을 볼 수 있습니다.
+                구독자만 볼 수 있는 콘텐츠입니다.
               </p>
             )}
 
