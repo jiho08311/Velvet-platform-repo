@@ -11,6 +11,10 @@ type ReportButtonProps = {
   targetId: string
   pathname: string
   currentUserId?: string
+
+  defaultOpen?: boolean
+  hideTrigger?: boolean
+  onClose?: () => void
 }
 
 const REASONS = [
@@ -29,8 +33,11 @@ export function ReportButton({
   targetId,
   pathname,
   currentUserId,
+  defaultOpen = false,
+  hideTrigger = false,
+  onClose,
 }: ReportButtonProps) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(defaultOpen)
   const router = useRouter()
 
   const isGuest = !currentUserId
@@ -44,15 +51,22 @@ export function ReportButton({
     setOpen((prev) => !prev)
   }
 
+  function handleClose() {
+    setOpen(false)
+    onClose?.()
+  }
+
   return (
     <div className="space-y-2">
-      <button
-        type="button"
-        onClick={handleClick}
-        className="px-0 py-1 text-xs text-zinc-500 hover:text-white"
-      >
-        {open ? "Cancel report" : "Report"}
-      </button>
+      {!hideTrigger ? (
+        <button
+          type="button"
+          onClick={handleClick}
+          className="px-0 py-1 text-xs text-zinc-500 hover:text-white"
+        >
+          {open ? "Cancel report" : "Report"}
+        </button>
+      ) : null}
 
       {open ? (
         <form
@@ -63,12 +77,23 @@ export function ReportButton({
           <input type="hidden" name="targetId" value={targetId} />
           <input type="hidden" name="pathname" value={pathname} />
 
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-white">Report</span>
+            <button
+              type="button"
+              onClick={handleClose}
+              className="text-xs text-zinc-400 hover:text-white"
+            >
+              Cancel
+            </button>
+          </div>
+
           <div className="space-y-1">
             <label className="text-xs text-zinc-400">Reason</label>
             <select
               name="reason"
               required
-             className="w-full border-b border-zinc-800 bg-black px-0 py-2 text-sm text-white outline-none"
+              className="w-full border-b border-zinc-800 bg-black px-0 py-2 text-sm text-white outline-none"
               defaultValue=""
             >
               <option value="" disabled>
@@ -88,7 +113,7 @@ export function ReportButton({
               name="description"
               rows={3}
               placeholder="Add details"
-className="w-full border-b border-zinc-800 bg-black px-0 py-2 text-sm text-white outline-none"
+              className="w-full border-b border-zinc-800 bg-black px-0 py-2 text-sm text-white outline-none"
             />
           </div>
 

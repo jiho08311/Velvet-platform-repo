@@ -7,6 +7,7 @@ import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
 
 import { LockedPostCard } from "./LockedPostCard"
+import { PostMoreMenu } from "./PostMoreMenu"
 
 type MediaItem = {
   url: string
@@ -40,8 +41,7 @@ type PostCardProps = {
   mediaThumbnailUrls?: string[]
   media?: MediaItem[]
   isLocked?: boolean
-  lockReason?: "none" | "subscription" 
-
+  lockReason?: "none" | "subscription"
   creatorId: string
   creatorUserId?: string
   currentUserId?: string
@@ -107,7 +107,6 @@ export function PostCard({
   media = [],
   isLocked = false,
   lockReason = "none",
-
   creatorId,
   creatorUserId,
   currentUserId,
@@ -131,10 +130,12 @@ export function PostCard({
   const [commentError, setCommentError] = useState<string | null>(null)
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null)
   const [expandedComments, setExpandedComments] = useState(false)
+
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [isVideoVisible, setIsVideoVisible] = useState(false)
   const [isVideoReady, setIsVideoReady] = useState(false)
-const [currentIndex, setCurrentIndex] = useState(0)
+  const [currentIndex, setCurrentIndex] = useState(0)
+
   const creatorName = creator.displayName ?? creator.username
   const creatorInitial = creatorName.slice(0, 1).toUpperCase()
   const previewTitle = getPreviewTitle(text)
@@ -149,7 +150,6 @@ const [currentIndex, setCurrentIndex] = useState(0)
         }))
 
   const primaryVideo = resolvedMedia.find((item) => item.type === "video")
-
   const visibleComments = expandedComments ? comments : comments.slice(0, 3)
 
   async function handleLike(event: React.MouseEvent<HTMLButtonElement>) {
@@ -307,16 +307,16 @@ const [currentIndex, setCurrentIndex] = useState(0)
   }, [primaryVideo])
 
   useEffect(() => {
-  if (!videoRef.current) return
+    if (!videoRef.current) return
 
-  const video = videoRef.current
+    const video = videoRef.current
 
-  if (isVideoVisible) {
-    video.play().catch(() => {})
-  } else {
-    video.pause()
-  }
-}, [isVideoVisible])
+    if (isVideoVisible) {
+      video.play().catch(() => {})
+    } else {
+      video.pause()
+    }
+  }, [isVideoVisible])
 
   function handleCardClick() {
     return
@@ -326,28 +326,28 @@ const [currentIndex, setCurrentIndex] = useState(0)
     const mediaUrl = item.url?.trim() ?? ""
     if (!mediaUrl) return null
 
-  if (item.type === "video") {
-  return (
-    <video
-      ref={videoRef}
-      src={mediaUrl}
-      muted
-      loop
-      playsInline
-      autoPlay
-     onClick={(e) => {
-    const video = e.currentTarget
-    if (video.paused) video.play()
-    else video.pause()
-  }}
-      preload="metadata"
-      onLoadedData={() => setIsVideoReady(true)}
-      className={`h-full w-full object-cover transition-opacity duration-300 ${
-        isVideoReady ? "opacity-100" : "opacity-0"
-      }`}
-    />
-  )
-}
+    if (item.type === "video") {
+      return (
+        <video
+          ref={videoRef}
+          src={mediaUrl}
+          muted
+          loop
+          playsInline
+          autoPlay
+          onClick={(event) => {
+            const video = event.currentTarget
+            if (video.paused) video.play()
+            else video.pause()
+          }}
+          preload="metadata"
+          onLoadedData={() => setIsVideoReady(true)}
+          className={`h-full w-full object-cover transition-opacity duration-300 ${
+            isVideoReady ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      )
+    }
 
     if (item.type === "audio") {
       return (
@@ -384,6 +384,13 @@ const [currentIndex, setCurrentIndex] = useState(0)
     )
   }
 
+  function handleScroll(event: React.UIEvent<HTMLDivElement>) {
+    const scrollLeft = event.currentTarget.scrollLeft
+    const width = event.currentTarget.clientWidth
+    const index = Math.round(scrollLeft / width)
+    setCurrentIndex(index)
+  }
+
   function renderMedia() {
     if (resolvedMedia.length === 0) return null
 
@@ -399,47 +406,36 @@ const [currentIndex, setCurrentIndex] = useState(0)
       )
     }
 
-
-
-function handleScroll(e: React.UIEvent<HTMLDivElement>) {
-  const scrollLeft = e.currentTarget.scrollLeft
-  const width = e.currentTarget.clientWidth
-  const index = Math.round(scrollLeft / width)
-  setCurrentIndex(index)
-}
-
-return (
-  <div className="relative">
-    {/* 🔥 swipe container */}
-    <div
-      onScroll={handleScroll}
-      className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
-    >
-      {resolvedMedia.map((item, index) => (
+    return (
+      <div className="relative">
         <div
-          key={`${item.url}-${index}`}
-          className="min-w-full snap-center"
+          onScroll={handleScroll}
+          className="flex snap-x snap-mandatory overflow-x-auto scrollbar-hide"
         >
-          <div className="aspect-[4/5] w-full overflow-hidden bg-zinc-900">
-            {renderSingleMedia(item, `Post media ${index + 1}`)}
-          </div>
+          {resolvedMedia.map((item, index) => (
+            <div
+              key={`${item.url}-${index}`}
+              className="min-w-full snap-center"
+            >
+              <div className="aspect-[4/5] w-full overflow-hidden bg-zinc-900">
+                {renderSingleMedia(item, `Post media ${index + 1}`)}
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
 
-    {/* 🔥 dot indicator */}
-    <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1">
-      {resolvedMedia.map((_, i) => (
-        <div
-          key={i}
-          className={`h-1.5 w-1.5 rounded-full ${
-            i === currentIndex ? "bg-white" : "bg-white/40"
-          }`}
-        />
-      ))}
-    </div>
-  </div>
-)
+        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1">
+          {resolvedMedia.map((_, index) => (
+            <div
+              key={index}
+              className={`h-1.5 w-1.5 rounded-full ${
+                index === currentIndex ? "bg-white" : "bg-white/40"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    )
   }
 
   function renderLockedAction() {
@@ -457,7 +453,6 @@ return (
       )
     }
 
-
     return null
   }
 
@@ -469,8 +464,8 @@ return (
     return comment.profiles?.username ?? "user"
   }
 
-  function handleCreatorClick(e: React.MouseEvent) {
-    e.stopPropagation()
+  function handleCreatorClick(event: React.MouseEvent) {
+    event.stopPropagation()
     router.push(`/creator/${creator.username}`)
   }
 
@@ -480,29 +475,41 @@ return (
       className="group w-full bg-black"
     >
       <div className="flex flex-col gap-2">
-        <button
-          type="button"
-          onClick={handleCreatorClick}
-          className="flex items-center gap-3 text-left"
-        >
-          {creator.avatarUrl ? (
-            <img
-              src={creator.avatarUrl}
-              alt={creatorName}
-              className="flex h-11 w-11 items-center justify-center bg-zinc-800 text-sm font-semibold text-white"
-            />
-          ) : (
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-white">
-              {creatorInitial}
-            </div>
-          )}
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={handleCreatorClick}
+            className="flex items-center gap-3 text-left"
+          >
+            {creator.avatarUrl ? (
+              <img
+                src={creator.avatarUrl}
+                alt={creatorName}
+                className="flex h-11 w-11 items-center justify-center bg-zinc-800 text-sm font-semibold text-white"
+              />
+            ) : (
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-white">
+                {creatorInitial}
+              </div>
+            )}
 
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-white">
-              {creatorName}
-            </p>
-          </div>
-        </button>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-white">
+                {creatorName}
+              </p>
+            </div>
+          </button>
+
+          {postId ? (
+            <div onClick={(event) => event.stopPropagation()}>
+              <PostMoreMenu
+                postId={postId}
+                pathname={pathname}
+                currentUserId={currentUserId}
+              />
+            </div>
+          ) : null}
+        </div>
 
         <div className="space-y-2 px-1">
           {isLocked ? (
@@ -510,7 +517,6 @@ return (
               previewText={text}
               createdAt={createdAt}
               previewThumbnailUrl={resolvedMedia[0]?.url ?? null}
-          
               action={renderLockedAction()}
             />
           ) : (
@@ -545,35 +551,24 @@ return (
                     <span>{count}</span>
                   </button>
 
-<button
-  type="button"
-  onClick={(event) => {
-    event.stopPropagation()
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation()
 
-    const nextShow = !showComments
-    setShowComments(nextShow)
+                      const nextShow = !showComments
+                      setShowComments(nextShow)
 
-    if (nextShow && comments.length === 0) {
-      loadComments()
-    }
-  }}
-  className="inline-flex items-center gap-1.5 px-0 py-1 text-xs text-zinc-400 transition hover:text-white"
->
-  <span aria-hidden="true">💬</span>
-<span>{commentsCount || comments.length}</span>
-</button>
+                      if (nextShow && comments.length === 0) {
+                        loadComments()
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 px-0 py-1 text-xs text-zinc-400 transition hover:text-white"
+                  >
+                    <span aria-hidden="true">💬</span>
+                    <span>{commentsCount || comments.length}</span>
+                  </button>
                 </div>
-
-                {postId ? (
-                  <div onClick={(e) => e.stopPropagation()}>
-                    <ReportButton
-                      targetType="post"
-                      targetId={postId}
-                  pathname={`/post/${postId}`}
-                   currentUserId={currentUserId}
-                    />
-                  </div>
-                ) : null}
               </div>
 
               {showComments ? (
@@ -597,9 +592,9 @@ return (
 
                   {isCommentsLoading ? (
                     <div className="space-y-2">
-                      {[1, 2, 3].map((i) => (
+                      {[1, 2, 3].map((index) => (
                         <div
-                          key={i}
+                          key={index}
                           className="animate-pulse px-0 py-3"
                         >
                           <div className="mb-2 h-3 w-1/3 rounded bg-zinc-700" />
@@ -644,7 +639,7 @@ return (
                                 <ReportButton
                                   targetType="comment"
                                   targetId={comment.id}
-                              pathname={`/post/${postId}`}
+                                  pathname={`/post/${postId}`}
                                   currentUserId={currentUserId}
                                 />
                               </div>
@@ -668,20 +663,21 @@ return (
                           </div>
                         </div>
                       ))}
-{comments.length > 3 ? (
-  <button
-    type="button"
-    onClick={(event) => {
-      event.stopPropagation()
-      setExpandedComments((prev) => !prev)
-    }}
-    className="text-sm text-zinc-400 hover:text-white"
-  >
-    {expandedComments
-      ? "Hide comments"
-      : `View ${comments.length - 3} more comments`}
-  </button>
-) : null}
+
+                      {comments.length > 3 ? (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            setExpandedComments((prev) => !prev)
+                          }}
+                          className="text-sm text-zinc-400 hover:text-white"
+                        >
+                          {expandedComments
+                            ? "Hide comments"
+                            : `View ${comments.length - 3} more comments`}
+                        </button>
+                      ) : null}
                     </div>
                   )}
                 </div>

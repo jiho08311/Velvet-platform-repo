@@ -32,13 +32,7 @@ export default async function NewPostPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-6">
-      <h1 className="mb-2 text-2xl font-semibold text-zinc-900">
-        Create new post
-      </h1>
-
-      <p className="mb-6 text-sm text-zinc-500">
-        Publish with text, media, or both.
-      </p>
+    
 
       <CreatePostComposer creatorId={creator.id} />
     </main>
