@@ -135,7 +135,7 @@ export default async function PostDetailPage({
 
   if (!post) {
     return (
-      <main className="min-h-screen bg-zinc-950 px-4 py-8 text-white sm:px-6 sm:py-10">
+     <main className="min-h-screen bg-zinc-950 px-0 py-8 text-white sm:px-6 sm:py-10">
         <div className="mx-auto max-w-3xl">
           <EmptyState
             title="Post not found"
@@ -154,7 +154,7 @@ export default async function PostDetailPage({
   const shouldAutoReloadOnce = !isLocked && post.media.length === 0
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-4 py-8 text-white sm:px-6 sm:py-10">
+   <main className="min-h-screen bg-zinc-950 px-0 py-8  text-white sm:px-6 sm:py-10">
       {shouldAutoReloadOnce ? (
         <script
           dangerouslySetInnerHTML={{
