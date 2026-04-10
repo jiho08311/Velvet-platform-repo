@@ -8,7 +8,7 @@ export function FeedListSkeleton({
   count = 4,
 }: FeedListSkeletonProps) {
   return (
-    <section className="mx-auto flex w-full max-w-3xl flex-col gap-4">
+    <section className="flex w-full flex-col gap-4">
       {Array.from({ length: count }).map((_, index) => (
         <SkeletonCard
           key={index}
