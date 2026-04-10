@@ -44,7 +44,7 @@ export function FeedList({
   }
 
   return (
-    <section className="mx-auto flex w-full max-w-3xl flex-col gap-4">
+    <section className="flex w-full flex-col gap-4">
       {posts.map((post) => (
         <PostCard
           key={post.id}
