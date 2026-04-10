@@ -559,266 +559,259 @@ export function PostCard({
     router.push(`/creator/${creator.username}`)
   }
 
+  const textGroups = groupedBlocks.filter(
+    (group): group is Extract<RenderGroup, { type: "text" }> => group.type === "text"
+  )
+
+  const mediaGroups = groupedBlocks.filter(
+    (group): group is Extract<RenderGroup, { type: "media" }> => group.type === "media"
+  )
+
   return (
- <article
-  onClick={handleCardClick}
-  className="group w-full"
->
-      <>
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={handleCreatorClick}
-            className="flex items-center gap-3 text-left"
-          >
-            {creator.avatarUrl ? (
-              <img
-                src={creator.avatarUrl}
-                alt={creatorName}
-                className="flex h-11 w-11 items-center justify-center bg-zinc-800 text-sm font-semibold text-white"
-              />
-            ) : (
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-white">
-                {creatorInitial}
-              </div>
-            )}
-
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-white">
-                {creatorName}
-              </p>
-            </div>
-          </button>
-
-          {postId ? (
-            <div onClick={(event) => event.stopPropagation()}>
-              <PostMoreMenu
-                postId={postId}
-                pathname={pathname}
-                currentUserId={currentUserId}
-              />
-            </div>
-          ) : null}
-        </div>
-
- <>
-          {isLocked ? (
-            <LockedPostCard
-              previewText={blockText}
-              createdAt={createdAt}
-              previewThumbnailUrl={blockMedia[0]?.url ?? null}
-              action={renderLockedAction()}
+    <article onClick={handleCardClick} className="group w-full">
+      <div className="flex items-center justify-between px-4">
+        <button
+          type="button"
+          onClick={handleCreatorClick}
+          className="flex items-center gap-3 text-left"
+        >
+          {creator.avatarUrl ? (
+            <img
+              src={creator.avatarUrl}
+              alt={creatorName}
+              className="flex h-11 w-11 items-center justify-center bg-zinc-800 text-sm font-semibold text-white"
             />
           ) : (
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-white">
+              {creatorInitial}
+            </div>
+          )}
+
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-white">
+              {creatorName}
+            </p>
+          </div>
+        </button>
+
+        {postId ? (
+          <div onClick={(event) => event.stopPropagation()}>
+            <PostMoreMenu
+              postId={postId}
+              pathname={pathname}
+              currentUserId={currentUserId}
+            />
+          </div>
+        ) : null}
+      </div>
+
+      {isLocked ? (
+        <div className="mt-2">
+          <LockedPostCard
+            previewText={blockText}
+            createdAt={createdAt}
+            previewThumbnailUrl={blockMedia[0]?.url ?? null}
+            action={renderLockedAction()}
+          />
+        </div>
+      ) : (
+        <>
+          {hasBlocks ? (
             <>
-          {blocks.length > 0 ? (
-  <>
-                  {groupedBlocks.map((group, index) => {
-                    if (group.type === "text") {
-                      return (
-                        <p
-                          key={group.block.id}
-                          className="whitespace-pre-wrap text-sm leading-6 text-zinc-400"
-                        >
-                          {group.block.content}
-                        </p>
-                      )
-                    }
-
-                    if (group.mediaItems.length === 0) {
-                      const hasVideo = group.blocks.some(
-                        (block) => block.type === "video"
-                      )
-
-                      return (
-                 <div
-  key={`media-group-${index}`}
-  className="flex min-h-[220px] items-center justify-center bg-zinc-900 text-sm text-zinc-500"
->
-                          {hasVideo ? "Video is processing..." : "Media not available"}
-                        </div>
-                      )
-                    }
-
-                    return (
-                     <div
-  key={`media-group-${index}`}
-  className="overflow-hidden"
->
-  {renderMedia(group.mediaItems)}
-</div>
-                    )
-                  })}
-                </>
-              ) : (
-                <>
-                  <div className="space-y-2">
-                    <p className="line-clamp-2 text-base font-semibold leading-7 text-white sm:text-lg">
-                      {previewTitle}
-                    </p>
-
-                    {previewBody ? (
-                      <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-zinc-400">
-                        {previewBody}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  {renderMedia()}
-                </>
-              )}
-
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <p className="text-xs text-zinc-500">
-                    {formatPostDate(createdAt)}
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={handleLike}
-                    disabled={isLikeLoading}
-                    className="inline-flex items-center gap-1.5 px-0 py-1 text-xs text-zinc-400 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <span aria-hidden="true">{liked ? "❤️" : "🤍"}</span>
-                    <span>{count}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation()
-
-                      const nextShow = !showComments
-                      setShowComments(nextShow)
-
-                      if (nextShow && comments.length === 0) {
-                        loadComments()
-                      }
-                    }}
-                    className="inline-flex items-center gap-1.5 px-0 py-1 text-xs text-zinc-400 transition hover:text-white"
-                  >
-                    <span aria-hidden="true">💬</span>
-                    <span>{commentsCount || comments.length}</span>
-                  </button>
-                </div>
-              </div>
-
-              {showComments ? (
-                <div
-                  className="space-y-3 pt-3"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  <form onSubmit={handleCommentSubmit}>
-                    <input
-                      value={commentInput}
-                      onChange={(event) => setCommentInput(event.target.value)}
-                      placeholder="Write a comment..."
-                      className="w-full border-b border-zinc-800 bg-black px-0 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
-                      disabled={isCommentSubmitting}
-                    />
-                  </form>
-
-                  {commentError ? (
-                    <p className="text-xs text-red-500">{commentError}</p>
-                  ) : null}
-
-                  {isCommentsLoading ? (
-                    <div className="space-y-2">
-                      {[1, 2, 3].map((index) => (
-                        <div
-                          key={index}
-                          className="animate-pulse px-0 py-3"
-                        >
-                          <div className="mb-2 h-3 w-1/3 rounded bg-zinc-700" />
-                          <div className="h-3 w-2/3 rounded bg-zinc-700" />
-                        </div>
-                      ))}
-                    </div>
-                  ) : comments.length === 0 ? (
-                    <p className="text-xs text-zinc-500">No comments yet.</p>
+              {mediaGroups.map((group, index) => (
+                <div key={`media-group-${index}`} className="mt-2 overflow-hidden">
+                  {group.mediaItems.length > 0 ? (
+                    renderMedia(group.mediaItems)
                   ) : (
-                    <div className="space-y-2">
-                      {visibleComments.map((comment) => (
-                        <div
-                          key={comment.id}
-                          className="bg-black px-1 py-2"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <p className="min-w-0 text-sm leading-6 text-zinc-300">
-                              <span className="mr-2 text-sm font-semibold text-white">
-                                @{getCommentUsername(comment)}
-                              </span>
-                              {comment.content}
-                            </p>
-
-                            <div className="flex shrink-0 items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={(event) =>
-                                  handleLikeComment(
-                                    event,
-                                    comment.id,
-                                    Boolean(comment.is_liked)
-                                  )
-                                }
-                                className="px-0 py-1 text-sm font-medium text-zinc-400 transition hover:text-white"
-                              >
-                                {comment.is_liked ? "❤️" : "🤍"}{" "}
-                                {comment.likes_count ?? 0}
-                              </button>
-
-                              <div onClick={(event) => event.stopPropagation()}>
-                                <ReportButton
-                                  targetType="comment"
-                                  targetId={comment.id}
-                                  pathname={`/post/${postId}`}
-                                  currentUserId={currentUserId}
-                                />
-                              </div>
-
-                              {currentUserId &&
-                              comment.user_id === currentUserId ? (
-                                <button
-                                  type="button"
-                                  onClick={(event) =>
-                                    handleDeleteComment(event, comment.id)
-                                  }
-                                  disabled={deletingCommentId === comment.id}
-                                  className="px-0 py-1 text-sm font-medium text-zinc-400 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                  {deletingCommentId === comment.id
-                                    ? "Deleting..."
-                                    : "Delete"}
-                                </button>
-                              ) : null}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-
-                      {comments.length > 3 ? (
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            setExpandedComments((prev) => !prev)
-                          }}
-                          className="text-sm text-zinc-400 hover:text-white"
-                        >
-                          {expandedComments
-                            ? "Hide comments"
-                            : `View ${comments.length - 3} more comments`}
-                        </button>
-                      ) : null}
+                    <div className="flex min-h-[220px] items-center justify-center bg-zinc-900 text-sm text-zinc-500">
+                      {group.blocks.some((block) => block.type === "video")
+                        ? "Video is processing..."
+                        : "Media not available"}
                     </div>
                   )}
                 </div>
+              ))}
+
+              {textGroups.length > 0 ? (
+                <div className="space-y-3 px-4 pt-3">
+                  {textGroups.map((group) => (
+                    <p
+                      key={group.block.id}
+                      className="whitespace-pre-wrap text-sm leading-6 text-zinc-400"
+                    >
+                      {group.block.content}
+                    </p>
+                  ))}
+                </div>
               ) : null}
             </>
+          ) : (
+            <>
+              {blockMedia.length > 0 ? <div className="mt-2">{renderMedia()}</div> : null}
+
+              <div className="space-y-2 px-4 pt-3">
+                <p className="line-clamp-2 text-base font-semibold leading-7 text-white sm:text-lg">
+                  {previewTitle}
+                </p>
+
+                {previewBody ? (
+                  <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-zinc-400">
+                    {previewBody}
+                  </p>
+                ) : null}
+              </div>
+            </>
           )}
+
+          <div className="flex items-center justify-between gap-3 px-4 pt-3">
+            <div className="flex items-center gap-3">
+              <p className="text-xs text-zinc-500">
+                {formatPostDate(createdAt)}
+              </p>
+
+              <button
+                type="button"
+                onClick={handleLike}
+                disabled={isLikeLoading}
+                className="inline-flex items-center gap-1.5 px-0 py-1 text-xs text-zinc-400 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <span aria-hidden="true">{liked ? "❤️" : "🤍"}</span>
+                <span>{count}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation()
+
+                  const nextShow = !showComments
+                  setShowComments(nextShow)
+
+                  if (nextShow && comments.length === 0) {
+                    loadComments()
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-0 py-1 text-xs text-zinc-400 transition hover:text-white"
+              >
+                <span aria-hidden="true">💬</span>
+                <span>{commentsCount || comments.length}</span>
+              </button>
+            </div>
+          </div>
+
+          {showComments ? (
+            <div
+              className="space-y-3 px-4 pt-3"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <form onSubmit={handleCommentSubmit}>
+                <input
+                  value={commentInput}
+                  onChange={(event) => setCommentInput(event.target.value)}
+                  placeholder="Write a comment..."
+                  className="w-full border-b border-zinc-800 bg-black px-0 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
+                  disabled={isCommentSubmitting}
+                />
+              </form>
+
+              {commentError ? (
+                <p className="text-xs text-red-500">{commentError}</p>
+              ) : null}
+
+              {isCommentsLoading ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((index) => (
+                    <div
+                      key={index}
+                      className="animate-pulse px-0 py-3"
+                    >
+                      <div className="mb-2 h-3 w-1/3 rounded bg-zinc-700" />
+                      <div className="h-3 w-2/3 rounded bg-zinc-700" />
+                    </div>
+                  ))}
+                </div>
+              ) : comments.length === 0 ? (
+                <p className="text-xs text-zinc-500">No comments yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {visibleComments.map((comment) => (
+                    <div
+                      key={comment.id}
+                      className="bg-black px-1 py-2"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="min-w-0 text-sm leading-6 text-zinc-300">
+                          <span className="mr-2 text-sm font-semibold text-white">
+                            @{getCommentUsername(comment)}
+                          </span>
+                          {comment.content}
+                        </p>
+
+                        <div className="flex shrink-0 items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={(event) =>
+                              handleLikeComment(
+                                event,
+                                comment.id,
+                                Boolean(comment.is_liked)
+                              )
+                            }
+                            className="px-0 py-1 text-sm font-medium text-zinc-400 transition hover:text-white"
+                          >
+                            {comment.is_liked ? "❤️" : "🤍"}{" "}
+                            {comment.likes_count ?? 0}
+                          </button>
+
+                          <div onClick={(event) => event.stopPropagation()}>
+                            <ReportButton
+                              targetType="comment"
+                              targetId={comment.id}
+                              pathname={`/post/${postId}`}
+                              currentUserId={currentUserId}
+                            />
+                          </div>
+
+                          {currentUserId &&
+                          comment.user_id === currentUserId ? (
+                            <button
+                              type="button"
+                              onClick={(event) =>
+                                handleDeleteComment(event, comment.id)
+                              }
+                              disabled={deletingCommentId === comment.id}
+                              className="px-0 py-1 text-sm font-medium text-zinc-400 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {deletingCommentId === comment.id
+                                ? "Deleting..."
+                                : "Delete"}
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {comments.length > 3 ? (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setExpandedComments((prev) => !prev)
+                      }}
+                      className="text-sm text-zinc-400 hover:text-white"
+                    >
+                      {expandedComments
+                        ? "Hide comments"
+                        : `View ${comments.length - 3} more comments`}
+                    </button>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          ) : null}
         </>
-      </>
+      )}
     </article>
   )
 }
