@@ -18,7 +18,6 @@ type CreatorPageProps = {
   }>
 }
 
-
 function formatPrice(amount: number) {
   return new Intl.NumberFormat("ko-KR", {
     style: "currency",
@@ -37,18 +36,16 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
     notFound()
   }
 
-const creator = await getCreatorByUsername(username)
+  const creator = await getCreatorByUsername(username)
 
-if (!creator) {
-  notFound()
-}
+  if (!creator) {
+    notFound()
+  }
 
-if (creator.status !== "active") {
-  notFound()
-}
+  if (creator.status !== "active") {
+    notFound()
+  }
 
-
-  
   const user = await getCurrentUser()
   const userId = user?.id ?? null
   const isOwner = userId === creator.userId
@@ -56,31 +53,30 @@ if (creator.status !== "active") {
 
   const summary = await getCreatorDashboardSummary(creator.id)
 
-const posts = userId
-  ? await getCreatorFeed({
-      creatorId: creator.id,
-      creatorUserId: creator.userId,
-      userId,
-    })
-
-  : ((await getCreatorPage({ username, viewerUserId: null }))?.posts ?? []).map(
-      (post) => ({
-        id: post.id,
-        content: post.text ?? "",
-        created_at: post.createdAt,
-        media: post.media ?? [],
-     blocks:
-  "blocks" in post && Array.isArray(post.blocks)
-    ? post.blocks
-    : [],
-        isLocked: post.isLocked,
-        lockReason: undefined,
-        price: post.price ?? 0,
-        likesCount: post.likesCount ?? 0,
-        commentsCount: post.commentsCount ?? 0,
-        isLiked: false,
+  const posts = userId
+    ? await getCreatorFeed({
+        creatorId: creator.id,
+        creatorUserId: creator.userId,
+        userId,
       })
-    )
+    : ((await getCreatorPage({ username, viewerUserId: null }))?.posts ?? []).map(
+        (post) => ({
+          id: post.id,
+          content: post.text ?? "",
+          created_at: post.createdAt,
+          media: post.media ?? [],
+          blocks:
+            "blocks" in post && Array.isArray(post.blocks)
+              ? post.blocks
+              : [],
+          isLocked: post.isLocked,
+          lockReason: undefined,
+          price: post.price ?? 0,
+          likesCount: post.likesCount ?? 0,
+          commentsCount: post.commentsCount ?? 0,
+          isLiked: false,
+        })
+      )
 
   const viewerSubscription = userId
     ? await getViewerSubscription(userId, creator.id)
@@ -164,7 +160,7 @@ const posts = userId
               targetType="creator"
               targetId={creator.id}
               pathname={pathname}
-                currentUserId={userId ?? undefined}
+              currentUserId={userId ?? undefined}
             />
           </div>
         ) : null}
@@ -194,34 +190,36 @@ const posts = userId
           <span>{formatCount(posts.length)} posts</span>
         </div>
 
-        <div className="mt-6 space-y-4">
+        <div className="mt-6">
           {isOwner ? <CreatePostComposer creatorId={creator.id} /> : null}
 
           {posts.length === 0 ? (
             <div className="text-center text-sm text-zinc-500">No posts yet</div>
           ) : (
-            posts.map((post) => (
-                          <PostCard
-                key={post.id}
-                postId={post.id}
-                text={post.content ?? ""}
-                createdAt={new Date(post.created_at).toLocaleString()}
-                media={post.media ?? []}
-               blocks={post.blocks ?? []}
-                isLocked={post.isLocked}
-                commentsCount={post.commentsCount}
-                likesCount={post.likesCount}
-                isLiked={post.isLiked}
-                creatorId={creator.id}
-                creatorUserId={creator.userId}
-                currentUserId={userId ?? undefined}
-                creator={{
-                  username: creator.username,
-                  displayName: creator.displayName ?? creator.username,
-                  avatarUrl: creator.avatarUrl ?? null,
-                }}
-              />
-            ))
+            <div className="-mx-4">
+              {posts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  postId={post.id}
+                  text={post.content ?? ""}
+                  createdAt={new Date(post.created_at).toLocaleString()}
+                  media={post.media ?? []}
+                  blocks={post.blocks ?? []}
+                  isLocked={post.isLocked}
+                  commentsCount={post.commentsCount}
+                  likesCount={post.likesCount}
+                  isLiked={post.isLiked}
+                  creatorId={creator.id}
+                  creatorUserId={creator.userId}
+                  currentUserId={userId ?? undefined}
+                  creator={{
+                    username: creator.username,
+                    displayName: creator.displayName ?? creator.username,
+                    avatarUrl: creator.avatarUrl ?? null,
+                  }}
+                />
+              ))}
+            </div>
           )}
         </div>
       </div>
@@ -239,7 +237,7 @@ const posts = userId
               </p>
             </div>
 
-     <div className="shrink-0 flex flex-col gap-2 w-full">
+            <div className="shrink-0 flex w-full flex-col gap-2">
               <SubscribeButton
                 creatorId={creator.id}
                 creatorUserId={creator.userId}
