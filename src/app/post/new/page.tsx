@@ -22,8 +22,8 @@ export default async function NewPostPage() {
 
   if (!creator) {
     return (
-      <main className="mx-auto w-full max-w-2xl px-4 py-6">
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-500">
+      <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+        <div className="rounded-3xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
           Only creators can create posts.
         </div>
       </main>
@@ -31,8 +31,19 @@ export default async function NewPostPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-6">
-    
+    <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+      <div className="mb-6 space-y-2">
+        <p className="text-xs font-medium uppercase tracking-[0.22em] text-pink-400">
+          Create
+        </p>
+        <h1 className="text-2xl font-semibold text-white sm:text-3xl">
+          Start a new post
+        </h1>
+        <p className="max-w-2xl text-sm leading-6 text-zinc-400 sm:text-base">
+          Write naturally, mix text with media, and build the post in the order
+          you want your fans to see it.
+        </p>
+      </div>
 
       <CreatePostComposer creatorId={creator.id} />
     </main>

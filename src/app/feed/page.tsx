@@ -9,8 +9,12 @@ import { FeedComposer } from "@/modules/feed/ui/FeedComposer"
 import { FeedEmptyState } from "@/modules/feed/ui/FeedEmptyState"
 import { FeedList } from "@/modules/feed/ui/FeedList"
 import { getRecommendedCreators } from "@/modules/search/server/get-recommended-creators"
+import { getStories } from "@/modules/story/server/get-stories"
+import { CreateStoryComposer } from "@/modules/story/ui/CreateStoryComposer"
+import { StoryList } from "@/modules/story/ui/StoryList"
 import { Card } from "@/shared/ui/Card"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { getStoryReadStateMap } from "@/modules/story/server/story-read-state"
 
 type FeedMediaItem = {
   url: string
@@ -65,7 +69,6 @@ function normalizePrice(item: unknown): number | undefined {
 export default async function FeedPage() {
   const session = await getSession()
 
-  // 로그인 있을 때만 체크
   if (session) {
     try {
       await requireActiveUser()
@@ -80,7 +83,6 @@ export default async function FeedPage() {
     }
   }
 
-  // 로그인 있을 때만 profile 체크
   if (session) {
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
@@ -99,36 +101,50 @@ export default async function FeedPage() {
     await getCreatorByUserId(session.userId)
   }
 
-let feed
-let recommendedCreators
+  let feed
+  let recommendedCreators
+  let stories
+  let readStateMap: Record<string, string> = {}
 
-if (session?.userId) {
-  ;[feed, recommendedCreators] = await Promise.all([
-    getHomeFeed({
-      viewerUserId: session.userId,
-      limit: 10,
-    }),
-    getRecommendedCreators({
-      viewerUserId: session.userId,
-      limit: 3,
-    }),
-  ])
-} else {
-  ;[feed, recommendedCreators] = await Promise.all([
-    getHomeFeed({
-      limit: 10,
-    } as any),
-    getRecommendedCreators({
-      limit: 3,
-    } as any),
-  ])
-}
+  if (session?.userId) {
+    const map = await getStoryReadStateMap(session.userId)
+    readStateMap = Object.fromEntries(map)
+  }
 
+  if (session?.userId) {
+    ;[feed, recommendedCreators, stories] = await Promise.all([
+      getHomeFeed({
+        viewerUserId: session.userId,
+        limit: 10,
+      }),
+      getRecommendedCreators({
+        viewerUserId: session.userId,
+        limit: 3,
+      }),
+      getStories(session.userId),
+    ])
+  } else {
+    ;[feed, recommendedCreators, stories] = await Promise.all([
+      getHomeFeed({
+        limit: 10,
+      } as any),
+      getRecommendedCreators({
+        limit: 3,
+      } as any),
+      getStories(),
+    ])
+  }
 
   return (
     <main className="min-h-screen">
       <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-0 py-2 sm:px-0 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section className="min-w-0 space-y-4">
+          {session ? <CreateStoryComposer /> : null}
+
+          <StoryList
+            stories={stories}
+            readStateMap={readStateMap}
+          />
 
           {session ? <FeedComposer /> : null}
 

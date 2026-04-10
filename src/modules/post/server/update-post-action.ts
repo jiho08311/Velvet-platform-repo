@@ -18,6 +18,12 @@ type UpdatePostActionInput = {
   price?: number
   files?: File[]
   removedMediaIds?: string[]
+blocks?: {
+  type: "text" | "image" | "video" | "audio" | "file"
+  content?: string | null
+  sortOrder: number
+  mediaId?: string | null
+}[]
 }
 
 type MediaRow = {
@@ -42,6 +48,7 @@ export async function updatePostAction({
   price = 0,
   files = [],
   removedMediaIds = [],
+  blocks = [],
 }: UpdatePostActionInput) {
   const user = await getCurrentUser()
 
@@ -149,6 +156,29 @@ export async function updatePostAction({
         sortOrder: startSortOrder + index,
         status: "ready",
       })
+    }
+  }
+
+  await supabaseAdmin
+    .from("post_blocks")
+    .delete()
+    .eq("post_id", postId)
+
+  if (blocks.length > 0) {
+    const insertData = blocks.map((block) => ({
+      post_id: postId,
+      type: block.type,
+      content: block.content ?? null,
+      media_id: block.mediaId ?? null,
+      sort_order: block.sortOrder,
+    }))
+
+    const { error: insertBlocksError } = await supabaseAdmin
+      .from("post_blocks")
+      .insert(insertData)
+
+    if (insertBlocksError) {
+      throw insertBlocksError
     }
   }
 

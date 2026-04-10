@@ -248,12 +248,15 @@ export default async function PostDetailPage({
   // ✅ 여기 핵심
   <PostCard
     postId={post.id}
+       
     text={post.content ?? ""}
     createdAt={post.publishedAt ?? post.createdAt}
-    media={post.media.map((m) => ({
-      url: m.url,
-      type: m.type,
-    }))}
+  media={post.media.map((m) => ({
+  id: m.id,
+  url: m.url,
+  type: m.type,
+}))}
+     blocks={post.blocks ?? []}
     isLocked={false}
   creator={{
   username: post.creator.username,

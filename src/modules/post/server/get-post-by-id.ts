@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-
+import type { PostBlock } from "../types"
+import { getPostBlocks } from "./get-post-blocks"
 import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 import { getPostAccess } from "./get-post-access"
 import { getPostMedia } from "./get-post-media"
@@ -46,14 +47,15 @@ export type PostDetail = {
   lockReason: "none" | "subscription" | "purchase"
   likesCount: number
   commentsCount: number
-  media: {
+    media: {
     id: string
     postId: string
     type: "image" | "video" | "audio" | "file"
     url: string
     mimeType: string | null
     sortOrder: number
-  }[]
+  }[],
+  blocks?: PostBlock[]
 }
 
 export async function getPostById(
@@ -157,7 +159,12 @@ export async function getPostById(
     hasPurchasedResult,
   })
 
-  const media = access.canView ? await getPostMedia(post.id) : []
+  const [media, blocks] = access.canView
+    ? await Promise.all([
+        getPostMedia(post.id),
+        getPostBlocks(post.id),
+      ])
+    : [[], []]
 
   const lockReason: "none" | "subscription" | "purchase" = access.canView
     ? "none"
@@ -166,6 +173,9 @@ export async function getPostById(
       : post.visibility === "subscribers"
         ? "subscription"
         : "none"
+
+console.log("BLOCKS:", blocks)
+
 
   return {
     id: post.id,
@@ -187,5 +197,6 @@ export async function getPostById(
     likesCount: likesCount ?? 0,
     commentsCount: commentsCount ?? 0,
     media,
+    blocks,
   }
 }

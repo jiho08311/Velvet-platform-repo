@@ -10,6 +10,7 @@ import { LockedPostCard } from "./LockedPostCard"
 import { PostMoreMenu } from "./PostMoreMenu"
 
 type MediaItem = {
+  id?: string
   url: string
   type?: "image" | "video" | "audio" | "file"
 }
@@ -40,6 +41,15 @@ type PostCardProps = {
   createdAt: string
   mediaThumbnailUrls?: string[]
   media?: MediaItem[]
+  blocks?: {
+    id: string
+    postId: string
+    type: "text" | "image" | "video" | "audio" | "file"
+    content: string | null
+    mediaId: string | null
+    sortOrder: number
+    createdAt: string
+  }[]
   isLocked?: boolean
   lockReason?: "none" | "subscription"
   creatorId: string
@@ -105,6 +115,7 @@ export function PostCard({
   createdAt,
   mediaThumbnailUrls = [],
   media = [],
+  blocks = [],
   isLocked = false,
   lockReason = "none",
   creatorId,
@@ -136,20 +147,45 @@ export function PostCard({
   const [isVideoReady, setIsVideoReady] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
 
-  const creatorName = creator.displayName ?? creator.username
-  const creatorInitial = creatorName.slice(0, 1).toUpperCase()
-  const previewTitle = getPreviewTitle(text)
-  const previewBody = getPreviewBody(text)
-
   const resolvedMedia =
     media.length > 0
       ? media
-      : mediaThumbnailUrls.map((url) => ({
-          url,
-          type: "image" as const,
-        }))
+      : mediaThumbnailUrls.map((url, index) => ({
+  id: `fallback-${index}`,
+  url,
+  type: "image" as const,
+}))
 
-  const primaryVideo = resolvedMedia.find((item) => item.type === "video")
+  const hasBlocks = blocks.length > 0
+
+  const blockText = hasBlocks
+    ? blocks
+        .filter((block) => block.type === "text" && block.content?.trim())
+        .map((block) => block.content?.trim() ?? "")
+        .join("\n\n")
+    : text
+
+  const blockMedia =
+    hasBlocks && resolvedMedia.length > 0
+      ? blocks
+          .filter(
+            (block) =>
+              block.type !== "text" &&
+              block.mediaId &&
+              resolvedMedia.some((item) => item.id === block.mediaId)
+          )
+          .map((block) =>
+           resolvedMedia.find((item) => item.id === block.mediaId)
+          )
+          .filter((item): item is MediaItem => Boolean(item))
+      : resolvedMedia
+
+  const creatorName = creator.displayName ?? creator.username
+  const creatorInitial = creatorName.slice(0, 1).toUpperCase()
+  const previewTitle = getPreviewTitle(blockText)
+  const previewBody = getPreviewBody(blockText)
+
+  const primaryVideo = blockMedia.find((item) => item.type === "video")
   const visibleComments = expandedComments ? comments : comments.slice(0, 3)
 
   async function handleLike(event: React.MouseEvent<HTMLButtonElement>) {
@@ -392,10 +428,10 @@ export function PostCard({
   }
 
   function renderMedia() {
-    if (resolvedMedia.length === 0) return null
+    if (blockMedia.length === 0) return null
 
-    if (resolvedMedia.length === 1) {
-      const item = resolvedMedia[0]
+    if (blockMedia.length === 1) {
+      const item = blockMedia[0]
 
       return (
         <div className="overflow-hidden bg-black">
@@ -412,7 +448,7 @@ export function PostCard({
           onScroll={handleScroll}
           className="flex snap-x snap-mandatory overflow-x-auto scrollbar-hide"
         >
-          {resolvedMedia.map((item, index) => (
+          {blockMedia.map((item, index) => (
             <div
               key={`${item.url}-${index}`}
               className="min-w-full snap-center"
@@ -425,7 +461,7 @@ export function PostCard({
         </div>
 
         <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1">
-          {resolvedMedia.map((_, index) => (
+          {blockMedia.map((_, index) => (
             <div
               key={index}
               className={`h-1.5 w-1.5 rounded-full ${
@@ -514,26 +550,62 @@ export function PostCard({
         <div className="space-y-2 px-1">
           {isLocked ? (
             <LockedPostCard
-              previewText={text}
+              previewText={blockText}
               createdAt={createdAt}
-              previewThumbnailUrl={resolvedMedia[0]?.url ?? null}
+              previewThumbnailUrl={blockMedia[0]?.url ?? null}
               action={renderLockedAction()}
             />
           ) : (
             <>
-              <div className="space-y-2">
-                <p className="line-clamp-2 text-base font-semibold leading-7 text-white sm:text-lg">
-                  {previewTitle}
-                </p>
+             {blocks.length > 0 ? (
+  <div className="space-y-3">
+    {blocks.map((block) => {
+      if (block.type === "text") {
+        return (
+          <p
+            key={block.id}
+            className="whitespace-pre-wrap text-sm leading-6 text-zinc-400"
+          >
+            {block.content}
+          </p>
+        )
+      }
 
-                {previewBody ? (
-                  <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-zinc-400">
-                    {previewBody}
-                  </p>
-                ) : null}
-              </div>
+      if (block.type === "image") {
+        const mediaItem = blockMedia.find((item) => item.id === block.mediaId)
 
-              {renderMedia()}
+        if (!mediaItem) return null
+
+        return (
+          <img
+            key={block.id}
+            src={mediaItem.url}
+            alt="Post media"
+            className="rounded-xl"
+          />
+        )
+      }
+
+      return null
+    })}
+  </div>
+) : (
+  <>
+    <div className="space-y-2">
+      <p className="line-clamp-2 text-base font-semibold leading-7 text-white sm:text-lg">
+        {previewTitle}
+      </p>
+
+      {previewBody ? (
+        <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-zinc-400">
+          {previewBody}
+        </p>
+      ) : null}
+    </div>
+
+    {renderMedia()}
+  </>
+)}
 
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">

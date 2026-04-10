@@ -15,6 +15,13 @@ type UploadedFileInput = {
   originalName: string
 }
 
+type CreatePostBlockInput = {
+  type: "text" | "image" | "video" | "audio" | "file"
+  content?: string | null
+  sortOrder: number
+  mediaId?: string | null
+}
+
 type CreatePostComposerProps = {
   creatorId: string
   onCreated?: () => void
@@ -86,53 +93,57 @@ export function CreatePostComposer({
   const [isPending, startTransition] = useTransition()
 
   return (
-  <div className="space-y-4">
-    {error ? (
-      <div className="rounded-3xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-        {error}
-      </div>
-    ) : null}
+    <div className="space-y-4">
+      {error ? (
+        <div className="rounded-3xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          {error}
+        </div>
+      ) : null}
 
-    <Card className="p-4 sm:p-5">
-      <CreatePostForm
-        isSubmitting={isPending}
-        onSubmitPost={({ text, visibility, files }) => {
-          startTransition(async () => {
-            try {
-              setError(null)
+      <Card className="rounded-[32px] border border-zinc-800/80 bg-zinc-900/70 p-5 shadow-[0_30px_80px_rgba(0,0,0,0.35)] backdrop-blur sm:p-6">
+        <CreatePostForm
+          isSubmitting={isPending}
+          onSubmitPost={({ visibility, files, blocks }) => {
+            startTransition(async () => {
+              try {
+                setError(null)
 
-              const uploadedFiles = await uploadFilesDirect(files)
+                const uploadedFiles = await uploadFilesDirect(files)
 
-              await createPostAction({
-                creatorId,
-                text,
-                visibility,
-                files: uploadedFiles as never,
-              })
+                await createPostAction({
+                  creatorId,
+                  visibility,
+                  files: uploadedFiles as never,
+                  blocks: blocks as CreatePostBlockInput[],
+                })
 
-              onCreated?.()
-            } catch (submitError) {
-              if (submitError instanceof Error) {
-                if (submitError.message === "TEXT_BLOCKED") {
-                  setError("부적절한 텍스트가 포함되어 있어 게시글을 올릴 수 없습니다.")
+                onCreated?.()
+              } catch (submitError) {
+                if (submitError instanceof Error) {
+                  if (submitError.message === "TEXT_BLOCKED") {
+                    setError(
+                      "부적절한 텍스트가 포함되어 있어 게시글을 올릴 수 없습니다."
+                    )
+                    return
+                  }
+
+                  if (submitError.message === "IMAGE_BLOCKED") {
+                    setError(
+                      "부적절한 이미지가 포함되어 있어 게시글을 올릴 수 없습니다."
+                    )
+                    return
+                  }
+
+                  setError(submitError.message)
                   return
                 }
 
-                if (submitError.message === "IMAGE_BLOCKED") {
-                  setError("부적절한 이미지가 포함되어 있어 게시글을 올릴 수 없습니다.")
-                  return
-                }
-
-                setError(submitError.message)
-                return
+                setError("Failed to create post")
               }
-
-              setError("Failed to create post")
-            }
-          })
-        }}
-      />
-    </Card>
-  </div>
-)
+            })
+          }}
+        />
+      </Card>
+    </div>
+  )
 }

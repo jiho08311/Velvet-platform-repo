@@ -5,6 +5,30 @@ export type PostVisibility =
   | "subscribers"
   | "paid"
 
+export type PostBlockType =
+  | "text"
+  | "image"
+  | "video"
+  | "audio"
+  | "file"
+
+export type PostBlock = {
+  id: string
+  postId: string
+  type: PostBlockType
+  content: string | null
+  mediaId: string | null
+  sortOrder: number
+  createdAt: string
+}
+
+export type CreatePostBlockInput = {
+  type: PostBlockType
+  content?: string | null
+  mediaId?: string | null
+  sortOrder: number
+}
+
 export type Post = {
   id: string
   creatorId: string
@@ -16,6 +40,7 @@ export type Post = {
   publishedAt: string | null
   createdAt: string
   updatedAt: string
+  blocks?: PostBlock[]
 }
 
 export type CreatePostInput = {
@@ -25,4 +50,5 @@ export type CreatePostInput = {
   visibility?: PostVisibility
   price?: number
   publishedAt?: string | null
+  blocks?: CreatePostBlockInput[]
 }

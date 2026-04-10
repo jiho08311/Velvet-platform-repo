@@ -15,25 +15,34 @@ type UploadedFileInput = {
 
 type CreatePostActionInput = {
   creatorId: string
-  text: string
+  text?: string
   visibility: "public" | "subscribers" | "paid"
   price?: number
   files?: UploadedFileInput[]
+    blocks?: {
+    type: "text" | "image" | "video" | "audio" | "file"
+    content?: string | null
+    sortOrder: number
+     mediaId?: string | null
+  }[]
 }
 
 export async function createPostAction({
   creatorId,
-  text,
+  text = "",
   visibility,
   price = 0,
   files = [],
+  blocks = [],
 }: CreatePostActionInput): Promise<void> {
-  const content = text.trim()
+const content = text?.trim() ?? ""
   const hasMedia = files.length > 0
 
-  if (!content && !hasMedia) {
-    throw new Error("Post must have text or media")
-  }
+ const hasBlocks = blocks.length > 0
+
+if (!content && !hasMedia && !hasBlocks) {
+  throw new Error("Post must have text or media")
+}
 
   if (visibility === "paid" && price <= 0) {
     throw new Error("Paid post price must be greater than 0")
@@ -47,6 +56,8 @@ export async function createPostAction({
       price: visibility === "paid" ? price : 0,
       status: "published",
       files,
+      blocks,
+    
     })
   } catch (error) {
     console.error("[createPostAction]", error)

@@ -4,6 +4,8 @@ import { createPost } from "@/modules/post/server/create-post"
 import { createMedia } from "@/modules/media/server/create-media"
 import { updatePostStatus } from "@/modules/post/server/update-post-status"
 import { enqueueVideoModeration } from "@/modules/moderation/server/enqueue-video-moderation"
+import { createPostBlocks } from "@/modules/post/server/create-post-blocks"
+import type { CreatePostBlockInput } from "@/modules/post/types"
 
 type UploadedFileInput = {
   path: string
@@ -21,6 +23,11 @@ type CreatePostWithMediaWorkflowInput = {
   visibility?: "public" | "subscribers" | "paid"
   price?: number
   files: UploadedFileInput[]
+  blocks?: {
+    type: "text" | "image" | "video" | "audio" | "file"
+    content?: string | null
+    sortOrder: number
+  }[]
 }
 
 type MediaType = "image" | "video" | "audio" | "file"
@@ -265,6 +272,7 @@ export async function createPostWithMediaWorkflow({
   visibility = "subscribers",
   price = 0,
   files,
+  blocks = [],
 }: CreatePostWithMediaWorkflowInput) {
   const resolvedprice = visibility === "paid" ? price : 0
 
@@ -318,44 +326,138 @@ export async function createPostWithMediaWorkflow({
   }
 
   const media: CreatedMedia[] = []
+  const blocksToInsert: CreatePostBlockInput[] = []
+  const hasIncomingBlocks = blocks.length > 0
 
-  for (const [index, file] of files.entries()) {
-    const type = resolveUploadedMediaType(file.type)
+  if (hasIncomingBlocks) {
+    let mediaFileIndex = 0
 
-    console.log("[createPostWithMediaWorkflow] detected media type", {
-      name: file.originalName,
-      fileType: file.mimeType,
-      detectedType: type,
-      path: file.path,
-    })
+    for (const block of blocks) {
+      if (block.type === "text") {
+        const trimmedContent = block.content?.trim() ?? ""
 
-    const mediaRow = await createMedia({
-      postId: post.id,
-      ownerUserId: creatorRow.user_id, 
-      type,
-      storagePath: file.path,
-      mimeType: file.mimeType || undefined,
-      sortOrder: index,
-      status: type === "video" ? "processing" : "ready",
-    })
+        if (!trimmedContent) {
+          continue
+        }
 
-    if (type === "video") {
-      await supabaseAdmin
-        .from("media")
-        .update({
-          processing_status: "processing",
-          moderation_status: "pending",
-          moderation_summary: null,
+        blocksToInsert.push({
+          type: "text",
+          content: trimmedContent,
+          sortOrder: block.sortOrder,
         })
-        .eq("id", mediaRow.id)
+
+        continue
+      }
+
+      const file = files[mediaFileIndex]
+
+      if (!file) {
+        continue
+      }
+
+      mediaFileIndex += 1
+
+      const type = resolveUploadedMediaType(file.type)
+
+      console.log("[createPostWithMediaWorkflow] detected media type", {
+        name: file.originalName,
+        fileType: file.mimeType,
+        detectedType: type,
+        path: file.path,
+      })
+
+      const mediaRow = await createMedia({
+        postId: post.id,
+        ownerUserId: creatorRow.user_id,
+        type,
+        storagePath: file.path,
+        mimeType: file.mimeType || undefined,
+        sortOrder: block.sortOrder,
+        status: type === "video" ? "processing" : "ready",
+      })
+
+      if (type === "video") {
+        await supabaseAdmin
+          .from("media")
+          .update({
+            processing_status: "processing",
+            moderation_status: "pending",
+            moderation_summary: null,
+          })
+          .eq("id", mediaRow.id)
+      }
+
+      media.push({
+        id: mediaRow.id,
+        type: mediaRow.type,
+        storagePath: mediaRow.storagePath,
+      })
+
+      blocksToInsert.push({
+        type,
+        mediaId: mediaRow.id,
+        sortOrder: block.sortOrder,
+      })
+    }
+  } else {
+    for (const [index, file] of files.entries()) {
+      const type = resolveUploadedMediaType(file.type)
+
+      console.log("[createPostWithMediaWorkflow] detected media type", {
+        name: file.originalName,
+        fileType: file.mimeType,
+        detectedType: type,
+        path: file.path,
+      })
+
+      const mediaRow = await createMedia({
+        postId: post.id,
+        ownerUserId: creatorRow.user_id,
+        type,
+        storagePath: file.path,
+        mimeType: file.mimeType || undefined,
+        sortOrder: index,
+        status: type === "video" ? "processing" : "ready",
+      })
+
+      if (type === "video") {
+        await supabaseAdmin
+          .from("media")
+          .update({
+            processing_status: "processing",
+            moderation_status: "pending",
+            moderation_summary: null,
+          })
+          .eq("id", mediaRow.id)
+      }
+
+      media.push({
+        id: mediaRow.id,
+        type: mediaRow.type,
+        storagePath: mediaRow.storagePath,
+      })
     }
 
-    media.push({
-      id: mediaRow.id,
-      type: mediaRow.type,
-      storagePath: mediaRow.storagePath,
+    const trimmedContent = content?.trim() ?? ""
+
+    if (trimmedContent) {
+      blocksToInsert.push({
+        type: "text",
+        content: trimmedContent,
+        sortOrder: 0,
+      })
+    }
+
+    media.forEach((item, index) => {
+      blocksToInsert.push({
+        type: item.type,
+        mediaId: item.id,
+        sortOrder: trimmedContent ? index + 1 : index,
+      })
     })
   }
+
+  await createPostBlocks(post.id, blocksToInsert)
 
   void moderatePostAsync({
     postId: post.id,
