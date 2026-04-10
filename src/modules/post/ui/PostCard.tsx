@@ -560,10 +560,10 @@ export function PostCard({
   }
 
   return (
-    <article
-      onClick={handleCardClick}
-      className="group w-full bg-black"
-    >
+ <article
+  onClick={handleCardClick}
+  className="group w-full"
+>
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <button
@@ -631,22 +631,22 @@ export function PostCard({
                       )
 
                       return (
-                        <div
-                          key={`media-group-${index}`}
-                          className="flex min-h-[220px] items-center justify-center rounded-xl bg-zinc-900 text-sm text-zinc-500"
-                        >
+                 <div
+  key={`media-group-${index}`}
+  className="flex min-h-[220px] items-center justify-center bg-zinc-900 text-sm text-zinc-500"
+>
                           {hasVideo ? "Video is processing..." : "Media not available"}
                         </div>
                       )
                     }
 
                     return (
-                      <div
-                        key={`media-group-${index}`}
-                        className="overflow-hidden rounded-xl"
-                      >
-                        {renderMedia(group.mediaItems)}
-                      </div>
+                     <div
+  key={`media-group-${index}`}
+  className="overflow-hidden"
+>
+  {renderMedia(group.mediaItems)}
+</div>
                     )
                   })}
                 </div>
