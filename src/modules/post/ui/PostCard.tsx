@@ -564,7 +564,7 @@ export function PostCard({
   onClick={handleCardClick}
   className="group w-full"
 >
-      <div className="flex flex-col gap-2">
+      <>
         <div className="flex items-center justify-between">
           <button
             type="button"
@@ -818,7 +818,7 @@ export function PostCard({
             </>
           )}
         </>
-      </div>
+      </>
     </article>
   )
 }
