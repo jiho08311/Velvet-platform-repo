@@ -469,7 +469,7 @@ export function PostCard({
       <img
         src={mediaUrl}
         alt={alt}
-        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
       />
     )
   }
@@ -569,7 +569,7 @@ export function PostCard({
 
   return (
     <article onClick={handleCardClick} className="group w-full">
-      <div className="flex items-center justify-between px-4">
+      <div className="flex items-center justify-between px-3.5">
         <button
           type="button"
           onClick={handleCreatorClick}
@@ -633,7 +633,7 @@ export function PostCard({
               ))}
 
               {textGroups.length > 0 ? (
-                <div className="space-y-3 px-4 pt-3">
+                <div className="space-y-2.5 px-3.5 pt-2.5">
                   {textGroups.map((group) => (
                     <p
                       key={group.block.id}
@@ -649,7 +649,7 @@ export function PostCard({
             <>
               {blockMedia.length > 0 ? <div className="mt-2">{renderMedia()}</div> : null}
 
-              <div className="space-y-2 px-4 pt-3">
+              <div className="space-y-2 px-3.5 pt-2.5">
                 <p className="line-clamp-2 text-base font-semibold leading-7 text-white sm:text-lg">
                   {previewTitle}
                 </p>
@@ -663,7 +663,7 @@ export function PostCard({
             </>
           )}
 
-          <div className="flex items-center justify-between gap-3 px-4 pt-3">
+          <div className="flex items-center justify-between gap-3 px-3.5 pt-2.5">
             <div className="flex items-center gap-3">
               <p className="text-xs text-zinc-500">
                 {formatPostDate(createdAt)}
@@ -701,7 +701,7 @@ export function PostCard({
 
           {showComments ? (
             <div
-              className="space-y-3 px-4 pt-3"
+              className="space-y-3 px-3.5 pt-2.5"
               onClick={(event) => event.stopPropagation()}
             >
               <form onSubmit={handleCommentSubmit}>
