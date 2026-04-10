@@ -601,7 +601,7 @@ export function PostCard({
           ) : null}
         </div>
 
-  <div className="space-y-2">
+ <>
           {isLocked ? (
             <LockedPostCard
               previewText={blockText}
@@ -817,7 +817,7 @@ export function PostCard({
               ) : null}
             </>
           )}
-        </div>
+        </>
       </div>
     </article>
   )
