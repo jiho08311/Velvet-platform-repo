@@ -7,7 +7,20 @@ type CreatorFeedPost = {
   id: string
   content: string | null
   created_at: string
-  media: any[]
+  media: Array<{
+    id: string
+    url: string
+    type: "image" | "video" | "audio" | "file"
+  }>
+  blocks?: {
+    id: string
+    postId: string
+    type: "text" | "image" | "video" | "audio" | "file"
+    content: string | null
+    mediaId: string | null
+    sortOrder: number
+    createdAt: string
+  }[]
   price: number
   isLocked: boolean
   likesCount: number
@@ -18,6 +31,7 @@ type CreatorFeedPost = {
 
 type GetCreatorFeedInput = {
   creatorId: string
+  creatorUserId?: string | null
   userId?: string | null
 }
 
@@ -34,6 +48,7 @@ type PostRow = {
 type MediaType = "image" | "video" | "audio" | "file"
 
 type MediaRow = {
+  id: string
   post_id: string
   storage_path: string
   type: MediaType | null
@@ -46,6 +61,16 @@ type PostLockReason = "none" | "subscription" | "purchase"
 
 type PostLikeRow = {
   post_id: string
+}
+
+type PostBlockRow = {
+  id: string
+  post_id: string
+  type: "text" | "image" | "video" | "audio" | "file"
+  content: string | null
+  media_id: string | null
+  sort_order: number
+  created_at: string
 }
 
 function resolveMediaType(row: MediaRow): MediaType {
@@ -69,6 +94,7 @@ function resolveMediaType(row: MediaRow): MediaType {
 
 export async function getCreatorFeed({
   creatorId,
+  creatorUserId,
   userId,
 }: GetCreatorFeedInput): Promise<CreatorFeedPost[]> {
   const safeUserId =
@@ -76,18 +102,32 @@ export async function getCreatorFeed({
       ? userId.trim()
       : null
 
-  const hasSubscriptionAccess = safeUserId
-    ? await checkSubscription({
-        userId: safeUserId,
-        creatorId,
-      })
-    : false
+  const safeCreatorUserId =
+    typeof creatorUserId === "string" && creatorUserId.trim().length > 0
+      ? creatorUserId.trim()
+      : null
+
+  const isOwner =
+    safeUserId !== null &&
+    safeCreatorUserId !== null &&
+    safeUserId === safeCreatorUserId
+
+  const hasSubscriptionAccess = isOwner
+    ? true
+    : safeUserId
+      ? await checkSubscription({
+          userId: safeUserId,
+          creatorId,
+        })
+      : false
 
   const { data: posts, error } = await supabaseAdmin
     .from("posts")
     .select("id, creator_id, content, visibility, price, status, created_at")
     .eq("creator_id", creatorId)
     .eq("status", "published")
+    .eq("visibility_status", "published")
+    .eq("moderation_status", "approved")
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .returns<PostRow[]>()
@@ -103,7 +143,7 @@ export async function getCreatorFeed({
 
       let hasPurchased = false
 
-      if (safeUserId && isPaidPost) {
+      if (safeUserId && isPaidPost && !isOwner) {
         hasPurchased = await hasPurchasedPost({
           userId: safeUserId,
           postId: post.id,
@@ -116,7 +156,7 @@ export async function getCreatorFeed({
         lockReason = "subscription"
       }
 
-      if (isPaidPost && !hasPurchased) {
+      if (isPaidPost && !hasPurchased && !isOwner) {
         lockReason = "purchase"
       }
 
@@ -125,7 +165,7 @@ export async function getCreatorFeed({
       return {
         ...post,
         price: post.price,
-        hasPurchased,
+        hasPurchased: isOwner ? true : hasPurchased,
         isLocked,
         lockReason,
         content: isLocked ? null : post.content,
@@ -135,7 +175,6 @@ export async function getCreatorFeed({
 
   const postIds = resolvedPosts.map((post) => post.id)
 
-  // ✅ likes 추가
   const { data: likeRows, error: likeRowsError } = await supabaseAdmin
     .from("post_likes")
     .select("post_id")
@@ -160,47 +199,51 @@ export async function getCreatorFeed({
   const likeCountMap = new Map<string, number>()
 
   for (const row of likeRows ?? []) {
-    likeCountMap.set(
-      row.post_id,
-      (likeCountMap.get(row.post_id) ?? 0) + 1
-    )
+    likeCountMap.set(row.post_id, (likeCountMap.get(row.post_id) ?? 0) + 1)
   }
 
-  const myLikeSet = new Set(
-    (myLikeRows ?? []).map((row) => row.post_id)
-  )
-// ✅ comments 추가
-const { data: commentRows, error: commentRowsError } = await supabaseAdmin
-  .from("comments")
-  .select("post_id")
-  .in("post_id", postIds)
+  const myLikeSet = new Set((myLikeRows ?? []).map((row) => row.post_id))
 
-if (commentRowsError) {
-  throw commentRowsError
-}
+  const { data: commentRows, error: commentRowsError } = await supabaseAdmin
+    .from("comments")
+    .select("post_id")
+    .in("post_id", postIds)
 
-const commentCountMap = new Map<string, number>()
+  if (commentRowsError) {
+    throw commentRowsError
+  }
 
-for (const row of commentRows ?? []) {
-  commentCountMap.set(
-    row.post_id,
-    (commentCountMap.get(row.post_id) ?? 0) + 1
-  )
-}
+  const commentCountMap = new Map<string, number>()
+
+  for (const row of commentRows ?? []) {
+    commentCountMap.set(row.post_id, (commentCountMap.get(row.post_id) ?? 0) + 1)
+  }
 
   if (postIds.length === 0) {
     return resolvedPosts.map((post) => ({
       ...post,
       media: [],
+      blocks: [],
       likesCount: 0,
       isLiked: false,
-       commentsCount: 0, 
+      commentsCount: 0,
     }))
+  }
+
+  const { data: blockRows, error: blockRowsError } = await supabaseAdmin
+    .from("post_blocks")
+    .select("id, post_id, type, content, media_id, sort_order, created_at")
+    .in("post_id", postIds)
+    .order("sort_order", { ascending: true })
+    .returns<PostBlockRow[]>()
+
+  if (blockRowsError) {
+    throw blockRowsError
   }
 
   const { data: mediaRows, error: mediaError } = await supabaseAdmin
     .from("media")
-    .select("post_id, storage_path, type, mime_type, status, sort_order")
+    .select("id, post_id, storage_path, type, mime_type, status, sort_order")
     .in("post_id", postIds)
     .in("status", ["processing", "ready"])
     .order("sort_order", { ascending: true })
@@ -218,24 +261,43 @@ for (const row of commentRows ?? []) {
     mediaMap.set(media.post_id, current)
   }
 
+  const blocksMap = new Map<string, CreatorFeedPost["blocks"]>()
+
+  for (const block of blockRows ?? []) {
+    const current = blocksMap.get(block.post_id) ?? []
+
+    current.push({
+      id: block.id,
+      postId: block.post_id,
+      type: block.type,
+      content: block.content,
+      mediaId: block.media_id,
+      sortOrder: block.sort_order,
+      createdAt: block.created_at,
+    })
+
+    blocksMap.set(block.post_id, current)
+  }
+
   return Promise.all(
     resolvedPosts.map(async (post) => {
-      const selectedMediaRows = post.isLocked
-        ? []
-        : (mediaMap.get(post.id) ?? []).slice(0, 3)
+  const selectedMediaRows = post.isLocked
+  ? []
+  : (mediaMap.get(post.id) ?? [])
 
       const media = await Promise.all(
         selectedMediaRows.map(async (item) => {
           const url = await createMediaSignedUrl({
             storagePath: item.storage_path,
             viewerUserId: safeUserId,
-            creatorUserId: post.creator_id,
+            creatorUserId: safeCreatorUserId,
             visibility: post.visibility,
             isSubscribed: hasSubscriptionAccess,
             hasPurchased: post.hasPurchased,
           })
 
           return {
+            id: item.id,
             url,
             type: resolveMediaType(item),
           }
@@ -245,8 +307,7 @@ for (const row of commentRows ?? []) {
       return {
         ...post,
         media,
-
-        // ✅ 추가
+        blocks: post.isLocked ? [] : blocksMap.get(post.id) ?? [],
         likesCount: likeCountMap.get(post.id) ?? 0,
         isLiked: myLikeSet.has(post.id),
         commentsCount: commentCountMap.get(post.id) ?? 0,

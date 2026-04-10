@@ -59,19 +59,25 @@ if (creator.status !== "active") {
 const posts = userId
   ? await getCreatorFeed({
       creatorId: creator.id,
+      creatorUserId: creator.userId,
       userId,
     })
+
   : ((await getCreatorPage({ username, viewerUserId: null }))?.posts ?? []).map(
       (post) => ({
         id: post.id,
         content: post.text ?? "",
         created_at: post.createdAt,
         media: post.media ?? [],
+     blocks:
+  "blocks" in post && Array.isArray(post.blocks)
+    ? post.blocks
+    : [],
         isLocked: post.isLocked,
-   lockReason: undefined,
+        lockReason: undefined,
         price: post.price ?? 0,
-       likesCount: post.likesCount ?? 0,
-       commentsCount: post.commentsCount ?? 0,
+        likesCount: post.likesCount ?? 0,
+        commentsCount: post.commentsCount ?? 0,
         isLiked: false,
       })
     )
@@ -195,14 +201,15 @@ const posts = userId
             <div className="text-center text-sm text-zinc-500">No posts yet</div>
           ) : (
             posts.map((post) => (
-              <PostCard
+                          <PostCard
                 key={post.id}
                 postId={post.id}
                 text={post.content ?? ""}
                 createdAt={new Date(post.created_at).toLocaleString()}
                 media={post.media ?? []}
+               blocks={post.blocks ?? []}
                 isLocked={post.isLocked}
-             commentsCount={post.commentsCount}
+                commentsCount={post.commentsCount}
                 likesCount={post.likesCount}
                 isLiked={post.isLiked}
                 creatorId={creator.id}

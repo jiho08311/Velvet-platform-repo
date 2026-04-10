@@ -70,7 +70,21 @@ export async function listCreatorPosts({
     query = query.eq("status", status)
   }
 
+if (!safeUserId || safeUserId !== creatorId) {
+  query = query
+    .eq("status", "published")
+    .eq("visibility_status", "published")
+    .eq("moderation_status", "approved")
+    .is("deleted_at", null)
+}
+
+
+
+
   const { data, error } = await query.returns<PostRow[]>()
+
+
+
 
   if (error) {
     throw error

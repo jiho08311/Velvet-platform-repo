@@ -13,6 +13,8 @@ type PostRow = {
   visibility: "public" | "subscribers" | "paid"
   price: number | null
   status: "draft" | "published" | "archived"
+  visibility_status: "draft" | "published" | "processing" | "rejected" | null
+  moderation_status: "pending" | "approved" | "rejected" | null
   created_at: string
   published_at: string | null
 }
@@ -47,14 +49,14 @@ export type PostDetail = {
   lockReason: "none" | "subscription" | "purchase"
   likesCount: number
   commentsCount: number
-    media: {
+  media: {
     id: string
     postId: string
     type: "image" | "video" | "audio" | "file"
     url: string
     mimeType: string | null
     sortOrder: number
-  }[],
+  }[]
   blocks?: PostBlock[]
 }
 
@@ -75,7 +77,7 @@ export async function getPostById(
   const { data: post, error: postError } = await supabaseAdmin
     .from("posts")
     .select(
-      "id, creator_id, title, content, visibility, price, status, created_at, published_at"
+      "id, creator_id, title, content, visibility, price, status, visibility_status, moderation_status, created_at, published_at"
     )
     .eq("id", resolvedPostId)
     .is("deleted_at", null)
@@ -101,6 +103,21 @@ export async function getPostById(
 
   if (!creator) {
     throw new Error("Creator not found")
+  }
+
+  const isOwner =
+    resolvedViewerUserId !== null &&
+    creator.user_id === resolvedViewerUserId
+
+  if (!isOwner) {
+    const isPubliclyAvailable =
+      post.status === "published" &&
+      post.visibility_status === "published" &&
+      post.moderation_status === "approved"
+
+    if (!isPubliclyAvailable) {
+      return null
+    }
   }
 
   const [{ count: likesCount }, { count: commentsCount }] = await Promise.all([
@@ -134,7 +151,7 @@ export async function getPostById(
 
     isSubscribed = Boolean(subscriptionRow)
 
-    if (post.visibility === "paid" && (post.price?? 0) > 0) {
+    if (post.visibility === "paid" && (post.price ?? 0) > 0) {
       hasPurchasedResult = await hasPurchasedPost({
         userId: resolvedViewerUserId,
         postId: post.id,
@@ -160,10 +177,7 @@ export async function getPostById(
   })
 
   const [media, blocks] = access.canView
-    ? await Promise.all([
-        getPostMedia(post.id),
-        getPostBlocks(post.id),
-      ])
+    ? await Promise.all([getPostMedia(post.id), getPostBlocks(post.id)])
     : [[], []]
 
   const lockReason: "none" | "subscription" | "purchase" = access.canView
@@ -173,9 +187,6 @@ export async function getPostById(
       : post.visibility === "subscribers"
         ? "subscription"
         : "none"
-
-console.log("BLOCKS:", blocks)
-
 
   return {
     id: post.id,

@@ -151,10 +151,10 @@ export function PostCard({
     media.length > 0
       ? media
       : mediaThumbnailUrls.map((url, index) => ({
-  id: `fallback-${index}`,
-  url,
-  type: "image" as const,
-}))
+          id: `fallback-${index}`,
+          url,
+          type: "image" as const,
+        }))
 
   const hasBlocks = blocks.length > 0
 
@@ -174,9 +174,7 @@ export function PostCard({
               block.mediaId &&
               resolvedMedia.some((item) => item.id === block.mediaId)
           )
-          .map((block) =>
-           resolvedMedia.find((item) => item.id === block.mediaId)
-          )
+          .map((block) => resolvedMedia.find((item) => item.id === block.mediaId))
           .filter((item): item is MediaItem => Boolean(item))
       : resolvedMedia
 
@@ -187,6 +185,62 @@ export function PostCard({
 
   const primaryVideo = blockMedia.find((item) => item.type === "video")
   const visibleComments = expandedComments ? comments : comments.slice(0, 3)
+
+  type RenderGroup =
+    | {
+        type: "text"
+        block: NonNullable<PostCardProps["blocks"]>[number]
+      }
+    | {
+        type: "media"
+        blocks: NonNullable<PostCardProps["blocks"]>
+        mediaItems: MediaItem[]
+      }
+
+  const groupedBlocks: RenderGroup[] = []
+
+  if (hasBlocks) {
+    let currentMediaBlocks: NonNullable<PostCardProps["blocks"]> = []
+    let currentMediaItems: MediaItem[] = []
+
+    const pushMediaGroup = () => {
+      if (currentMediaBlocks.length === 0) return
+
+      groupedBlocks.push({
+        type: "media",
+        blocks: currentMediaBlocks,
+        mediaItems: currentMediaItems,
+      })
+
+      currentMediaBlocks = []
+      currentMediaItems = []
+    }
+
+    for (const block of blocks) {
+      if (block.type === "text") {
+        pushMediaGroup()
+
+        groupedBlocks.push({
+          type: "text",
+          block,
+        })
+
+        continue
+      }
+
+      const mediaItem = block.mediaId
+        ? blockMedia.find((item) => item.id === block.mediaId)
+        : undefined
+
+      currentMediaBlocks.push(block)
+
+      if (mediaItem) {
+        currentMediaItems.push(mediaItem)
+      }
+    }
+
+    pushMediaGroup()
+  }
 
   async function handleLike(event: React.MouseEvent<HTMLButtonElement>) {
     event.stopPropagation()
@@ -427,11 +481,11 @@ export function PostCard({
     setCurrentIndex(index)
   }
 
-  function renderMedia() {
-    if (blockMedia.length === 0) return null
+  function renderMedia(items: MediaItem[] = blockMedia) {
+    if (items.length === 0) return null
 
-    if (blockMedia.length === 1) {
-      const item = blockMedia[0]
+    if (items.length === 1) {
+      const item = items[0]
 
       return (
         <div className="overflow-hidden bg-black">
@@ -448,9 +502,9 @@ export function PostCard({
           onScroll={handleScroll}
           className="flex snap-x snap-mandatory overflow-x-auto scrollbar-hide"
         >
-          {blockMedia.map((item, index) => (
+          {items.map((item, index) => (
             <div
-              key={`${item.url}-${index}`}
+              key={`${item.id ?? item.url}-${index}`}
               className="min-w-full snap-center"
             >
               <div className="aspect-[4/5] w-full overflow-hidden bg-zinc-900">
@@ -461,7 +515,7 @@ export function PostCard({
         </div>
 
         <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1">
-          {blockMedia.map((_, index) => (
+          {items.map((_, index) => (
             <div
               key={index}
               className={`h-1.5 w-1.5 rounded-full ${
@@ -557,55 +611,62 @@ export function PostCard({
             />
           ) : (
             <>
-             {blocks.length > 0 ? (
-  <div className="space-y-3">
-    {blocks.map((block) => {
-      if (block.type === "text") {
-        return (
-          <p
-            key={block.id}
-            className="whitespace-pre-wrap text-sm leading-6 text-zinc-400"
-          >
-            {block.content}
-          </p>
-        )
-      }
+              {blocks.length > 0 ? (
+                <div className="space-y-3">
+                  {groupedBlocks.map((group, index) => {
+                    if (group.type === "text") {
+                      return (
+                        <p
+                          key={group.block.id}
+                          className="whitespace-pre-wrap text-sm leading-6 text-zinc-400"
+                        >
+                          {group.block.content}
+                        </p>
+                      )
+                    }
 
-      if (block.type === "image") {
-        const mediaItem = blockMedia.find((item) => item.id === block.mediaId)
+                    if (group.mediaItems.length === 0) {
+                      const hasVideo = group.blocks.some(
+                        (block) => block.type === "video"
+                      )
 
-        if (!mediaItem) return null
+                      return (
+                        <div
+                          key={`media-group-${index}`}
+                          className="flex min-h-[220px] items-center justify-center rounded-xl bg-zinc-900 text-sm text-zinc-500"
+                        >
+                          {hasVideo ? "Video is processing..." : "Media not available"}
+                        </div>
+                      )
+                    }
 
-        return (
-          <img
-            key={block.id}
-            src={mediaItem.url}
-            alt="Post media"
-            className="rounded-xl"
-          />
-        )
-      }
+                    return (
+                      <div
+                        key={`media-group-${index}`}
+                        className="overflow-hidden rounded-xl"
+                      >
+                        {renderMedia(group.mediaItems)}
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <p className="line-clamp-2 text-base font-semibold leading-7 text-white sm:text-lg">
+                      {previewTitle}
+                    </p>
 
-      return null
-    })}
-  </div>
-) : (
-  <>
-    <div className="space-y-2">
-      <p className="line-clamp-2 text-base font-semibold leading-7 text-white sm:text-lg">
-        {previewTitle}
-      </p>
+                    {previewBody ? (
+                      <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-zinc-400">
+                        {previewBody}
+                      </p>
+                    ) : null}
+                  </div>
 
-      {previewBody ? (
-        <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-zinc-400">
-          {previewBody}
-        </p>
-      ) : null}
-    </div>
-
-    {renderMedia()}
-  </>
-)}
+                  {renderMedia()}
+                </>
+              )}
 
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">

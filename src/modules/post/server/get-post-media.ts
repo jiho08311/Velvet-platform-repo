@@ -91,7 +91,7 @@ export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
     .from("media")
     .select("id, post_id, type, storage_path, mime_type, sort_order, status")
     .eq("post_id", resolvedPostId)
-    .eq("status", "ready")
+  .in("status", ["processing", "ready"])
     .order("sort_order", { ascending: true })
     .returns<MediaRow[]>()
 

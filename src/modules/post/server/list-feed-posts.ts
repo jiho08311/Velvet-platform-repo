@@ -99,8 +99,11 @@ export async function listFeedPosts({
       "id, creator_id, title, content, status, visibility, price, published_at, created_at, updated_at"
     )
     .in("creator_id", creatorIds)
-    .eq("status", "published")
-    .in("visibility", ["public", "subscribers"])
+  .eq("status", "published")
+.eq("visibility_status", "published")
+.eq("moderation_status", "approved")
+.is("deleted_at", null)
+.in("visibility", ["public", "subscribers"])
     .order("published_at", { ascending: false })
     .limit(limit)
     .returns<PostRow[]>()
