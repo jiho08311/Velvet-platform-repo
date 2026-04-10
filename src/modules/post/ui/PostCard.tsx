@@ -611,8 +611,8 @@ export function PostCard({
             />
           ) : (
             <>
-              {blocks.length > 0 ? (
-                <div className="space-y-3">
+          {blocks.length > 0 ? (
+  <>
                   {groupedBlocks.map((group, index) => {
                     if (group.type === "text") {
                       return (
@@ -649,7 +649,7 @@ export function PostCard({
 </div>
                     )
                   })}
-                </div>
+                </>
               ) : (
                 <>
                   <div className="space-y-2">
