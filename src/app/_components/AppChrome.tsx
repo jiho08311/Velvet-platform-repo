@@ -40,8 +40,10 @@ export function AppChrome({
   <AppSidebar />
 </div>
 
-       <main className="min-w-0 flex-1 px-0 pb-20 pt-4 md:px-0 md:pb-10 md:pt-6">
-  {children}
+    <main className="min-w-0 flex-1 px-0 pb-20 pt-4 md:px-6 md:pb-10 md:pt-6">
+  <div className="w-full md:mx-auto md:max-w-6xl">
+    {children}
+  </div>
 </main>
       </div>
 <MobileNavigation />
