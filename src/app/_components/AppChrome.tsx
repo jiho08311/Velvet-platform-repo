@@ -33,20 +33,23 @@ export function AppChrome({
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
-   
-<AppHeader />
-      <div className="mx-auto flex w-full max-w-[1600px]">
- <div className="hidden md:block self-start">
-  <AppSidebar />
-</div>
+      <AppHeader />
 
-    <main className="min-w-0 flex-1 px-0 pb-20 pt-4 md:px-6 md:pb-10 md:pt-6">
-  <div className="w-full md:mx-auto md:max-w-6xl">
-    {children}
-  </div>
-</main>
+      <div className="flex w-full">
+        {/* Sidebar */}
+        <div className="hidden md:block">
+          <AppSidebar />
+        </div>
+
+        {/* Content */}
+        <main className="min-w-0 flex-1 px-0 pb-20 pt-4 md:px-6 md:pb-10 md:pt-6">
+          <div className="mx-auto w-full max-w-6xl">
+            {children}
+          </div>
+        </main>
       </div>
-<MobileNavigation />
+
+      <MobileNavigation />
       <Footer />
     </div>
   )
