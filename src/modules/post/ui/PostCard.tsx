@@ -2,6 +2,11 @@
 
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
+import {
+  HeartIcon as HeartOutline,
+  ChatBubbleOvalLeftIcon,
+} from "@heroicons/react/24/outline"
+import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid"
 
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
@@ -673,9 +678,13 @@ export function PostCard({
                 type="button"
                 onClick={handleLike}
                 disabled={isLikeLoading}
-                className="inline-flex items-center gap-1.5 px-0 py-1 text-xs text-zinc-400 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-400 transition hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <span aria-hidden="true">{liked ? "❤️" : "🤍"}</span>
+                {liked ? (
+                  <HeartSolid className="h-5 w-5 text-pink-500" />
+                ) : (
+                  <HeartOutline className="h-5 w-5" />
+                )}
                 <span>{count}</span>
               </button>
 
@@ -691,9 +700,9 @@ export function PostCard({
                     loadComments()
                   }
                 }}
-                className="inline-flex items-center gap-1.5 px-0 py-1 text-xs text-zinc-400 transition hover:text-white"
+                className="inline-flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-400 transition hover:text-white active:scale-95"
               >
-                <span aria-hidden="true">💬</span>
+                <ChatBubbleOvalLeftIcon className="h-5 w-5" />
                 <span>{commentsCount || comments.length}</span>
               </button>
             </div>
@@ -721,10 +730,7 @@ export function PostCard({
               {isCommentsLoading ? (
                 <div className="space-y-2">
                   {[1, 2, 3].map((index) => (
-                    <div
-                      key={index}
-                      className="animate-pulse px-0 py-3"
-                    >
+                    <div key={index} className="animate-pulse px-0 py-3">
                       <div className="mb-2 h-3 w-1/3 rounded bg-zinc-700" />
                       <div className="h-3 w-2/3 rounded bg-zinc-700" />
                     </div>
@@ -735,10 +741,7 @@ export function PostCard({
               ) : (
                 <div className="space-y-2">
                   {visibleComments.map((comment) => (
-                    <div
-                      key={comment.id}
-                      className="bg-black px-1 py-2"
-                    >
+                    <div key={comment.id} className="bg-black px-1 py-2">
                       <div className="flex items-start justify-between gap-3">
                         <p className="min-w-0 text-sm leading-6 text-zinc-300">
                           <span className="mr-2 text-sm font-semibold text-white">
@@ -757,10 +760,14 @@ export function PostCard({
                                 Boolean(comment.is_liked)
                               )
                             }
-                            className="px-0 py-1 text-sm font-medium text-zinc-400 transition hover:text-white"
+                            className="inline-flex items-center gap-1.5 px-0 py-1 text-xs text-zinc-400 transition hover:text-white active:scale-95"
                           >
-                            {comment.is_liked ? "❤️" : "🤍"}{" "}
-                            {comment.likes_count ?? 0}
+                            {comment.is_liked ? (
+                              <HeartSolid className="h-4 w-4 text-pink-500" />
+                            ) : (
+                              <HeartOutline className="h-4 w-4" />
+                            )}
+                            <span>{comment.likes_count ?? 0}</span>
                           </button>
 
                           <div onClick={(event) => event.stopPropagation()}>
@@ -772,8 +779,7 @@ export function PostCard({
                             />
                           </div>
 
-                          {currentUserId &&
-                          comment.user_id === currentUserId ? (
+                          {currentUserId && comment.user_id === currentUserId ? (
                             <button
                               type="button"
                               onClick={(event) =>
