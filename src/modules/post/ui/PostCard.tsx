@@ -79,41 +79,6 @@ function formatPostDate(value: string) {
   }).format(date)
 }
 
-function getPreviewTitle(text: string) {
-  const normalized = text.trim()
-
-  if (!normalized) {
-    return "Untitled post"
-  }
-
-  const firstLine = normalized.split("\n").find((line) => line.trim().length > 0)
-
-  if (!firstLine) {
-    return "Untitled post"
-  }
-
-  return firstLine.length > 72 ? `${firstLine.slice(0, 72)}...` : firstLine
-}
-
-function getPreviewBody(text: string) {
-  const normalized = text.trim()
-
-  if (!normalized) {
-    return ""
-  }
-
-  const lines = normalized
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-
-  if (lines.length <= 1) {
-    return normalized
-  }
-
-  return lines.slice(1).join(" ")
-}
-
 export function PostCard({
   postId,
   text,
@@ -185,8 +150,6 @@ export function PostCard({
 
   const creatorName = creator.displayName ?? creator.username
   const creatorInitial = creatorName.slice(0, 1).toUpperCase()
-  const previewTitle = getPreviewTitle(blockText)
-  const previewBody = getPreviewBody(blockText)
 
   const primaryVideo = blockMedia.find((item) => item.type === "video")
   const visibleComments = expandedComments ? comments : comments.slice(0, 3)
@@ -638,11 +601,11 @@ export function PostCard({
               ))}
 
               {textGroups.length > 0 ? (
-                <div className="space-y-3 px-4 pt-3">
+                <div className="space-y-1 px-3 pt-3">
                   {textGroups.map((group) => (
                     <p
                       key={group.block.id}
-                      className="whitespace-pre-wrap text-sm leading-6 text-zinc-400"
+                      className="whitespace-pre-wrap text-sm leading-6 text-white/80"
                     >
                       {group.block.content}
                     </p>
@@ -654,22 +617,18 @@ export function PostCard({
             <>
               {blockMedia.length > 0 ? <div className="mt-2">{renderMedia()}</div> : null}
 
-              <div className="space-y-2 px-4 pt-3">
-                <p className="line-clamp-2 text-base font-semibold leading-7 text-white sm:text-lg">
-                  {previewTitle}
-                </p>
-
-                {previewBody ? (
-                  <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-zinc-400">
-                    {previewBody}
+              {blockText ? (
+                <div className="px-3 pt-3">
+                  <p className="whitespace-pre-wrap text-sm leading-6 text-white/80">
+                    {blockText}
                   </p>
-                ) : null}
-              </div>
+                </div>
+              ) : null}
             </>
           )}
 
-          <div className="flex items-center justify-between gap-3 px-4 pt-3">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-3 px-3 pt-3">
+            <div className="flex items-center gap-2">
               <p className="text-xs text-zinc-500">
                 {formatPostDate(createdAt)}
               </p>
@@ -678,12 +637,12 @@ export function PostCard({
                 type="button"
                 onClick={handleLike}
                 disabled={isLikeLoading}
-                className="inline-flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-400 transition hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-1 px-1 py-1 text-xs text-zinc-400 transition hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {liked ? (
-                  <HeartSolid className="h-5 w-5 text-pink-500" />
+                  <HeartSolid className="h-4 w-4 text-pink-500" />
                 ) : (
-                  <HeartOutline className="h-5 w-5" />
+                  <HeartOutline className="h-4 w-4" />
                 )}
                 <span>{count}</span>
               </button>
@@ -700,9 +659,9 @@ export function PostCard({
                     loadComments()
                   }
                 }}
-                className="inline-flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-400 transition hover:text-white active:scale-95"
+                className="inline-flex items-center gap-1 px-1 py-1 text-xs text-zinc-400 transition hover:text-white active:scale-95"
               >
-                <ChatBubbleOvalLeftIcon className="h-5 w-5" />
+                <ChatBubbleOvalLeftIcon className="h-4 w-4" />
                 <span>{commentsCount || comments.length}</span>
               </button>
             </div>
@@ -710,7 +669,7 @@ export function PostCard({
 
           {showComments ? (
             <div
-              className="space-y-3 px-4 pt-3"
+              className="space-y-3 px-3 pt-3"
               onClick={(event) => event.stopPropagation()}
             >
               <form onSubmit={handleCommentSubmit}>
