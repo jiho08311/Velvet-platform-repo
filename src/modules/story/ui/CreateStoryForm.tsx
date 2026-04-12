@@ -758,7 +758,7 @@ function handleChangeTextOverlayColor(color: string) {
                   selectedLayer: null,
                 }))
               }}
-             className="relative mx-auto w-full max-w-[420px] aspect-[9/16] overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-900 shadow-2xl"
+             className="relative mx-auto w-[92%] max-w-[380px] aspect-[9/16] overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-900 shadow-2xl"
             >
 {previewUrl ? (
   <div className="absolute inset-0">
