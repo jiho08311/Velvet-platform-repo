@@ -33,33 +33,36 @@ export function AppHeader({
     return href
   }
 
-useEffect(() => {
-  async function fetchAuth() {
-    try {
-      const res = await fetch("/api/notifications", {
-        method: "HEAD",
-        cache: "no-store",
-      })
+  useEffect(() => {
+    async function fetchAuth() {
+      try {
+        const res = await fetch("/api/notifications", {
+          method: "HEAD",
+          cache: "no-store",
+        })
 
-      if (!res.ok) {
+        if (!res.ok) {
+          setIsAuthenticated(false)
+          return
+        }
+
+        setIsAuthenticated(true)
+      } catch {
         setIsAuthenticated(false)
-        return
       }
-
-      setIsAuthenticated(true)
-    } catch {
-      setIsAuthenticated(false)
     }
-  }
 
-  fetchAuth()
-}, [])
+    fetchAuth()
+  }, [])
 
   return (
-    <header className="sticky top-0 z-40 border-b border-zinc-900/80 bg-zinc-950/90 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 px-4 py-3 md:px-6">
-        <div className="flex min-w-0 items-center gap-3">
-          <Link href={resolveHref("/feed")} className="flex items-center gap-3">
+    <header className="sticky top-0 z-40 overflow-x-hidden border-b border-zinc-900/80 bg-zinc-950/90 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-2 px-3 py-3 md:gap-3 md:px-6">
+        <div className="min-w-0 flex-1">
+          <Link
+            href={resolveHref("/feed")}
+            className="flex min-w-0 items-center gap-2 md:gap-3"
+          >
             <Image
               src="/logo-mark.png"
               alt="Velvet logo"
@@ -81,22 +84,22 @@ useEffect(() => {
           </Link>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex shrink-0 items-center gap-2 md:gap-4">
           <Link
             href="/about"
-            className="text-sm text-zinc-400 transition hover:text-white"
+            className="hidden text-sm text-zinc-400 transition hover:text-white sm:inline"
           >
             About
           </Link>
 
           <Link
             href={resolveHref("/post/new")}
-            className="inline-flex items-center rounded-full bg-[#C2185B] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#D81B60] active:bg-[#AD1457]"
+            className="inline-flex items-center rounded-full bg-[#C2185B] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#D81B60] active:bg-[#AD1457] md:px-4"
           >
             New post
           </Link>
 
-          <div className="shrink-0">
+          <div className="hidden shrink-0 sm:block">
             {action ??
               (isAuthenticated ? (
                 <SignOutButton />
