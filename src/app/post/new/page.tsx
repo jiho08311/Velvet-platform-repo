@@ -32,7 +32,7 @@ export default async function NewPostPage() {
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
-      <div className="mb-6 space-y-2">
+      <div className="mb-6 space-y-2"> 
         <p className="text-xs font-medium uppercase tracking-[0.22em] text-pink-400">
           Create
         </p>
