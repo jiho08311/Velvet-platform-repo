@@ -34,7 +34,7 @@ export default async function NewStoryPage() {
 
   return (
     <main className="min-h-screen bg-zinc-950">
-      <div className="mx-auto flex min-h-screen w-full max-w-5xl items-stretch">
+      <div className="flex min-h-screen w-full items-stretch">
         <div className="w-full px-0 py-0">
           <CreateStoryComposer />
         </div>
