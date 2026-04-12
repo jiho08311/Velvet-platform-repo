@@ -705,7 +705,7 @@ export function CreateStoryForm({
         className="hidden"
       />
 
-      <div className="flex min-h-screen w-full flex-col">
+      <div className="flex min-h-screen w-full flex-col bg-gradient-to-b from-zinc-950 to-pink-950/10">
         <div className="sticky top-0 z-30 border-b border-zinc-900/80 bg-zinc-950/90 backdrop-blur-xl">
           <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-4">
             <button
