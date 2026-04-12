@@ -688,7 +688,7 @@ export function CreateStoryForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="min-h-screen bg-zinc-900">
+   <form className="min-h-screen bg-[#f7f5f6]">
       <input
         ref={fileInputRef}
         type="file"
@@ -738,7 +738,7 @@ export function CreateStoryForm({
                   selectedLayer: null,
                 }))
               }}
-           className="relative w-full aspect-[9/16] overflow-hidden bg-[#0f0f10]"
+           className="relative w-full aspect-[9/16] overflow-hidden bg-[#fff7fa]"
             >
               {previewUrl ? (
                 <div className="absolute inset-0">
