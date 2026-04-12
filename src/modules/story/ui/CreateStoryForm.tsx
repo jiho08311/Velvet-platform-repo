@@ -758,29 +758,31 @@ function handleChangeTextOverlayColor(color: string) {
                   selectedLayer: null,
                 }))
               }}
-             className="relative w-full overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-900 shadow-2xl md:aspect-[9/16] md:max-h-[720px]"
+             className="relative mx-auto w-full max-w-[420px] aspect-[9/16] overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-900 shadow-2xl"
             >
-              {previewUrl ? (
-                file?.type.startsWith("video/") ? (
-                  <video
-                    src={previewUrl}
-                    className="h-full w-full object-cover"
-                    style={getFilterStyle(selectedFilterPreset)}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                  />
-                ) : (
-                  <img
-                    src={previewUrl}
-                    className="h-full w-full object-cover"
-                    style={getFilterStyle(selectedFilterPreset)}
-                    alt="Story preview"
-                  />
-                )
+{previewUrl ? (
+  <div className="absolute inset-0">
+    {file?.type.startsWith("video/") ? (
+      <video
+        src={previewUrl}
+        className="absolute inset-0 h-full w-full object-cover"
+        style={getFilterStyle(selectedFilterPreset)}
+        autoPlay
+        muted
+        loop
+        playsInline
+      />
+    ) : (
+      <img
+        src={previewUrl}
+        className="absolute inset-0 h-full w-full object-cover"
+        style={getFilterStyle(selectedFilterPreset)}
+        alt="Story preview"
+      />
+    )}
+  </div>
 ) : (
-  <div className="flex h-full w-full items-center justify-center p-6">
+  <div className="absolute inset-0 flex items-center justify-center p-6">
     <button
       type="button"
       onClick={() => fileInputRef.current?.click()}
