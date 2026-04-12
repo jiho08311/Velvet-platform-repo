@@ -728,7 +728,7 @@ export function CreateStoryForm({
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col px-4 pb-28 pt-4 md:px-6">
+        <div className="flex flex-1 flex-col pb-28 pt-4">
           <div className="flex w-full flex-1 flex-col items-stretch">
             <div
               ref={previewContainerRef}
@@ -766,9 +766,9 @@ export function CreateStoryForm({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full max-w-[260px] rounded-[24px] border border-white/10 bg-black/25 px-5 py-7 text-center backdrop-blur-sm transition hover:bg-black/35 active:scale-[0.96] md:rounded-[28px]"
+                    className="flex flex-col items-center justify-center gap-4 text-center transition active:scale-[0.96]"
                   >
-                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-2xl text-white/80">
+                    <div className="mb-2 text-4xl text-white/80">
                       +
                     </div>
 
@@ -779,9 +779,7 @@ export function CreateStoryForm({
                       Upload a photo or video to begin editing.
                     </p>
 
-                    <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/5 px-3 py-2 text-[11px] leading-4 text-white/70">
-                      {emptyStateHint}
-                    </div>
+
                   </button>
                 </div>
               )}
