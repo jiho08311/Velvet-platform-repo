@@ -80,7 +80,7 @@ export function StoryList({
 
   return (
     <>
-      <section className="space-y-3">
+      <section className="space-y-3 bg-gradient-to-b from-[#2a0f1c]/60 to-transparent">
         <div className="px-1">
           <h2 className="text-sm font-semibold text-white">Stories</h2>
         </div>
