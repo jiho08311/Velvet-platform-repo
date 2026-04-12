@@ -1,6 +1,6 @@
 export default function Footer() {
   return (
-    <footer className="w-full border-t border-transparent bg-gradient-to-t from-[#2a0f1c] to-transparent text-sm text-zinc-500">
+    <footer className="w-full border-t border-zinc-900 bg-zinc-950 text-sm text-zinc-500">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 md:px-6">
         <p className="text-zinc-400">Velvet</p>
 
