@@ -705,7 +705,7 @@ export function CreateStoryForm({
         className="hidden"
       />
 
-      <div className="flex min-h-screen w-full flex-col bg-gradient-to-b from-zinc-950 to-pink-950/10">
+      <div className="flex min-h-screen w-full flex-col">
         <div className="sticky top-0 z-30 border-b border-zinc-900/80 bg-zinc-950/90 backdrop-blur-xl">
           <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-4">
             <button
@@ -738,7 +738,7 @@ export function CreateStoryForm({
                   selectedLayer: null,
                 }))
               }}
-              className="relative w-full aspect-[9/16] overflow-hidden bg-black md:mx-auto md:max-w-[420px] md:rounded-[28px] md:border md:border-zinc-800 md:shadow-2xl"
+           className="relative w-full aspect-[9/16] overflow-hidden bg-gradient-to-b from-zinc-950 to-pink-950/10 ..."
             >
               {previewUrl ? (
                 <div className="absolute inset-0">
