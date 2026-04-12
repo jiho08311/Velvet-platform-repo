@@ -748,264 +748,268 @@ function handleChangeTextOverlayColor(color: string) {
           </button>
         </div>
 </div>
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-start">
-        <div className="w-full space-y-4">
-<div className="flex w-full justify-center">
-  <div
-    ref={previewContainerRef}
-    onClick={() => {
-      setUiState((prev) => ({
-        ...prev,
-        selectedLayer: null,
-      }))
-    }}
-    className="relative w-full max-w-[380px] aspect-[9/16] overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-900 shadow-2xl"
-  >
-{previewUrl ? (
-  <div className="absolute inset-0">
-    {file?.type.startsWith("video/") ? (
-      <video
-        src={previewUrl}
-        className="absolute inset-0 h-full w-full object-cover"
-        style={getFilterStyle(selectedFilterPreset)}
-        autoPlay
-        muted
-        loop
-        playsInline
-      />
-    ) : (
-      <img
-        src={previewUrl}
-        className="absolute inset-0 h-full w-full object-cover"
-        style={getFilterStyle(selectedFilterPreset)}
-        alt="Story preview"
-      />
-    )}
-  </div>
-) : (
-  <div className="absolute inset-0 flex items-center justify-center p-6">
-    <button
-      type="button"
-      onClick={() => fileInputRef.current?.click()}
-      className="w-full max-w-[260px] rounded-[28px] border border-white/10 bg-black/25 px-5 py-7 text-center backdrop-blur-sm transition hover:bg-black/35"
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-start">
+       <div className="w-full space-y-4">
+  <div className="flex w-full justify-center">
+    <div
+      ref={previewContainerRef}
+      onClick={() => {
+        setUiState((prev) => ({
+          ...prev,
+          selectedLayer: null,
+        }))
+      }}
+      className="relative w-full max-w-[380px] aspect-[9/16] overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-900 shadow-2xl"
     >
-      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-2xl text-white/80">
-        +
-      </div>
-
-      <p className="text-sm font-medium text-white">Start your story</p>
-      <p className="mt-2 text-xs leading-5 text-zinc-300">
-        Upload a photo or video to begin editing.
-      </p>
-
-      <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/5 px-3 py-2 text-[11px] leading-4 text-white/70">
-        {emptyStateHint}
-      </div>
-    </button>
-  </div>
-)}
-
-               <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/35 to-transparent" />
-  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent" />
-  <div className="pointer-events-none absolute inset-[6%] rounded-[22px] border border-white/10" />
-  <div className="pointer-events-none absolute left-4 top-4 rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-medium text-white/80 backdrop-blur-sm">
-    Story preview
-  </div>
-
-              {editorState.textOverlays?.map((overlay) => {
-                const isSelected =
-                  selectedLayer?.type === "text" &&
-                  selectedLayer.id === overlay.id
-
-                return (
-                  <div
-                    key={overlay.id}
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      setUiState((prev) => ({
-                        ...prev,
-                        activeTool: "text",
-                        selectedLayer: {
-                          type: "text",
-                          id: overlay.id,
-                        },
-                      }))
-                    }}
-                    onMouseDown={handleSelectedLayerMouseDown}
-                    onTouchStart={handleSelectedLayerTouchStart}
-        className={`absolute max-w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-md text-center text-white transition-all duration-150 ${
-  isSelected
-    ? uiState.isDragging
-      ? "ring-2 ring-pink-400 scale-110 shadow-2xl z-20"
-      : "ring-2 ring-pink-400 scale-105 shadow-lg"
-    : "opacity-80"
-}`}
-              style={{
-  left: `${overlay.x * 100}%`,
-  top: `${overlay.y * 100}%`,
-  touchAction: "none",
-  textAlign: overlay.align ?? "center",
-}}
-                  >
-                  <p
-  className={`whitespace-pre-wrap break-words font-medium ${
-    overlay.fontSize === "sm"
-      ? "text-sm"
-      : overlay.fontSize === "lg"
-        ? "text-xl"
-        : "text-base"
-  }`}
-  style={{
-    color: overlay.color ?? "#ffffff",
-  }}
->
-  {overlay.text || "Text overlay"}
-</p>
-                  </div>
-                )
-              })}
-
-              {editorState.overlays?.map((overlay) => {
-                const isSelected =
-                  selectedLayer?.type === "overlay" &&
-                  selectedLayer.id === overlay.id
-
-                return (
-                  <div
-                    key={overlay.id}
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      setUiState((prev) => ({
-                        ...prev,
-                        activeTool: "sticker",
-                        selectedLayer: {
-                          type: "overlay",
-                          id: overlay.id,
-                        },
-                      }))
-                    }}
-                    onMouseDown={handleSelectedLayerMouseDown}
-                    onTouchStart={handleSelectedLayerTouchStart}
-     className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-md text-2xl transition-all duration-150 ${
-  isSelected
-    ? uiState.isDragging
-      ? "ring-2 ring-pink-400 scale-[1.16] shadow-2xl z-20"
-      : "ring-2 ring-pink-400 scale-110 shadow-lg"
-    : "opacity-80"
-}`}
-                    style={{
-                      left: `${overlay.x * 100}%`,
-                      top: `${overlay.y * 100}%`,
-                      transform: `translate(-50%, -50%) scale(${overlay.scale ?? 1}) rotate(${overlay.rotation ?? 0}deg)`,
-                      touchAction: "none",
-                    }}
-                  >
-                    {getStickerSymbol(overlay.preset)}
-                  </div>
-                )
-              })}
-
-              {selectedMusic ? (
-                <div
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    setUiState((prev) => ({
-                      ...prev,
-                      activeTool: "music",
-                      selectedLayer: {
-                        type: "music",
-                        id: "music",
-                      },
-                    }))
-                  }}
-className={`absolute z-10 max-w-[78%] -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing transition-all duration-150 ${
-  uiState.isDragging ? "scale-[1.08]" : "scale-100"
-} ${isMusicSelected ? "ring-2 ring-pink-400 shadow-xl rounded-2xl" : "opacity-90"}`}
-                  style={{
-                    left: `${(selectedMusic.x ?? 0.22) * 100}%`,
-                    top: `${(selectedMusic.y ?? 0.12) * 100}%`,
-                    touchAction: "none",
-                  }}
-                  onMouseDown={handleMusicStickerMouseDown}
-                  onTouchStart={handleMusicStickerTouchStart}
-                >
-                  <div
-                    className={`pointer-events-none border border-white/10 bg-black/65 backdrop-blur-sm ${
-                      selectedMusicStyle === "minimal"
-                        ? "rounded-full px-3 py-1.5"
-                        : selectedMusicStyle === "bold"
-                          ? "rounded-3xl px-4 py-3 shadow-2xl"
-                          : "rounded-2xl px-3 py-2 shadow-lg"
-                    }`}
-                  >
-                    {selectedMusicStyle === "minimal" ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-white">🎵</span>
-                        <p className="max-w-[160px] truncate text-xs font-medium text-white">
-                          {selectedMusic.title ?? "Selected music"}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        {selectedMusic.artworkUrl ? (
-                          <img
-                            src={selectedMusic.artworkUrl}
-                            alt={selectedMusic.title ?? "Selected music"}
-                            className={`object-cover ${
-                              selectedMusicStyle === "bold"
-                                ? "h-12 w-12 rounded-2xl"
-                                : "h-10 w-10 rounded-xl"
-                            }`}
-                          />
-                        ) : (
-                          <div
-                            className={`flex items-center justify-center bg-white/10 text-white ${
-                              selectedMusicStyle === "bold"
-                                ? "h-12 w-12 rounded-2xl text-base"
-                                : "h-10 w-10 rounded-xl text-sm"
-                            }`}
-                          >
-                            🎵
-                          </div>
-                        )}
-
-                        <div className="min-w-0">
-                          <p
-                            className={`truncate font-medium uppercase tracking-[0.18em] text-pink-300 ${
-                              selectedMusicStyle === "bold"
-                                ? "text-[10px]"
-                                : "text-[11px]"
-                            }`}
-                          >
-                            Music
-                          </p>
-                          <p
-                            className={`truncate font-semibold text-white ${
-                              selectedMusicStyle === "bold"
-                                ? "text-base"
-                                : "text-sm"
-                            }`}
-                          >
-                            {selectedMusic.title ?? "Selected music"}
-                          </p>
-                          <p
-                            className={`truncate text-zinc-300 ${
-                              selectedMusicStyle === "bold"
-                                ? "text-sm"
-                                : "text-xs"
-                            }`}
-                          >
-                            {selectedMusic.artist ?? ""}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : null}
+      {previewUrl ? (
+        <div className="absolute inset-0">
+          {file?.type.startsWith("video/") ? (
+            <video
+              src={previewUrl}
+              className="absolute inset-0 h-full w-full object-cover"
+              style={getFilterStyle(selectedFilterPreset)}
+              autoPlay
+              muted
+              loop
+              playsInline
+            />
+          ) : (
+            <img
+              src={previewUrl}
+              className="absolute inset-0 h-full w-full object-cover"
+              style={getFilterStyle(selectedFilterPreset)}
+              alt="Story preview"
+            />
+          )}
+        </div>
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center p-6">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full max-w-[260px] rounded-[28px] border border-white/10 bg-black/25 px-5 py-7 text-center backdrop-blur-sm transition hover:bg-black/35"
+          >
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-2xl text-white/80">
+              +
             </div>
 
-            <div className="sticky bottom-3 z-20 flex flex-wrap items-center justify-center gap-2 rounded-[28px] border border-zinc-800 bg-zinc-950/85 p-3 shadow-2xl backdrop-blur-md">
+            <p className="text-sm font-medium text-white">Start your story</p>
+            <p className="mt-2 text-xs leading-5 text-zinc-300">
+              Upload a photo or video to begin editing.
+            </p>
+
+            <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/5 px-3 py-2 text-[11px] leading-4 text-white/70">
+              {emptyStateHint}
+            </div>
+          </button>
+        </div>
+      )}
+
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/35 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent" />
+      <div className="pointer-events-none absolute inset-[6%] rounded-[22px] border border-white/10" />
+      <div className="pointer-events-none absolute left-4 top-4 rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-medium text-white/80 backdrop-blur-sm">
+        Story preview
+      </div>
+
+      {/* 기존 text / sticker / music overlay 렌더 그대로 유지 */}
+      {editorState.textOverlays?.map((overlay) => {
+        const isSelected =
+          selectedLayer?.type === "text" &&
+          selectedLayer.id === overlay.id
+
+        return (
+          <div
+            key={overlay.id}
+            onClick={(event) => {
+              event.stopPropagation()
+              setUiState((prev) => ({
+                ...prev,
+                activeTool: "text",
+                selectedLayer: {
+                  type: "text",
+                  id: overlay.id,
+                },
+              }))
+            }}
+            onMouseDown={handleSelectedLayerMouseDown}
+            onTouchStart={handleSelectedLayerTouchStart}
+            className={`absolute max-w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-md text-center text-white transition-all duration-150 ${
+              isSelected
+                ? uiState.isDragging
+                  ? "ring-2 ring-pink-400 scale-110 shadow-2xl z-20"
+                  : "ring-2 ring-pink-400 scale-105 shadow-lg"
+                : "opacity-80"
+            }`}
+            style={{
+              left: `${overlay.x * 100}%`,
+              top: `${overlay.y * 100}%`,
+              touchAction: "none",
+              textAlign: overlay.align ?? "center",
+            }}
+          >
+            <p
+              className={`whitespace-pre-wrap break-words font-medium ${
+                overlay.fontSize === "sm"
+                  ? "text-sm"
+                  : overlay.fontSize === "lg"
+                    ? "text-xl"
+                    : "text-base"
+              }`}
+              style={{
+                color: overlay.color ?? "#ffffff",
+              }}
+            >
+              {overlay.text || "Text overlay"}
+            </p>
+          </div>
+        )
+      })}
+
+      {editorState.overlays?.map((overlay) => {
+        const isSelected =
+          selectedLayer?.type === "overlay" &&
+          selectedLayer.id === overlay.id
+
+        return (
+          <div
+            key={overlay.id}
+            onClick={(event) => {
+              event.stopPropagation()
+              setUiState((prev) => ({
+                ...prev,
+                activeTool: "sticker",
+                selectedLayer: {
+                  type: "overlay",
+                  id: overlay.id,
+                },
+              }))
+            }}
+            onMouseDown={handleSelectedLayerMouseDown}
+            onTouchStart={handleSelectedLayerTouchStart}
+            className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-md text-2xl transition-all duration-150 ${
+              isSelected
+                ? uiState.isDragging
+                  ? "ring-2 ring-pink-400 scale-[1.16] shadow-2xl z-20"
+                  : "ring-2 ring-pink-400 scale-110 shadow-lg"
+                : "opacity-80"
+            }`}
+            style={{
+              left: `${overlay.x * 100}%`,
+              top: `${overlay.y * 100}%`,
+              transform: `translate(-50%, -50%) scale(${overlay.scale ?? 1}) rotate(${overlay.rotation ?? 0}deg)`,
+              touchAction: "none",
+            }}
+          >
+            {getStickerSymbol(overlay.preset)}
+          </div>
+        )
+      })}
+
+      {selectedMusic ? (
+        <div
+          onClick={(event) => {
+            event.stopPropagation()
+            setUiState((prev) => ({
+              ...prev,
+              activeTool: "music",
+              selectedLayer: {
+                type: "music",
+                id: "music",
+              },
+            }))
+          }}
+          className={`absolute z-10 max-w-[78%] -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing transition-all duration-150 ${
+            uiState.isDragging ? "scale-[1.08]" : "scale-100"
+          } ${isMusicSelected ? "ring-2 ring-pink-400 shadow-xl rounded-2xl" : "opacity-90"}`}
+          style={{
+            left: `${(selectedMusic.x ?? 0.22) * 100}%`,
+            top: `${(selectedMusic.y ?? 0.12) * 100}%`,
+            touchAction: "none",
+          }}
+          onMouseDown={handleMusicStickerMouseDown}
+          onTouchStart={handleMusicStickerTouchStart}
+        >
+          <div
+            className={`pointer-events-none border border-white/10 bg-black/65 backdrop-blur-sm ${
+              selectedMusicStyle === "minimal"
+                ? "rounded-full px-3 py-1.5"
+                : selectedMusicStyle === "bold"
+                  ? "rounded-3xl px-4 py-3 shadow-2xl"
+                  : "rounded-2xl px-3 py-2 shadow-lg"
+            }`}
+          >
+            {selectedMusicStyle === "minimal" ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-white">🎵</span>
+                <p className="max-w-[160px] truncate text-xs font-medium text-white">
+                  {selectedMusic.title ?? "Selected music"}
+                </p>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                {selectedMusic.artworkUrl ? (
+                  <img
+                    src={selectedMusic.artworkUrl}
+                    alt={selectedMusic.title ?? "Selected music"}
+                    className={`object-cover ${
+                      selectedMusicStyle === "bold"
+                        ? "h-12 w-12 rounded-2xl"
+                        : "h-10 w-10 rounded-xl"
+                    }`}
+                  />
+                ) : (
+                  <div
+                    className={`flex items-center justify-center bg-white/10 text-white ${
+                      selectedMusicStyle === "bold"
+                        ? "h-12 w-12 rounded-2xl text-base"
+                        : "h-10 w-10 rounded-xl text-sm"
+                    }`}
+                  >
+                    🎵
+                  </div>
+                )}
+
+                <div className="min-w-0">
+                  <p
+                    className={`truncate font-medium uppercase tracking-[0.18em] text-pink-300 ${
+                      selectedMusicStyle === "bold"
+                        ? "text-[10px]"
+                        : "text-[11px]"
+                    }`}
+                  >
+                    Music
+                  </p>
+                  <p
+                    className={`truncate font-semibold text-white ${
+                      selectedMusicStyle === "bold"
+                        ? "text-base"
+                        : "text-sm"
+                    }`}
+                  >
+                    {selectedMusic.title ?? "Selected music"}
+                  </p>
+                  <p
+                    className={`truncate text-zinc-300 ${
+                      selectedMusicStyle === "bold"
+                        ? "text-sm"
+                        : "text-xs"
+                    }`}
+                  >
+                    {selectedMusic.artist ?? ""}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  </div>
+
+  <div className="mx-auto w-full max-w-[380px]">
+    <div className="sticky bottom-3 z-20 flex flex-wrap items-center justify-center gap-2 rounded-[28px] border border-zinc-800 bg-zinc-950/85 p-3 shadow-2xl backdrop-blur-md">
+      {/* 기존 Text / Sticker / Music / Filter / Trim 버튼 그대로 유지 */}
               <button
                 type="button"
                 onClick={() =>
