@@ -768,9 +768,11 @@ export function CreateStoryForm({
                     onClick={() => fileInputRef.current?.click()}
                     className="flex flex-col items-center justify-center gap-4 text-center transition active:scale-[0.96]"
                   >
-                    <div className="mb-2 text-4xl text-white/80">
-                      +
-                    </div>
+<img
+  src="/logo-mark.png"
+  alt="Velvet"
+  className="mb-3 w-24 opacity-[0.12]"
+/>
 
                     <p className="text-sm font-medium text-white">
                       Start your story
