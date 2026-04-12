@@ -705,7 +705,7 @@ export function CreateStoryForm({
         className="hidden"
       />
 
-      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col">
+      <div className="flex min-h-screen w-full flex-col">
         <div className="sticky top-0 z-30 border-b border-zinc-900/80 bg-zinc-950/90 backdrop-blur-xl">
           <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-4">
             <button
@@ -729,7 +729,7 @@ export function CreateStoryForm({
         </div>
 
         <div className="flex flex-1 flex-col px-4 pb-28 pt-4 md:px-6">
-          <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center">
+          <div className="flex w-full flex-1 flex-col items-stretch">
             <div
               ref={previewContainerRef}
               onClick={() => {
@@ -738,7 +738,7 @@ export function CreateStoryForm({
                   selectedLayer: null,
                 }))
               }}
-              className="relative w-full max-w-[380px] aspect-[9/16] overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-900 shadow-2xl"
+              className="relative w-full aspect-[9/16] overflow-hidden bg-black md:mx-auto md:max-w-[420px] md:rounded-[28px] md:border md:border-zinc-800 md:shadow-2xl"
             >
               {previewUrl ? (
                 <div className="absolute inset-0">
@@ -990,7 +990,7 @@ export function CreateStoryForm({
               ) : null}
             </div>
 
-            <div className="mt-3 w-full max-w-[420px]">
+            <div className="mt-3 w-full md:mx-auto md:max-w-[420px]">
               <div className="flex items-center justify-between gap-2 rounded-[28px] border border-zinc-800 bg-zinc-950/85 p-2.5 shadow-2xl backdrop-blur-md">
                 <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto">
                   <button
