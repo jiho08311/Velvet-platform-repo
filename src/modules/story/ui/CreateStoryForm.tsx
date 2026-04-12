@@ -1,6 +1,7 @@
 "use client"
 
 import { FormEvent, useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { StoryVideoTrimField } from "@/modules/media/ui/StoryVideoTrimField"
 import type {
   StoryEditorState,
@@ -8,10 +9,7 @@ import type {
   StoryMusicSearchItem,
 } from "../types"
 
-type StoryVisibility = "public" | "subscribers"
-
 type SubmitStoryInput = {
-  visibility: StoryVisibility
   file: File | null
   trim: {
     duration: number
@@ -23,7 +21,7 @@ type SubmitStoryInput = {
 
 type CreateStoryFormProps = {
   isSubmitting?: boolean
-  onSubmitStory: (input: SubmitStoryInput) => void
+  onNextStory: (input: SubmitStoryInput) => void
 }
 
 function clampPosition(value: number) {
@@ -59,9 +57,9 @@ function getFilterStyle(preset?: string | null) {
 
 export function CreateStoryForm({
   isSubmitting = false,
-  onSubmitStory,
+  onNextStory,
 }: CreateStoryFormProps) {
-  const [visibility, setVisibility] = useState<StoryVisibility>("subscribers")
+  const router = useRouter()
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [musicQuery, setMusicQuery] = useState("")
@@ -119,8 +117,6 @@ export function CreateStoryForm({
         ) ?? null
       : null
 
-  const isTextSelected = !!selectedTextOverlay
-  const isLatestStickerSelected = !!selectedSticker
   const isMusicSelected = selectedLayer?.type === "music"
 
   const selectedFilterPreset = editorState.filter?.preset ?? "none"
@@ -133,21 +129,20 @@ export function CreateStoryForm({
   const isMusicToolOpen = activeTool === "music"
   const isFilterToolOpen = activeTool === "filter"
   const isTrimToolOpen = activeTool === "trim"
+  const isToolSheetOpen = activeTool !== null
 
+  const emptyStateHint = isTextToolOpen
+    ? "Add text after choosing a photo or video"
+    : isStickerToolOpen
+      ? "Choose media first, then add stickers"
+      : isMusicToolOpen
+        ? "Pick media first, then add music"
+        : isFilterToolOpen
+          ? "Choose media to preview filters"
+          : isTrimToolOpen
+            ? "Trim becomes available after selecting a video"
+            : "Upload a photo or video to start"
 
-const emptyStateHint = isTextToolOpen
-  ? "Add text after choosing a photo or video"
-  : isStickerToolOpen
-    ? "Choose media first, then add stickers"
-    : isMusicToolOpen
-      ? "Pick media first, then add music"
-      : isFilterToolOpen
-        ? "Choose media to preview filters"
-        : isTrimToolOpen
-          ? "Trim becomes available after selecting a video"
-          : "Upload a photo or video to start"
-
-  
   useEffect(() => {
     const query = musicQuery.trim()
 
@@ -186,6 +181,13 @@ const emptyStateHint = isTextToolOpen
       window.clearTimeout(timeout)
     }
   }, [musicQuery])
+
+  function closeToolSheet() {
+    setUiState((prev) => ({
+      ...prev,
+      activeTool: null,
+    }))
+  }
 
   function handleAddTextOverlay() {
     const nextId = crypto.randomUUID()
@@ -243,68 +245,65 @@ const emptyStateHint = isTextToolOpen
     })
   }
 
+  function handleChangeTextOverlayFontSize(fontSize: "sm" | "md" | "lg") {
+    setEditorState((prev) => {
+      if (selectedLayer?.type !== "text") {
+        return prev
+      }
 
-function handleChangeTextOverlayFontSize(fontSize: "sm" | "md" | "lg") {
-  setEditorState((prev) => {
-    if (selectedLayer?.type !== "text") {
-      return prev
-    }
+      return {
+        ...prev,
+        textOverlays: (prev.textOverlays ?? []).map((overlay) =>
+          overlay.id === selectedLayer.id
+            ? {
+                ...overlay,
+                fontSize,
+              }
+            : overlay
+        ),
+      }
+    })
+  }
 
-    return {
-      ...prev,
-      textOverlays: (prev.textOverlays ?? []).map((overlay) =>
-        overlay.id === selectedLayer.id
-          ? {
-              ...overlay,
-              fontSize,
-            }
-          : overlay
-      ),
-    }
-  })
-}
+  function handleChangeTextOverlayAlign(align: "left" | "center" | "right") {
+    setEditorState((prev) => {
+      if (selectedLayer?.type !== "text") {
+        return prev
+      }
 
-function handleChangeTextOverlayAlign(align: "left" | "center" | "right") {
-  setEditorState((prev) => {
-    if (selectedLayer?.type !== "text") {
-      return prev
-    }
+      return {
+        ...prev,
+        textOverlays: (prev.textOverlays ?? []).map((overlay) =>
+          overlay.id === selectedLayer.id
+            ? {
+                ...overlay,
+                align,
+              }
+            : overlay
+        ),
+      }
+    })
+  }
 
-    return {
-      ...prev,
-      textOverlays: (prev.textOverlays ?? []).map((overlay) =>
-        overlay.id === selectedLayer.id
-          ? {
-              ...overlay,
-              align,
-            }
-          : overlay
-      ),
-    }
-  })
-}
+  function handleChangeTextOverlayColor(color: string) {
+    setEditorState((prev) => {
+      if (selectedLayer?.type !== "text") {
+        return prev
+      }
 
-function handleChangeTextOverlayColor(color: string) {
-  setEditorState((prev) => {
-    if (selectedLayer?.type !== "text") {
-      return prev
-    }
-
-    return {
-      ...prev,
-      textOverlays: (prev.textOverlays ?? []).map((overlay) =>
-        overlay.id === selectedLayer.id
-          ? {
-              ...overlay,
-              color,
-            }
-          : overlay
-      ),
-    }
-  })
-}
-
-
+      return {
+        ...prev,
+        textOverlays: (prev.textOverlays ?? []).map((overlay) =>
+          overlay.id === selectedLayer.id
+            ? {
+                ...overlay,
+                color,
+              }
+            : overlay
+        ),
+      }
+    })
+  }
 
   function handleRemoveTextOverlay() {
     setEditorState((prev) => {
@@ -681,1003 +680,1008 @@ function handleChangeTextOverlayColor(color: string) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    onSubmitStory({
-      visibility,
+    onNextStory({
       file,
       trim,
       editorState,
     })
-
-    setVisibility("subscribers")
-    setFile(null)
-    setPreviewUrl(null)
-    setMusicQuery("")
-    setMusicResults([])
-    setEditorState({
-      textOverlays: [],
-      overlays: [],
-      filter: null,
-      music: null,
-    })
-    setUiState({
-      activeTool: null,
-      selectedLayer: null,
-      isPreviewMode: false,
-      isDragging: false,
-    })
-    setTrim({
-      duration: 0,
-      requiresTrim: false,
-      startTime: 0,
-    })
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
   }
 
   return (
-  <form
-  onSubmit={handleSubmit}
-  className="space-y-4 pb-24 lg:space-y-0 md:pb-0"
->
-      <div className="mx-auto max-w-5xl space-y-4">
-        <div className="flex items-center justify-between rounded-3xl border border-zinc-800 bg-zinc-950/70 px-4 py-3">
-          <button
-            type="button"
-            onClick={() =>
-              setUiState((prev) => ({
-                ...prev,
-                activeTool: null,
-                selectedLayer: null,
-              }))
-            }
-            className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-white transition hover:bg-zinc-800"
-          >
-            Cancel
-          </button>
+    <form onSubmit={handleSubmit} className="min-h-screen bg-zinc-950">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,video/*"
+        onChange={(e) => {
+          const nextFile = e.target.files?.[0] ?? null
+          setFile(nextFile)
+          setTrim({
+            duration: 0,
+            requiresTrim: false,
+            startTime: 0,
+          })
+        }}
+        className="hidden"
+      />
 
-          <p className="text-sm font-medium text-white">Create story</p>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="rounded-full bg-pink-600 px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-pink-500 hover:scale-[1.02] disabled:opacity-50"
-          >
-            {isSubmitting ? "Posting..." : "Post"}
-          </button>
-        </div>
-</div>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-start">
-       <div className="w-full space-y-4">
-  <div className="flex w-full justify-center">
-    <div
-      ref={previewContainerRef}
-      onClick={() => {
-        setUiState((prev) => ({
-          ...prev,
-          selectedLayer: null,
-        }))
-      }}
-      className="relative w-full max-w-[380px] aspect-[9/16] overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-900 shadow-2xl"
-    >
-      {previewUrl ? (
-        <div className="absolute inset-0">
-          {file?.type.startsWith("video/") ? (
-            <video
-              src={previewUrl}
-              className="absolute inset-0 h-full w-full object-cover"
-              style={getFilterStyle(selectedFilterPreset)}
-              autoPlay
-              muted
-              loop
-              playsInline
-            />
-          ) : (
-            <img
-              src={previewUrl}
-              className="absolute inset-0 h-full w-full object-cover"
-              style={getFilterStyle(selectedFilterPreset)}
-              alt="Story preview"
-            />
-          )}
-        </div>
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center p-6">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full max-w-[260px] rounded-[28px] border border-white/10 bg-black/25 px-5 py-7 text-center backdrop-blur-sm transition hover:bg-black/35"
-          >
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-2xl text-white/80">
-              +
-            </div>
-
-            <p className="text-sm font-medium text-white">Start your story</p>
-            <p className="mt-2 text-xs leading-5 text-zinc-300">
-              Upload a photo or video to begin editing.
-            </p>
-
-            <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/5 px-3 py-2 text-[11px] leading-4 text-white/70">
-              {emptyStateHint}
-            </div>
-          </button>
-        </div>
-      )}
-
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/35 to-transparent" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent" />
-      <div className="pointer-events-none absolute inset-[6%] rounded-[22px] border border-white/10" />
-      <div className="pointer-events-none absolute left-4 top-4 rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-medium text-white/80 backdrop-blur-sm">
-        Story preview
-      </div>
-
-      {/* 기존 text / sticker / music overlay 렌더 그대로 유지 */}
-      {editorState.textOverlays?.map((overlay) => {
-        const isSelected =
-          selectedLayer?.type === "text" &&
-          selectedLayer.id === overlay.id
-
-        return (
-          <div
-            key={overlay.id}
-            onClick={(event) => {
-              event.stopPropagation()
-              setUiState((prev) => ({
-                ...prev,
-                activeTool: "text",
-                selectedLayer: {
-                  type: "text",
-                  id: overlay.id,
-                },
-              }))
-            }}
-            onMouseDown={handleSelectedLayerMouseDown}
-            onTouchStart={handleSelectedLayerTouchStart}
-            className={`absolute max-w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-md text-center text-white transition-all duration-150 ${
-              isSelected
-                ? uiState.isDragging
-                  ? "ring-2 ring-pink-400 scale-110 shadow-2xl z-20"
-                  : "ring-2 ring-pink-400 scale-105 shadow-lg"
-                : "opacity-80"
-            }`}
-            style={{
-              left: `${overlay.x * 100}%`,
-              top: `${overlay.y * 100}%`,
-              touchAction: "none",
-              textAlign: overlay.align ?? "center",
-            }}
-          >
-            <p
-              className={`whitespace-pre-wrap break-words font-medium ${
-                overlay.fontSize === "sm"
-                  ? "text-sm"
-                  : overlay.fontSize === "lg"
-                    ? "text-xl"
-                    : "text-base"
-              }`}
-              style={{
-                color: overlay.color ?? "#ffffff",
-              }}
+      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col">
+        <div className="sticky top-0 z-30 border-b border-zinc-900/80 bg-zinc-950/90 backdrop-blur-xl">
+          <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-4">
+            <button
+              type="button"
+              onClick={() => router.push("/feed")}
+              className="text-sm text-zinc-400 transition hover:text-white"
             >
-              {overlay.text || "Text overlay"}
-            </p>
-          </div>
-        )
-      })}
+              Cancel
+            </button>
 
-      {editorState.overlays?.map((overlay) => {
-        const isSelected =
-          selectedLayer?.type === "overlay" &&
-          selectedLayer.id === overlay.id
+            <p className="text-sm font-medium text-white">New story</p>
 
-        return (
-          <div
-            key={overlay.id}
-            onClick={(event) => {
-              event.stopPropagation()
-              setUiState((prev) => ({
-                ...prev,
-                activeTool: "sticker",
-                selectedLayer: {
-                  type: "overlay",
-                  id: overlay.id,
-                },
-              }))
-            }}
-            onMouseDown={handleSelectedLayerMouseDown}
-            onTouchStart={handleSelectedLayerTouchStart}
-            className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-md text-2xl transition-all duration-150 ${
-              isSelected
-                ? uiState.isDragging
-                  ? "ring-2 ring-pink-400 scale-[1.16] shadow-2xl z-20"
-                  : "ring-2 ring-pink-400 scale-110 shadow-lg"
-                : "opacity-80"
-            }`}
-            style={{
-              left: `${overlay.x * 100}%`,
-              top: `${overlay.y * 100}%`,
-              transform: `translate(-50%, -50%) scale(${overlay.scale ?? 1}) rotate(${overlay.rotation ?? 0}deg)`,
-              touchAction: "none",
-            }}
-          >
-            {getStickerSymbol(overlay.preset)}
-          </div>
-        )
-      })}
-
-      {selectedMusic ? (
-        <div
-          onClick={(event) => {
-            event.stopPropagation()
-            setUiState((prev) => ({
-              ...prev,
-              activeTool: "music",
-              selectedLayer: {
-                type: "music",
-                id: "music",
-              },
-            }))
-          }}
-          className={`absolute z-10 max-w-[78%] -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing transition-all duration-150 ${
-            uiState.isDragging ? "scale-[1.08]" : "scale-100"
-          } ${isMusicSelected ? "ring-2 ring-pink-400 shadow-xl rounded-2xl" : "opacity-90"}`}
-          style={{
-            left: `${(selectedMusic.x ?? 0.22) * 100}%`,
-            top: `${(selectedMusic.y ?? 0.12) * 100}%`,
-            touchAction: "none",
-          }}
-          onMouseDown={handleMusicStickerMouseDown}
-          onTouchStart={handleMusicStickerTouchStart}
-        >
-          <div
-            className={`pointer-events-none border border-white/10 bg-black/65 backdrop-blur-sm ${
-              selectedMusicStyle === "minimal"
-                ? "rounded-full px-3 py-1.5"
-                : selectedMusicStyle === "bold"
-                  ? "rounded-3xl px-4 py-3 shadow-2xl"
-                  : "rounded-2xl px-3 py-2 shadow-lg"
-            }`}
-          >
-            {selectedMusicStyle === "minimal" ? (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-white">🎵</span>
-                <p className="max-w-[160px] truncate text-xs font-medium text-white">
-                  {selectedMusic.title ?? "Selected music"}
-                </p>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                {selectedMusic.artworkUrl ? (
-                  <img
-                    src={selectedMusic.artworkUrl}
-                    alt={selectedMusic.title ?? "Selected music"}
-                    className={`object-cover ${
-                      selectedMusicStyle === "bold"
-                        ? "h-12 w-12 rounded-2xl"
-                        : "h-10 w-10 rounded-xl"
-                    }`}
-                  />
-                ) : (
-                  <div
-                    className={`flex items-center justify-center bg-white/10 text-white ${
-                      selectedMusicStyle === "bold"
-                        ? "h-12 w-12 rounded-2xl text-base"
-                        : "h-10 w-10 rounded-xl text-sm"
-                    }`}
-                  >
-                    🎵
-                  </div>
-                )}
-
-                <div className="min-w-0">
-                  <p
-                    className={`truncate font-medium uppercase tracking-[0.18em] text-pink-300 ${
-                      selectedMusicStyle === "bold"
-                        ? "text-[10px]"
-                        : "text-[11px]"
-                    }`}
-                  >
-                    Music
-                  </p>
-                  <p
-                    className={`truncate font-semibold text-white ${
-                      selectedMusicStyle === "bold"
-                        ? "text-base"
-                        : "text-sm"
-                    }`}
-                  >
-                    {selectedMusic.title ?? "Selected music"}
-                  </p>
-                  <p
-                    className={`truncate text-zinc-300 ${
-                      selectedMusicStyle === "bold"
-                        ? "text-sm"
-                        : "text-xs"
-                    }`}
-                  >
-                    {selectedMusic.artist ?? ""}
-                  </p>
-                </div>
-              </div>
-            )}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="rounded-full bg-pink-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-pink-600/20 transition-all hover:bg-pink-500 hover:scale-[1.03] active:scale-[0.97] disabled:opacity-50"
+            >
+              {isSubmitting ? "Posting..." : "Next"}
+            </button>
           </div>
         </div>
-      ) : null}
-    </div>
-  </div>
 
-  <div className="mx-auto w-full max-w-[380px]">
-    <div className="sticky bottom-3 z-20 flex flex-wrap items-center justify-center gap-2 rounded-[28px] border border-zinc-800 bg-zinc-950/85 p-3 shadow-2xl backdrop-blur-md">
-      {/* 기존 Text / Sticker / Music / Filter / Trim 버튼 그대로 유지 */}
-              <button
-                type="button"
-                onClick={() =>
-                  setUiState((prev) => ({
-                    ...prev,
-                    activeTool: prev.activeTool === "text" ? null : "text",
-                  }))
-                }
-               className={`rounded-full border px-4 py-2 text-sm font-medium transition-all ${
-  isTextToolOpen
-    ? "border-pink-500 bg-pink-500/15 text-white shadow-lg shadow-pink-500/10"
-    : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
-}`}
-              >
-                Text
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setUiState((prev) => ({
-                    ...prev,
-                    activeTool: prev.activeTool === "sticker" ? null : "sticker",
-                  }))
-                }
-              className={`rounded-full border px-4 py-2 text-sm font-medium transition-all ${
-  isStickerToolOpen
-    ? "border-pink-500 bg-pink-500/15 text-white shadow-lg shadow-pink-500/10"
-    : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
-}`}
-              >
-                Sticker
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setUiState((prev) => ({
-                    ...prev,
-                    activeTool: prev.activeTool === "music" ? null : "music",
-                  }))
-                }
-              className={`rounded-full border px-4 py-2 text-sm font-medium transition-all ${
-  isMusicToolOpen
-    ? "border-pink-500 bg-pink-500/15 text-white shadow-lg shadow-pink-500/10"
-    : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
-}`}
-              >
-                Music
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setUiState((prev) => ({
-                    ...prev,
-                    activeTool: prev.activeTool === "filter" ? null : "filter",
-                  }))
-                }
-  className={`rounded-full border px-4 py-2 text-sm font-medium transition-all ${
-  isFilterToolOpen
-    ? "border-pink-500 bg-pink-500/15 text-white shadow-lg shadow-pink-500/10"
-    : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
-}`}
-              >
-                Filter
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setUiState((prev) => ({
-                    ...prev,
-                    activeTool: prev.activeTool === "trim" ? null : "trim",
-                  }))
-                }
-      className={`rounded-full border px-4 py-2 text-sm font-medium transition-all ${
-  isTrimToolOpen
-    ? "border-pink-500 bg-pink-500/15 text-white shadow-lg shadow-pink-500/10"
-    : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
-}`}
-              >
-                Trim
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {isTextToolOpen ? (
-              <div className="space-y-4 rounded-[28px] border border-zinc-800 bg-zinc-950/70 p-5 shadow-xl">
-                <div className="flex items-center justify-between gap-3">
-<div className="space-y-1">
-  <p className="text-sm font-medium text-white">Text overlay</p>
-  <p className="text-xs text-zinc-400">
-    Add text on top of your story preview
-  </p>
-</div>
-
-                  {selectedTextOverlay ? (
-                    <button
-                      type="button"
-                      onClick={handleRemoveTextOverlay}
-                      className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-white transition hover:bg-zinc-800"
-                    >
-                      Remove
-                    </button>
+        <div className="flex flex-1 flex-col px-4 pb-28 pt-4 md:px-6">
+          <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center">
+            <div
+              ref={previewContainerRef}
+              onClick={() => {
+                setUiState((prev) => ({
+                  ...prev,
+                  selectedLayer: null,
+                }))
+              }}
+              className="relative w-full max-w-[380px] aspect-[9/16] overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-900 shadow-2xl"
+            >
+              {previewUrl ? (
+                <div className="absolute inset-0">
+                  {file?.type.startsWith("video/") ? (
+                    <video
+                      src={previewUrl}
+                      className="absolute inset-0 h-full w-full object-cover"
+                      style={getFilterStyle(selectedFilterPreset)}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                    />
                   ) : (
-                    <button
-                      type="button"
-                      onClick={handleAddTextOverlay}
-                      className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-white transition hover:bg-zinc-800"
-                    >
-                      Add text
-                    </button>
+                    <img
+                      src={previewUrl}
+                      className="absolute inset-0 h-full w-full object-cover"
+                      style={getFilterStyle(selectedFilterPreset)}
+                      alt="Story preview"
+                    />
                   )}
                 </div>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center p-6">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full max-w-[260px] rounded-[28px] border border-white/10 bg-black/25 px-5 py-7 text-center backdrop-blur-sm transition hover:bg-black/35 active:scale-[0.96]"
+                  >
+                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-2xl text-white/80">
+                      +
+                    </div>
 
-                {selectedTextOverlay ? (
-                  <>
-                    <textarea
-                      value={selectedTextOverlay.text}
-                      onChange={(event) =>
-                        handleOverlayTextChange(event.target.value)
-                      }
-                      placeholder="Write overlay text..."
-                      className="min-h-[96px] w-full resize-none rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
-                    />
-
-<div className="space-y-3">
-  <div>
-    <p className="mb-2 text-xs font-medium text-zinc-400">Size</p>
-    <div className="flex flex-wrap gap-2">
-      <button
-        type="button"
-        onClick={() => handleChangeTextOverlayFontSize("sm")}
-        className={`rounded-full border px-3 py-1.5 text-xs transition ${
-          (selectedTextOverlay.fontSize ?? "md") === "sm"
-            ? "border-pink-500 bg-pink-500/10 text-white"
-            : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
-        }`}
-      >
-        Small
-      </button>
-
-      <button
-        type="button"
-        onClick={() => handleChangeTextOverlayFontSize("md")}
-        className={`rounded-full border px-3 py-1.5 text-xs transition ${
-          (selectedTextOverlay.fontSize ?? "md") === "md"
-            ? "border-pink-500 bg-pink-500/10 text-white"
-            : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
-        }`}
-      >
-        Medium
-      </button>
-
-      <button
-        type="button"
-        onClick={() => handleChangeTextOverlayFontSize("lg")}
-        className={`rounded-full border px-3 py-1.5 text-xs transition ${
-          (selectedTextOverlay.fontSize ?? "md") === "lg"
-            ? "border-pink-500 bg-pink-500/10 text-white"
-            : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
-        }`}
-      >
-        Large
-      </button>
-    </div>
-  </div>
-
-  <div>
-    <p className="mb-2 text-xs font-medium text-zinc-400">Align</p>
-    <div className="flex flex-wrap gap-2">
-      <button
-        type="button"
-        onClick={() => handleChangeTextOverlayAlign("left")}
-        className={`rounded-full border px-3 py-1.5 text-xs transition ${
-          (selectedTextOverlay.align ?? "center") === "left"
-            ? "border-pink-500 bg-pink-500/10 text-white"
-            : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
-        }`}
-      >
-        Left
-      </button>
-
-      <button
-        type="button"
-        onClick={() => handleChangeTextOverlayAlign("center")}
-        className={`rounded-full border px-3 py-1.5 text-xs transition ${
-          (selectedTextOverlay.align ?? "center") === "center"
-            ? "border-pink-500 bg-pink-500/10 text-white"
-            : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
-        }`}
-      >
-        Center
-      </button>
-
-      <button
-        type="button"
-        onClick={() => handleChangeTextOverlayAlign("right")}
-        className={`rounded-full border px-3 py-1.5 text-xs transition ${
-          (selectedTextOverlay.align ?? "center") === "right"
-            ? "border-pink-500 bg-pink-500/10 text-white"
-            : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
-        }`}
-      >
-        Right
-      </button>
-    </div>
-  </div>
-
-  <div>
-    <p className="mb-2 text-xs font-medium text-zinc-400">Color</p>
-    <div className="flex flex-wrap gap-2">
-      {["#ffffff", "#f472b6", "#facc15", "#60a5fa", "#4ade80"].map((color) => {
-        const isActive = (selectedTextOverlay.color ?? "#ffffff") === color
-
-        return (
-          <button
-            key={color}
-            type="button"
-            onClick={() => handleChangeTextOverlayColor(color)}
-            className={`h-8 w-8 rounded-full border transition ${
-              isActive
-                ? "border-white scale-110"
-                : "border-zinc-700 hover:scale-105"
-            }`}
-            style={{ backgroundColor: color }}
-            aria-label={`Select color ${color}`}
-          />
-        )
-      })}
-    </div>
-  </div>
-</div>
-
-
-
-
-
-<div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-400">
-  Tap text to select it, then drag it directly on the preview.
-</div>
-
-                    <p className="text-xs text-zinc-500">
-                      x: {selectedTextOverlay.x.toFixed(2)} / y:{" "}
-                      {selectedTextOverlay.y.toFixed(2)}
+                    <p className="text-sm font-medium text-white">
+                      Start your story
                     </p>
-                  </>
-                ) : (
-               <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-4 text-sm text-zinc-400">
-  Tap "Add text" to start, then drag it on the preview.
-</div>
-                )}
-              </div>
-            ) : null}
-
-            {isStickerToolOpen ? (
-              <div className="space-y-4 rounded-[28px] border border-zinc-800 bg-zinc-950/70 p-5 shadow-xl">
-                <div className="flex items-center justify-between gap-3">
-           <div className="space-y-1">
-  <p className="text-sm font-medium text-white">Stickers</p>
-  <p className="text-xs text-zinc-400">
-    Add a simple sticker to your story preview
-  </p>
-</div>
-
-                  {selectedSticker ? (
-                    <button
-                      type="button"
-                      onClick={handleRemoveLatestSticker}
-                      className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-white transition hover:bg-zinc-800"
-                    >
-                      Remove
-                    </button>
-                  ) : null}
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleAddSticker("sparkle")}
-                    className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-white transition hover:bg-zinc-800"
-                  >
-                    ✨ Sparkle
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleAddSticker("heart")}
-                    className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-white transition hover:bg-zinc-800"
-                  >
-                    💖 Heart
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleAddSticker("fire")}
-                    className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-white transition hover:bg-zinc-800"
-                  >
-                    🔥 Fire
-                  </button>
-                </div>
-
-                {selectedSticker ? (
-                  <>
-      <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-400">
-  Tap a sticker to select it, then drag it directly on the preview.
-</div>
-
-                    <p className="text-xs text-zinc-500">
-                      x: {selectedSticker.x.toFixed(2)} / y:{" "}
-                      {selectedSticker.y.toFixed(2)}
+                    <p className="mt-2 text-xs leading-5 text-zinc-300">
+                      Upload a photo or video to begin editing.
                     </p>
-                  </>
-                ) : (
-<div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-4 text-sm text-zinc-400">
-  Choose a sticker, then drag it on the preview.
-</div>
-                )}
-              </div>
-            ) : null}
 
-            {isFilterToolOpen ? (
-              <div className="space-y-4 rounded-[28px] border border-zinc-800 bg-zinc-950/70 p-5 shadow-xl">
-               <div className="space-y-1">
-  <p className="text-sm font-medium text-white">Filter</p>
-  <p className="text-xs text-zinc-400">
-    Apply a simple preview filter to your story
-  </p>
-</div>
-
-
-<div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-400">
-  Select a filter to preview changes instantly.
-</div>
-
-
-
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleChangeFilter("none")}
-                    className={`rounded-full border px-3 py-1.5 text-sm transition ${
-                      selectedFilterPreset === "none"
-                        ? "border-pink-500 bg-pink-500/10 text-white"
-                        : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
-                    }`}
-                  >
-                    None
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleChangeFilter("warm")}
-                    className={`rounded-full border px-3 py-1.5 text-sm transition ${
-                      selectedFilterPreset === "warm"
-                        ? "border-pink-500 bg-pink-500/10 text-white"
-                        : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
-                    }`}
-                  >
-                    Warm
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleChangeFilter("cool")}
-                    className={`rounded-full border px-3 py-1.5 text-sm transition ${
-                      selectedFilterPreset === "cool"
-                        ? "border-pink-500 bg-pink-500/10 text-white"
-                        : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
-                    }`}
-                  >
-                    Cool
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleChangeFilter("mono")}
-                    className={`rounded-full border px-3 py-1.5 text-sm transition ${
-                      selectedFilterPreset === "mono"
-                        ? "border-pink-500 bg-pink-500/10 text-white"
-                        : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
-                    }`}
-                  >
-                    Mono
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleChangeFilter("vivid")}
-                    className={`rounded-full border px-3 py-1.5 text-sm transition ${
-                      selectedFilterPreset === "vivid"
-                        ? "border-pink-500 bg-pink-500/10 text-white"
-                        : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
-                    }`}
-                  >
-                    Vivid
+                    <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/5 px-3 py-2 text-[11px] leading-4 text-white/70">
+                      {emptyStateHint}
+                    </div>
                   </button>
                 </div>
-              </div>
-            ) : null}
+              )}
 
-            {isMusicToolOpen ? (
-              <div className="space-y-4 rounded-[28px] border border-zinc-800 bg-zinc-950/70 p-5 shadow-xl">
-                <div className="flex items-center justify-between gap-3">
-              <div className="space-y-1">
-  <p className="text-sm font-medium text-white">Music</p>
-  <p className="text-xs text-zinc-400">
-    Add background music to your story
-  </p>
-</div>
-                  {selectedMusic ? (
-                    <button
-                      type="button"
-                      onClick={handleRemoveMusic}
-                      className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-white transition hover:bg-zinc-800"
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/35 to-transparent" />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent" />
+              <div className="pointer-events-none absolute inset-[6%] rounded-[22px] border border-white/10" />
+              <div className="pointer-events-none absolute left-4 top-4 rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-medium text-white/80 backdrop-blur-sm">
+                Story preview
+              </div>
+
+              {editorState.textOverlays?.map((overlay) => {
+                const isSelected =
+                  selectedLayer?.type === "text" &&
+                  selectedLayer.id === overlay.id
+
+                return (
+                  <div
+                    key={overlay.id}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      setUiState((prev) => ({
+                        ...prev,
+                        activeTool: "text",
+                        selectedLayer: {
+                          type: "text",
+                          id: overlay.id,
+                        },
+                      }))
+                    }}
+                    onMouseDown={handleSelectedLayerMouseDown}
+                    onTouchStart={handleSelectedLayerTouchStart}
+                    className={`absolute max-w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-md text-center text-white transition-all duration-150 ${
+                      isSelected
+                        ? uiState.isDragging
+                          ? "ring-2 ring-pink-400 scale-110 shadow-2xl z-20"
+                          : "ring-2 ring-pink-400 scale-105 shadow-lg"
+                        : "opacity-80"
+                    }`}
+                    style={{
+                      left: `${overlay.x * 100}%`,
+                      top: `${overlay.y * 100}%`,
+                      touchAction: "none",
+                      textAlign: overlay.align ?? "center",
+                    }}
+                  >
+                    <p
+                      className={`whitespace-pre-wrap break-words font-medium ${
+                        overlay.fontSize === "sm"
+                          ? "text-sm"
+                          : overlay.fontSize === "lg"
+                            ? "text-xl"
+                            : "text-base"
+                      }`}
+                      style={{
+                        color: overlay.color ?? "#ffffff",
+                      }}
                     >
-                      Remove
-                    </button>
-                  ) : null}
-                </div>
-
-                <div className="space-y-3">
-                  <input
-                    value={musicQuery}
-                    onChange={(event) => setMusicQuery(event.target.value)}
-                    placeholder="Search music..."
-                    className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
-                  />
-
-                  <div className="space-y-2">
-         {!musicQuery.trim() ? (
-  <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-4 text-sm text-zinc-400">
-    Search music to add, then drag it on the preview.
-  </div>
-) : null}
-
-                    {isSearchingMusic ? (
-                      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-400">
-                        Searching...
-                      </div>
-                    ) : null}
-
-                    {!isSearchingMusic &&
-                    musicQuery.trim() &&
-                    musicResults.length === 0 ? (
-                      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-400">
-                        No results
-                      </div>
-                    ) : null}
-
-                    {!isSearchingMusic &&
-                      musicResults.map((option) => {
-                        const isSelected =
-                          selectedMusic?.trackId === option.trackId
-
-                        return (
-                          <button
-                            key={option.trackId}
-                            type="button"
-                            onClick={() =>
-                              handleSelectMusic({
-                                source: "external",
-                                trackId: option.trackId,
-                                title: option.title,
-                                artist: option.artist,
-                                previewUrl: option.previewUrl ?? null,
-                                artworkUrl: option.artworkUrl ?? null,
-                                duration: option.duration ?? null,
-                              })
-                            }
-                            className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${
-                              isSelected
-                                ? "border-pink-500 bg-pink-500/10"
-                                : "border-zinc-800 bg-zinc-900 hover:bg-zinc-800"
-                            }`}
-                          >
-                            <div className="flex min-w-0 items-center gap-3">
-                              {option.artworkUrl ? (
-                                <img
-                                  src={option.artworkUrl}
-                                  alt={option.title}
-                                  className="h-10 w-10 rounded-md object-cover"
-                                />
-                              ) : (
-                                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-zinc-800 text-xs text-zinc-400">
-                                  🎵
-                                </div>
-                              )}
-
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-medium text-white">
-                                  {option.title}
-                                </p>
-                                <p className="truncate text-xs text-zinc-400">
-                                  {option.artist}
-                                </p>
-                              </div>
-                            </div>
-
-                            <span
-                              className={`shrink-0 text-xs ${
-                                isSelected ? "text-pink-400" : "text-zinc-400"
-                              }`}
-                            >
-                              {isSelected ? "Selected" : "Pick"}
-                            </span>
-                          </button>
-                        )
-                      })}
+                      {overlay.text || "Text overlay"}
+                    </p>
                   </div>
+                )
+              })}
 
-                  {selectedMusic ? (
-                    <div className="rounded-2xl border border-pink-500/20 bg-pink-500/10 px-4 py-3">
+              {editorState.overlays?.map((overlay) => {
+                const isSelected =
+                  selectedLayer?.type === "overlay" &&
+                  selectedLayer.id === overlay.id
+
+                return (
+                  <div
+                    key={overlay.id}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      setUiState((prev) => ({
+                        ...prev,
+                        activeTool: "sticker",
+                        selectedLayer: {
+                          type: "overlay",
+                          id: overlay.id,
+                        },
+                      }))
+                    }}
+                    onMouseDown={handleSelectedLayerMouseDown}
+                    onTouchStart={handleSelectedLayerTouchStart}
+                    className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-md text-2xl transition-all duration-150 ${
+                      isSelected
+                        ? uiState.isDragging
+                          ? "ring-2 ring-pink-400 scale-[1.16] shadow-2xl z-20"
+                          : "ring-2 ring-pink-400 scale-110 shadow-lg"
+                        : "opacity-80"
+                    }`}
+                    style={{
+                      left: `${overlay.x * 100}%`,
+                      top: `${overlay.y * 100}%`,
+                      transform: `translate(-50%, -50%) scale(${overlay.scale ?? 1}) rotate(${overlay.rotation ?? 0}deg)`,
+                      touchAction: "none",
+                    }}
+                  >
+                    {getStickerSymbol(overlay.preset)}
+                  </div>
+                )
+              })}
+
+              {selectedMusic ? (
+                <div
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    setUiState((prev) => ({
+                      ...prev,
+                      activeTool: "music",
+                      selectedLayer: {
+                        type: "music",
+                        id: "music",
+                      },
+                    }))
+                  }}
+                  className={`absolute z-10 max-w-[78%] -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing transition-all duration-150 ${
+                    uiState.isDragging ? "scale-[1.08]" : "scale-100"
+                  } ${
+                    isMusicSelected
+                      ? "ring-2 ring-pink-400 shadow-xl rounded-2xl"
+                      : "opacity-90"
+                  }`}
+                  style={{
+                    left: `${(selectedMusic.x ?? 0.22) * 100}%`,
+                    top: `${(selectedMusic.y ?? 0.12) * 100}%`,
+                    touchAction: "none",
+                  }}
+                  onMouseDown={handleMusicStickerMouseDown}
+                  onTouchStart={handleMusicStickerTouchStart}
+                >
+                  <div
+                    className={`pointer-events-none border border-white/10 bg-black/65 backdrop-blur-sm ${
+                      selectedMusicStyle === "minimal"
+                        ? "rounded-full px-3 py-1.5"
+                        : selectedMusicStyle === "bold"
+                          ? "rounded-3xl px-4 py-3 shadow-2xl"
+                          : "rounded-2xl px-3 py-2 shadow-lg"
+                    }`}
+                  >
+                    {selectedMusicStyle === "minimal" ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-white">🎵</span>
+                        <p className="max-w-[160px] truncate text-xs font-medium text-white">
+                          {selectedMusic.title ?? "Selected music"}
+                        </p>
+                      </div>
+                    ) : (
                       <div className="flex items-center gap-3">
                         {selectedMusic.artworkUrl ? (
                           <img
                             src={selectedMusic.artworkUrl}
                             alt={selectedMusic.title ?? "Selected music"}
-                            className="h-10 w-10 rounded-xl object-cover"
+                            className={`object-cover ${
+                              selectedMusicStyle === "bold"
+                                ? "h-12 w-12 rounded-2xl"
+                                : "h-10 w-10 rounded-xl"
+                            }`}
                           />
                         ) : (
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-800 text-sm text-zinc-300">
+                          <div
+                            className={`flex items-center justify-center bg-white/10 text-white ${
+                              selectedMusicStyle === "bold"
+                                ? "h-12 w-12 rounded-2xl text-base"
+                                : "h-10 w-10 rounded-xl text-sm"
+                            }`}
+                          >
                             🎵
                           </div>
                         )}
 
                         <div className="min-w-0">
-                          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-pink-300">
-                            Selected
+                          <p
+                            className={`truncate font-medium uppercase tracking-[0.18em] text-pink-300 ${
+                              selectedMusicStyle === "bold"
+                                ? "text-[10px]"
+                                : "text-[11px]"
+                            }`}
+                          >
+                            Music
                           </p>
-                          <p className="truncate text-sm font-semibold text-white">
+                          <p
+                            className={`truncate font-semibold text-white ${
+                              selectedMusicStyle === "bold"
+                                ? "text-base"
+                                : "text-sm"
+                            }`}
+                          >
                             {selectedMusic.title ?? "Selected music"}
                           </p>
-                          <p className="truncate text-xs text-zinc-400">
+                          <p
+                            className={`truncate text-zinc-300 ${
+                              selectedMusicStyle === "bold"
+                                ? "text-sm"
+                                : "text-xs"
+                            }`}
+                          >
                             {selectedMusic.artist ?? ""}
                           </p>
                         </div>
                       </div>
-                    </div>
-                  ) : null}
-
-{selectedMusic ? (
-  <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-400">
-    Drag the music sticker directly on the preview.
-  </div>
-) : null}
-
-
-
-
-                  {selectedMusic && isMusicSelected ? (
-                    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-3">
-                      <p className="mb-2 text-xs font-medium text-zinc-400">
-                        Sticker style
-                      </p>
-
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleChangeMusicStyle("default")}
-                          className={`rounded-full border px-3 py-1.5 text-xs transition ${
-                            selectedMusicStyle === "default"
-                              ? "border-pink-500 bg-pink-500/10 text-white"
-                              : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
-                          }`}
-                        >
-                          Default
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleChangeMusicStyle("minimal")}
-                          className={`rounded-full border px-3 py-1.5 text-xs transition ${
-                            selectedMusicStyle === "minimal"
-                              ? "border-pink-500 bg-pink-500/10 text-white"
-                              : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
-                          }`}
-                        >
-                          Minimal
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleChangeMusicStyle("bold")}
-                          className={`rounded-full border px-3 py-1.5 text-xs transition ${
-                            selectedMusicStyle === "bold"
-                              ? "border-pink-500 bg-pink-500/10 text-white"
-                              : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
-                          }`}
-                        >
-                          Bold
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
+                    )}
+                  </div>
                 </div>
-              </div>
-            ) : null}
+              ) : null}
+            </div>
 
-            {isTrimToolOpen ? (
-              <div className="rounded-[28px] border border-zinc-800 bg-zinc-950/70 p-5 shadow-xl">
-                {!file ? (
-  <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-400">
-    Select a video to enable trimming.
-  </div>
-) : null}
-                <StoryVideoTrimField file={file} onChange={setTrim} />
-              </div>
-            ) : null}
+            <div className="mt-3 w-full max-w-[380px]">
+              <div className="flex items-center justify-between gap-2 rounded-[28px] border border-zinc-800 bg-zinc-950/85 p-2.5 shadow-2xl backdrop-blur-md">
+                <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setUiState((prev) => ({
+                        ...prev,
+                        activeTool: prev.activeTool === "text" ? null : "text",
+                      }))
+                    }
+                    className={`rounded-full border px-4 py-2 text-sm font-medium transition-all active:scale-[0.96] ${
+                      isTextToolOpen
+                        ? "border-pink-500 bg-pink-500/15 text-white shadow-lg shadow-pink-500/10"
+                        : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
+                    }`}
+                  >
+                    Text
+                  </button>
 
-            <div className="flex items-center justify-between gap-3 rounded-[28px] border border-zinc-800 bg-zinc-950/85 p-4 shadow-xl backdrop-blur-md">
-              <div className="flex items-center gap-3 min-w-0">
-                <select
-                  value={visibility}
-                  onChange={(e) =>
-                    setVisibility(e.target.value as StoryVisibility)
-                  }
-                  className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2 text-xs font-medium text-white"
-                >
-                  <option value="public">Public</option>
-                  <option value="subscribers">Subscribers</option>
-                </select>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setUiState((prev) => ({
+                        ...prev,
+                        activeTool:
+                          prev.activeTool === "sticker" ? null : "sticker",
+                      }))
+                    }
+                    className={`rounded-full border px-4 py-2 text-sm font-medium transition-all active:scale-[0.96] ${
+                      isStickerToolOpen
+                        ? "border-pink-500 bg-pink-500/15 text-white shadow-lg shadow-pink-500/10"
+                        : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
+                    }`}
+                  >
+                    Sticker
+                  </button>
 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,video/*"
-                  onChange={(e) => {
-                    const nextFile = e.target.files?.[0] ?? null
-                    setFile(nextFile)
-                    setTrim({
-                      duration: 0,
-                      requiresTrim: false,
-                      startTime: 0,
-                    })
-                  }}
-                  className="hidden"
-                />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setUiState((prev) => ({
+                        ...prev,
+                        activeTool: prev.activeTool === "music" ? null : "music",
+                      }))
+                    }
+                    className={`rounded-full border px-4 py-2 text-sm font-medium transition-all active:scale-[0.96] ${
+                      isMusicToolOpen
+                        ? "border-pink-500 bg-pink-500/15 text-white shadow-lg shadow-pink-500/10"
+                        : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
+                    }`}
+                  >
+                    Music
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setUiState((prev) => ({
+                        ...prev,
+                        activeTool:
+                          prev.activeTool === "filter" ? null : "filter",
+                      }))
+                    }
+                    className={`rounded-full border px-4 py-2 text-sm font-medium transition-all active:scale-[0.96] ${
+                      isFilterToolOpen
+                        ? "border-pink-500 bg-pink-500/15 text-white shadow-lg shadow-pink-500/10"
+                        : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
+                    }`}
+                  >
+                    Filter
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setUiState((prev) => ({
+                        ...prev,
+                        activeTool: prev.activeTool === "trim" ? null : "trim",
+                      }))
+                    }
+                    className={`rounded-full border px-4 py-2 text-sm font-medium transition-all active:scale-[0.96] ${
+                      isTrimToolOpen
+                        ? "border-pink-500 bg-pink-500/15 text-white shadow-lg shadow-pink-500/10"
+                        : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
+                    }`}
+                  >
+                    Trim
+                  </button>
+                </div>
 
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-lg font-medium text-white transition-all hover:bg-zinc-800 hover:scale-105"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-lg font-medium text-white transition-all hover:bg-zinc-800 hover:scale-105 active:scale-[0.92]"
                   aria-label="Upload story file"
                 >
                   +
                 </button>
-
-                {file ? (
-<p className="max-w-[180px] truncate rounded-full border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-300">
-  {file.name}
-</p>
-                ) : null}
               </div>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="rounded-full bg-pink-600 px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-pink-500 hover:scale-[1.02] disabled:opacity-50"
-              >
-                {isSubmitting ? "Posting..." : "Post story"}
-              </button>
+              {file ? (
+                <p className="mt-3 truncate px-1 text-center text-xs text-zinc-500">
+                  {file.name}
+                </p>
+              ) : null}
             </div>
           </div>
         </div>
       </div>
+
+      {isToolSheetOpen ? (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/50"
+            onClick={closeToolSheet}
+          />
+
+          <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-2xl rounded-t-[32px] border border-zinc-800 bg-zinc-950/98 shadow-2xl backdrop-blur-xl">
+            <div className="mx-auto flex max-w-2xl items-center justify-between px-4 pb-3 pt-3">
+              <div className="mx-auto h-1.5 w-14 rounded-full bg-zinc-700" />
+            </div>
+
+            <div className="flex items-center justify-between px-5 pb-3">
+              <p className="text-sm font-medium text-white">
+                {isTextToolOpen
+                  ? "Text"
+                  : isStickerToolOpen
+                    ? "Sticker"
+                    : isMusicToolOpen
+                      ? "Music"
+                      : isFilterToolOpen
+                        ? "Filter"
+                        : "Trim"}
+              </p>
+
+              <button
+                type="button"
+                onClick={closeToolSheet}
+                className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-white transition hover:bg-zinc-800"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="max-h-[62vh] overflow-y-auto px-4 pb-6">
+              {isTextToolOpen ? (
+                <div className="space-y-4 rounded-[28px] border border-zinc-800 bg-zinc-950/70 p-5 shadow-xl">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-white">
+                        Text overlay
+                      </p>
+                      <p className="text-xs text-zinc-400">
+                        Add text on top of your story preview
+                      </p>
+                    </div>
+
+                    {selectedTextOverlay ? (
+                      <button
+                        type="button"
+                        onClick={handleRemoveTextOverlay}
+                        className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-white transition hover:bg-zinc-800"
+                      >
+                        Remove
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleAddTextOverlay}
+                        className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-white transition hover:bg-zinc-800"
+                      >
+                        Add text
+                      </button>
+                    )}
+                  </div>
+
+                  {selectedTextOverlay ? (
+                    <>
+                      <textarea
+                        value={selectedTextOverlay.text}
+                        onChange={(event) =>
+                          handleOverlayTextChange(event.target.value)
+                        }
+                        placeholder="Write overlay text..."
+                        className="min-h-[96px] w-full resize-none rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
+                      />
+
+                      <div className="space-y-3">
+                        <div>
+                          <p className="mb-2 text-xs font-medium text-zinc-400">
+                            Size
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleChangeTextOverlayFontSize("sm")
+                              }
+                              className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                                (selectedTextOverlay.fontSize ?? "md") === "sm"
+                                  ? "border-pink-500 bg-pink-500/10 text-white"
+                                  : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+                              }`}
+                            >
+                              Small
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleChangeTextOverlayFontSize("md")
+                              }
+                              className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                                (selectedTextOverlay.fontSize ?? "md") === "md"
+                                  ? "border-pink-500 bg-pink-500/10 text-white"
+                                  : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+                              }`}
+                            >
+                              Medium
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleChangeTextOverlayFontSize("lg")
+                              }
+                              className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                                (selectedTextOverlay.fontSize ?? "md") === "lg"
+                                  ? "border-pink-500 bg-pink-500/10 text-white"
+                                  : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+                              }`}
+                            >
+                              Large
+                            </button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <p className="mb-2 text-xs font-medium text-zinc-400">
+                            Align
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleChangeTextOverlayAlign("left")}
+                              className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                                (selectedTextOverlay.align ?? "center") ===
+                                "left"
+                                  ? "border-pink-500 bg-pink-500/10 text-white"
+                                  : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+                              }`}
+                            >
+                              Left
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleChangeTextOverlayAlign("center")
+                              }
+                              className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                                (selectedTextOverlay.align ?? "center") ===
+                                "center"
+                                  ? "border-pink-500 bg-pink-500/10 text-white"
+                                  : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+                              }`}
+                            >
+                              Center
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleChangeTextOverlayAlign("right")
+                              }
+                              className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                                (selectedTextOverlay.align ?? "center") ===
+                                "right"
+                                  ? "border-pink-500 bg-pink-500/10 text-white"
+                                  : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+                              }`}
+                            >
+                              Right
+                            </button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <p className="mb-2 text-xs font-medium text-zinc-400">
+                            Color
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {["#ffffff", "#f472b6", "#facc15", "#60a5fa", "#4ade80"].map(
+                              (color) => {
+                                const isActive =
+                                  (selectedTextOverlay.color ?? "#ffffff") ===
+                                  color
+
+                                return (
+                                  <button
+                                    key={color}
+                                    type="button"
+                                    onClick={() =>
+                                      handleChangeTextOverlayColor(color)
+                                    }
+                                    className={`h-8 w-8 rounded-full border transition ${
+                                      isActive
+                                        ? "border-white scale-110"
+                                        : "border-zinc-700 hover:scale-105"
+                                    }`}
+                                    style={{ backgroundColor: color }}
+                                    aria-label={`Select color ${color}`}
+                                  />
+                                )
+                              }
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-400">
+                        Tap text to select it, then drag it directly on the
+                        preview.
+                      </div>
+
+                      <p className="text-xs text-zinc-500">
+                        x: {selectedTextOverlay.x.toFixed(2)} / y:{" "}
+                        {selectedTextOverlay.y.toFixed(2)}
+                      </p>
+                    </>
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-4 text-sm text-zinc-400">
+                      Tap "Add text" to start, then drag it on the preview.
+                    </div>
+                  )}
+                </div>
+              ) : null}
+
+              {isStickerToolOpen ? (
+                <div className="space-y-4 rounded-[28px] border border-zinc-800 bg-zinc-950/70 p-5 shadow-xl">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-white">Stickers</p>
+                      <p className="text-xs text-zinc-400">
+                        Add a simple sticker to your story preview
+                      </p>
+                    </div>
+
+                    {selectedSticker ? (
+                      <button
+                        type="button"
+                        onClick={handleRemoveLatestSticker}
+                        className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-white transition hover:bg-zinc-800"
+                      >
+                        Remove
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleAddSticker("sparkle")}
+                      className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-white transition hover:bg-zinc-800"
+                    >
+                      ✨ Sparkle
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleAddSticker("heart")}
+                      className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-white transition hover:bg-zinc-800"
+                    >
+                      💖 Heart
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleAddSticker("fire")}
+                      className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-white transition hover:bg-zinc-800"
+                    >
+                      🔥 Fire
+                    </button>
+                  </div>
+
+                  {selectedSticker ? (
+                    <>
+                      <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-400">
+                        Tap a sticker to select it, then drag it directly on the
+                        preview.
+                      </div>
+
+                      <p className="text-xs text-zinc-500">
+                        x: {selectedSticker.x.toFixed(2)} / y:{" "}
+                        {selectedSticker.y.toFixed(2)}
+                      </p>
+                    </>
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-4 text-sm text-zinc-400">
+                      Choose a sticker, then drag it on the preview.
+                    </div>
+                  )}
+                </div>
+              ) : null}
+
+              {isFilterToolOpen ? (
+                <div className="space-y-4 rounded-[28px] border border-zinc-800 bg-zinc-950/70 p-5 shadow-xl">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-white">Filter</p>
+                    <p className="text-xs text-zinc-400">
+                      Apply a simple preview filter to your story
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-400">
+                    Select a filter to preview changes instantly.
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleChangeFilter("none")}
+                      className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                        selectedFilterPreset === "none"
+                          ? "border-pink-500 bg-pink-500/10 text-white"
+                          : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
+                      }`}
+                    >
+                      None
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleChangeFilter("warm")}
+                      className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                        selectedFilterPreset === "warm"
+                          ? "border-pink-500 bg-pink-500/10 text-white"
+                          : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
+                      }`}
+                    >
+                      Warm
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleChangeFilter("cool")}
+                      className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                        selectedFilterPreset === "cool"
+                          ? "border-pink-500 bg-pink-500/10 text-white"
+                          : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
+                      }`}
+                    >
+                      Cool
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleChangeFilter("mono")}
+                      className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                        selectedFilterPreset === "mono"
+                          ? "border-pink-500 bg-pink-500/10 text-white"
+                          : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
+                      }`}
+                    >
+                      Mono
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleChangeFilter("vivid")}
+                      className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                        selectedFilterPreset === "vivid"
+                          ? "border-pink-500 bg-pink-500/10 text-white"
+                          : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
+                      }`}
+                    >
+                      Vivid
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              {isMusicToolOpen ? (
+                <div className="space-y-4 rounded-[28px] border border-zinc-800 bg-zinc-950/70 p-5 shadow-xl">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-white">Music</p>
+                      <p className="text-xs text-zinc-400">
+                        Add background music to your story
+                      </p>
+                    </div>
+                    {selectedMusic ? (
+                      <button
+                        type="button"
+                        onClick={handleRemoveMusic}
+                        className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-white transition hover:bg-zinc-800"
+                      >
+                        Remove
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-3">
+                    <input
+                      value={musicQuery}
+                      onChange={(event) => setMusicQuery(event.target.value)}
+                      placeholder="Search music..."
+                      className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
+                    />
+
+                    <div className="space-y-2">
+                      {!musicQuery.trim() ? (
+                        <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-4 text-sm text-zinc-400">
+                          Search music to add, then drag it on the preview.
+                        </div>
+                      ) : null}
+
+                      {isSearchingMusic ? (
+                        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-400">
+                          Searching...
+                        </div>
+                      ) : null}
+
+                      {!isSearchingMusic &&
+                      musicQuery.trim() &&
+                      musicResults.length === 0 ? (
+                        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-400">
+                          No results
+                        </div>
+                      ) : null}
+
+                      {!isSearchingMusic &&
+                        musicResults.map((option) => {
+                          const isSelected =
+                            selectedMusic?.trackId === option.trackId
+
+                          return (
+                            <button
+                              key={option.trackId}
+                              type="button"
+                              onClick={() =>
+                                handleSelectMusic({
+                                  source: "external",
+                                  trackId: option.trackId,
+                                  title: option.title,
+                                  artist: option.artist,
+                                  previewUrl: option.previewUrl ?? null,
+                                  artworkUrl: option.artworkUrl ?? null,
+                                  duration: option.duration ?? null,
+                                })
+                              }
+                              className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${
+                                isSelected
+                                  ? "border-pink-500 bg-pink-500/10"
+                                  : "border-zinc-800 bg-zinc-900 hover:bg-zinc-800"
+                              }`}
+                            >
+                              <div className="flex min-w-0 items-center gap-3">
+                                {option.artworkUrl ? (
+                                  <img
+                                    src={option.artworkUrl}
+                                    alt={option.title}
+                                    className="h-10 w-10 rounded-md object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex h-10 w-10 items-center justify-center rounded-md bg-zinc-800 text-xs text-zinc-400">
+                                    🎵
+                                  </div>
+                                )}
+
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm font-medium text-white">
+                                    {option.title}
+                                  </p>
+                                  <p className="truncate text-xs text-zinc-400">
+                                    {option.artist}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <span
+                                className={`shrink-0 text-xs ${
+                                  isSelected ? "text-pink-400" : "text-zinc-400"
+                                }`}
+                              >
+                                {isSelected ? "Selected" : "Pick"}
+                              </span>
+                            </button>
+                          )
+                        })}
+                    </div>
+
+                    {selectedMusic ? (
+                      <div className="rounded-2xl border border-pink-500/20 bg-pink-500/10 px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          {selectedMusic.artworkUrl ? (
+                            <img
+                              src={selectedMusic.artworkUrl}
+                              alt={selectedMusic.title ?? "Selected music"}
+                              className="h-10 w-10 rounded-xl object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-800 text-sm text-zinc-300">
+                              🎵
+                            </div>
+                          )}
+
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-pink-300">
+                              Selected
+                            </p>
+                            <p className="truncate text-sm font-semibold text-white">
+                              {selectedMusic.title ?? "Selected music"}
+                            </p>
+                            <p className="truncate text-xs text-zinc-400">
+                              {selectedMusic.artist ?? ""}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {selectedMusic ? (
+                      <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-400">
+                        Drag the music sticker directly on the preview.
+                      </div>
+                    ) : null}
+
+                    {selectedMusic && isMusicSelected ? (
+                      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-3">
+                        <p className="mb-2 text-xs font-medium text-zinc-400">
+                          Sticker style
+                        </p>
+
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleChangeMusicStyle("default")}
+                            className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                              selectedMusicStyle === "default"
+                                ? "border-pink-500 bg-pink-500/10 text-white"
+                                : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+                            }`}
+                          >
+                            Default
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleChangeMusicStyle("minimal")}
+                            className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                              selectedMusicStyle === "minimal"
+                                ? "border-pink-500 bg-pink-500/10 text-white"
+                                : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+                            }`}
+                          >
+                            Minimal
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleChangeMusicStyle("bold")}
+                            className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                              selectedMusicStyle === "bold"
+                                ? "border-pink-500 bg-pink-500/10 text-white"
+                                : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+                            }`}
+                          >
+                            Bold
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+
+              {isTrimToolOpen ? (
+                <div className="rounded-[28px] border border-zinc-800 bg-zinc-950/70 p-5 shadow-xl">
+                  {!file ? (
+                    <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-400">
+                      Select a video to enable trimming.
+                    </div>
+                  ) : null}
+                  <StoryVideoTrimField file={file} onChange={setTrim} />
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </>
+      ) : null}
     </form>
   )
 }
