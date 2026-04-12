@@ -738,7 +738,7 @@ export function CreateStoryForm({
                   selectedLayer: null,
                 }))
               }}
-           className="relative w-full aspect-[9/16] overflow-hidden bg-[#fff7fa]"
+           className="relative w-full aspect-[9/16] overflow-hidden bg-[#C2185B]"
             >
               {previewUrl ? (
                 <div className="absolute inset-0">
@@ -774,12 +774,13 @@ export function CreateStoryForm({
   className="mb-3 w-24 opacity-[0.12]"
 />
 
-                    <p className="text-sm font-medium text-white">
-                      Start your story
-                    </p>
-                    <p className="mt-2 text-xs leading-5 text-zinc-300">
-                      Upload a photo or video to begin editing.
-                    </p>
+               <p className="text-sm font-medium text-white">
+  Start your story
+</p>
+
+<p className="mt-2 text-xs leading-5 text-white/80">
+  Upload a photo or video to begin editing.
+</p>
 
 
                   </button>
