@@ -1,76 +1,73 @@
-export async function queueStoryVideoJob(params: {
-  file: File;
-  visibility: string;
-  startTime: number;
-  expiresAt?: string;
-}) {
-  const formData = new FormData();
-  formData.append("file", params.file);
-  formData.append("visibility", params.visibility);
-  formData.append("startTime", String(params.startTime));
+import type { StoryEditorState } from "@/modules/story/types"
 
-  if (params.expiresAt) {
-    formData.append("expiresAt", params.expiresAt);
+type QueueStoryVideoJobInput = {
+  file: File
+  visibility: "public" | "subscribers"
+  startTime: number
+  editorState?: StoryEditorState | null
+}
+
+export async function queueStoryVideoJob({
+  file,
+  visibility,
+  startTime,
+  editorState,
+}: QueueStoryVideoJobInput): Promise<{
+  jobId: string
+}> {
+  const formData = new FormData()
+
+  formData.append("file", file)
+  formData.append("visibility", visibility)
+  formData.append("startTime", String(startTime))
+
+  if (editorState) {
+    formData.append("editorState", JSON.stringify(editorState))
   }
 
-  const response = await fetch("/api/stories/video-jobs", {
+  const response = await fetch("/api/story/video-job", {
     method: "POST",
     body: formData,
-  });
-
-  const json = await response.json();
+  })
 
   if (!response.ok) {
-    throw new Error(json.error ?? "Failed to queue story video job");
+    throw new Error("Failed to queue story video job")
   }
 
-  return json as {
-    jobId: string;
-    status: "pending" | "processing" | "completed" | "failed";
-  };
+  const data = await response.json()
+
+  return {
+    jobId: data.jobId,
+  }
 }
 
-export async function waitForStoryVideoJob(params: {
-  jobId: string;
-  timeoutMs?: number;
-  intervalMs?: number;
+export async function waitForStoryVideoJob({
+  jobId,
+}: {
+  jobId: string
 }) {
-  const timeoutMs = params.timeoutMs ?? 5 * 60 * 1000;
-  const intervalMs = params.intervalMs ?? 2000;
-  const startedAt = Date.now();
+  const maxAttempts = 60
+  const intervalMs = 1000
 
-  for (;;) {
-    if (Date.now() - startedAt > timeoutMs) {
-      throw new Error("Story video processing timeout");
+  for (let i = 0; i < maxAttempts; i++) {
+    const res = await fetch(`/api/story/video-job/${jobId}`)
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch job status")
     }
 
-    const response = await fetch(`/api/stories/video-jobs/${params.jobId}`, {
-      method: "GET",
-      cache: "no-store",
-    });
+    const data = await res.json()
 
-    const json = await response.json();
-
-    if (!response.ok) {
-      throw new Error(json.error ?? "Failed to fetch story video job");
+    if (data.status === "completed") {
+      return
     }
 
-    if (json.status === "completed") {
-      return json as {
-        id: string;
-        status: "completed";
-        story_id: string;
-      };
+    if (data.status === "failed") {
+      throw new Error(data.errorMessage || "Video processing failed")
     }
 
-    if (json.status === "failed") {
-      throw new Error(json.error_message ?? "Story video processing failed");
-    }
-
-    await sleep(intervalMs);
+    await new Promise((resolve) => setTimeout(resolve, intervalMs))
   }
-}
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  throw new Error("Video processing timeout")
 }

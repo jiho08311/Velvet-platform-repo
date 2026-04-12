@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
 import { checkSubscription } from "@/modules/subscription/server/check-subscription"
+import type { StoryEditorState } from "../types"
 
 type StoryProfileRow =
   | {
@@ -34,6 +35,7 @@ type StoryRow = {
   storage_path: string
   text: string | null
   visibility: "public" | "subscribers"
+  editor_state: StoryEditorState | null
   created_at: string
   expires_at: string
   is_deleted: boolean
@@ -63,6 +65,7 @@ export async function getStories(viewerUserId?: string | null): Promise<
     mediaType: "image" | "video"
     text: string | null
     visibility: "public" | "subscribers"
+    editorState: StoryEditorState | null
     createdAt: string
     expiresAt: string
     isDeleted: boolean
@@ -90,6 +93,7 @@ export async function getStories(viewerUserId?: string | null): Promise<
       storage_path,
       text,
       visibility,
+      editor_state,
       created_at,
       expires_at,
       is_deleted,
@@ -105,7 +109,7 @@ export async function getStories(viewerUserId?: string | null): Promise<
     `)
     .eq("is_deleted", false)
     .gt("expires_at", now)
-.order("created_at", { ascending: true })
+    .order("created_at", { ascending: true })
     .returns<StoryRow[]>()
 
   if (error) {
@@ -164,6 +168,7 @@ export async function getStories(viewerUserId?: string | null): Promise<
         mediaType: resolveStoryMediaType(story.storage_path),
         text: isLocked ? null : story.text,
         visibility: story.visibility,
+        editorState: isLocked ? null : story.editor_state,
         createdAt: story.created_at,
         expiresAt: story.expires_at,
         isDeleted: story.is_deleted,

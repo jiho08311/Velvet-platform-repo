@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { Card } from "@/shared/ui/Card"
+
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/client"
 
 import { createPostAction } from "../server/create-post-action"
@@ -100,7 +100,7 @@ export function CreatePostComposer({
         </div>
       ) : null}
 
-      <Card className="rounded-[32px] border border-zinc-800/80 bg-zinc-900/70 p-5 shadow-[0_30px_80px_rgba(0,0,0,0.35)] backdrop-blur sm:p-6">
+      <div className="border-b border-zinc-800 px-4 py-4">
         <CreatePostForm
           isSubmitting={isPending}
           onSubmitPost={({ visibility, files, blocks }) => {
@@ -143,7 +143,7 @@ export function CreatePostComposer({
             })
           }}
         />
-      </Card>
+      </div>
     </div>
   )
 }

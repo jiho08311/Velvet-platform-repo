@@ -10,7 +10,7 @@ import { FeedEmptyState } from "@/modules/feed/ui/FeedEmptyState"
 import { FeedList } from "@/modules/feed/ui/FeedList"
 import { getRecommendedCreators } from "@/modules/search/server/get-recommended-creators"
 import { getStories } from "@/modules/story/server/get-stories"
-import { CreateStoryComposer } from "@/modules/story/ui/CreateStoryComposer"
+
 import { StoryList } from "@/modules/story/ui/StoryList"
 import { Card } from "@/shared/ui/Card"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
@@ -83,6 +83,8 @@ export default async function FeedPage() {
     }
   }
 
+  let currentCreatorId: string | undefined
+
   if (session) {
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
@@ -98,7 +100,8 @@ export default async function FeedPage() {
       redirect("/onboarding")
     }
 
-    await getCreatorByUserId(session.userId)
+    const creator = await getCreatorByUserId(session.userId)
+    currentCreatorId = creator?.id
   }
 
   let feed
@@ -137,16 +140,16 @@ export default async function FeedPage() {
 
   return (
     <main className="min-h-screen">
-      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-0 py-2 sm:px-0 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <section className="min-w-0 space-y-4">
-          {session ? <CreateStoryComposer /> : null}
+      <div className="mx-auto grid w-full max-w-[980px] grid-cols-1 gap-6 px-0 py-2 sm:px-0 lg:grid-cols-[640px_280px]">
+        <section className="min-w-0 w-full space-y-3">
 
           <StoryList
             stories={stories}
             readStateMap={readStateMap}
+            currentCreatorId={currentCreatorId}
           />
 
-          {session ? <FeedComposer /> : null}
+          {session ? <FeedComposer userId={session.userId} /> : null}
 
           {feed.items.length === 0 ? (
             <FeedEmptyState

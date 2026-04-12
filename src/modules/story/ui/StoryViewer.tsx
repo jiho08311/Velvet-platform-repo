@@ -38,6 +38,33 @@ function getInitial(value?: string | null) {
   return normalized.slice(0, 1).toUpperCase()
 }
 
+function getStickerSymbol(preset: string) {
+  if (preset === "sparkle") return "✨"
+  if (preset === "heart") return "💖"
+  if (preset === "fire") return "🔥"
+  return "✨"
+}
+
+function getFilterStyle(preset?: string | null) {
+  if (preset === "warm") {
+    return { filter: "sepia(0.35) saturate(1.15) brightness(1.05)" }
+  }
+
+  if (preset === "cool") {
+    return { filter: "saturate(0.9) hue-rotate(12deg) brightness(1.02)" }
+  }
+
+  if (preset === "mono") {
+    return { filter: "grayscale(1) contrast(1.05)" }
+  }
+
+  if (preset === "vivid") {
+    return { filter: "saturate(1.35) contrast(1.08)" }
+  }
+
+  return { filter: "none" }
+}
+
 export function StoryViewer({
   stories,
   initialIndex,
@@ -48,17 +75,20 @@ export function StoryViewer({
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const [progress, setProgress] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
+  const [hasAudioError, setHasAudioError] = useState(false)
 
   const touchStartXRef = useRef<number | null>(null)
   const touchEndXRef = useRef<number | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const lastMarkedStoryIdRef = useRef<string | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     if (open) {
       setCurrentIndex(initialIndex)
       setProgress(0)
       setIsPaused(false)
+      setHasAudioError(false)
       lastMarkedStoryIdRef.current = null
     }
   }, [initialIndex, open])
@@ -162,7 +192,6 @@ export function StoryViewer({
 
       if (nextProgress >= 100) {
         window.clearInterval(timer)
-
         void handleNext()
       }
     }, 50)
@@ -178,13 +207,48 @@ export function StoryViewer({
     story,
   ])
 
+  const musicPreviewUrl = story?.editorState?.music?.previewUrl ?? null
+
+  useEffect(() => {
+    setHasAudioError(false)
+  }, [currentIndex, musicPreviewUrl, open])
+
+  useEffect(() => {
+    const audio = audioRef.current
+
+    if (!audio) return
+
+    if (!open || !musicPreviewUrl) {
+      audio.pause()
+      audio.currentTime = 0
+      setHasAudioError(false)
+      return
+    }
+
+    setHasAudioError(false)
+    audio.currentTime = 0
+
+    void audio.play().catch(() => {
+      setHasAudioError(true)
+    })
+
+    return () => {
+      audio.pause()
+      audio.currentTime = 0
+    }
+  }, [currentIndex, musicPreviewUrl, open])
+
   if (!open || !story) {
     return null
   }
 
   const creatorName =
     story.creator?.displayName ?? story.creator?.username ?? "creator"
-
+  const selectedFilterPreset = story.editorState?.filter?.preset ?? "none"
+  const storyMusic = story.editorState?.music ?? null
+  const musicStickerX = Math.min(0.78, Math.max(0.22, storyMusic?.x ?? 0.22))
+  const musicStickerY = Math.min(0.22, Math.max(0.14, storyMusic?.y ?? 0.12))
+const storyMusicStyle = storyMusic?.style ?? "default"
   return (
     <div className="fixed inset-0 z-[100] bg-black/90" onClick={onClose}>
       <div className="flex h-full w-full items-center justify-center p-4">
@@ -278,6 +342,15 @@ export function StoryViewer({
               }
             }}
           >
+            {musicPreviewUrl ? (
+              <audio
+                ref={audioRef}
+                src={musicPreviewUrl}
+                preload="none"
+                onError={() => setHasAudioError(true)}
+              />
+            ) : null}
+
             {story.isLocked ? (
               <div className="flex h-full w-full flex-col items-center justify-center px-6 text-center">
                 <div className="max-w-xs">
@@ -296,6 +369,7 @@ export function StoryViewer({
                     ref={videoRef}
                     src={story.mediaUrl}
                     className="h-full w-full object-cover"
+                    style={getFilterStyle(selectedFilterPreset)}
                     autoPlay
                     muted
                     playsInline
@@ -335,8 +409,115 @@ export function StoryViewer({
                     src={story.mediaUrl}
                     alt={story.text ?? "Story media"}
                     className="h-full w-full object-cover"
+                    style={getFilterStyle(selectedFilterPreset)}
                   />
                 )}
+
+                {storyMusic ? (
+                  <div
+                    className="pointer-events-none absolute z-20 max-w-[78%] -translate-x-1/2 -translate-y-1/2"
+                    style={{
+                      left: `${(musicStickerX * 100).toFixed(2)}%`,
+                      top: `${(musicStickerY * 100).toFixed(2)}%`,
+                    }}
+                  >
+<div
+  className={`border border-white/10 bg-black/65 backdrop-blur-sm ${
+    storyMusicStyle === "minimal"
+      ? "rounded-full px-3 py-1.5"
+      : storyMusicStyle === "bold"
+        ? "rounded-3xl px-4 py-3 shadow-2xl"
+        : "rounded-2xl px-3 py-2 shadow-lg"
+  }`}
+>
+  {storyMusicStyle === "minimal" ? (
+    <div className="flex items-center gap-2">
+      <span className="text-sm text-white">🎵</span>
+      <p className="max-w-[160px] truncate text-xs font-medium text-white">
+        {storyMusic.title ?? "Story music"}
+      </p>
+    </div>
+  ) : (
+    <div className="flex items-center gap-3">
+      {storyMusic.artworkUrl ? (
+        <img
+          src={storyMusic.artworkUrl}
+          alt={storyMusic.title ?? "Story music"}
+          className={`object-cover ${
+            storyMusicStyle === "bold"
+              ? "h-12 w-12 rounded-2xl"
+              : "h-10 w-10 rounded-xl"
+          }`}
+        />
+      ) : (
+        <div
+          className={`flex items-center justify-center bg-white/10 text-white ${
+            storyMusicStyle === "bold"
+              ? "h-12 w-12 rounded-2xl text-base"
+              : "h-10 w-10 rounded-xl text-sm"
+          }`}
+        >
+          🎵
+        </div>
+      )}
+
+      <div className="min-w-0">
+        <p
+          className={`truncate font-medium uppercase tracking-[0.18em] text-pink-300 ${
+            storyMusicStyle === "bold" ? "text-[10px]" : "text-[11px]"
+          }`}
+        >
+          Music
+        </p>
+        <p
+          className={`truncate font-semibold text-white ${
+            storyMusicStyle === "bold" ? "text-base" : "text-sm"
+          }`}
+        >
+          {storyMusic.title ?? "Story music"}
+        </p>
+        <p
+          className={`truncate text-zinc-300 ${
+            storyMusicStyle === "bold" ? "text-sm" : "text-xs"
+          }`}
+        >
+          {storyMusic.artist ?? ""}
+        </p>
+      </div>
+    </div>
+  )}
+</div>
+                  </div>
+                ) : null}
+
+                {story.editorState?.textOverlays?.map((overlay) => (
+                  <div
+                    key={overlay.id}
+                    className="pointer-events-none absolute z-10 max-w-[80%] -translate-x-1/2 -translate-y-1/2 text-center text-white"
+                    style={{
+                      left: `${overlay.x * 100}%`,
+                      top: `${overlay.y * 100}%`,
+                    }}
+                  >
+                    <p className="whitespace-pre-wrap break-words text-base font-medium">
+                      {overlay.text}
+                    </p>
+                  </div>
+                ))}
+
+                {story.editorState?.overlays?.map((overlay) => (
+                  <div
+                    key={overlay.id}
+                    className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2 text-2xl"
+                    style={{
+                      left: `${overlay.x * 100}%`,
+                      top: `${overlay.y * 100}%`,
+                      transform: `translate(-50%, -50%) scale(${overlay.scale ?? 1}) rotate(${overlay.rotation ?? 0}deg)`,
+                    }}
+                  >
+                    {getStickerSymbol(overlay.preset)}
+                  </div>
+                ))}
 
                 {story.text ? (
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent p-4 pt-12">
