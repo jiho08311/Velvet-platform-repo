@@ -776,24 +776,28 @@ function handleChangeTextOverlayColor(color: string) {
                     alt="Story preview"
                   />
                 )
-              ) : (
-<div className="flex h-full w-full items-center justify-center p-6">
-  <div className="w-full max-w-[260px] rounded-[28px] border border-white/10 bg-black/25 px-5 py-6 text-center backdrop-blur-sm">
-    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-white/5 text-2xl text-white/80">
-      +
-    </div>
+) : (
+  <div className="flex h-full w-full items-center justify-center p-6">
+    <button
+      type="button"
+      onClick={() => fileInputRef.current?.click()}
+      className="w-full max-w-[260px] rounded-[28px] border border-white/10 bg-black/25 px-5 py-7 text-center backdrop-blur-sm transition hover:bg-black/35"
+    >
+      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-2xl text-white/80">
+        +
+      </div>
 
-    <p className="text-sm font-medium text-white">Start your story</p>
-    <p className="mt-2 text-xs leading-5 text-zinc-300">
-      Upload a photo or video to begin editing.
-    </p>
+      <p className="text-sm font-medium text-white">Start your story</p>
+      <p className="mt-2 text-xs leading-5 text-zinc-300">
+        Upload a photo or video to begin editing.
+      </p>
 
-    <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/5 px-3 py-2 text-[11px] leading-4 text-white/70">
-      {emptyStateHint}
-    </div>
+      <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/5 px-3 py-2 text-[11px] leading-4 text-white/70">
+        {emptyStateHint}
+      </div>
+    </button>
   </div>
-</div>
-              )}
+)}
 
                <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/35 to-transparent" />
   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent" />
