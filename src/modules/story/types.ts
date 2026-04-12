@@ -51,6 +51,36 @@ export type StoryEditorState = {
   music?: StoryMusic | null
 }
 
+export type StoryEditorTool =
+  | "text"
+  | "sticker"
+  | "music"
+  | "filter"
+  | "trim"
+  | null
+
+export type StorySelectedLayer =
+  | {
+      type: "text"
+      id: string
+    }
+  | {
+      type: "overlay"
+      id: string
+    }
+  | {
+      type: "music"
+      id: "music"
+    }
+  | null
+
+export type StoryEditorUiState = {
+  activeTool: StoryEditorTool
+  selectedLayer: StorySelectedLayer
+  isPreviewMode: boolean
+  isDragging: boolean
+}
+
 export type StoryCreator = {
   id: string
   username: string
@@ -83,4 +113,3 @@ export type StoryMusicSearchItem = {
   duration?: number | null
   source: "external"
 }
-
