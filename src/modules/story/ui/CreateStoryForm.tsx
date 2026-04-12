@@ -747,19 +747,20 @@ function handleChangeTextOverlayColor(color: string) {
             {isSubmitting ? "Posting..." : "Post"}
           </button>
         </div>
-
+</div>
         <div className="grid gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-start">
-        <div className="flex flex-col items-center space-y-4">
-            <div
-              ref={previewContainerRef}
-              onClick={() => {
-                setUiState((prev) => ({
-                  ...prev,
-                  selectedLayer: null,
-                }))
-              }}
-             className="relative mx-auto w-[92%] max-w-[380px] aspect-[9/16] overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-900 shadow-2xl"
-            >
+        <div className="w-full space-y-4">
+<div className="flex w-full justify-center">
+  <div
+    ref={previewContainerRef}
+    onClick={() => {
+      setUiState((prev) => ({
+        ...prev,
+        selectedLayer: null,
+      }))
+    }}
+    className="relative w-full max-w-[380px] aspect-[9/16] overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-900 shadow-2xl"
+  >
 {previewUrl ? (
   <div className="absolute inset-0">
     {file?.type.startsWith("video/") ? (
