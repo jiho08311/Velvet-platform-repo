@@ -766,7 +766,7 @@ export function CreateStoryForm({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full max-w-[260px] rounded-[28px] border border-white/10 bg-black/25 px-5 py-7 text-center backdrop-blur-sm transition hover:bg-black/35 active:scale-[0.96]"
+                    className="w-full max-w-[260px] rounded-[24px] border border-white/10 bg-black/25 px-5 py-7 text-center backdrop-blur-sm transition hover:bg-black/35 active:scale-[0.96] md:rounded-[28px]"
                   >
                     <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-2xl text-white/80">
                       +
@@ -788,10 +788,10 @@ export function CreateStoryForm({
 
               <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/35 to-transparent" />
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent" />
-              <div className="pointer-events-none absolute inset-[6%] rounded-[22px] border border-white/10" />
-              <div className="pointer-events-none absolute left-4 top-4 rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-medium text-white/80 backdrop-blur-sm">
-                Story preview
-              </div>
+              <div className="pointer-events-none absolute inset-0 md:inset-[6%] md:rounded-[22px] md:border md:border-white/10" />
+          <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-medium text-white/80 backdrop-blur-sm md:left-4 md:top-4">
+  Story preview
+</div>
 
               {editorState.textOverlays?.map((overlay) => {
                 const isSelected =
@@ -990,7 +990,7 @@ export function CreateStoryForm({
               ) : null}
             </div>
 
-            <div className="mt-3 w-full max-w-[380px]">
+            <div className="mt-3 w-full max-w-[420px]">
               <div className="flex items-center justify-between gap-2 rounded-[28px] border border-zinc-800 bg-zinc-950/85 p-2.5 shadow-2xl backdrop-blur-md">
                 <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto">
                   <button
