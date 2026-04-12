@@ -688,7 +688,7 @@ export function CreateStoryForm({
   }
 
   return (
-   <form className="min-h-screen bg-[#f7f5f6]">
+   <form className="min-h-screen bg-gradient-to-b from-zinc-950 to-[#0a0a0a]">
       <input
         ref={fileInputRef}
         type="file"
