@@ -191,12 +191,12 @@ export function CreateStoryComposer({
         </div>
       ) : null}
 
-      <Card className="p-4 sm:p-5">
+     <div>
         <CreateStoryForm
           isSubmitting={isPending}
           onSubmitStory={handleSubmitStory}
         />
-      </Card>
+      </div>
     </div>
   )
 }
