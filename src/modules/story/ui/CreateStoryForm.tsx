@@ -749,7 +749,7 @@ function handleChangeTextOverlayColor(color: string) {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-start">
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col items-center space-y-4">
             <div
               ref={previewContainerRef}
               onClick={() => {
