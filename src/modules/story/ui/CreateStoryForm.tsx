@@ -717,7 +717,10 @@ function handleChangeTextOverlayColor(color: string) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-0">
+  <form
+  onSubmit={handleSubmit}
+  className="space-y-4 pb-24 lg:space-y-0 md:pb-0"
+>
       <div className="mx-auto max-w-5xl space-y-4">
         <div className="flex items-center justify-between rounded-3xl border border-zinc-800 bg-zinc-950/70 px-4 py-3">
           <button
@@ -746,7 +749,7 @@ function handleChangeTextOverlayColor(color: string) {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-start">
-          <div className="space-y-4">
+        <div className="flex flex-col space-y-4">
             <div
               ref={previewContainerRef}
               onClick={() => {
@@ -755,7 +758,7 @@ function handleChangeTextOverlayColor(color: string) {
                   selectedLayer: null,
                 }))
               }}
-              className="relative aspect-[9/16] w-full overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-900 shadow-2xl"
+             className="relative w-full overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-900 shadow-2xl md:aspect-[9/16] md:max-h-[720px]"
             >
               {previewUrl ? (
                 file?.type.startsWith("video/") ? (
