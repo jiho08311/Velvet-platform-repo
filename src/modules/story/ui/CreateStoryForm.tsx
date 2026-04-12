@@ -688,7 +688,7 @@ export function CreateStoryForm({
   }
 
   return (
-   <form className="min-h-screen bg-gradient-to-b from-zinc-950 to-[#0a0a0a]">
+   <form className="min-h-screen bg-gradient-to-b from-[#2a0f1c] via-zinc-950 to-[#0a0a0a]">
       <input
         ref={fileInputRef}
         type="file"
@@ -728,7 +728,7 @@ export function CreateStoryForm({
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col pb-28 pt-4">
+        <div className="flex flex-1 flex-col bg-gradient-to-b from-transparent via-[#2a0f1c]/40 to-[#2a0f1c] pb-28 pt-4">
           <div className="flex w-full flex-1 flex-col items-stretch">
             <div
               ref={previewContainerRef}
