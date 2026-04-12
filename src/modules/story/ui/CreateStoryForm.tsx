@@ -771,7 +771,7 @@ export function CreateStoryForm({
 <img
   src="/logo-mark.png"
   alt="Velvet"
-  className="mb-3 w-24 opacity-[0.2]"
+  className="mb-3 w-24 opacity-[0.4]"
 />
 
                <p className="text-sm font-medium text-white">
