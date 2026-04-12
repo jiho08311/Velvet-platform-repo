@@ -26,7 +26,6 @@ type StorySubmitPhase =
   | "publishing"
 
 type SubmitStoryInput = {
-  text: string
   visibility: "public" | "subscribers"
   file: File | null
   trim: {
@@ -98,7 +97,6 @@ export function CreateStoryComposer({
   const [isPending, setIsPending] = useState(false)
 
   async function handleSubmitStory({
-    text,
     visibility,
     file,
     trim,
@@ -112,10 +110,7 @@ export function CreateStoryComposer({
         throw new Error("Story file is required")
       }
 
-      if (
-        !file.type.startsWith("image/") &&
-        !file.type.startsWith("video/")
-      ) {
+      if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
         throw new Error("Only image or video files are allowed")
       }
 
@@ -147,24 +142,23 @@ export function CreateStoryComposer({
       const storagePath = await uploadStoryFile(file)
 
       setPhase("publishing")
-const res = await fetch("/api/story/create", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  credentials: "include",
-  body: JSON.stringify({
-    storagePath,
-    text,
-    visibility,
-    editorState,
-  }),
-})
+      const res = await fetch("/api/story/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          storagePath,
+          visibility,
+          editorState,
+        }),
+      })
 
-if (!res.ok) {
-  const raw = await res.text()
-  throw new Error(raw || "Failed to create story")
-}
+      if (!res.ok) {
+        const raw = await res.text()
+        throw new Error(raw || "Failed to create story")
+      }
 
       onCreated?.()
       router.push("/feed")
