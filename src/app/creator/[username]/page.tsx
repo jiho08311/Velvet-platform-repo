@@ -224,30 +224,6 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
         </div>
       </div>
 
-      {!isOwner ? (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800 bg-zinc-950/95 px-4 py-3 backdrop-blur md:hidden">
-          <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-white">
-                {formatPrice(creator.subscriptionPrice)}
-                <span className="ml-1 text-zinc-400">구독</span>
-              </p>
-              <p className="truncate text-xs text-zinc-500">
-                구독자 전용 콘텐츠
-              </p>
-            </div>
-
-            <div className="shrink-0 flex w-full flex-col gap-2">
-              <SubscribeButton
-                creatorId={creator.id}
-                creatorUserId={creator.userId}
-                currentUserId={userId ?? undefined}
-                creatorUsername={creator.username}
-              />
-            </div>
-          </div>
-        </div>
-      ) : null}
     </main>
   )
 }
