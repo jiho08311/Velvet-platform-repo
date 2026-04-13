@@ -7,7 +7,6 @@ export type StoryTextOverlay = {
   text: string
   x: number
   y: number
-  align?: "left" | "center" | "right"
   color?: string
   fontSize?: "sm" | "md" | "lg"
   scale?: number
@@ -80,6 +79,7 @@ export type StoryEditorUiState = {
   selectedLayer: StorySelectedLayer
   isPreviewMode: boolean
   isDragging: boolean
+  isToolSheetOpen: boolean
 }
 
 export type StoryCreator = {
