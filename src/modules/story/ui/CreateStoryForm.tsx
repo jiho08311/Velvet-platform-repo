@@ -1023,7 +1023,7 @@ export function CreateStoryForm({
     : "text-white/60 hover:text-white"
 }`}
                   >
-                  Aa
+                  ✨
                   </button>
 
                   <button
@@ -1040,7 +1040,7 @@ export function CreateStoryForm({
     : "text-white/60 hover:text-white"
 }`}
                   >
-                   Aa
+                   🎵
                   </button>
 
                   <button
@@ -1058,7 +1058,7 @@ export function CreateStoryForm({
     : "text-white/60 hover:text-white"
 }`}
                   >
-                    Aa
+                    🎨
                   </button>
 
                   <button
@@ -1075,7 +1075,7 @@ export function CreateStoryForm({
     : "text-white/60 hover:text-white"
 }`}
                   >
-                  Aa
+                  ✂️
                   </button>
                 </div>
 
