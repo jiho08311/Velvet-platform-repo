@@ -1194,7 +1194,7 @@ willChange: "transform",
                     }`}
                   >
                     <span className="text-lg leading-none">⚙</span>
-                    <span className="mt-2 text-[11px] font-medium">수정</span>
+                    <span className="mt-2 text-[11px] font-medium">영상 편집</span>
                   </button>
                 </div>
 
