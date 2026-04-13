@@ -619,43 +619,50 @@ export function PostCard({
             </>
           )}
 
-          <div className="flex items-center justify-between gap-3 px-3 pt-3">
-            <div className="flex items-center gap-2">
-              <p className="text-sm text-zinc-300">{formatPostDate(createdAt)}</p>
+   <div className="flex items-center gap-4 px-3 pt-3">
 
-              <button
-                type="button"
-                onClick={handleLike}
-                disabled={isLikeLoading}
-className="flex items-center gap-2 p-2 text-zinc-300 hover:text-white active:scale-95"
-              >
-                {liked ? (
-                  <HeartSolid className="h-4 w-4 text-pink-500" />
-                ) : (
-                  <HeartOutline className="h-6 w-6" />
-                )}
-       <span className="text-sm font-medium">{count}</span>
-              </button>
+  {/* ❤️ 좋아요 */}
+  <button
+    type="button"
+    onClick={handleLike}
+    disabled={isLikeLoading}
+    className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
+  >
+    {liked ? (
+      <HeartSolid className="h-6 w-6 text-pink-500" />
+    ) : (
+      <HeartOutline className="h-6 w-6" />
+    )}
+    <span className="text-[14px] font-semibold">{count}</span>
+  </button>
 
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation()
+  {/* 💬 댓글 */}
+  <button
+    type="button"
+    onClick={(event) => {
+      event.stopPropagation()
 
-                  const nextShow = !showComments
-                  setShowComments(nextShow)
+      const nextShow = !showComments
+      setShowComments(nextShow)
 
-                  if (nextShow && comments.length === 0) {
-                    loadComments()
-                  }
-                }}
-className="flex items-center gap-2 p-2 text-zinc-300 hover:text-white active:scale-95"
-              >
-                <ChatBubbleOvalLeftIcon className="h-6 w-6" />
-                <span>{commentsCount || comments.length}</span>
-              </button>
-            </div>
-          </div>
+      if (nextShow && comments.length === 0) {
+        loadComments()
+      }
+    }}
+    className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
+  >
+    <ChatBubbleOvalLeftIcon className="h-6 w-6" />
+    <span className="text-[14px] font-semibold">
+      {commentsCount || comments.length}
+    </span>
+  </button>
+
+  {/* 📅 날짜 */}
+  <p className="text-[13px] text-zinc-400">
+    {formatPostDate(createdAt)}
+  </p>
+
+</div>
 
           {showComments ? (
             <div
