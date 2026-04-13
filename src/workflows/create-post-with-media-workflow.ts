@@ -143,6 +143,25 @@ async function sleep(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+async function updatePostApproved(postId: string) {
+  const now = new Date().toISOString()
+
+  const { error } = await supabaseAdmin
+    .from("posts")
+    .update({
+      status: "published",
+      visibility_status: "published",
+      moderation_status: "approved",
+      moderation_completed_at: now,
+      updated_at: now,
+    })
+    .eq("id", postId)
+
+  if (error) {
+    throw error
+  }
+}
+
 export async function checkTextSafety(text?: string | null) {
   const resolvedText = text?.trim() ?? ""
 
@@ -235,16 +254,22 @@ async function moderatePostAsync({
   postId,
   content,
   files,
+  shouldApproveOnSuccess,
 }: {
   postId: string
   content?: string | null
   files: Array<File | UploadedFileInput>
+  shouldApproveOnSuccess: boolean
 }) {
   try {
     await checkPostSafety({
       text: content,
       files,
     })
+
+    if (shouldApproveOnSuccess) {
+      await updatePostApproved(postId)
+    }
   } catch (error) {
     console.error("[moderation] blocked:", error)
 
@@ -463,6 +488,7 @@ export async function createPostWithMediaWorkflow({
     postId: post.id,
     content,
     files,
+    shouldApproveOnSuccess: !hasVideo,
   })
 
   if (hasVideo) {
