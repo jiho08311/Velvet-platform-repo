@@ -392,7 +392,7 @@ export function CreateStoryComposer({
                       style={{
                         left: `${overlay.x * 100}%`,
                         top: `${overlay.y * 100}%`,
-                        textAlign: overlay.align ?? "center",
+                      
                       }}
                     >
                       <p

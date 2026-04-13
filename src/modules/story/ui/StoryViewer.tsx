@@ -497,7 +497,7 @@ const storyMusicStyle = storyMusic?.style ?? "default"
                     style={{
                       left: `${overlay.x * 100}%`,
                       top: `${overlay.y * 100}%`,
-                      textAlign: overlay.align ?? "center",
+                  
                       transform: `translate(-50%, -50%) scale(${overlay.scale ?? 1})`,
                     }}
                   >

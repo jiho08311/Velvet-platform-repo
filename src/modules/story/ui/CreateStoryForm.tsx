@@ -193,18 +193,17 @@ export function CreateStoryForm({
 
       return {
         ...prev,
-           textOverlays: [
-          {
-            id: nextId,
-            text: "",
-            x: 0.5,
-            y: 0.2,
-            align: "center",
-            color: "#ffffff",
-            fontSize: "md",
-            scale: 1,
-          },
-        ],
+   textOverlays: [
+  {
+    id: nextId,
+    text: "",
+    x: 0.5,
+    y: 0.2,
+    color: "#ffffff",
+    fontSize: "md",
+    scale: 1,
+  },
+],
       }
     })
 
@@ -260,26 +259,6 @@ export function CreateStoryForm({
     })
   }
 
-
-  function handleChangeTextOverlayAlign(align: "left" | "center" | "right") {
-    setEditorState((prev) => {
-      if (selectedLayer?.type !== "text") {
-        return prev
-      }
-
-      return {
-        ...prev,
-        textOverlays: (prev.textOverlays ?? []).map((overlay) =>
-          overlay.id === selectedLayer.id
-            ? {
-                ...overlay,
-                align,
-              }
-            : overlay
-        ),
-      }
-    })
-  }
 
   function handleChangeTextOverlayColor(color: string) {
     setEditorState((prev) => {
@@ -941,7 +920,7 @@ function handleSelectedLayerTouchStart(
                       left: `${overlay.x * 100}%`,
                       top: `${overlay.y * 100}%`,
                       touchAction: "none",
-                      textAlign: overlay.align ?? "center",
+                      
                       transform: `translate(-50%, -50%) scale(${overlay.scale ?? 1})`,
                     }}
                   >
@@ -1292,87 +1271,43 @@ function handleSelectedLayerTouchStart(
                       <div className="space-y-3">
                     
 
-                        <div>
-                          <p className="mb-2 text-xs font-medium text-zinc-400">
-                            Align
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleChangeTextOverlayAlign("left")}
-                              className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
-                                (selectedTextOverlay.align ?? "center") ===
-                                "left"
-                                  ? "border-pink-500 bg-pink-500/10 text-white"
-                                  : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
-                              }`}
-                            >
-                              Left
-                            </button>
+   <div>
+  <p className="mb-2 text-xs font-medium text-zinc-400">
+    Color
+  </p>
+  <div className="flex flex-wrap gap-2">
+    {[
+      "#FFFFFF",
+      "#000000",
+      "#FF0000",
+      "#00FF00",
+      "#0000FF",
+      "#FFFF00",
+      "#FF00FF",
+      "#00FFFF",
+      "#FFA500",
+      "#800080",
+    ].map((color) => {
+      const isActive =
+        (selectedTextOverlay.color ?? "#ffffff") === color
 
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleChangeTextOverlayAlign("center")
-                              }
-                              className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
-                                (selectedTextOverlay.align ?? "center") ===
-                                "center"
-                                  ? "border-pink-500 bg-pink-500/10 text-white"
-                                  : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
-                              }`}
-                            >
-                              Center
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleChangeTextOverlayAlign("right")
-                              }
-                              className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
-                                (selectedTextOverlay.align ?? "center") ===
-                                "right"
-                                  ? "border-pink-500 bg-pink-500/10 text-white"
-                                  : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
-                              }`}
-                            >
-                              Right
-                            </button>
-                          </div>
-                        </div>
-
-                        <div>
-                          <p className="mb-2 text-xs font-medium text-zinc-400">
-                            Color
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {["#ffffff", "#f472b6", "#facc15", "#60a5fa", "#4ade80"].map(
-                              (color) => {
-                                const isActive =
-                                  (selectedTextOverlay.color ?? "#ffffff") ===
-                                  color
-
-                                return (
-                                  <button
-                                    key={color}
-                                    type="button"
-                                    onClick={() =>
-                                      handleChangeTextOverlayColor(color)
-                                    }
-                                    className={`h-8 w-8 rounded-full border transition ${
-                                      isActive
-                                        ? "border-white scale-110"
-                                        : "border-zinc-700 hover:scale-105"
-                                    }`}
-                                    style={{ backgroundColor: color }}
-                                    aria-label={`Select color ${color}`}
-                                  />
-                                )
-                              }
-                            )}
-                          </div>
-                        </div>
+      return (
+        <button
+          key={color}
+          type="button"
+          onClick={() => handleChangeTextOverlayColor(color)}
+          className={`h-8 w-8 rounded-full border transition ${
+            isActive
+              ? "border-white scale-110"
+              : "border-zinc-700 hover:scale-105"
+          }`}
+          style={{ backgroundColor: color }}
+          aria-label={`Select color ${color}`}
+        />
+      )
+    })}
+  </div>
+</div>
                       </div>
 
 <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-400">
