@@ -556,7 +556,7 @@ export function PostCard({
           )}
 
           <div className="min-w-0">
-            <p className="truncate text-base font-semibold text-white">
+            <p className="truncate text-[15px] font-semibold text-white">
               {creatorName}
             </p>
           </div>
@@ -605,7 +605,7 @@ export function PostCard({
                   {textGroups.map((group) => (
                     <p
                       key={group.block.id}
-                      className="whitespace-pre-wrap text-sm leading-6 text-white/80"
+                      className="whitespace-pre-wrap text-[15px] leading-7 text-white font-medium"
                     >
                       {group.block.content}
                     </p>
@@ -619,7 +619,7 @@ export function PostCard({
 
               {blockText ? (
                 <div className="px-3 pt-3">
-                  <p className="whitespace-pre-wrap text-base leading-7 text-white">
+                  <p className="whitespace-pre-wrap text-[16px] leading-7 text-white font-medium">
                     {blockText}
                   </p>
                 </div>
