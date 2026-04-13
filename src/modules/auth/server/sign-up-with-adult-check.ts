@@ -21,6 +21,13 @@ type SignUpWithAdultCheckParams = {
         };
         error: { message: string } | null;
       }>;
+      signInWithPassword: (params: {
+        email: string;
+        password: string;
+      }) => Promise<{
+        data: unknown;
+        error: { message: string } | null;
+      }>;
     };
   };
   email: string;
@@ -61,6 +68,15 @@ export async function signUpWithAdultCheck({
     username: buildDefaultUsername(email, data.user.id),
     birthDate,
   });
+
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (signInError) {
+    throw new Error(signInError.message);
+  }
 
   return data.user;
 }
