@@ -49,6 +49,12 @@ export type StoryEditorState = {
   overlays?: StoryOverlayItem[]
   filter?: StoryFilter | null
   music?: StoryMusic | null
+
+  crop?: {
+    scale: number
+    x: number
+    y: number
+  }
 }
 
 export type StoryEditorTool =
@@ -56,6 +62,7 @@ export type StoryEditorTool =
   | "sticker"
   | "music"
   | "filter"
+  | "crop"
   | "trim"
   | null
 

@@ -52,6 +52,10 @@ function getFilterStyle(preset?: string | null) {
   return { filter: "none" }
 }
 
+
+
+
+
 export function CreateStoryForm({
   isSubmitting = false,
   onNextStory,
@@ -62,12 +66,17 @@ export function CreateStoryForm({
   const [musicQuery, setMusicQuery] = useState("")
   const [musicResults, setMusicResults] = useState<StoryMusicSearchItem[]>([])
   const [isSearchingMusic, setIsSearchingMusic] = useState(false)
-  const [editorState, setEditorState] = useState<StoryEditorState>({
-    textOverlays: [],
-    overlays: [],
-    filter: null,
-    music: null,
-  })
+const [editorState, setEditorState] = useState<StoryEditorState>({
+  textOverlays: [],
+  overlays: [],
+  filter: null,
+  music: null,
+  crop: {
+    scale: 1,
+    x: 0,
+    y: 0,
+  },
+})
   const [uiState, setUiState] = useState<StoryEditorUiState>({
     activeTool: null,
     selectedLayer: null,
@@ -91,6 +100,8 @@ export function CreateStoryForm({
   const [filterSwipeOffsetX, setFilterSwipeOffsetX] = useState(0)
   const textPinchStartDistanceRef = useRef<number | null>(null)
   const textPinchStartScaleRef = useRef<number | null>(null)
+  const cropPinchStartDistanceRef = useRef<number | null>(null)
+const cropPinchStartScaleRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (!file) {
@@ -134,6 +145,7 @@ export function CreateStoryForm({
   const isMusicToolOpen = activeTool === "music"
   const isFilterToolOpen = activeTool === "filter"
   const isTrimToolOpen = activeTool === "trim"
+  const isCropToolOpen = activeTool === "crop"
   const isToolSheetOpen = uiState.isToolSheetOpen
 
   useEffect(() => {
@@ -182,7 +194,7 @@ export function CreateStoryForm({
     }))
   }
 
-  function handleOpenTool(tool: "text" | "music" | "filter" | "trim") {
+  function handleOpenTool(tool: "text" | "music" | "filter" | "crop" | "trim") {
     setUiState((prev) => ({
       ...prev,
       activeTool: tool,
@@ -465,6 +477,31 @@ return {
 }
     })
   }
+
+
+function updateCropPositionFromClientPoint(clientX: number, clientY: number) {
+  const container = previewContainerRef.current
+
+  if (!container) {
+    return
+  }
+
+  const rect = container.getBoundingClientRect()
+
+  const nextX = (clientX - rect.left) / rect.width - 0.5
+  const nextY = (clientY - rect.top) / rect.height - 0.5
+
+  setEditorState((prev) => ({
+    ...prev,
+    crop: {
+      scale: prev.crop?.scale ?? 1,
+      x: nextX,
+      y: nextY,
+    },
+  }))
+}
+
+
 
   function updateTextOverlayPositionFromClientPoint(
     overlayId: string,
@@ -859,28 +896,86 @@ y: overlay.y + (nextY - overlay.y) * 0.35,
                   selectedLayer: null,
                 }))
               }}
-              onTouchStart={(event) => {
-                if (activeTool === "filter") {
-                  handleFilterSwipeStart(event.touches[0]?.clientX ?? 0)
-                }
-              }}
-              onTouchMove={(event) => {
-                if (activeTool === "filter") {
-                  handleFilterSwipeMove(event.touches[0]?.clientX ?? 0)
-                }
-              }}
+onTouchStart={(event) => {
+  if (activeTool === "filter") {
+    handleFilterSwipeStart(event.touches[0]?.clientX ?? 0)
+  }
+
+  if (activeTool === "crop") {
+    const t1 = event.touches[0]
+    const t2 = event.touches[1]
+
+    if (t1 && t2) {
+      cropPinchStartDistanceRef.current = getTouchDistance(t1, t2)
+      cropPinchStartScaleRef.current = editorState.crop?.scale ?? 1
+      return
+    }
+
+    if (t1) {
+      updateCropPositionFromClientPoint(t1.clientX, t1.clientY)
+    }
+  }
+}}
+          onTouchMove={(event) => {
+  if (activeTool === "filter") {
+    handleFilterSwipeMove(event.touches[0]?.clientX ?? 0)
+  }
+
+  if (activeTool === "crop") {
+    const t1 = event.touches[0]
+    const t2 = event.touches[1]
+
+    if (t1 && t2) {
+      const startDistance = cropPinchStartDistanceRef.current
+      const startScale = cropPinchStartScaleRef.current ?? 1
+
+      if (!startDistance || startDistance <= 0) {
+        return
+      }
+
+      const currentDistance = getTouchDistance(t1, t2)
+      const ratio = currentDistance / startDistance
+
+      event.preventDefault()
+
+      setEditorState((prev) => ({
+        ...prev,
+        crop: {
+          scale: Math.min(3, Math.max(1, startScale * ratio)),
+          x: prev.crop?.x ?? 0,
+          y: prev.crop?.y ?? 0,
+        },
+      }))
+
+      return
+    }
+
+    if (t1) {
+      event.preventDefault()
+      updateCropPositionFromClientPoint(t1.clientX, t1.clientY)
+    }
+  }
+}}
               onTouchEnd={resetFilterSwipe}
               onTouchCancel={resetFilterSwipe}
-              onMouseDown={(event) => {
-                if (activeTool === "filter") {
-                  handleFilterSwipeStart(event.clientX)
-                }
-              }}
-              onMouseMove={(event) => {
-                if (activeTool === "filter" && (event.buttons & 1) === 1) {
-                  handleFilterSwipeMove(event.clientX)
-                }
-              }}
+        onMouseDown={(event) => {
+  if (activeTool === "filter") {
+    handleFilterSwipeStart(event.clientX)
+  }
+
+  if (activeTool === "crop") {
+    updateCropPositionFromClientPoint(event.clientX, event.clientY)
+  }
+}}
+          onMouseMove={(event) => {
+  if (activeTool === "filter" && (event.buttons & 1) === 1) {
+    handleFilterSwipeMove(event.clientX)
+  }
+
+  if (activeTool === "crop" && (event.buttons & 1) === 1) {
+    updateCropPositionFromClientPoint(event.clientX, event.clientY)
+  }
+}}
               onMouseUp={resetFilterSwipe}
               className="relative w-full aspect-[9/16] overflow-hidden bg-white"
             >
@@ -899,8 +994,15 @@ y: overlay.y + (nextY - overlay.y) * 0.35,
                   {file?.type.startsWith("video/") ? (
                     <video
                       src={previewUrl}
-                      className="absolute inset-0 h-full w-full object-contain"
-                      style={getFilterStyle(selectedFilterPreset)}
+                  className="absolute inset-0 h-full w-full object-contain"
+style={{
+  ...getFilterStyle(selectedFilterPreset),
+  transform: `
+    translate(${(editorState.crop?.x ?? 0) * 100}%,
+              ${(editorState.crop?.y ?? 0) * 100}%)
+    scale(${editorState.crop?.scale ?? 1})
+  `,
+}}
                       autoPlay
                       muted
                       loop
@@ -909,8 +1011,15 @@ y: overlay.y + (nextY - overlay.y) * 0.35,
                   ) : (
                     <img
                       src={previewUrl}
-                      className="absolute inset-0 h-full w-full object-contain"
-                      style={getFilterStyle(selectedFilterPreset)}
+                className="absolute inset-0 h-full w-full object-contain"
+style={{
+  ...getFilterStyle(selectedFilterPreset),
+  transform: `
+    translate(${(editorState.crop?.x ?? 0) * 100}%,
+              ${(editorState.crop?.y ?? 0) * 100}%)
+    scale(${editorState.crop?.scale ?? 1})
+  `,
+}}
                       alt="Story preview"
                     />
                   )}
@@ -1171,18 +1280,33 @@ willChange: "transform",
                   </button>
 
 
-                  <button
-                    type="button"
-                    onClick={() => handleOpenTool("filter")}
-                    className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
-                      isFilterToolOpen
-                        ? "border-zinc-300 bg-white text-black shadow-sm"
-                        : "border-zinc-200 bg-white text-black backdrop-blur-xl"
-                    }`}
-                  >
-                    <span className="text-lg leading-none">◌</span>
-                    <span className="mt-2 text-[11px] font-medium">필터</span>
-                  </button>
+              <button
+  type="button"
+  onClick={() => handleOpenTool("filter")}
+  className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
+    isFilterToolOpen
+      ? "border-zinc-300 bg-white text-black shadow-sm"
+      : "border-zinc-200 bg-white text-black backdrop-blur-xl"
+  }`}
+>
+  <span className="text-lg leading-none">◌</span>
+  <span className="mt-2 text-[11px] font-medium">필터</span>
+</button>
+
+<button
+  type="button"
+  onClick={() => handleOpenTool("crop")}
+  className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
+    isCropToolOpen
+      ? "border-zinc-300 bg-white text-black shadow-sm"
+      : "border-zinc-200 bg-white text-black backdrop-blur-xl"
+  }`}
+>
+  <span className="text-lg leading-none">✂️</span>
+  <span className="mt-2 text-[11px] font-medium">자르기</span>
+</button>
+
+
 
                   <button
                     type="button"
@@ -1224,15 +1348,17 @@ willChange: "transform",
             </div>
 
             <div className="flex items-center justify-between px-5 pb-3">
-              <p className="text-sm font-medium text-black">
-                {isTextToolOpen
-                  ? "Text"
-                  : isMusicToolOpen
-                    ? "Music"
-                    : isFilterToolOpen
-                      ? "Filter"
-                      : "Trim"}
-              </p>
+    <p className="text-sm font-medium text-black">
+  {isTextToolOpen
+    ? "Text"
+    : isMusicToolOpen
+      ? "Music"
+      : isFilterToolOpen
+        ? "Filter"
+        : isCropToolOpen
+          ? "자르기"
+          : "Trim"}
+</p>
 
               <button
                 type="button"
@@ -1346,20 +1472,34 @@ willChange: "transform",
                 </div>
               ) : null}
 
-              {isFilterToolOpen ? (
-                <div className="space-y-4 rounded-[24px] border border-zinc-200 bg-white p-5">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-black">Filter</p>
-                    <p className="text-sm font-medium text-black">
-                      Swipe to change filters
-                    </p>
-                  </div>
+    {isFilterToolOpen ? (
+  <div className="space-y-4 rounded-[24px] border border-zinc-200 bg-white p-5">
+    <div className="space-y-1">
+      <p className="text-sm font-medium text-black">Filter</p>
+      <p className="text-sm font-medium text-black">
+        Swipe to change filters
+      </p>
+    </div>
 
-                  <p className="text-xs text-zinc-500">
-                    Left or right on the preview
-                  </p>
-                </div>
-              ) : null}
+    <p className="text-xs text-zinc-500">
+      Left or right on the preview
+    </p>
+  </div>
+) : null}
+
+{isCropToolOpen ? (
+  <div className="space-y-4 rounded-[24px] border border-zinc-200 bg-white p-5">
+    <div className="space-y-1">
+      <p className="text-sm font-medium text-black">자르기</p>
+      <p className="text-sm text-zinc-500">
+        드래그해서 위치를 바꾸고, 두 손가락으로 확대하거나 축소하세요.
+      </p>
+    </div>
+  </div>
+) : null}
+
+
+
 
               {isMusicToolOpen ? (
                 <div className="space-y-5 rounded-[24px] border border-zinc-200 bg-white p-5 shadow-sm">
