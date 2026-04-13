@@ -88,6 +88,7 @@ export function CreateStoryForm({
   const filterSwipeTriggeredRef = useRef(false)
   const filterIndicatorTimeoutRef = useRef<number | null>(null)
   const [showFilterIndicator, setShowFilterIndicator] = useState(false)
+    const [filterSwipeOffsetX, setFilterSwipeOffsetX] = useState(0)
 
   useEffect(() => {
     if (!file) {
@@ -366,6 +367,7 @@ export function CreateStoryForm({
 
     filterSwipeStartXRef.current = clientX
     filterSwipeTriggeredRef.current = false
+    setFilterSwipeOffsetX(0)
   }
 
   function handleFilterSwipeMove(clientX: number) {
@@ -375,11 +377,18 @@ export function CreateStoryForm({
 
     const startX = filterSwipeStartXRef.current
 
-    if (startX === null || filterSwipeTriggeredRef.current) {
+    if (startX === null) {
       return
     }
 
     const deltaX = clientX - startX
+    const clampedOffset = Math.max(-18, Math.min(18, deltaX * 0.18))
+
+    setFilterSwipeOffsetX(clampedOffset)
+
+    if (filterSwipeTriggeredRef.current) {
+      return
+    }
 
     if (Math.abs(deltaX) < FILTER_SWIPE_THRESHOLD) {
       return
@@ -397,8 +406,8 @@ export function CreateStoryForm({
   function resetFilterSwipe() {
     filterSwipeStartXRef.current = null
     filterSwipeTriggeredRef.current = false
+    setFilterSwipeOffsetX(0)
   }
-
 
 
   
@@ -761,8 +770,18 @@ function handleSelectedLayerTouchStart(
                 previewUrl ? "bg-black" : "bg-white"
               }`}
             >
-              {previewUrl ? (
-                <div className="absolute inset-0">
+                   {previewUrl ? (
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    transform: `translateX(${filterSwipeOffsetX}px)`,
+                    transition:
+                      filterSwipeStartXRef.current === null
+                        ? "transform 180ms ease-out"
+                        : "none",
+                    willChange: "transform",
+                  }}
+                >
                   {file?.type.startsWith("video/") ? (
                     <video
                       src={previewUrl}
