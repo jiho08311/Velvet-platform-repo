@@ -1193,7 +1193,7 @@ willChange: "transform",
                         : "border-zinc-200 bg-white text-black backdrop-blur-xl"
                     }`}
                   >
-                    <span className="text-lg leading-none">⚙</span>
+                    <span className="text-lg leading-none">🎬</span>
                     <span className="mt-2 text-[11px] font-medium">영상 편집</span>
                   </button>
                 </div>
