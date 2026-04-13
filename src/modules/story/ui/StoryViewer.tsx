@@ -493,13 +493,26 @@ const storyMusicStyle = storyMusic?.style ?? "default"
                 {story.editorState?.textOverlays?.map((overlay) => (
                   <div
                     key={overlay.id}
-                    className="pointer-events-none absolute z-10 max-w-[80%] -translate-x-1/2 -translate-y-1/2 text-center text-white"
+                    className="pointer-events-none absolute z-10 max-w-[80%] text-center text-white"
                     style={{
                       left: `${overlay.x * 100}%`,
                       top: `${overlay.y * 100}%`,
+                      textAlign: overlay.align ?? "center",
+                      transform: `translate(-50%, -50%) scale(${overlay.scale ?? 1})`,
                     }}
                   >
-                    <p className="whitespace-pre-wrap break-words text-base font-medium">
+                    <p
+                      className={`whitespace-pre-wrap break-words font-medium ${
+                        overlay.fontSize === "sm"
+                          ? "text-sm"
+                          : overlay.fontSize === "lg"
+                            ? "text-xl"
+                            : "text-base"
+                      }`}
+                      style={{
+                        color: overlay.color ?? "#ffffff",
+                      }}
+                    >
                       {overlay.text}
                     </p>
                   </div>

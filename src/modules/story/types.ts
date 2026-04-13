@@ -10,6 +10,7 @@ export type StoryTextOverlay = {
   align?: "left" | "center" | "right"
   color?: string
   fontSize?: "sm" | "md" | "lg"
+  scale?: number
 }
 
 export type StoryOverlayItem = {

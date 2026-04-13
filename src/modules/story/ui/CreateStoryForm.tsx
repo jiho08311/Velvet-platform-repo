@@ -27,7 +27,7 @@ type CreateStoryFormProps = {
 const FILTER_PRESETS = ["none", "warm", "cool", "mono", "vivid"] as const
 type StoryFilterPreset = (typeof FILTER_PRESETS)[number]
 const FILTER_SWIPE_THRESHOLD = 40
-const TEXT_FONT_SIZES = ["sm", "md", "lg"] as const
+
 
 
 function clampPosition(value: number) {
@@ -89,7 +89,9 @@ export function CreateStoryForm({
   const filterSwipeTriggeredRef = useRef(false)
   const filterIndicatorTimeoutRef = useRef<number | null>(null)
   const [showFilterIndicator, setShowFilterIndicator] = useState(false)
-    const [filterSwipeOffsetX, setFilterSwipeOffsetX] = useState(0)
+  const [filterSwipeOffsetX, setFilterSwipeOffsetX] = useState(0)
+  const textPinchStartDistanceRef = useRef<number | null>(null)
+  const textPinchStartScaleRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (!file) {
@@ -191,7 +193,7 @@ export function CreateStoryForm({
 
       return {
         ...prev,
-        textOverlays: [
+           textOverlays: [
           {
             id: nextId,
             text: "",
@@ -200,6 +202,7 @@ export function CreateStoryForm({
             align: "center",
             color: "#ffffff",
             fontSize: "md",
+            scale: 1,
           },
         ],
       }
@@ -257,28 +260,6 @@ export function CreateStoryForm({
     })
   }
 
-  function handleStepTextOverlayFontSize(direction: "down" | "up") {
-    if (!selectedTextOverlay) {
-      return
-    }
-
-    const currentFontSize = selectedTextOverlay.fontSize ?? "md"
-    const currentIndex = TEXT_FONT_SIZES.indexOf(currentFontSize)
-    const safeCurrentIndex = currentIndex >= 0 ? currentIndex : 1
-
-    const nextIndex =
-      direction === "up"
-        ? Math.min(TEXT_FONT_SIZES.length - 1, safeCurrentIndex + 1)
-        : Math.max(0, safeCurrentIndex - 1)
-
-    const nextFontSize = TEXT_FONT_SIZES[nextIndex]
-
-    if (nextFontSize === currentFontSize) {
-      return
-    }
-
-    handleChangeTextOverlayFontSize(nextFontSize)
-  }
 
   function handleChangeTextOverlayAlign(align: "left" | "center" | "right") {
     setEditorState((prev) => {
@@ -529,6 +510,36 @@ y: 0.5,
     }
   }
 
+function getTouchDistance(
+  touchA: { clientX: number; clientY: number },
+  touchB: { clientX: number; clientY: number }
+) {
+  const dx = touchA.clientX - touchB.clientX
+  const dy = touchA.clientY - touchB.clientY
+  return Math.sqrt(dx * dx + dy * dy)
+}
+
+  function handleChangeSelectedTextScale(scale: number) {
+    if (selectedLayer?.type !== "text") {
+      return
+    }
+
+    const nextScale = Math.min(2.4, Math.max(0.6, scale))
+
+    setEditorState((prev) => ({
+      ...prev,
+      textOverlays: (prev.textOverlays ?? []).map((overlay) =>
+        overlay.id === selectedLayer.id
+          ? {
+              ...overlay,
+              scale: nextScale,
+            }
+          : overlay
+      ),
+    }))
+  }
+
+
  function handleSelectedLayerMouseDown(
     event: React.MouseEvent<HTMLDivElement>
   ) {
@@ -579,17 +590,51 @@ function handleSelectedLayerTouchStart(
 
     event.stopPropagation()
 
-    const touch = event.touches[0]
-    if (!touch) return
+    const firstTouch = event.touches[0]
+    if (!firstTouch) return
+
+    const secondTouch = event.touches[1]
 
     setUiState((prev) => ({
       ...prev,
-      isDragging: true,
+      isDragging: !secondTouch,
     }))
 
-    updateSelectedLayerPositionFromClientPoint(touch.clientX, touch.clientY)
+    if (secondTouch) {
+      textPinchStartDistanceRef.current = getTouchDistance(firstTouch, secondTouch)
+      textPinchStartScaleRef.current = selectedTextOverlay?.scale ?? 1
+      return
+    }
+
+    updateSelectedLayerPositionFromClientPoint(
+      firstTouch.clientX,
+      firstTouch.clientY
+    )
 
     function handleTouchMove(moveEvent: TouchEvent) {
+      const touchA = moveEvent.touches[0]
+      const touchB = moveEvent.touches[1]
+
+      if (touchA && touchB) {
+        const startDistance = textPinchStartDistanceRef.current
+        const startScale = textPinchStartScaleRef.current ?? 1
+
+        if (!startDistance || startDistance <= 0) {
+          return
+        }
+
+        const currentDistance = getTouchDistance(touchA, touchB)
+        const ratio = currentDistance / startDistance
+
+        setUiState((prev) => ({
+          ...prev,
+          isDragging: false,
+        }))
+
+        handleChangeSelectedTextScale(startScale * ratio)
+        return
+      }
+
       const nextTouch = moveEvent.touches[0]
       if (!nextTouch) return
 
@@ -600,6 +645,9 @@ function handleSelectedLayerTouchStart(
     }
 
     function handleTouchEnd() {
+      textPinchStartDistanceRef.current = null
+      textPinchStartScaleRef.current = null
+
       setUiState((prev) => ({
         ...prev,
         isDragging: false,
@@ -882,18 +930,19 @@ function handleSelectedLayerTouchStart(
                     }}
                     onMouseDown={handleSelectedLayerMouseDown}
                     onTouchStart={handleSelectedLayerTouchStart}
-                    className={`absolute max-w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-md text-center text-white transition-all duration-150 ${
-                      isSelected
-                        ? uiState.isDragging
-                          ? "ring-2 ring-pink-400 scale-110 shadow-2xl z-20"
-                          : "ring-2 ring-pink-400 scale-105 shadow-lg"
-                        : "opacity-80"
-                    }`}
-                    style={{
+               className={`absolute max-w-[80%] rounded-md text-center text-white transition-all duration-150 ${
+  isSelected
+    ? uiState.isDragging
+      ? "ring-2 ring-pink-400 shadow-2xl z-20"
+      : "ring-2 ring-pink-400 shadow-lg"
+    : "opacity-80"
+}`}
+                                    style={{
                       left: `${overlay.x * 100}%`,
                       top: `${overlay.y * 100}%`,
                       touchAction: "none",
                       textAlign: overlay.align ?? "center",
+                      transform: `translate(-50%, -50%) scale(${overlay.scale ?? 1})`,
                     }}
                   >
                     <p
@@ -1242,45 +1291,7 @@ function handleSelectedLayerTouchStart(
 
                       <div className="space-y-3">
                     
-<div>
-  <p className="mb-2 text-xs font-medium text-zinc-400">
-    Size
-  </p>
 
-  <div className="flex items-center justify-center gap-5 rounded-[20px] border border-white/10 bg-white/5 px-4 py-3">
-    <button
-      type="button"
-      onClick={() => handleStepTextOverlayFontSize("down")}
-      disabled={(selectedTextOverlay.fontSize ?? "md") === "sm"}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xl text-white transition hover:bg-white/10 disabled:opacity-30"
-      aria-label="Decrease text size"
-    >
-      ‹
-    </button>
-
-    <span
-      className={`min-w-[44px] text-center font-semibold text-white ${
-        (selectedTextOverlay.fontSize ?? "md") === "sm"
-          ? "text-xl"
-          : (selectedTextOverlay.fontSize ?? "md") === "lg"
-            ? "text-4xl"
-            : "text-2xl"
-      }`}
-    >
-      Aa
-    </span>
-
-    <button
-      type="button"
-      onClick={() => handleStepTextOverlayFontSize("up")}
-      disabled={(selectedTextOverlay.fontSize ?? "md") === "lg"}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xl text-white transition hover:bg-white/10 disabled:opacity-30"
-      aria-label="Increase text size"
-    >
-      ›
-    </button>
-  </div>
-</div>
                         <div>
                           <p className="mb-2 text-xs font-medium text-zinc-400">
                             Align
@@ -1364,10 +1375,9 @@ function handleSelectedLayerTouchStart(
                         </div>
                       </div>
 
-                      <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-400">
-                        Tap text to select it, then drag it directly on the
-                        preview.
-                      </div>
+<div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-400">
+  Drag to move. Pinch with two fingers to resize.
+</div>
 
                       <p className="text-xs text-zinc-500">
                         x: {selectedTextOverlay.x.toFixed(2)} / y:{" "}
