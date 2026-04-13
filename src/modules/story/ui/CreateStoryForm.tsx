@@ -748,7 +748,7 @@ y: 0.5,
 
 {previewUrl ? (
   <>
-    <div className="absolute left-6 right-4 top-12 z-20">
+    <div className="absolute left-6 right-4 top-8 z-20">
       <div className="flex items-center gap-3 rounded-full border border-white/10 bg-zinc-800/75 px-3 py-2.5 backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.28)]">
         {selectedMusic?.artworkUrl ? (
           <img
