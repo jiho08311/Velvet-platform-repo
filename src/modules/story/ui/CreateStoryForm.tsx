@@ -626,13 +626,7 @@ export function CreateStoryForm({
 
             <p className="text-sm font-medium text-white">New story</p>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="rounded-full bg-pink-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-pink-600/20 transition-all hover:bg-pink-500 hover:scale-[1.03] active:scale-[0.97] disabled:opacity-50"
-            >
-              {isSubmitting ? "Posting..." : "Next"}
-            </button>
+  <div className="w-[72px]" />
           </div>
         </div>
 
@@ -853,95 +847,102 @@ export function CreateStoryForm({
               ) : null}
             </div>
 
-            <div className="mt-3 w-full md:mx-auto md:max-w-[420px]">
-              <div className="flex items-center justify-between gap-2 rounded-3xl border border-white/10 bg-black/70 px-3 py-2 backdrop-blur-2xl shadow-[0_10px_40px_rgba(0,0,0,0.6)]">
-                <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setUiState((prev) => ({
-                        ...prev,
-                        activeTool: prev.activeTool === "text" ? null : "text",
-                      }))
-                    }
-                    className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
-                      isTextToolOpen
-                        ? "bg-white text-black shadow-md"
-                        : "text-white/60 hover:text-white"
-                    }`}
-                  >
-                    Aa
-                  </button>
+<div className="mt-4 w-full px-4 md:mx-auto md:max-w-[420px] md:px-0">
+  <div className="flex items-end justify-between gap-3">
+    <div className="flex min-w-0 items-center gap-3 overflow-x-auto pb-1">
+      <button
+        type="button"
+        onClick={() =>
+          setUiState((prev) => ({
+            ...prev,
+            activeTool: prev.activeTool === "music" ? null : "music",
+          }))
+        }
+        className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
+          isMusicToolOpen
+            ? "border-white/20 bg-white text-black shadow-lg"
+            : "border-white/10 bg-white/10 text-white backdrop-blur-xl"
+        }`}
+      >
+        <span className="text-lg leading-none">♫</span>
+        <span className="mt-2 text-[11px] font-medium">오디오</span>
+      </button>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setUiState((prev) => ({
-                        ...prev,
-                        activeTool: prev.activeTool === "music" ? null : "music",
-                      }))
-                    }
-                    className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
-                      isMusicToolOpen
-                        ? "bg-white text-black shadow-md"
-                        : "text-white/60 hover:text-white"
-                    }`}
-                  >
-                    Music
-                  </button>
+      <button
+        type="button"
+        onClick={() =>
+          setUiState((prev) => ({
+            ...prev,
+            activeTool: prev.activeTool === "text" ? null : "text",
+          }))
+        }
+        className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
+          isTextToolOpen
+            ? "border-white/20 bg-white text-black shadow-lg"
+            : "border-white/10 bg-white/10 text-white backdrop-blur-xl"
+        }`}
+      >
+        <span className="text-lg leading-none">Aa</span>
+        <span className="mt-2 text-[11px] font-medium">텍스트</span>
+      </button>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setUiState((prev) => ({
-                        ...prev,
-                        activeTool:
-                          prev.activeTool === "filter" ? null : "filter",
-                      }))
-                    }
-                    className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
-                      isFilterToolOpen
-                        ? "bg-white text-black shadow-md"
-                        : "text-white/60 hover:text-white"
-                    }`}
-                  >
-                    Filter
-                  </button>
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        className="flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border border-white/10 bg-white/10 px-3 text-white backdrop-blur-xl transition-all"
+      >
+        <span className="text-lg leading-none">▣</span>
+        <span className="mt-2 text-[11px] font-medium">오버레이</span>
+      </button>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setUiState((prev) => ({
-                        ...prev,
-                        activeTool: prev.activeTool === "trim" ? null : "trim",
-                      }))
-                    }
-                    className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
-                      isTrimToolOpen
-                        ? "bg-white text-black shadow-md"
-                        : "text-white/60 hover:text-white"
-                    }`}
-                  >
-                    Trim
-                  </button>
-                </div>
+      <button
+        type="button"
+        onClick={() =>
+          setUiState((prev) => ({
+            ...prev,
+            activeTool: prev.activeTool === "filter" ? null : "filter",
+          }))
+        }
+        className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
+          isFilterToolOpen
+            ? "border-white/20 bg-white text-black shadow-lg"
+            : "border-white/10 bg-white/10 text-white backdrop-blur-xl"
+        }`}
+      >
+        <span className="text-lg leading-none">◌</span>
+        <span className="mt-2 text-[11px] font-medium">필터</span>
+      </button>
 
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-900 text-lg font-medium text-white transition-all hover:bg-zinc-800 hover:scale-105 active:scale-[0.92]"
-                  aria-label="Upload story file"
-                >
-                  +
-                </button>
-              </div>
+      <button
+        type="button"
+        onClick={() =>
+          setUiState((prev) => ({
+            ...prev,
+            activeTool: prev.activeTool === "trim" ? null : "trim",
+          }))
+        }
+        className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
+          isTrimToolOpen
+            ? "border-white/20 bg-white text-black shadow-lg"
+            : "border-white/10 bg-white/10 text-white backdrop-blur-xl"
+        }`}
+      >
+        <span className="text-lg leading-none">⚙</span>
+        <span className="mt-2 text-[11px] font-medium">수정</span>
+      </button>
+    </div>
 
-              {file ? (
-                <p className="mt-3 truncate px-1 text-center text-xs text-zinc-500">
-                  {file.name}
-                </p>
-              ) : null}
-            </div>
+    <button
+      type="submit"
+      disabled={isSubmitting}
+      className="mb-1 inline-flex h-16 shrink-0 items-center justify-center rounded-[24px] bg-indigo-500 px-6 text-base font-semibold text-white shadow-[0_12px_30px_rgba(79,70,229,0.35)] transition-all hover:bg-indigo-400 active:scale-[0.98] disabled:opacity-50"
+    >
+      {isSubmitting ? "다음..." : "다음 →"}
+    </button>
+  </div>
+</div>
+
+          
           </div>
         </div>
       </div>
