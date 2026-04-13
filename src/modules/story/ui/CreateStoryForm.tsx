@@ -24,6 +24,11 @@ type CreateStoryFormProps = {
   onNextStory: (input: SubmitStoryInput) => void
 }
 
+const FILTER_PRESETS = ["none", "warm", "cool", "mono", "vivid"] as const
+type StoryFilterPreset = (typeof FILTER_PRESETS)[number]
+const FILTER_SWIPE_THRESHOLD = 40
+
+
 function clampPosition(value: number) {
   return Math.min(0.95, Math.max(0.05, value))
 }
@@ -77,8 +82,12 @@ export function CreateStoryForm({
     startTime: 0,
   })
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
+    const fileInputRef = useRef<HTMLInputElement | null>(null)
   const previewContainerRef = useRef<HTMLDivElement | null>(null)
+  const filterSwipeStartXRef = useRef<number | null>(null)
+  const filterSwipeTriggeredRef = useRef(false)
+  const filterIndicatorTimeoutRef = useRef<number | null>(null)
+  const [showFilterIndicator, setShowFilterIndicator] = useState(false)
 
   useEffect(() => {
     if (!file) {
@@ -105,9 +114,17 @@ export function CreateStoryForm({
 
   const isMusicSelected = selectedLayer?.type === "music"
 
-  const selectedFilterPreset = editorState.filter?.preset ?? "none"
+    const selectedFilterPreset = editorState.filter?.preset ?? "none"
   const selectedMusic = editorState.music
   const selectedMusicStyle = selectedMusic?.style ?? "default"
+
+  useEffect(() => {
+    return () => {
+      if (filterIndicatorTimeoutRef.current) {
+        window.clearTimeout(filterIndicatorTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const activeTool = uiState.activeTool
   const isTextToolOpen = activeTool === "text"
@@ -297,7 +314,6 @@ export function CreateStoryForm({
       selectedLayer: null,
     }))
   }
-
   function handleChangeFilter(
     preset: "none" | "warm" | "cool" | "mono" | "vivid"
   ) {
@@ -309,6 +325,83 @@ export function CreateStoryForm({
     }))
   }
 
+  function showActiveFilterIndicator() {
+    setShowFilterIndicator(true)
+
+    if (filterIndicatorTimeoutRef.current) {
+      window.clearTimeout(filterIndicatorTimeoutRef.current)
+    }
+
+    filterIndicatorTimeoutRef.current = window.setTimeout(() => {
+      setShowFilterIndicator(false)
+    }, 900)
+  }
+
+  function moveFilterBy(direction: "next" | "prev") {
+    const currentIndex = FILTER_PRESETS.indexOf(
+      selectedFilterPreset as StoryFilterPreset
+    )
+
+    const safeCurrentIndex = currentIndex >= 0 ? currentIndex : 0
+    const nextIndex =
+      direction === "next"
+        ? Math.min(FILTER_PRESETS.length - 1, safeCurrentIndex + 1)
+        : Math.max(0, safeCurrentIndex - 1)
+
+    const nextPreset = FILTER_PRESETS[nextIndex]
+
+    if (nextPreset === selectedFilterPreset) {
+      showActiveFilterIndicator()
+      return
+    }
+
+    handleChangeFilter(nextPreset)
+    showActiveFilterIndicator()
+  }
+
+  function handleFilterSwipeStart(clientX: number) {
+    if (!previewUrl || uiState.isDragging) {
+      return
+    }
+
+    filterSwipeStartXRef.current = clientX
+    filterSwipeTriggeredRef.current = false
+  }
+
+  function handleFilterSwipeMove(clientX: number) {
+    if (!previewUrl || uiState.isDragging) {
+      return
+    }
+
+    const startX = filterSwipeStartXRef.current
+
+    if (startX === null || filterSwipeTriggeredRef.current) {
+      return
+    }
+
+    const deltaX = clientX - startX
+
+    if (Math.abs(deltaX) < FILTER_SWIPE_THRESHOLD) {
+      return
+    }
+
+    filterSwipeTriggeredRef.current = true
+
+    if (deltaX < 0) {
+      moveFilterBy("next")
+    } else {
+      moveFilterBy("prev")
+    }
+  }
+
+  function resetFilterSwipe() {
+    filterSwipeStartXRef.current = null
+    filterSwipeTriggeredRef.current = false
+  }
+
+
+
+  
   function handleSelectMusic(option: {
     source: "external"
     trackId: string
@@ -403,9 +496,11 @@ y: 0.5,
     }
   }
 
-  function handleSelectedLayerMouseDown(
+ function handleSelectedLayerMouseDown(
     event: React.MouseEvent<HTMLDivElement>
   ) {
+    resetFilterSwipe()
+
     if (selectedLayer?.type !== "text") {
       return
     }
@@ -440,9 +535,11 @@ y: 0.5,
     window.addEventListener("mouseup", handleMouseUp)
   }
 
-  function handleSelectedLayerTouchStart(
+function handleSelectedLayerTouchStart(
     event: React.TouchEvent<HTMLDivElement>
   ) {
+    resetFilterSwipe()
+
     if (selectedLayer?.type !== "text") {
       return
     }
@@ -487,7 +584,9 @@ y: 0.5,
   function handleMusicStickerMouseDown(
     event: React.MouseEvent<HTMLDivElement>
   ) {
+    resetFilterSwipe()
     event.preventDefault()
+
     event.stopPropagation()
     setUiState((prev) => ({
       ...prev,
@@ -520,6 +619,7 @@ y: 0.5,
   function handleMusicStickerTouchStart(
     event: React.TouchEvent<HTMLDivElement>
   ) {
+    resetFilterSwipe()
     event.stopPropagation()
     setUiState((prev) => ({
       ...prev,
@@ -632,7 +732,7 @@ y: 0.5,
 
         <div className="flex flex-1 flex-col pb-28 pt-4">
           <div className="flex w-full flex-1 flex-col items-stretch">
-            <div
+                 <div
               ref={previewContainerRef}
               onClick={() => {
                 setUiState((prev) => ({
@@ -640,6 +740,23 @@ y: 0.5,
                   selectedLayer: null,
                 }))
               }}
+              onTouchStart={(event) => {
+                handleFilterSwipeStart(event.touches[0]?.clientX ?? 0)
+              }}
+              onTouchMove={(event) => {
+                handleFilterSwipeMove(event.touches[0]?.clientX ?? 0)
+              }}
+              onTouchEnd={resetFilterSwipe}
+              onTouchCancel={resetFilterSwipe}
+              onMouseDown={(event) => {
+                handleFilterSwipeStart(event.clientX)
+              }}
+              onMouseMove={(event) => {
+                if ((event.buttons & 1) === 1) {
+                  handleFilterSwipeMove(event.clientX)
+                }
+              }}
+              onMouseUp={resetFilterSwipe}
               className={`relative w-full aspect-[9/16] overflow-hidden ${
                 previewUrl ? "bg-black" : "bg-white"
               }`}
@@ -688,7 +805,11 @@ y: 0.5,
               <div className="pointer-events-none absolute inset-0 md:inset-[6%] md:rounded-[22px] md:border md:border-white/10" />
             
 
-
+              {previewUrl && showFilterIndicator ? (
+                <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full border border-white/10 bg-black/65 px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-white backdrop-blur-sm">
+                  {selectedFilterPreset}
+                </div>
+              ) : null}
 
 
               {editorState.textOverlays?.map((overlay) => {
@@ -1225,14 +1346,14 @@ y: 0.5,
                 <div className="space-y-5 rounded-[24px] border border-white/10 bg-black/60 p-5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.45)]">
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-white">Filter</p>
-                    <p className="text-xs text-zinc-400">
-                      Apply a simple preview filter to your story
-                    </p>
+               <p className="text-xs text-zinc-400">
+  Swipe left or right on the preview to change filters
+</p>
                   </div>
 
-                  <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-400">
-                    Select a filter to preview changes instantly.
-                  </div>
+            <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-400">
+  You can still tap a filter below, but swipe on the preview for Instagram-style browsing.
+</div>
 
                   <div className="flex flex-wrap gap-2">
                     <button
