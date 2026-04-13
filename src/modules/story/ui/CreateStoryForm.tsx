@@ -626,7 +626,7 @@ export function CreateStoryForm({
 
             <p className="text-sm font-medium text-white">New story</p>
 
-  <div className="w-[72px]" />
+            <div className="w-[72px]" />
           </div>
         </div>
 
@@ -847,102 +847,101 @@ export function CreateStoryForm({
               ) : null}
             </div>
 
-<div className="mt-4 w-full px-4 md:mx-auto md:max-w-[420px] md:px-0">
-  <div className="flex items-end justify-between gap-3">
-    <div className="flex min-w-0 items-center gap-3 overflow-x-auto pb-1">
-      <button
-        type="button"
-        onClick={() =>
-          setUiState((prev) => ({
-            ...prev,
-            activeTool: prev.activeTool === "music" ? null : "music",
-          }))
-        }
-        className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
-          isMusicToolOpen
-            ? "border-white/20 bg-white text-black shadow-lg"
-            : "border-white/10 bg-white/10 text-white backdrop-blur-xl"
-        }`}
-      >
-        <span className="text-lg leading-none">♫</span>
-        <span className="mt-2 text-[11px] font-medium">오디오</span>
-      </button>
+            <div className="mt-4 w-full px-4 md:mx-auto md:max-w-[420px] md:px-0">
+              <div className="flex items-end justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3 overflow-x-auto pb-1">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setUiState((prev) => ({
+                        ...prev,
+                        activeTool: prev.activeTool === "music" ? null : "music",
+                      }))
+                    }
+                    className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
+                      isMusicToolOpen
+                        ? "border-white/20 bg-white text-black shadow-lg"
+                        : "border-white/10 bg-white/10 text-white backdrop-blur-xl"
+                    }`}
+                  >
+                    <span className="text-lg leading-none">♫</span>
+                    <span className="mt-2 text-[11px] font-medium">오디오</span>
+                  </button>
 
-      <button
-        type="button"
-        onClick={() =>
-          setUiState((prev) => ({
-            ...prev,
-            activeTool: prev.activeTool === "text" ? null : "text",
-          }))
-        }
-        className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
-          isTextToolOpen
-            ? "border-white/20 bg-white text-black shadow-lg"
-            : "border-white/10 bg-white/10 text-white backdrop-blur-xl"
-        }`}
-      >
-        <span className="text-lg leading-none">Aa</span>
-        <span className="mt-2 text-[11px] font-medium">텍스트</span>
-      </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setUiState((prev) => ({
+                        ...prev,
+                        activeTool: prev.activeTool === "text" ? null : "text",
+                      }))
+                    }
+                    className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
+                      isTextToolOpen
+                        ? "border-white/20 bg-white text-black shadow-lg"
+                        : "border-white/10 bg-white/10 text-white backdrop-blur-xl"
+                    }`}
+                  >
+                    <span className="text-lg leading-none">Aa</span>
+                    <span className="mt-2 text-[11px] font-medium">텍스트</span>
+                  </button>
 
-      <button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        className="flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border border-white/10 bg-white/10 px-3 text-white backdrop-blur-xl transition-all"
-      >
-        <span className="text-lg leading-none">▣</span>
-        <span className="mt-2 text-[11px] font-medium">오버레이</span>
-      </button>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border border-white/10 bg-white/10 px-3 text-white backdrop-blur-xl transition-all"
+                  >
+                    <span className="text-lg leading-none">▣</span>
+                    <span className="mt-2 text-[11px] font-medium">오버레이</span>
+                  </button>
 
-      <button
-        type="button"
-        onClick={() =>
-          setUiState((prev) => ({
-            ...prev,
-            activeTool: prev.activeTool === "filter" ? null : "filter",
-          }))
-        }
-        className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
-          isFilterToolOpen
-            ? "border-white/20 bg-white text-black shadow-lg"
-            : "border-white/10 bg-white/10 text-white backdrop-blur-xl"
-        }`}
-      >
-        <span className="text-lg leading-none">◌</span>
-        <span className="mt-2 text-[11px] font-medium">필터</span>
-      </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setUiState((prev) => ({
+                        ...prev,
+                        activeTool:
+                          prev.activeTool === "filter" ? null : "filter",
+                      }))
+                    }
+                    className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
+                      isFilterToolOpen
+                        ? "border-white/20 bg-white text-black shadow-lg"
+                        : "border-white/10 bg-white/10 text-white backdrop-blur-xl"
+                    }`}
+                  >
+                    <span className="text-lg leading-none">◌</span>
+                    <span className="mt-2 text-[11px] font-medium">필터</span>
+                  </button>
 
-      <button
-        type="button"
-        onClick={() =>
-          setUiState((prev) => ({
-            ...prev,
-            activeTool: prev.activeTool === "trim" ? null : "trim",
-          }))
-        }
-        className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
-          isTrimToolOpen
-            ? "border-white/20 bg-white text-black shadow-lg"
-            : "border-white/10 bg-white/10 text-white backdrop-blur-xl"
-        }`}
-      >
-        <span className="text-lg leading-none">⚙</span>
-        <span className="mt-2 text-[11px] font-medium">수정</span>
-      </button>
-    </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setUiState((prev) => ({
+                        ...prev,
+                        activeTool: prev.activeTool === "trim" ? null : "trim",
+                      }))
+                    }
+                    className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
+                      isTrimToolOpen
+                        ? "border-white/20 bg-white text-black shadow-lg"
+                        : "border-white/10 bg-white/10 text-white backdrop-blur-xl"
+                    }`}
+                  >
+                    <span className="text-lg leading-none">⚙</span>
+                    <span className="mt-2 text-[11px] font-medium">수정</span>
+                  </button>
+                </div>
 
-    <button
-      type="submit"
-      disabled={isSubmitting}
-      className="mb-1 inline-flex h-16 shrink-0 items-center justify-center rounded-[24px] bg-indigo-500 px-6 text-base font-semibold text-white shadow-[0_12px_30px_rgba(79,70,229,0.35)] transition-all hover:bg-indigo-400 active:scale-[0.98] disabled:opacity-50"
-    >
-      {isSubmitting ? "다음..." : "다음 →"}
-    </button>
-  </div>
-</div>
-
-          
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="mb-1 inline-flex h-16 shrink-0 items-center justify-center rounded-[24px] bg-indigo-500 px-6 text-base font-semibold text-white shadow-[0_12px_30px_rgba(79,70,229,0.35)] transition-all hover:bg-indigo-400 active:scale-[0.98] disabled:opacity-50"
+                >
+                  {isSubmitting ? "다음..." : "다음 →"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -973,7 +972,7 @@ export function CreateStoryForm({
               <button
                 type="button"
                 onClick={closeToolSheet}
-                className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-white transition hover:bg-zinc-800"
+                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white transition hover:bg-white/10"
               >
                 Close
               </button>
@@ -981,7 +980,7 @@ export function CreateStoryForm({
 
             <div className="max-h-[62vh] overflow-y-auto px-4 pb-6">
               {isTextToolOpen ? (
-                <div className="space-y-4 rounded-[28px] border border-zinc-800 bg-zinc-950/70 p-5 shadow-xl">
+                <div className="space-y-5 rounded-[24px] border border-white/10 bg-black/60 p-5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.45)]">
                   <div className="flex items-center justify-between gap-3">
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-white">
@@ -996,7 +995,7 @@ export function CreateStoryForm({
                       <button
                         type="button"
                         onClick={handleRemoveTextOverlay}
-                        className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-white transition hover:bg-zinc-800"
+                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white transition hover:bg-white/10"
                       >
                         Remove
                       </button>
@@ -1004,7 +1003,7 @@ export function CreateStoryForm({
                       <button
                         type="button"
                         onClick={handleAddTextOverlay}
-                        className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-white transition hover:bg-zinc-800"
+                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white transition hover:bg-white/10"
                       >
                         Add text
                       </button>
@@ -1019,7 +1018,7 @@ export function CreateStoryForm({
                           handleOverlayTextChange(event.target.value)
                         }
                         placeholder="Write overlay text..."
-                        className="min-h-[96px] w-full resize-none rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
+                        className="min-h-[120px] w-full resize-none rounded-[20px] border border-white/10 bg-white/5 px-4 py-4 text-sm text-white outline-none placeholder:text-zinc-500"
                       />
 
                       <div className="space-y-3">
@@ -1033,10 +1032,10 @@ export function CreateStoryForm({
                               onClick={() =>
                                 handleChangeTextOverlayFontSize("sm")
                               }
-                              className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                              className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
                                 (selectedTextOverlay.fontSize ?? "md") === "sm"
                                   ? "border-pink-500 bg-pink-500/10 text-white"
-                                  : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+                                  : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
                               }`}
                             >
                               Small
@@ -1047,10 +1046,10 @@ export function CreateStoryForm({
                               onClick={() =>
                                 handleChangeTextOverlayFontSize("md")
                               }
-                              className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                              className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
                                 (selectedTextOverlay.fontSize ?? "md") === "md"
                                   ? "border-pink-500 bg-pink-500/10 text-white"
-                                  : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+                                  : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
                               }`}
                             >
                               Medium
@@ -1061,10 +1060,10 @@ export function CreateStoryForm({
                               onClick={() =>
                                 handleChangeTextOverlayFontSize("lg")
                               }
-                              className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                              className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
                                 (selectedTextOverlay.fontSize ?? "md") === "lg"
                                   ? "border-pink-500 bg-pink-500/10 text-white"
-                                  : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+                                  : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
                               }`}
                             >
                               Large
@@ -1080,11 +1079,11 @@ export function CreateStoryForm({
                             <button
                               type="button"
                               onClick={() => handleChangeTextOverlayAlign("left")}
-                              className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                              className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
                                 (selectedTextOverlay.align ?? "center") ===
                                 "left"
                                   ? "border-pink-500 bg-pink-500/10 text-white"
-                                  : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+                                  : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
                               }`}
                             >
                               Left
@@ -1095,11 +1094,11 @@ export function CreateStoryForm({
                               onClick={() =>
                                 handleChangeTextOverlayAlign("center")
                               }
-                              className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                              className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
                                 (selectedTextOverlay.align ?? "center") ===
                                 "center"
                                   ? "border-pink-500 bg-pink-500/10 text-white"
-                                  : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+                                  : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
                               }`}
                             >
                               Center
@@ -1110,11 +1109,11 @@ export function CreateStoryForm({
                               onClick={() =>
                                 handleChangeTextOverlayAlign("right")
                               }
-                              className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                              className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
                                 (selectedTextOverlay.align ?? "center") ===
                                 "right"
                                   ? "border-pink-500 bg-pink-500/10 text-white"
-                                  : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+                                  : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
                               }`}
                             >
                               Right
@@ -1155,7 +1154,7 @@ export function CreateStoryForm({
                         </div>
                       </div>
 
-                      <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-400">
+                      <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-400">
                         Tap text to select it, then drag it directly on the
                         preview.
                       </div>
@@ -1166,7 +1165,7 @@ export function CreateStoryForm({
                       </p>
                     </>
                   ) : (
-                    <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-4 text-sm text-zinc-400">
+                    <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-4 text-sm text-zinc-400">
                       Tap "Add text" to start, then drag it on the preview.
                     </div>
                   )}
@@ -1174,7 +1173,7 @@ export function CreateStoryForm({
               ) : null}
 
               {isFilterToolOpen ? (
-                <div className="space-y-4 rounded-[28px] border border-zinc-800 bg-zinc-950/70 p-5 shadow-xl">
+                <div className="space-y-5 rounded-[24px] border border-white/10 bg-black/60 p-5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.45)]">
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-white">Filter</p>
                     <p className="text-xs text-zinc-400">
@@ -1182,7 +1181,7 @@ export function CreateStoryForm({
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-400">
+                  <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-400">
                     Select a filter to preview changes instantly.
                   </div>
 
@@ -1190,10 +1189,10 @@ export function CreateStoryForm({
                     <button
                       type="button"
                       onClick={() => handleChangeFilter("none")}
-                      className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                      className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
                         selectedFilterPreset === "none"
                           ? "border-pink-500 bg-pink-500/10 text-white"
-                          : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
+                          : "border-white/10 bg-white/5 text-white hover:bg-white/10"
                       }`}
                     >
                       None
@@ -1202,10 +1201,10 @@ export function CreateStoryForm({
                     <button
                       type="button"
                       onClick={() => handleChangeFilter("warm")}
-                      className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                      className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
                         selectedFilterPreset === "warm"
                           ? "border-pink-500 bg-pink-500/10 text-white"
-                          : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
+                          : "border-white/10 bg-white/5 text-white hover:bg-white/10"
                       }`}
                     >
                       Warm
@@ -1214,10 +1213,10 @@ export function CreateStoryForm({
                     <button
                       type="button"
                       onClick={() => handleChangeFilter("cool")}
-                      className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                      className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
                         selectedFilterPreset === "cool"
                           ? "border-pink-500 bg-pink-500/10 text-white"
-                          : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
+                          : "border-white/10 bg-white/5 text-white hover:bg-white/10"
                       }`}
                     >
                       Cool
@@ -1226,10 +1225,10 @@ export function CreateStoryForm({
                     <button
                       type="button"
                       onClick={() => handleChangeFilter("mono")}
-                      className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                      className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
                         selectedFilterPreset === "mono"
                           ? "border-pink-500 bg-pink-500/10 text-white"
-                          : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
+                          : "border-white/10 bg-white/5 text-white hover:bg-white/10"
                       }`}
                     >
                       Mono
@@ -1238,10 +1237,10 @@ export function CreateStoryForm({
                     <button
                       type="button"
                       onClick={() => handleChangeFilter("vivid")}
-                      className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                      className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
                         selectedFilterPreset === "vivid"
                           ? "border-pink-500 bg-pink-500/10 text-white"
-                          : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
+                          : "border-white/10 bg-white/5 text-white hover:bg-white/10"
                       }`}
                     >
                       Vivid
@@ -1251,7 +1250,7 @@ export function CreateStoryForm({
               ) : null}
 
               {isMusicToolOpen ? (
-                <div className="space-y-4 rounded-[28px] border border-zinc-800 bg-zinc-950/70 p-5 shadow-xl">
+                <div className="space-y-5 rounded-[24px] border border-white/10 bg-black/60 p-5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.45)]">
                   <div className="flex items-center justify-between gap-3">
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-white">Music</p>
@@ -1264,7 +1263,7 @@ export function CreateStoryForm({
                       <button
                         type="button"
                         onClick={handleRemoveMusic}
-                        className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-white transition hover:bg-zinc-800"
+                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white transition hover:bg-white/10"
                       >
                         Remove
                       </button>
@@ -1276,18 +1275,18 @@ export function CreateStoryForm({
                       value={musicQuery}
                       onChange={(event) => setMusicQuery(event.target.value)}
                       placeholder="Search music..."
-                      className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
+                      className="w-full rounded-[20px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
                     />
 
                     <div className="space-y-2">
                       {!musicQuery.trim() ? (
-                        <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-4 text-sm text-zinc-400">
+                        <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-4 text-sm text-zinc-400">
                           Search music to add, then drag it on the preview.
                         </div>
                       ) : null}
 
                       {isSearchingMusic ? (
-                        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-400">
+                        <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-400">
                           Searching...
                         </div>
                       ) : null}
@@ -1295,7 +1294,7 @@ export function CreateStoryForm({
                       {!isSearchingMusic &&
                       musicQuery.trim() &&
                       musicResults.length === 0 ? (
-                        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-400">
+                        <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-400">
                           No results
                         </div>
                       ) : null}
@@ -1320,10 +1319,10 @@ export function CreateStoryForm({
                                   duration: option.duration ?? null,
                                 })
                               }
-                              className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${
+                              className={`flex w-full items-center justify-between rounded-[20px] border px-4 py-3 text-left transition ${
                                 isSelected
-                                  ? "border-pink-500 bg-pink-500/10"
-                                  : "border-zinc-800 bg-zinc-900 hover:bg-zinc-800"
+                                  ? "border-white/20 bg-white text-black shadow-lg"
+                                  : "border-white/10 bg-white/5 text-white hover:bg-white/10"
                               }`}
                             >
                               <div className="flex min-w-0 items-center gap-3">
@@ -1340,18 +1339,26 @@ export function CreateStoryForm({
                                 )}
 
                                 <div className="min-w-0">
-                                  <p className="truncate text-sm font-medium text-white">
+                                  <p
+                                    className={`truncate text-sm font-medium ${
+                                      isSelected ? "text-black" : "text-white"
+                                    }`}
+                                  >
                                     {option.title}
                                   </p>
-                                  <p className="truncate text-xs text-zinc-400">
+                                  <p
+                                    className={`truncate text-xs ${
+                                      isSelected ? "text-zinc-600" : "text-zinc-400"
+                                    }`}
+                                  >
                                     {option.artist}
                                   </p>
                                 </div>
                               </div>
 
                               <span
-                                className={`shrink-0 text-xs ${
-                                  isSelected ? "text-pink-400" : "text-zinc-400"
+                                className={`shrink-0 text-xs font-medium ${
+                                  isSelected ? "text-black" : "text-zinc-400"
                                 }`}
                               >
                                 {isSelected ? "Selected" : "Pick"}
@@ -1362,7 +1369,7 @@ export function CreateStoryForm({
                     </div>
 
                     {selectedMusic ? (
-                      <div className="rounded-2xl border border-pink-500/20 bg-pink-500/10 px-4 py-3">
+                      <div className="rounded-[20px] border border-white/10 bg-white/5 px-4 py-3">
                         <div className="flex items-center gap-3">
                           {selectedMusic.artworkUrl ? (
                             <img
@@ -1392,13 +1399,13 @@ export function CreateStoryForm({
                     ) : null}
 
                     {selectedMusic ? (
-                      <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-400">
+                      <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-400">
                         Drag the music sticker directly on the preview.
                       </div>
                     ) : null}
 
                     {selectedMusic && isMusicSelected ? (
-                      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-3">
+                      <div className="rounded-[20px] border border-white/10 bg-white/5 p-3">
                         <p className="mb-2 text-xs font-medium text-zinc-400">
                           Sticker style
                         </p>
@@ -1407,10 +1414,10 @@ export function CreateStoryForm({
                           <button
                             type="button"
                             onClick={() => handleChangeMusicStyle("default")}
-                            className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                            className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
                               selectedMusicStyle === "default"
                                 ? "border-pink-500 bg-pink-500/10 text-white"
-                                : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+                                : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
                             }`}
                           >
                             Default
@@ -1419,10 +1426,10 @@ export function CreateStoryForm({
                           <button
                             type="button"
                             onClick={() => handleChangeMusicStyle("minimal")}
-                            className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                            className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
                               selectedMusicStyle === "minimal"
                                 ? "border-pink-500 bg-pink-500/10 text-white"
-                                : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+                                : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
                             }`}
                           >
                             Minimal
@@ -1431,10 +1438,10 @@ export function CreateStoryForm({
                           <button
                             type="button"
                             onClick={() => handleChangeMusicStyle("bold")}
-                            className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                            className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
                               selectedMusicStyle === "bold"
                                 ? "border-pink-500 bg-pink-500/10 text-white"
-                                : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+                                : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
                             }`}
                           >
                             Bold
@@ -1447,9 +1454,9 @@ export function CreateStoryForm({
               ) : null}
 
               {isTrimToolOpen ? (
-                <div className="rounded-[28px] border border-zinc-800 bg-zinc-950/70 p-5 shadow-xl">
+                <div className="rounded-[24px] border border-white/10 bg-black/60 p-5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.45)]">
                   {!file ? (
-                    <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-400">
+                    <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-400">
                       Select a video to enable trimming.
                     </div>
                   ) : null}
