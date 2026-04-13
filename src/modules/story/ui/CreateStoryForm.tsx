@@ -454,35 +454,34 @@ if (!previewUrl || uiState.isDragging || activeTool !== "filter") {
     })
   }
 
-  function updateSelectedLayerPositionFromClientPoint(
-    clientX: number,
-    clientY: number
-  ) {
-    const container = previewContainerRef.current
+function updateTextOverlayPositionFromClientPoint(
+  overlayId: string,
+  clientX: number,
+  clientY: number
+) {
+  const container = previewContainerRef.current
 
-    if (!container) {
-      return
-    }
-
-    const rect = container.getBoundingClientRect()
-    const nextX = clampPosition((clientX - rect.left) / rect.width)
-    const nextY = clampPosition((clientY - rect.top) / rect.height)
-
-    if (selectedLayer?.type === "text") {
-      setEditorState((prev) => ({
-        ...prev,
-        textOverlays: (prev.textOverlays ?? []).map((overlay) =>
-          overlay.id === selectedLayer.id
-            ? {
-                ...overlay,
-                x: nextX,
-                y: nextY,
-              }
-            : overlay
-        ),
-      }))
-    }
+  if (!container) {
+    return
   }
+
+  const rect = container.getBoundingClientRect()
+  const nextX = clampPosition((clientX - rect.left) / rect.width)
+  const nextY = clampPosition((clientY - rect.top) / rect.height)
+
+  setEditorState((prev) => ({
+    ...prev,
+    textOverlays: (prev.textOverlays ?? []).map((overlay) =>
+      overlay.id === overlayId
+        ? {
+            ...overlay,
+            x: nextX,
+            y: nextY,
+          }
+        : overlay
+    ),
+  }))
+}
 
   function getTouchDistance(
     touchA: { clientX: number; clientY: number },
@@ -493,84 +492,32 @@ if (!previewUrl || uiState.isDragging || activeTool !== "filter") {
     return Math.sqrt(dx * dx + dy * dy)
   }
 
-  function handleChangeSelectedTextScale(scale: number) {
-    if (selectedLayer?.type !== "text") {
-      return
-    }
+function handleChangeTextOverlayScale(overlayId: string, scale: number) {
+  const nextScale = Math.min(2.4, Math.max(0.6, scale))
 
-    const nextScale = Math.min(2.4, Math.max(0.6, scale))
+  setEditorState((prev) => ({
+    ...prev,
+    textOverlays: (prev.textOverlays ?? []).map((overlay) =>
+      overlay.id === overlayId
+        ? {
+            ...overlay,
+            scale: nextScale,
+          }
+        : overlay
+    ),
+  }))
+}
 
-    setEditorState((prev) => ({
-      ...prev,
-      textOverlays: (prev.textOverlays ?? []).map((overlay) =>
-        overlay.id === selectedLayer.id
-          ? {
-              ...overlay,
-              scale: nextScale,
-            }
-          : overlay
-      ),
-    }))
+function handleSelectedLayerMouseDown(
+  event: React.MouseEvent<HTMLDivElement>
+) {
+  resetFilterSwipe()
+
+  if (activeTool !== "text") {
+    return
   }
 
-  function handleSelectedLayerMouseDown(
-    event: React.MouseEvent<HTMLDivElement>
-  ) {
-    resetFilterSwipe()
-
-if (activeTool !== "text") {
-  return
-}
-
- event.preventDefault()
-event.stopPropagation()
-
-const overlayId = event.currentTarget.dataset.overlayId
-
-if (!overlayId) {
-  return
-}
-
-setUiState((prev) => ({
-  ...prev,
-  isDragging: true,
-  selectedLayer: {
-    type: "text",
-    id: overlayId,
-  },
-}))
-
-    updateSelectedLayerPositionFromClientPoint(event.clientX, event.clientY)
-
-    function handleMouseMove(moveEvent: MouseEvent) {
-      updateSelectedLayerPositionFromClientPoint(
-        moveEvent.clientX,
-        moveEvent.clientY
-      )
-    }
-
-    function handleMouseUp() {
-      setUiState((prev) => ({
-        ...prev,
-        isDragging: false,
-      }))
-      window.removeEventListener("mousemove", handleMouseMove)
-      window.removeEventListener("mouseup", handleMouseUp)
-    }
-
-    window.addEventListener("mousemove", handleMouseMove)
-    window.addEventListener("mouseup", handleMouseUp)
-  }
-
-  function handleSelectedLayerTouchStart(
-    event: React.TouchEvent<HTMLDivElement>
-  ) {
-    resetFilterSwipe()
-
-if (activeTool !== "text") {
-  return
-}
-
+  event.preventDefault()
   event.stopPropagation()
 
 const overlayId = event.currentTarget.dataset.overlayId
@@ -579,88 +526,151 @@ if (!overlayId) {
   return
 }
 
-setUiState((prev) => ({
-  ...prev,
-  selectedLayer: {
-    type: "text",
-    id: overlayId,
-  },
-}))
+const safeOverlayId = overlayId
 
-const firstTouch = event.touches[0]
-    if (!firstTouch) return
+  setUiState((prev) => ({
+    ...prev,
+    isDragging: true,
+selectedLayer: {
+  type: "text",
+  id: safeOverlayId,
+},
+  }))
 
-    const secondTouch = event.touches[1]
+updateTextOverlayPositionFromClientPoint(
+  safeOverlayId,
+  event.clientX,
+  event.clientY
+)
 
+  function handleMouseMove(moveEvent: MouseEvent) {
+updateTextOverlayPositionFromClientPoint(
+  safeOverlayId,
+  moveEvent.clientX,
+  moveEvent.clientY
+)
+  }
+
+  function handleMouseUp() {
     setUiState((prev) => ({
       ...prev,
-      isDragging: !secondTouch,
+      isDragging: false,
     }))
+    window.removeEventListener("mousemove", handleMouseMove)
+    window.removeEventListener("mouseup", handleMouseUp)
+  }
 
-    if (secondTouch) {
-      textPinchStartDistanceRef.current = getTouchDistance(
-        firstTouch,
-        secondTouch
-      )
-      textPinchStartScaleRef.current = selectedTextOverlay?.scale ?? 1
-      return
-    }
+  window.addEventListener("mousemove", handleMouseMove)
+  window.addEventListener("mouseup", handleMouseUp)
+}
 
-    updateSelectedLayerPositionFromClientPoint(
-      firstTouch.clientX,
-      firstTouch.clientY
+function handleSelectedLayerTouchStart(
+  event: React.TouchEvent<HTMLDivElement>
+) {
+  resetFilterSwipe()
+
+  if (activeTool !== "text") {
+    return
+  }
+
+  event.stopPropagation()
+
+  const overlayId = event.currentTarget.dataset.overlayId
+
+  if (!overlayId) {
+    return
+  }
+
+  const safeOverlayId = overlayId
+
+  const currentOverlay = (editorState.textOverlays ?? []).find(
+    (overlay) => overlay.id === safeOverlayId
+  )
+
+  setUiState((prev) => ({
+    ...prev,
+    selectedLayer: {
+      type: "text",
+      id: safeOverlayId,
+    },
+  }))
+
+  const firstTouch = event.touches[0]
+  if (!firstTouch) return
+
+  const secondTouch = event.touches[1]
+
+  setUiState((prev) => ({
+    ...prev,
+    isDragging: !secondTouch,
+  }))
+
+  if (secondTouch) {
+    textPinchStartDistanceRef.current = getTouchDistance(
+      firstTouch,
+      secondTouch
     )
+    textPinchStartScaleRef.current = currentOverlay?.scale ?? 1
+    return
+  }
 
-    function handleTouchMove(moveEvent: TouchEvent) {
-      const touchA = moveEvent.touches[0]
-      const touchB = moveEvent.touches[1]
+  updateTextOverlayPositionFromClientPoint(
+    safeOverlayId,
+    firstTouch.clientX,
+    firstTouch.clientY
+  )
 
-      if (touchA && touchB) {
-        const startDistance = textPinchStartDistanceRef.current
-        const startScale = textPinchStartScaleRef.current ?? 1
+  function handleTouchMove(moveEvent: TouchEvent) {
+    const touchA = moveEvent.touches[0]
+    const touchB = moveEvent.touches[1]
 
-        if (!startDistance || startDistance <= 0) {
-          return
-        }
+    if (touchA && touchB) {
+      const startDistance = textPinchStartDistanceRef.current
+      const startScale = textPinchStartScaleRef.current ?? 1
 
-        const currentDistance = getTouchDistance(touchA, touchB)
-        const ratio = currentDistance / startDistance
-
-        setUiState((prev) => ({
-          ...prev,
-          isDragging: false,
-        }))
-
-        handleChangeSelectedTextScale(startScale * ratio)
+      if (!startDistance || startDistance <= 0) {
         return
       }
 
-      const nextTouch = moveEvent.touches[0]
-      if (!nextTouch) return
-
-      updateSelectedLayerPositionFromClientPoint(
-        nextTouch.clientX,
-        nextTouch.clientY
-      )
-    }
-
-    function handleTouchEnd() {
-      textPinchStartDistanceRef.current = null
-      textPinchStartScaleRef.current = null
+      const currentDistance = getTouchDistance(touchA, touchB)
+      const ratio = currentDistance / startDistance
 
       setUiState((prev) => ({
         ...prev,
         isDragging: false,
       }))
-      window.removeEventListener("touchmove", handleTouchMove)
-      window.removeEventListener("touchend", handleTouchEnd)
-      window.removeEventListener("touchcancel", handleTouchEnd)
+
+      handleChangeTextOverlayScale(safeOverlayId, startScale * ratio)
+      return
     }
 
-    window.addEventListener("touchmove", handleTouchMove, { passive: true })
-    window.addEventListener("touchend", handleTouchEnd)
-    window.addEventListener("touchcancel", handleTouchEnd)
+    const nextTouch = moveEvent.touches[0]
+    if (!nextTouch) return
+
+    updateTextOverlayPositionFromClientPoint(
+      safeOverlayId,
+      nextTouch.clientX,
+      nextTouch.clientY
+    )
   }
+
+  function handleTouchEnd() {
+    textPinchStartDistanceRef.current = null
+    textPinchStartScaleRef.current = null
+
+    setUiState((prev) => ({
+      ...prev,
+      isDragging: false,
+    }))
+    window.removeEventListener("touchmove", handleTouchMove)
+    window.removeEventListener("touchend", handleTouchEnd)
+    window.removeEventListener("touchcancel", handleTouchEnd)
+  }
+
+  window.addEventListener("touchmove", handleTouchMove, { passive: true })
+  window.addEventListener("touchend", handleTouchEnd)
+  window.addEventListener("touchcancel", handleTouchEnd)
+}
 
   function handleMusicStickerMouseDown(
     event: React.MouseEvent<HTMLDivElement>
@@ -925,29 +935,20 @@ if (activeTool !== "music") {
                   selectedLayer.id === overlay.id
 
                 return (
-            <div
+<div
   key={overlay.id}
   data-overlay-id={overlay.id}
-  onClick={(event) => {
-                      event.stopPropagation()
-                      setUiState((prev) => ({
-                        ...prev,
-                        activeTool: "text",
-                        selectedLayer: {
-                          type: "text",
-                          id: overlay.id,
-                        },
-                      }))
-                    }}
-                    onMouseDown={handleSelectedLayerMouseDown}
-                    onTouchStart={handleSelectedLayerTouchStart}
-                    className={`absolute max-w-[80%] rounded-md text-center text-white transition-all duration-150 ${
-                      isSelected
-                        ? uiState.isDragging
-                          ? "z-20 ring-2 ring-pink-400 shadow-2xl"
-                          : "ring-2 ring-pink-400 shadow-lg"
-                        : "opacity-80"
-                    }`}
+  onMouseDown={handleSelectedLayerMouseDown}
+  onTouchStart={handleSelectedLayerTouchStart}
+                className={`absolute max-w-[80%] rounded-md text-center text-white transition-all duration-150 ${
+  activeTool === "text" ? "pointer-events-auto" : "pointer-events-none"
+} ${
+  isSelected
+    ? uiState.isDragging
+      ? "z-20 ring-2 ring-pink-400 shadow-2xl"
+      : "ring-2 ring-pink-400 shadow-lg"
+    : "opacity-80"
+}`}
                     style={{
                       left: `${overlay.x * 100}%`,
                       top: `${overlay.y * 100}%`,
@@ -1031,13 +1032,17 @@ if (activeTool !== "music") {
                           },
                         }))
                       }}
-                      className={`absolute z-10 max-w-[78%] -translate-x-1/2 -translate-y-1/2 cursor-grab transition-all duration-150 active:cursor-grabbing ${
-                        uiState.isDragging ? "scale-[1.08]" : "scale-100"
-                      } ${
-                        isMusicSelected
-                          ? "rounded-2xl ring-2 ring-pink-400 shadow-xl"
-                          : "opacity-90"
-                      }`}
+className={`absolute z-10 max-w-[78%] -translate-x-1/2 -translate-y-1/2 transition-all duration-150 ${
+  activeTool === "music"
+    ? "pointer-events-auto cursor-grab active:cursor-grabbing"
+    : "pointer-events-none"
+} ${
+  uiState.isDragging ? "scale-[1.08]" : "scale-100"
+} ${
+  isMusicSelected
+    ? "rounded-2xl ring-2 ring-pink-400 shadow-xl"
+    : "opacity-90"
+}`}
                       style={{
                         left: `${(selectedMusic.x ?? 0.22) * 100}%`,
                         top: `${(selectedMusic.y ?? 0.12) * 100}%`,
