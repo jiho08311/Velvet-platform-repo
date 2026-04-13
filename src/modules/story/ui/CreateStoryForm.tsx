@@ -686,9 +686,7 @@ y: 0.5,
               <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/35 to-transparent" />
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent" />
               <div className="pointer-events-none absolute inset-0 md:inset-[6%] md:rounded-[22px] md:border md:border-white/10" />
-              <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-medium text-white/80 backdrop-blur-sm md:left-4 md:top-4">
-                Story preview
-              </div>
+            
 
 
 
@@ -748,7 +746,7 @@ y: 0.5,
 
 {previewUrl ? (
   <>
-    <div className="absolute left-6 right-4 top-8 z-20">
+    <div className="absolute left-6 right-4 top-6 z-20">
       <div className="flex items-center gap-3 rounded-full border border-white/10 bg-zinc-800/75 px-3 py-2.5 backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.28)]">
         {selectedMusic?.artworkUrl ? (
           <img
