@@ -748,8 +748,8 @@ export function CreateStoryForm({
 
         {selectedMusic ? (
   <>
-    <div className="absolute left-4 right-4 top-14 z-20">
-      <div className="flex items-center gap-3 rounded-full border border-white/10 bg-zinc-800/70 px-3 py-2 backdrop-blur-md">
+    <div className="absolute left-6 right-4 top-16 z-20">
+      <div className="flex items-center gap-3 rounded-full border border-white/10 bg-zinc-800/75 px-3 py-2.5 backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.28)]">
         {selectedMusic.artworkUrl ? (
           <img
             src={selectedMusic.artworkUrl}
@@ -784,7 +784,7 @@ export function CreateStoryForm({
               },
             }))
           }}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-700/90 text-2xl leading-none text-white"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-700/90 text-xl leading-none text-white"
         >
           +
         </button>
