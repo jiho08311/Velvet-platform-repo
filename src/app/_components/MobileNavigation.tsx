@@ -63,7 +63,7 @@ export function MobileNavigation() {
   }, [])
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-900 bg-zinc-950/95 backdrop-blur-xl md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-900 bg-zinc-950/95 pb-[max(env(safe-area-inset-bottom),0px)] backdrop-blur-xl md:hidden">
       <div className="mx-auto grid max-w-3xl grid-cols-5 gap-1 px-3 py-2">
         {navigationItems.map((item) => {
           const isActive =
