@@ -28,13 +28,6 @@ function clampPosition(value: number) {
   return Math.min(0.95, Math.max(0.05, value))
 }
 
-function getStickerSymbol(preset: string) {
-  if (preset === "sparkle") return "✨"
-  if (preset === "heart") return "💖"
-  if (preset === "fire") return "🔥"
-  return "✨"
-}
-
 function getFilterStyle(preset?: string | null) {
   if (preset === "warm") {
     return { filter: "sepia(0.35) saturate(1.15) brightness(1.05)" }
@@ -110,13 +103,6 @@ export function CreateStoryForm({
         ) ?? null
       : null
 
-  const selectedSticker =
-    selectedLayer?.type === "overlay"
-      ? (editorState.overlays ?? []).find(
-          (overlay) => overlay.id === selectedLayer.id
-        ) ?? null
-      : null
-
   const isMusicSelected = selectedLayer?.type === "music"
 
   const selectedFilterPreset = editorState.filter?.preset ?? "none"
@@ -125,23 +111,10 @@ export function CreateStoryForm({
 
   const activeTool = uiState.activeTool
   const isTextToolOpen = activeTool === "text"
-  const isStickerToolOpen = activeTool === "sticker"
   const isMusicToolOpen = activeTool === "music"
   const isFilterToolOpen = activeTool === "filter"
   const isTrimToolOpen = activeTool === "trim"
   const isToolSheetOpen = activeTool !== null
-
-  const emptyStateHint = isTextToolOpen
-    ? "Add text after choosing a photo or video"
-    : isStickerToolOpen
-      ? "Choose media first, then add stickers"
-      : isMusicToolOpen
-        ? "Pick media first, then add music"
-        : isFilterToolOpen
-          ? "Choose media to preview filters"
-          : isTrimToolOpen
-            ? "Trim becomes available after selecting a video"
-            : "Upload a photo or video to start"
 
   useEffect(() => {
     const query = musicQuery.trim()
@@ -325,55 +298,6 @@ export function CreateStoryForm({
     }))
   }
 
-  function handleAddSticker(preset: "sparkle" | "heart" | "fire") {
-    const nextId = crypto.randomUUID()
-
-    setEditorState((prev) => ({
-      ...prev,
-      overlays: [
-        ...(prev.overlays ?? []),
-        {
-          id: nextId,
-          type: "sticker",
-          preset,
-          x: 0.5,
-          y: 0.3,
-          scale: 1,
-          rotation: 0,
-        },
-      ],
-    }))
-
-    setUiState((prev) => ({
-      ...prev,
-      activeTool: "sticker",
-      selectedLayer: {
-        type: "overlay",
-        id: nextId,
-      },
-    }))
-  }
-
-  function handleRemoveLatestSticker() {
-    setEditorState((prev) => {
-      if (selectedLayer?.type !== "overlay") {
-        return prev
-      }
-
-      return {
-        ...prev,
-        overlays: (prev.overlays ?? []).filter(
-          (overlay) => overlay.id !== selectedLayer.id
-        ),
-      }
-    })
-
-    setUiState((prev) => ({
-      ...prev,
-      selectedLayer: null,
-    }))
-  }
-
   function handleChangeFilter(
     preset: "none" | "warm" | "cool" | "mono" | "vivid"
   ) {
@@ -476,29 +400,13 @@ export function CreateStoryForm({
             : overlay
         ),
       }))
-      return
-    }
-
-    if (selectedLayer?.type === "overlay") {
-      setEditorState((prev) => ({
-        ...prev,
-        overlays: (prev.overlays ?? []).map((overlay) =>
-          overlay.id === selectedLayer.id
-            ? {
-                ...overlay,
-                x: nextX,
-                y: nextY,
-              }
-            : overlay
-        ),
-      }))
     }
   }
 
   function handleSelectedLayerMouseDown(
     event: React.MouseEvent<HTMLDivElement>
   ) {
-    if (selectedLayer?.type !== "text" && selectedLayer?.type !== "overlay") {
+    if (selectedLayer?.type !== "text") {
       return
     }
 
@@ -535,7 +443,7 @@ export function CreateStoryForm({
   function handleSelectedLayerTouchStart(
     event: React.TouchEvent<HTMLDivElement>
   ) {
-    if (selectedLayer?.type !== "text" && selectedLayer?.type !== "overlay") {
+    if (selectedLayer?.type !== "text") {
       return
     }
 
@@ -688,7 +596,7 @@ export function CreateStoryForm({
   }
 
   return (
-   <form className="min-h-screen bg-zinc-950">
+    <form className="min-h-screen bg-zinc-950" onSubmit={handleSubmit}>
       <input
         ref={fileInputRef}
         type="file"
@@ -738,9 +646,9 @@ export function CreateStoryForm({
                   selectedLayer: null,
                 }))
               }}
-         className={`relative w-full aspect-[9/16] overflow-hidden ${
-  previewUrl ? "bg-black" : "bg-white"
-}`}
+              className={`relative w-full aspect-[9/16] overflow-hidden ${
+                previewUrl ? "bg-black" : "bg-white"
+              }`}
             >
               {previewUrl ? (
                 <div className="absolute inset-0">
@@ -770,16 +678,13 @@ export function CreateStoryForm({
                     onClick={() => fileInputRef.current?.click()}
                     className="flex flex-col items-center justify-center gap-4 text-center transition active:scale-[0.96]"
                   >
+                    <p className="text-base font-semibold text-zinc-900">
+                      Start your story
+                    </p>
 
-<p className="text-base font-semibold text-zinc-900">
-  Start your story
-</p>
-
-<p className="mt-2 text-xs leading-5 text-zinc-500">
-  Upload a photo or video to begin editing.
-</p>
-
-
+                    <p className="mt-2 text-xs leading-5 text-zinc-500">
+                      Upload a photo or video to begin editing.
+                    </p>
                   </button>
                 </div>
               )}
@@ -787,9 +692,9 @@ export function CreateStoryForm({
               <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/35 to-transparent" />
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent" />
               <div className="pointer-events-none absolute inset-0 md:inset-[6%] md:rounded-[22px] md:border md:border-white/10" />
-          <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-medium text-white/80 backdrop-blur-sm md:left-4 md:top-4">
-  Story preview
-</div>
+              <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-medium text-white/80 backdrop-blur-sm md:left-4 md:top-4">
+                Story preview
+              </div>
 
               {editorState.textOverlays?.map((overlay) => {
                 const isSelected =
@@ -840,46 +745,6 @@ export function CreateStoryForm({
                     >
                       {overlay.text || "Text overlay"}
                     </p>
-                  </div>
-                )
-              })}
-
-              {editorState.overlays?.map((overlay) => {
-                const isSelected =
-                  selectedLayer?.type === "overlay" &&
-                  selectedLayer.id === overlay.id
-
-                return (
-                  <div
-                    key={overlay.id}
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      setUiState((prev) => ({
-                        ...prev,
-                        activeTool: "sticker",
-                        selectedLayer: {
-                          type: "overlay",
-                          id: overlay.id,
-                        },
-                      }))
-                    }}
-                    onMouseDown={handleSelectedLayerMouseDown}
-                    onTouchStart={handleSelectedLayerTouchStart}
-                    className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-md text-2xl transition-all duration-150 ${
-                      isSelected
-                        ? uiState.isDragging
-                          ? "ring-2 ring-pink-400 scale-[1.16] shadow-2xl z-20"
-                          : "ring-2 ring-pink-400 scale-110 shadow-lg"
-                        : "opacity-80"
-                    }`}
-                    style={{
-                      left: `${overlay.x * 100}%`,
-                      top: `${overlay.y * 100}%`,
-                      transform: `translate(-50%, -50%) scale(${overlay.scale ?? 1}) rotate(${overlay.rotation ?? 0}deg)`,
-                      touchAction: "none",
-                    }}
-                  >
-                    {getStickerSymbol(overlay.preset)}
                   </div>
                 )
               })}
@@ -999,31 +864,13 @@ export function CreateStoryForm({
                         activeTool: prev.activeTool === "text" ? null : "text",
                       }))
                     }
-        className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
-  isTextToolOpen
-    ? "bg-white text-black shadow-md"
-    : "text-white/60 hover:text-white"
-}`}
+                    className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
+                      isTextToolOpen
+                        ? "bg-white text-black shadow-md"
+                        : "text-white/60 hover:text-white"
+                    }`}
                   >
                     Aa
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setUiState((prev) => ({
-                        ...prev,
-                        activeTool:
-                          prev.activeTool === "sticker" ? null : "sticker",
-                      }))
-                    }
-className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
-  isStickerToolOpen
-    ? "bg-white text-black shadow-md"
-    : "text-white/60 hover:text-white"
-}`}
-                  >
-                  Sticker
                   </button>
 
                   <button
@@ -1034,13 +881,13 @@ className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-
                         activeTool: prev.activeTool === "music" ? null : "music",
                       }))
                     }
-className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
-  isMusicToolOpen
-    ? "bg-white text-black shadow-md"
-    : "text-white/60 hover:text-white"
-}`}
+                    className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
+                      isMusicToolOpen
+                        ? "bg-white text-black shadow-md"
+                        : "text-white/60 hover:text-white"
+                    }`}
                   >
-                   Music
+                    Music
                   </button>
 
                   <button
@@ -1052,11 +899,11 @@ className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-
                           prev.activeTool === "filter" ? null : "filter",
                       }))
                     }
-className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
-  isFilterToolOpen
-    ? "bg-white text-black shadow-md"
-    : "text-white/60 hover:text-white"
-}`}
+                    className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
+                      isFilterToolOpen
+                        ? "bg-white text-black shadow-md"
+                        : "text-white/60 hover:text-white"
+                    }`}
                   >
                     Filter
                   </button>
@@ -1069,13 +916,13 @@ className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-
                         activeTool: prev.activeTool === "trim" ? null : "trim",
                       }))
                     }
-className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
-  isTrimToolOpen
-    ? "bg-white text-black shadow-md"
-    : "text-white/60 hover:text-white"
-}`}
+                    className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
+                      isTrimToolOpen
+                        ? "bg-white text-black shadow-md"
+                        : "text-white/60 hover:text-white"
+                    }`}
                   >
-                  Trim
+                    Trim
                   </button>
                 </div>
 
@@ -1090,7 +937,7 @@ className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-
               </div>
 
               {file ? (
-                <p className="mt-3 truncate px-1 text-center ">
+                <p className="mt-3 truncate px-1 text-center text-xs text-zinc-500">
                   {file.name}
                 </p>
               ) : null}
@@ -1115,13 +962,11 @@ className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-
               <p className="text-sm font-medium text-white">
                 {isTextToolOpen
                   ? "Text"
-                  : isStickerToolOpen
-                    ? "Sticker"
-                    : isMusicToolOpen
-                      ? "Music"
-                      : isFilterToolOpen
-                        ? "Filter"
-                        : "Trim"}
+                  : isMusicToolOpen
+                    ? "Music"
+                    : isFilterToolOpen
+                      ? "Filter"
+                      : "Trim"}
               </p>
 
               <button
@@ -1327,73 +1172,6 @@ className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-
                 </div>
               ) : null}
 
-              {isStickerToolOpen ? (
-                <div className="space-y-4 rounded-[28px] border border-zinc-800 bg-zinc-950/70 p-5 shadow-xl">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-white">Stickers</p>
-                      <p className="text-xs text-zinc-400">
-                        Add a simple sticker to your story preview
-                      </p>
-                    </div>
-
-                    {selectedSticker ? (
-                      <button
-                        type="button"
-                        onClick={handleRemoveLatestSticker}
-                        className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-white transition hover:bg-zinc-800"
-                      >
-                        Remove
-                      </button>
-                    ) : null}
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleAddSticker("sparkle")}
-                      className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-white transition hover:bg-zinc-800"
-                    >
-                      ✨ Sparkle
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleAddSticker("heart")}
-                      className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-white transition hover:bg-zinc-800"
-                    >
-                      💖 Heart
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleAddSticker("fire")}
-                      className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-white transition hover:bg-zinc-800"
-                    >
-                      🔥 Fire
-                    </button>
-                  </div>
-
-                  {selectedSticker ? (
-                    <>
-                      <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-400">
-                        Tap a sticker to select it, then drag it directly on the
-                        preview.
-                      </div>
-
-                      <p className="text-xs text-zinc-500">
-                        x: {selectedSticker.x.toFixed(2)} / y:{" "}
-                        {selectedSticker.y.toFixed(2)}
-                      </p>
-                    </>
-                  ) : (
-                    <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-4 text-sm text-zinc-400">
-                      Choose a sticker, then drag it on the preview.
-                    </div>
-                  )}
-                </div>
-              ) : null}
-
               {isFilterToolOpen ? (
                 <div className="space-y-4 rounded-[28px] border border-zinc-800 bg-zinc-950/70 p-5 shadow-xl">
                   <div className="space-y-1">
@@ -1480,6 +1258,7 @@ className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-
                         Add background music to your story
                       </p>
                     </div>
+
                     {selectedMusic ? (
                       <button
                         type="button"
