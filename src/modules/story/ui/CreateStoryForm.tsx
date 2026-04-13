@@ -102,7 +102,10 @@ const [editorState, setEditorState] = useState<StoryEditorState>({
   const textPinchStartScaleRef = useRef<number | null>(null)
   const cropPinchStartDistanceRef = useRef<number | null>(null)
 const cropPinchStartScaleRef = useRef<number | null>(null)
-
+const cropDragStartXRef = useRef<number | null>(null)
+const cropDragStartYRef = useRef<number | null>(null)
+const cropStartOffsetXRef = useRef(0)
+const cropStartOffsetYRef = useRef(0)
   useEffect(() => {
     if (!file) {
       setPreviewUrl(null)
@@ -478,7 +481,6 @@ return {
     })
   }
 
-
 function updateCropPositionFromClientPoint(clientX: number, clientY: number) {
   const container = previewContainerRef.current
 
@@ -486,20 +488,31 @@ function updateCropPositionFromClientPoint(clientX: number, clientY: number) {
     return
   }
 
+  const dragStartX = cropDragStartXRef.current
+  const dragStartY = cropDragStartYRef.current
+
+  if (dragStartX === null || dragStartY === null) {
+    return
+  }
+
   const rect = container.getBoundingClientRect()
 
-  const nextX = (clientX - rect.left) / rect.width - 0.5
-  const nextY = (clientY - rect.top) / rect.height - 0.5
+  const deltaX = (clientX - dragStartX) / rect.width
+  const deltaY = (clientY - dragStartY) / rect.height
+
+  const nextX = cropStartOffsetXRef.current + deltaX
+  const nextY = cropStartOffsetYRef.current + deltaY
 
   setEditorState((prev) => ({
     ...prev,
     crop: {
       scale: prev.crop?.scale ?? 1,
-      x: nextX,
-      y: nextY,
+      x: Math.max(-0.5, Math.min(0.5, nextX)),
+      y: Math.max(-0.5, Math.min(0.5, nextY)),
     },
   }))
 }
+ 
 
 
 
@@ -857,15 +870,25 @@ y: overlay.y + (nextY - overlay.y) * 0.35,
         ref={fileInputRef}
         type="file"
         accept="image/*,video/*"
-        onChange={(e) => {
-          const nextFile = e.target.files?.[0] ?? null
-          setFile(nextFile)
-          setTrim({
-            duration: 0,
-            requiresTrim: false,
-            startTime: 0,
-          })
-        }}
+  onChange={(e) => {
+  const nextFile = e.target.files?.[0] ?? null
+  setFile(nextFile)
+
+  setEditorState((prev) => ({
+    ...prev,
+    crop: {
+      scale: 1,
+      x: 0,
+      y: 0,
+    },
+  }))
+
+  setTrim({
+    duration: 0,
+    requiresTrim: false,
+    startTime: 0,
+  })
+}}
         className="hidden"
       />
 
@@ -901,20 +924,23 @@ onTouchStart={(event) => {
     handleFilterSwipeStart(event.touches[0]?.clientX ?? 0)
   }
 
-  if (activeTool === "crop") {
-    const t1 = event.touches[0]
-    const t2 = event.touches[1]
+if (activeTool === "crop") {
+  const t1 = event.touches[0]
+  const t2 = event.touches[1]
 
-    if (t1 && t2) {
-      cropPinchStartDistanceRef.current = getTouchDistance(t1, t2)
-      cropPinchStartScaleRef.current = editorState.crop?.scale ?? 1
-      return
-    }
-
-    if (t1) {
-      updateCropPositionFromClientPoint(t1.clientX, t1.clientY)
-    }
+  if (t1 && t2) {
+    cropPinchStartDistanceRef.current = getTouchDistance(t1, t2)
+    cropPinchStartScaleRef.current = editorState.crop?.scale ?? 1
+    return
   }
+
+  if (t1) {
+    cropDragStartXRef.current = t1.clientX
+    cropDragStartYRef.current = t1.clientY
+    cropStartOffsetXRef.current = editorState.crop?.x ?? 0
+    cropStartOffsetYRef.current = editorState.crop?.y ?? 0
+  }
+}
 }}
           onTouchMove={(event) => {
   if (activeTool === "filter") {
@@ -956,16 +982,27 @@ onTouchStart={(event) => {
     }
   }
 }}
-              onTouchEnd={resetFilterSwipe}
-              onTouchCancel={resetFilterSwipe}
+onTouchEnd={() => {
+  resetFilterSwipe()
+  cropDragStartXRef.current = null
+  cropDragStartYRef.current = null
+}}
+onTouchCancel={() => {
+  resetFilterSwipe()
+  cropDragStartXRef.current = null
+  cropDragStartYRef.current = null
+}}
         onMouseDown={(event) => {
   if (activeTool === "filter") {
     handleFilterSwipeStart(event.clientX)
   }
 
-  if (activeTool === "crop") {
-    updateCropPositionFromClientPoint(event.clientX, event.clientY)
-  }
+if (activeTool === "crop") {
+  cropDragStartXRef.current = event.clientX
+  cropDragStartYRef.current = event.clientY
+  cropStartOffsetXRef.current = editorState.crop?.x ?? 0
+  cropStartOffsetYRef.current = editorState.crop?.y ?? 0
+}
 }}
           onMouseMove={(event) => {
   if (activeTool === "filter" && (event.buttons & 1) === 1) {
@@ -976,7 +1013,11 @@ onTouchStart={(event) => {
     updateCropPositionFromClientPoint(event.clientX, event.clientY)
   }
 }}
-              onMouseUp={resetFilterSwipe}
+           onMouseUp={() => {
+  resetFilterSwipe()
+  cropDragStartXRef.current = null
+  cropDragStartYRef.current = null
+}}
               className="relative w-full aspect-[9/16] overflow-hidden bg-white"
             >
               {previewUrl ? (
@@ -994,7 +1035,9 @@ onTouchStart={(event) => {
                   {file?.type.startsWith("video/") ? (
                     <video
                       src={previewUrl}
-                  className="absolute inset-0 h-full w-full object-contain"
+            className={`absolute inset-0 h-full w-full ${
+  activeTool === "crop" ? "object-cover" : "object-contain"
+}`}
 style={{
   ...getFilterStyle(selectedFilterPreset),
   transform: `
@@ -1002,6 +1045,7 @@ style={{
               ${(editorState.crop?.y ?? 0) * 100}%)
     scale(${editorState.crop?.scale ?? 1})
   `,
+  transformOrigin: "center center",
 }}
                       autoPlay
                       muted
@@ -1011,7 +1055,9 @@ style={{
                   ) : (
                     <img
                       src={previewUrl}
-                className="absolute inset-0 h-full w-full object-contain"
+     className={`absolute inset-0 h-full w-full ${
+  activeTool === "crop" ? "object-cover" : "object-contain"
+}`}
 style={{
   ...getFilterStyle(selectedFilterPreset),
   transform: `
@@ -1019,6 +1065,7 @@ style={{
               ${(editorState.crop?.y ?? 0) * 100}%)
     scale(${editorState.crop?.scale ?? 1})
   `,
+  transformOrigin: "center center",
 }}
                       alt="Story preview"
                     />
