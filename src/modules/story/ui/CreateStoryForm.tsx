@@ -989,7 +989,7 @@ export function CreateStoryForm({
             </div>
 
             <div className="mt-3 w-full md:mx-auto md:max-w-[420px]">
-              <div className="flex items-center justify-between gap-2 rounded-[28px] border border-zinc-800 bg-zinc-950/85 p-2.5 shadow-2xl backdrop-blur-md">
+              <div className="flex items-center justify-between gap-2 rounded-3xl border border-white/10 bg-black/70 px-3 py-2 backdrop-blur-2xl shadow-[0_10px_40px_rgba(0,0,0,0.6)]">
                 <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto">
                   <button
                     type="button"
@@ -999,13 +999,13 @@ export function CreateStoryForm({
                         activeTool: prev.activeTool === "text" ? null : "text",
                       }))
                     }
-                    className={`rounded-full border px-4 py-2 text-sm font-medium transition-all active:scale-[0.96] ${
-                      isTextToolOpen
-                        ? "border-pink-500 bg-pink-500/15 text-white shadow-lg shadow-pink-500/10"
-                        : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
-                    }`}
+        className={`flex h-10 items-center justify-center rounded-full px-3 text-xs font-medium transition-all ${
+  isTextToolOpen
+    ? "bg-white text-black shadow-md"
+    : "text-white/60 hover:text-white"
+}`}
                   >
-                    Text
+                    Aa
                   </button>
 
                   <button
@@ -1017,13 +1017,13 @@ export function CreateStoryForm({
                           prev.activeTool === "sticker" ? null : "sticker",
                       }))
                     }
-                    className={`rounded-full border px-4 py-2 text-sm font-medium transition-all active:scale-[0.96] ${
-                      isStickerToolOpen
-                        ? "border-pink-500 bg-pink-500/15 text-white shadow-lg shadow-pink-500/10"
-                        : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
-                    }`}
+           className={`flex h-10 items-center justify-center rounded-full px-3 text-xs font-medium transition-all ${
+  isTextToolOpen
+    ? "bg-white text-black shadow-md"
+    : "text-white/60 hover:text-white"
+}`}
                   >
-                    Sticker
+                  Aa
                   </button>
 
                   <button
@@ -1034,13 +1034,13 @@ export function CreateStoryForm({
                         activeTool: prev.activeTool === "music" ? null : "music",
                       }))
                     }
-                    className={`rounded-full border px-4 py-2 text-sm font-medium transition-all active:scale-[0.96] ${
-                      isMusicToolOpen
-                        ? "border-pink-500 bg-pink-500/15 text-white shadow-lg shadow-pink-500/10"
-                        : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
-                    }`}
+             className={`flex h-10 items-center justify-center rounded-full px-3 text-xs font-medium transition-all ${
+  isTextToolOpen
+    ? "bg-white text-black shadow-md"
+    : "text-white/60 hover:text-white"
+}`}
                   >
-                    Music
+                   Aa
                   </button>
 
                   <button
@@ -1052,13 +1052,13 @@ export function CreateStoryForm({
                           prev.activeTool === "filter" ? null : "filter",
                       }))
                     }
-                    className={`rounded-full border px-4 py-2 text-sm font-medium transition-all active:scale-[0.96] ${
-                      isFilterToolOpen
-                        ? "border-pink-500 bg-pink-500/15 text-white shadow-lg shadow-pink-500/10"
-                        : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
-                    }`}
+              className={`flex h-10 items-center justify-center rounded-full px-3 text-xs font-medium transition-all ${
+  isTextToolOpen
+    ? "bg-white text-black shadow-md"
+    : "text-white/60 hover:text-white"
+}`}
                   >
-                    Filter
+                    Aa
                   </button>
 
                   <button
@@ -1069,13 +1069,13 @@ export function CreateStoryForm({
                         activeTool: prev.activeTool === "trim" ? null : "trim",
                       }))
                     }
-                    className={`rounded-full border px-4 py-2 text-sm font-medium transition-all active:scale-[0.96] ${
-                      isTrimToolOpen
-                        ? "border-pink-500 bg-pink-500/15 text-white shadow-lg shadow-pink-500/10"
-                        : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
-                    }`}
+       className={`flex h-10 items-center justify-center rounded-full px-3 text-xs font-medium transition-all ${
+  isTextToolOpen
+    ? "bg-white text-black shadow-md"
+    : "text-white/60 hover:text-white"
+}`}
                   >
-                    Trim
+                  Aa
                   </button>
                 </div>
 
