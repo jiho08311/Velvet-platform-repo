@@ -738,7 +738,7 @@ export function CreateStoryForm({
                   selectedLayer: null,
                 }))
               }}
-           className="relative w-full aspect-[9/16] overflow-hidden bg-[#C2185B]"
+           className="relative w-full aspect-[9/16] overflow-hidden bg-white"
             >
               {previewUrl ? (
                 <div className="absolute inset-0">
@@ -768,11 +768,7 @@ export function CreateStoryForm({
                     onClick={() => fileInputRef.current?.click()}
                     className="flex flex-col items-center justify-center gap-4 text-center transition active:scale-[0.96]"
                   >
-<img
-  src="/logo-mark.png"
-  alt="Velvet"
-  className="mb-3 w-24 opacity-[0.22]"
-/>
+
 
                <p className="text-sm font-medium text-white">
   Start your story
