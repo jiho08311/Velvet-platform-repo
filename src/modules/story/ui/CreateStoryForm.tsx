@@ -29,7 +29,7 @@ type StoryFilterPreset = (typeof FILTER_PRESETS)[number]
 const FILTER_SWIPE_THRESHOLD = 40
 
 function clampPosition(value: number) {
-  return Math.min(0.95, Math.max(0.05, value))
+  return Math.min(0.98, Math.max(0.02, value))
 }
 
 function getFilterStyle(preset?: string | null) {
@@ -455,14 +455,14 @@ export function CreateStoryForm({
         return prev
       }
 
-      return {
-        ...prev,
-        music: {
-          ...prev.music,
-          x: nextX,
-          y: nextY,
-        },
-      }
+return {
+  ...prev,
+  music: {
+    ...prev.music,
+    x: (prev.music.x ?? 0.5) + (nextX - (prev.music.x ?? 0.5)) * 0.35,
+    y: (prev.music.y ?? 0.5) + (nextY - (prev.music.y ?? 0.5)) * 0.35,
+  },
+}
     })
   }
 
@@ -487,8 +487,8 @@ export function CreateStoryForm({
         overlay.id === overlayId
           ? {
               ...overlay,
-              x: nextX,
-              y: nextY,
+     x: overlay.x + (nextX - overlay.x) * 0.35,
+y: overlay.y + (nextY - overlay.y) * 0.35,
             }
           : overlay
       ),
@@ -633,6 +633,7 @@ export function CreateStoryForm({
     )
 
     function handleTouchMove(moveEvent: TouchEvent) {
+       moveEvent.preventDefault()
       const touchA = moveEvent.touches[0]
       const touchB = moveEvent.touches[1]
 
@@ -666,6 +667,9 @@ export function CreateStoryForm({
       )
     }
 
+
+
+    
     function handleTouchEnd() {
       textPinchStartDistanceRef.current = null
       textPinchStartScaleRef.current = null
@@ -679,7 +683,7 @@ export function CreateStoryForm({
       window.removeEventListener("touchcancel", handleTouchEnd)
     }
 
-    window.addEventListener("touchmove", handleTouchMove, { passive: true })
+    window.addEventListener("touchmove", handleTouchMove, { passive: false })
     window.addEventListener("touchend", handleTouchEnd)
     window.addEventListener("touchcancel", handleTouchEnd)
   }
@@ -750,6 +754,7 @@ export function CreateStoryForm({
     updateMusicPositionFromClientPoint(touch.clientX, touch.clientY)
 
     function handleTouchMove(moveEvent: TouchEvent) {
+       moveEvent.preventDefault()
       const nextTouch = moveEvent.touches[0]
       if (!nextTouch) return
 
@@ -766,7 +771,7 @@ export function CreateStoryForm({
       window.removeEventListener("touchcancel", handleTouchEnd)
     }
 
-    window.addEventListener("touchmove", handleTouchMove, { passive: true })
+    window.addEventListener("touchmove", handleTouchMove, { passive: false })
     window.addEventListener("touchend", handleTouchEnd)
     window.addEventListener("touchcancel", handleTouchEnd)
   }
@@ -968,7 +973,9 @@ export function CreateStoryForm({
                       left: `${overlay.x * 100}%`,
                       top: `${overlay.y * 100}%`,
                       touchAction: "none",
-                      transform: `translate(-50%, -50%) scale(${overlay.scale ?? 1})`,
+                     transform: `translate(-50%, -50%) scale(${overlay.scale ?? 1})`,
+transition: uiState.isDragging ? "none" : "transform 120ms ease-out",
+willChange: "transform",
                     }}
                   >
                     <p
