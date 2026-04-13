@@ -518,17 +518,27 @@ if (!previewUrl || uiState.isDragging || activeTool !== "filter") {
   ) {
     resetFilterSwipe()
 
-if (selectedLayer?.type !== "text" || activeTool !== "text") {
+if (activeTool !== "text") {
   return
 }
 
-    event.preventDefault()
-    event.stopPropagation()
+ event.preventDefault()
+event.stopPropagation()
 
-    setUiState((prev) => ({
-      ...prev,
-      isDragging: true,
-    }))
+const overlayId = event.currentTarget.dataset.overlayId
+
+if (!overlayId) {
+  return
+}
+
+setUiState((prev) => ({
+  ...prev,
+  isDragging: true,
+  selectedLayer: {
+    type: "text",
+    id: overlayId,
+  },
+}))
 
     updateSelectedLayerPositionFromClientPoint(event.clientX, event.clientY)
 
@@ -557,13 +567,27 @@ if (selectedLayer?.type !== "text" || activeTool !== "text") {
   ) {
     resetFilterSwipe()
 
-if (selectedLayer?.type !== "text" || activeTool !== "text") {
+if (activeTool !== "text") {
   return
 }
 
-    event.stopPropagation()
+  event.stopPropagation()
 
-    const firstTouch = event.touches[0]
+const overlayId = event.currentTarget.dataset.overlayId
+
+if (!overlayId) {
+  return
+}
+
+setUiState((prev) => ({
+  ...prev,
+  selectedLayer: {
+    type: "text",
+    id: overlayId,
+  },
+}))
+
+const firstTouch = event.touches[0]
     if (!firstTouch) return
 
     const secondTouch = event.touches[1]
@@ -901,9 +925,10 @@ if (activeTool !== "music") {
                   selectedLayer.id === overlay.id
 
                 return (
-                  <div
-                    key={overlay.id}
-                    onClick={(event) => {
+            <div
+  key={overlay.id}
+  data-overlay-id={overlay.id}
+  onClick={(event) => {
                       event.stopPropagation()
                       setUiState((prev) => ({
                         ...prev,
