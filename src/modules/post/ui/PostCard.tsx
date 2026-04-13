@@ -452,39 +452,35 @@ export function PostCard({
   function renderMedia(items: MediaItem[] = blockMedia) {
     if (items.length === 0) return null
 
-if (items.length === 1) {
-  const item = items[0]
+    if (items.length === 1) {
+      const item = items[0]
 
-  return (
-    <div className="overflow-hidden">
-      <div className="mx-auto w-full max-w-[470px] overflow-hidden">
-        <div className="aspect-[4/5] w-full overflow-hidden">
-          {renderSingleMedia(item, "Post media")}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-return (
-  <div className="relative">
-    <div className="mx-auto w-full max-w-[470px]">
-      <div
-        onScroll={handleScroll}
-        className="flex snap-x snap-mandatory overflow-x-auto scrollbar-hide"
-      >
-        {items.map((item, index) => (
-          <div
-            key={`${item.id ?? item.url}-${index}`}
-            className="min-w-full snap-center"
-          >
-            <div className="aspect-[4/5] w-full overflow-hidden">
-              {renderSingleMedia(item, `Post media ${index + 1}`)}
-            </div>
+      return (
+        <div className="overflow-hidden">
+          <div className="aspect-[4/5] w-full overflow-hidden">
+            {renderSingleMedia(item, "Post media")}
           </div>
-        ))}
-      </div>
-    </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="relative">
+        <div
+          onScroll={handleScroll}
+          className="flex snap-x snap-mandatory overflow-x-auto scrollbar-hide"
+        >
+          {items.map((item, index) => (
+            <div
+              key={`${item.id ?? item.url}-${index}`}
+              className="min-w-full snap-center"
+            >
+              <div className="aspect-[4/5] w-full overflow-hidden">
+                {renderSingleMedia(item, `Post media ${index + 1}`)}
+              </div>
+            </div>
+          ))}
+        </div>
 
         <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1">
           {items.map((_, index) => (
@@ -633,10 +629,7 @@ return (
 
           <div className="flex items-center justify-between gap-3 px-3 pt-3">
             <div className="flex items-center gap-2">
-            
-              <p className="text-sm text-zinc-300">
-                {formatPostDate(createdAt)}
-              </p>
+              <p className="text-sm text-zinc-300">{formatPostDate(createdAt)}</p>
 
               <button
                 type="button"
