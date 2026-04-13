@@ -769,12 +769,11 @@ export function CreateStoryForm({
                     className="flex flex-col items-center justify-center gap-4 text-center transition active:scale-[0.96]"
                   >
 
-
-               <p className="text-sm font-medium text-white">
+<p className="text-sm font-semibold text-zinc-800">
   Start your story
 </p>
 
-<p className="mt-2 text-xs leading-5 text-white/80">
+<p className="mt-2 text-xs leading-5 text-zinc-500">
   Upload a photo or video to begin editing.
 </p>
 
