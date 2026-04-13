@@ -968,7 +968,7 @@ function handleRemoveSelectedFile() {
   <button
     type="button"
     onClick={handleRemoveSelectedFile}
-    className="absolute right-4 top-4 z-30 inline-flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-base text-black shadow-sm backdrop-blur-sm transition hover:bg-white"
+    className="absolute right-3 top-3 z-30 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/65 text-lg text-white backdrop-blur-sm transition hover:bg-black/75"
     aria-label="Remove selected file"
   >
     ×
