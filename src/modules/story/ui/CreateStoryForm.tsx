@@ -964,6 +964,48 @@ function handleRemoveSelectedFile() {
 
               <div className="pointer-events-none absolute inset-0 md:inset-[6%] md:rounded-[22px] md:border md:border-zinc-200" />
 
+
+{previewUrl ? (
+  <button
+    type="button"
+    onClick={(event) => {
+      event.stopPropagation()
+      setFile(null)
+      setPreviewUrl(null)
+      setTrim({
+        duration: 0,
+        requiresTrim: false,
+        startTime: 0,
+      })
+      setEditorState({
+        textOverlays: [],
+        overlays: [],
+        filter: null,
+        music: null,
+        crop: {
+          scale: 1,
+          x: 0,
+          y: 0,
+        },
+      })
+      setUiState((prev) => ({
+        ...prev,
+        activeTool: null,
+        selectedLayer: null,
+        isToolSheetOpen: false,
+      }))
+      setMusicQuery("")
+      setMusicResults([])
+    }}
+    className="absolute right-4 top-4 z-30 flex h-11 w-11 items-center justify-center rounded-full bg-black/55 text-2xl leading-none text-white backdrop-blur-sm transition hover:bg-black/70"
+    aria-label="Remove media"
+  >
+    ×
+  </button>
+) : null}
+
+
+
 {previewUrl ? (
   <button
     type="button"
