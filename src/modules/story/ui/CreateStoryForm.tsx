@@ -999,7 +999,7 @@ export function CreateStoryForm({
                         activeTool: prev.activeTool === "text" ? null : "text",
                       }))
                     }
-        className={`flex h-10 items-center justify-center rounded-full px-3 text-xs font-medium transition-all ${
+        className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
   isTextToolOpen
     ? "bg-white text-black shadow-md"
     : "text-white/60 hover:text-white"
@@ -1017,7 +1017,7 @@ export function CreateStoryForm({
                           prev.activeTool === "sticker" ? null : "sticker",
                       }))
                     }
-           className={`flex h-10 items-center justify-center rounded-full px-3 text-xs font-medium transition-all ${
+           className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
   isTextToolOpen
     ? "bg-white text-black shadow-md"
     : "text-white/60 hover:text-white"
@@ -1034,7 +1034,7 @@ export function CreateStoryForm({
                         activeTool: prev.activeTool === "music" ? null : "music",
                       }))
                     }
-             className={`flex h-10 items-center justify-center rounded-full px-3 text-xs font-medium transition-all ${
+             className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
   isTextToolOpen
     ? "bg-white text-black shadow-md"
     : "text-white/60 hover:text-white"
@@ -1052,7 +1052,7 @@ export function CreateStoryForm({
                           prev.activeTool === "filter" ? null : "filter",
                       }))
                     }
-              className={`flex h-10 items-center justify-center rounded-full px-3 text-xs font-medium transition-all ${
+              className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
   isTextToolOpen
     ? "bg-white text-black shadow-md"
     : "text-white/60 hover:text-white"
@@ -1069,7 +1069,7 @@ export function CreateStoryForm({
                         activeTool: prev.activeTool === "trim" ? null : "trim",
                       }))
                     }
-       className={`flex h-10 items-center justify-center rounded-full px-3 text-xs font-medium transition-all ${
+       className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
   isTextToolOpen
     ? "bg-white text-black shadow-md"
     : "text-white/60 hover:text-white"
