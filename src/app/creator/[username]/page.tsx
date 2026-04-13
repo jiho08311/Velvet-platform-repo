@@ -94,7 +94,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
 
   return (
     <main className="min-h-screen">
-      <div className="w-full pb-32 pt-6">
+      <div className="w-full pb-52 pt-6">
         <div className="h-40 w-full rounded-3xl bg-gradient-to-r from-[#C2185B] via-[#D81B60] to-[#F06292]" />
 
         <div className="mt-[-40px] flex items-end justify-between gap-4">
