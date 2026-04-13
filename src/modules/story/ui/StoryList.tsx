@@ -87,6 +87,26 @@ export function StoryList({
 
         <div className="overflow-x-auto">
           <div className="flex gap-3 px-1 pb-2">
+            <button
+              type="button"
+              onClick={() => router.push("/story/new")}
+              className="flex shrink-0 flex-col items-center gap-2 transition-transform duration-300 ease-out hover:scale-[1.04] animate-[storyIn_0.4s_ease-out]"
+            >
+              <div className="relative">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-zinc-800 text-2xl text-white">
+                  +
+                </div>
+
+                <div className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-pink-600 text-xs font-bold text-white">
+                  +
+                </div>
+              </div>
+
+              <span className="text-xs font-medium text-white">
+                Your Story
+              </span>
+            </button>
+
             {myGroup ? (
               <button
                 type="button"
@@ -138,27 +158,7 @@ export function StoryList({
                   Your Story
                 </span>
               </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => router.push("/story/new")}
-                className="flex shrink-0 flex-col items-center gap-2 transition-transform duration-300 ease-out hover:scale-[1.04] animate-[storyIn_0.4s_ease-out]"
-              >
-                <div className="relative">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-zinc-800 text-2xl text-white">
-                    +
-                  </div>
-
-                  <div className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-pink-600 text-xs font-bold text-white">
-                    +
-                  </div>
-                </div>
-
-                <span className="text-xs font-medium text-white">
-                  Your Story
-                </span>
-              </button>
-            )}
+            ) : null}
 
             {otherGroups.map((group) => {
               const latestStory =
@@ -180,8 +180,8 @@ export function StoryList({
                 >
                   <div
                     className={
-hasUnseenStory
-  ? "rounded-full bg-gradient-to-br from-pink-500 via-fuchsia-500 to-orange-400 p-[2px] animate-[storyPulse_2.5s_ease-in-out_infinite]"
+                      hasUnseenStory
+                        ? "rounded-full bg-gradient-to-br from-pink-500 via-fuchsia-500 to-orange-400 p-[2px] animate-[storyPulse_2.5s_ease-in-out_infinite]"
                         : "rounded-full bg-zinc-700 p-[2px]"
                     }
                   >
