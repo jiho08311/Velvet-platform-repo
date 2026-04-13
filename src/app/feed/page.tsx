@@ -158,23 +158,24 @@ export default async function FeedPage() {
             />
           ) : (
             <FeedList
-              posts={feed.items.map((item) => ({
-                id: item.id,
-                postId: item.id,
-                creatorId: item.creatorId,
-                creatorUserId: item.creatorUserId,
-                currentUserId: session?.userId ?? undefined,
-                text: item.text,
-                createdAt: item.createdAt,
-                media: normalizeMedia(item),
-                isLocked: item.isLocked,
-                lockReason: item.lockReason,
-                price: normalizePrice(item),
-                commentsCount: item.commentsCount,
-                likesCount: item.likesCount,
-                isLiked: item.isLiked,
-                creator: item.creator,
-              }))}
+  posts={feed.items.map((item) => ({
+  id: item.id,
+  postId: item.id,
+  creatorId: item.creatorId,
+  creatorUserId: item.creatorUserId,
+  currentUserId: session?.userId ?? undefined,
+  text: item.text,
+  createdAt: item.createdAt,
+  media: normalizeMedia(item),
+  blocks: "blocks" in item && Array.isArray(item.blocks) ? item.blocks : [],
+  isLocked: item.isLocked,
+  lockReason: item.lockReason,
+  price: normalizePrice(item),
+  commentsCount: item.commentsCount,
+  likesCount: item.likesCount,
+  isLiked: item.isLiked,
+  creator: item.creator,
+}))}
             />
           )}
         </section>

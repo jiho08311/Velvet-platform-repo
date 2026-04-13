@@ -14,8 +14,16 @@ type FeedListPost = {
     url: string
     type?: "image" | "video" | "audio" | "file"
   }>
+  blocks?: Array<{
+    id: string
+    postId: string
+    type: "text" | "image" | "video" | "audio" | "file"
+    content: string | null
+    mediaId: string | null
+    sortOrder: number
+    createdAt: string
+  }>
   isLocked?: boolean
- 
   likesCount?: number
   isLiked?: boolean
   creator: {
@@ -52,8 +60,9 @@ export function FeedList({
           text={post.text}
           createdAt={post.createdAt}
           media={post.media ?? []}
+          blocks={post.blocks ?? []}
           isLocked={post.isLocked}
-         commentsCount={post.commentsCount}
+          commentsCount={post.commentsCount}
           likesCount={post.likesCount}
           isLiked={post.isLiked}
           creatorId={post.creatorId}
