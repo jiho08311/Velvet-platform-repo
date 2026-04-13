@@ -1017,8 +1017,8 @@ export function CreateStoryForm({
                           prev.activeTool === "sticker" ? null : "sticker",
                       }))
                     }
-           className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
-  isTextToolOpen
+className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
+  isStickerToolOpen
     ? "bg-white text-black shadow-md"
     : "text-white/60 hover:text-white"
 }`}
@@ -1034,8 +1034,8 @@ export function CreateStoryForm({
                         activeTool: prev.activeTool === "music" ? null : "music",
                       }))
                     }
-             className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
-  isTextToolOpen
+className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
+  isMusicToolOpen
     ? "bg-white text-black shadow-md"
     : "text-white/60 hover:text-white"
 }`}
@@ -1052,8 +1052,8 @@ export function CreateStoryForm({
                           prev.activeTool === "filter" ? null : "filter",
                       }))
                     }
-              className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
-  isTextToolOpen
+className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
+  isFilterToolOpen
     ? "bg-white text-black shadow-md"
     : "text-white/60 hover:text-white"
 }`}
@@ -1069,8 +1069,8 @@ export function CreateStoryForm({
                         activeTool: prev.activeTool === "trim" ? null : "trim",
                       }))
                     }
-       className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
-  isTextToolOpen
+className={`flex h-10 items-center justify-center rounded-2xl px-3 text-xs font-medium transition-all ${
+  isTrimToolOpen
     ? "bg-white text-black shadow-md"
     : "text-white/60 hover:text-white"
 }`}
@@ -1082,7 +1082,7 @@ export function CreateStoryForm({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-lg font-medium text-white transition-all hover:bg-zinc-800 hover:scale-105 active:scale-[0.92]"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-900 text-lg font-medium text-white transition-all hover:bg-zinc-800 hover:scale-105 active:scale-[0.92]"
                   aria-label="Upload story file"
                 >
                   +
