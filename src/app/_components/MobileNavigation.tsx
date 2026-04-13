@@ -122,19 +122,31 @@ export function MobileNavigation() {
             href="/sign-in?next=%2Fbecome-creator"
             className="flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-2xl bg-[#C2185B]/15 text-[10px] font-semibold text-[#F472B6] hover:bg-[#C2185B]/25"
           >
-            <Sparkles className="h-5 w-5" />
+          <Sparkles
+  className={`h-5 w-5 ${
+    pathname.startsWith("/become-creator")
+      ? "text-zinc-950"
+      : "text-zinc-500"
+  }`}
+/>
             Creator
           </Link>
         ) : isCreator ? (
           <Link
             href="/dashboard"
-className={`flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-semibold ${
-  pathname.startsWith("/dashboard")
-    ? "bg-[#C2185B] text-white"
-    : "bg-[#C2185B]/15 text-[#F472B6] hover:bg-[#C2185B]/25"
+className={`flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-2xl px-2 text-center text-[10px] font-semibold transition ${
+  pathname.startsWith("/dashboard") || pathname.startsWith("/become-creator")
+    ? "bg-zinc-100"
+    : "text-zinc-500 hover:bg-zinc-900 hover:text-white"
 }`}
           >
-            <LayoutDashboard className="h-5 w-5" />
+        <LayoutDashboard
+  className={`h-5 w-5 ${
+    pathname.startsWith("/dashboard")
+      ? "text-zinc-950"
+      : "text-zinc-500"
+  }`}
+/>
             Dashboard
           </Link>
         ) : (
@@ -146,7 +158,13 @@ className={`flex min-h-[60px] flex-col items-center justify-center gap-1 rounded
     : "bg-[#C2185B]/15 text-[#F472B6] hover:bg-[#C2185B]/25"
 }`}
           >
-            <Sparkles className="h-5 w-5" />
+   <Sparkles
+  className={`h-5 w-5 ${
+    pathname.startsWith("/become-creator")
+      ? "text-zinc-950"
+      : "text-zinc-500"
+  }`}
+/>
             Creator
           </Link>
         )}
