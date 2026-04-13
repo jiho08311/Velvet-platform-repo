@@ -200,17 +200,17 @@ export function CreateStoryForm({
 
       return {
         ...prev,
-        textOverlays: [
-          {
-            id: nextId,
-            text: "",
-            x: 0.5,
-            y: 0.2,
-            color: "#ffffff",
-            fontSize: "md",
-            scale: 1,
-          },
-        ],
+textOverlays: [
+  {
+    id: nextId,
+    text: "",
+    x: 0.5,
+    y: 0.2,
+    color: "#ffffff",
+    fontSize: "md",
+    scale: 2,
+  },
+],
       }
     })
 
