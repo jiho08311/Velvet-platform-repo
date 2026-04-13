@@ -801,6 +801,38 @@ export function CreateStoryForm({
     }))
   }
 
+function handleRemoveSelectedFile() {
+  setFile(null)
+  setPreviewUrl(null)
+
+  setTrim({
+    duration: 0,
+    requiresTrim: false,
+    startTime: 0,
+  })
+
+  setEditorState({
+    textOverlays: [],
+    overlays: [],
+    filter: null,
+    music: null,
+  })
+
+  setUiState({
+    activeTool: null,
+    selectedLayer: null,
+    isPreviewMode: false,
+    isDragging: false,
+    isToolSheetOpen: false,
+  })
+
+  if (fileInputRef.current) {
+    fileInputRef.current.value = ""
+  }
+}
+
+
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
@@ -931,6 +963,19 @@ export function CreateStoryForm({
               )}
 
               <div className="pointer-events-none absolute inset-0 md:inset-[6%] md:rounded-[22px] md:border md:border-zinc-200" />
+
+{previewUrl ? (
+  <button
+    type="button"
+    onClick={handleRemoveSelectedFile}
+    className="absolute right-4 top-4 z-30 inline-flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-base text-black shadow-sm backdrop-blur-sm transition hover:bg-white"
+    aria-label="Remove selected file"
+  >
+    ×
+  </button>
+) : null}
+
+
 
               {previewUrl && activeTool === "filter" && showFilterIndicator ? (
                 <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full border border-zinc-200 bg-white/90 px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-black backdrop-blur-sm">
