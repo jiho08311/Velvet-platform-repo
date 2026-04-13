@@ -547,7 +547,7 @@ export function PostCard({
             <img
               src={creator.avatarUrl}
               alt={creatorName}
-              className="flex h-11 w-11 items-center justify-center bg-zinc-800 text-sm font-semibold text-white"
+              className="h-11 w-11 rounded-full object-cover"
             />
           ) : (
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-white">
