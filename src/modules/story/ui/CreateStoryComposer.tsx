@@ -230,13 +230,13 @@ export function CreateStoryComposer({
   return (
     <div className="space-y-4">
       {error ? (
-        <div className="rounded-3xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <div className="rounded-3xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-600">
           {error}
         </div>
       ) : null}
 
       {phase !== "idle" ? (
-        <div className="rounded-3xl border border-pink-500/20 bg-pink-500/10 px-4 py-3 text-sm text-pink-200">
+        <div className="rounded-3xl border border-pink-500/20 bg-pink-500/10 px-4 py-3 text-sm text-pink-700">
           {getPhaseLabel(phase)}
         </div>
       ) : null}
@@ -257,12 +257,12 @@ export function CreateStoryComposer({
               <button
                 type="button"
                 onClick={() => setStep("editor")}
-                className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-white transition hover:bg-zinc-800"
+                className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-sm text-black transition hover:bg-zinc-100"
               >
                 Back
               </button>
 
-              <p className="text-sm font-medium text-white">Story settings</p>
+              <p className="text-sm font-medium text-black">Story settings</p>
 
               <button
                 type="button"
@@ -279,8 +279,8 @@ export function CreateStoryComposer({
                 Preview
               </p>
 
-              <div className="overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-900">
-                <div className="relative aspect-[9/16] w-full bg-zinc-950">
+              <div className="overflow-hidden rounded-[28px] border border-zinc-200 bg-white">
+                <div className="relative aspect-[9/16] w-full bg-white">
                   {previewUrl ? (
                     draft.file?.type.startsWith("video/") ? (
                       <video
@@ -302,6 +302,8 @@ export function CreateStoryComposer({
                     )
                   ) : null}
 
+                  <div className="pointer-events-none absolute inset-0 md:inset-[6%] md:rounded-[22px] md:border md:border-zinc-200" />
+
                   {previewMusic ? (
                     <div
                       className="pointer-events-none absolute z-20 max-w-[78%] -translate-x-1/2 -translate-y-1/2"
@@ -311,7 +313,7 @@ export function CreateStoryComposer({
                       }}
                     >
                       <div
-                        className={`border border-white/10 bg-black/65 backdrop-blur-sm ${
+                        className={`border border-zinc-200 bg-white/88 backdrop-blur-sm ${
                           previewMusicStyle === "minimal"
                             ? "rounded-full px-3 py-1.5"
                             : previewMusicStyle === "bold"
@@ -321,8 +323,8 @@ export function CreateStoryComposer({
                       >
                         {previewMusicStyle === "minimal" ? (
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-white">🎵</span>
-                            <p className="max-w-[160px] truncate text-xs font-medium text-white">
+                            <span className="text-sm text-black">🎵</span>
+                            <p className="max-w-[160px] truncate text-xs font-medium text-black">
                               {previewMusic.title ?? "Story music"}
                             </p>
                           </div>
@@ -340,7 +342,7 @@ export function CreateStoryComposer({
                               />
                             ) : (
                               <div
-                                className={`flex items-center justify-center bg-white/10 text-white ${
+                                className={`flex items-center justify-center bg-zinc-100 text-black ${
                                   previewMusicStyle === "bold"
                                     ? "h-12 w-12 rounded-2xl text-base"
                                     : "h-10 w-10 rounded-xl text-sm"
@@ -352,7 +354,7 @@ export function CreateStoryComposer({
 
                             <div className="min-w-0">
                               <p
-                                className={`truncate font-medium uppercase tracking-[0.18em] text-pink-300 ${
+                                className={`truncate font-medium uppercase tracking-[0.18em] text-pink-600 ${
                                   previewMusicStyle === "bold"
                                     ? "text-[10px]"
                                     : "text-[11px]"
@@ -361,7 +363,7 @@ export function CreateStoryComposer({
                                 Music
                               </p>
                               <p
-                                className={`truncate font-semibold text-white ${
+                                className={`truncate font-semibold text-black ${
                                   previewMusicStyle === "bold"
                                     ? "text-base"
                                     : "text-sm"
@@ -370,7 +372,7 @@ export function CreateStoryComposer({
                                 {previewMusic.title ?? "Story music"}
                               </p>
                               <p
-                                className={`truncate text-zinc-300 ${
+                                className={`truncate text-zinc-500 ${
                                   previewMusicStyle === "bold"
                                     ? "text-sm"
                                     : "text-xs"
@@ -388,11 +390,11 @@ export function CreateStoryComposer({
                   {draft.editorState.textOverlays?.map((overlay) => (
                     <div
                       key={overlay.id}
-                      className="pointer-events-none absolute z-10 max-w-[80%] -translate-x-1/2 -translate-y-1/2 text-center text-white"
+                      className="pointer-events-none absolute z-10 max-w-[80%] text-center text-white"
                       style={{
                         left: `${overlay.x * 100}%`,
                         top: `${overlay.y * 100}%`,
-                      
+                        transform: `translate(-50%, -50%) scale(${overlay.scale ?? 1})`,
                       }}
                     >
                       <p
@@ -429,10 +431,10 @@ export function CreateStoryComposer({
               </div>
             </div>
 
-            <div className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-4">
+            <div className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm">
               <div className="mb-3 space-y-1">
-                <p className="text-sm font-medium text-white">Visibility</p>
-                <p className="text-xs text-zinc-400">
+                <p className="text-sm font-medium text-black">Visibility</p>
+                <p className="text-xs text-zinc-500">
                   Choose who can view this story after publishing.
                 </p>
               </div>
@@ -443,8 +445,8 @@ export function CreateStoryComposer({
                   onClick={() => setVisibility("public")}
                   className={`rounded-full border px-4 py-2 text-sm transition ${
                     visibility === "public"
-                      ? "border-pink-500 bg-pink-500/10 text-white"
-                      : "border-zinc-700 bg-zinc-900 text-zinc-300"
+                      ? "border-pink-500 bg-pink-500/10 text-black"
+                      : "border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100"
                   }`}
                 >
                   Public
@@ -455,8 +457,8 @@ export function CreateStoryComposer({
                   onClick={() => setVisibility("subscribers")}
                   className={`rounded-full border px-4 py-2 text-sm transition ${
                     visibility === "subscribers"
-                      ? "border-pink-500 bg-pink-500/10 text-white"
-                      : "border-zinc-700 bg-zinc-900 text-zinc-300"
+                      ? "border-pink-500 bg-pink-500/10 text-black"
+                      : "border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100"
                   }`}
                 >
                   Subscribers

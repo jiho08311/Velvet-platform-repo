@@ -28,8 +28,6 @@ const FILTER_PRESETS = ["none", "warm", "cool", "mono", "vivid"] as const
 type StoryFilterPreset = (typeof FILTER_PRESETS)[number]
 const FILTER_SWIPE_THRESHOLD = 40
 
-
-
 function clampPosition(value: number) {
   return Math.min(0.95, Math.max(0.05, value))
 }
@@ -83,7 +81,7 @@ export function CreateStoryForm({
     startTime: 0,
   })
 
-    const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const previewContainerRef = useRef<HTMLDivElement | null>(null)
   const filterSwipeStartXRef = useRef<number | null>(null)
   const filterSwipeTriggeredRef = useRef(false)
@@ -118,7 +116,7 @@ export function CreateStoryForm({
 
   const isMusicSelected = selectedLayer?.type === "music"
 
-    const selectedFilterPreset = editorState.filter?.preset ?? "none"
+  const selectedFilterPreset = editorState.filter?.preset ?? "none"
   const selectedMusic = editorState.music
   const selectedMusicStyle = selectedMusic?.style ?? "default"
 
@@ -193,17 +191,17 @@ export function CreateStoryForm({
 
       return {
         ...prev,
-   textOverlays: [
-  {
-    id: nextId,
-    text: "",
-    x: 0.5,
-    y: 0.2,
-    color: "#ffffff",
-    fontSize: "md",
-    scale: 1,
-  },
-],
+        textOverlays: [
+          {
+            id: nextId,
+            text: "",
+            x: 0.5,
+            y: 0.2,
+            color: "#ffffff",
+            fontSize: "md",
+            scale: 1,
+          },
+        ],
       }
     })
 
@@ -259,7 +257,6 @@ export function CreateStoryForm({
     })
   }
 
-
   function handleChangeTextOverlayColor(color: string) {
     setEditorState((prev) => {
       if (selectedLayer?.type !== "text") {
@@ -299,6 +296,7 @@ export function CreateStoryForm({
       selectedLayer: null,
     }))
   }
+
   function handleChangeFilter(
     preset: "none" | "warm" | "cool" | "mono" | "vivid"
   ) {
@@ -393,8 +391,6 @@ export function CreateStoryForm({
     setFilterSwipeOffsetX(0)
   }
 
-
-  
   function handleSelectMusic(option: {
     source: "external"
     trackId: string
@@ -416,8 +412,8 @@ export function CreateStoryForm({
         startTime: 0,
         duration: option.duration ?? 30,
         volume: 1,
-       x: 0.5,
-y: 0.5,
+        x: 0.5,
+        y: 0.5,
         style: prev.music?.style ?? "default",
       },
     }))
@@ -489,14 +485,14 @@ y: 0.5,
     }
   }
 
-function getTouchDistance(
-  touchA: { clientX: number; clientY: number },
-  touchB: { clientX: number; clientY: number }
-) {
-  const dx = touchA.clientX - touchB.clientX
-  const dy = touchA.clientY - touchB.clientY
-  return Math.sqrt(dx * dx + dy * dy)
-}
+  function getTouchDistance(
+    touchA: { clientX: number; clientY: number },
+    touchB: { clientX: number; clientY: number }
+  ) {
+    const dx = touchA.clientX - touchB.clientX
+    const dy = touchA.clientY - touchB.clientY
+    return Math.sqrt(dx * dx + dy * dy)
+  }
 
   function handleChangeSelectedTextScale(scale: number) {
     if (selectedLayer?.type !== "text") {
@@ -518,8 +514,7 @@ function getTouchDistance(
     }))
   }
 
-
- function handleSelectedLayerMouseDown(
+  function handleSelectedLayerMouseDown(
     event: React.MouseEvent<HTMLDivElement>
   ) {
     resetFilterSwipe()
@@ -558,7 +553,7 @@ function getTouchDistance(
     window.addEventListener("mouseup", handleMouseUp)
   }
 
-function handleSelectedLayerTouchStart(
+  function handleSelectedLayerTouchStart(
     event: React.TouchEvent<HTMLDivElement>
   ) {
     resetFilterSwipe()
@@ -580,7 +575,10 @@ function handleSelectedLayerTouchStart(
     }))
 
     if (secondTouch) {
-      textPinchStartDistanceRef.current = getTouchDistance(firstTouch, secondTouch)
+      textPinchStartDistanceRef.current = getTouchDistance(
+        firstTouch,
+        secondTouch
+      )
       textPinchStartScaleRef.current = selectedTextOverlay?.scale ?? 1
       return
     }
@@ -792,7 +790,7 @@ function handleSelectedLayerTouchStart(
 
         <div className="flex flex-1 flex-col pb-28 pt-4">
           <div className="flex w-full flex-1 flex-col items-stretch">
-                 <div
+            <div
               ref={previewContainerRef}
               onClick={() => {
                 setUiState((prev) => ({
@@ -817,11 +815,9 @@ function handleSelectedLayerTouchStart(
                 }
               }}
               onMouseUp={resetFilterSwipe}
-              className={`relative w-full aspect-[9/16] overflow-hidden ${
-                previewUrl ? "bg-black" : "bg-white"
-              }`}
+              className="relative w-full aspect-[9/16] overflow-hidden bg-white"
             >
-                   {previewUrl ? (
+              {previewUrl ? (
                 <div
                   className="absolute inset-0"
                   style={{
@@ -870,23 +866,19 @@ function handleSelectedLayerTouchStart(
                 </div>
               )}
 
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/35 to-transparent" />
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent" />
-              <div className="pointer-events-none absolute inset-0 md:inset-[6%] md:rounded-[22px] md:border md:border-white/10" />
-            
+              <div className="pointer-events-none absolute inset-0 md:inset-[6%] md:rounded-[22px] md:border md:border-zinc-200" />
 
-     {previewUrl && showFilterIndicator ? (
-  <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full border border-white/10 bg-black/65 px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-white backdrop-blur-sm">
-    {selectedFilterPreset}
-  </div>
-) : null}
+              {previewUrl && showFilterIndicator ? (
+                <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full border border-zinc-200 bg-white/90 px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-black backdrop-blur-sm">
+                  {selectedFilterPreset}
+                </div>
+              ) : null}
 
-{previewUrl && !showFilterIndicator ? (
-  <div className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 text-[11px] text-zinc-400 opacity-60">
-    Swipe
-  </div>
-) : null}
-
+              {previewUrl && !showFilterIndicator ? (
+                <div className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 text-[11px] text-zinc-500 opacity-80">
+                  Swipe
+                </div>
+              ) : null}
 
               {editorState.textOverlays?.map((overlay) => {
                 const isSelected =
@@ -909,18 +901,17 @@ function handleSelectedLayerTouchStart(
                     }}
                     onMouseDown={handleSelectedLayerMouseDown}
                     onTouchStart={handleSelectedLayerTouchStart}
-               className={`absolute max-w-[80%] rounded-md text-center text-white transition-all duration-150 ${
-  isSelected
-    ? uiState.isDragging
-      ? "ring-2 ring-pink-400 shadow-2xl z-20"
-      : "ring-2 ring-pink-400 shadow-lg"
-    : "opacity-80"
-}`}
-                                    style={{
+                    className={`absolute max-w-[80%] rounded-md text-center text-white transition-all duration-150 ${
+                      isSelected
+                        ? uiState.isDragging
+                          ? "z-20 ring-2 ring-pink-400 shadow-2xl"
+                          : "ring-2 ring-pink-400 shadow-lg"
+                        : "opacity-80"
+                    }`}
+                    style={{
                       left: `${overlay.x * 100}%`,
                       top: `${overlay.y * 100}%`,
                       touchAction: "none",
-                      
                       transform: `translate(-50%, -50%) scale(${overlay.scale ?? 1})`,
                     }}
                   >
@@ -942,157 +933,156 @@ function handleSelectedLayerTouchStart(
                 )
               })}
 
-{previewUrl ? (
-  <>
-    <div className="absolute left-5 right-5 top-3 z-20">
-      <div className="flex items-center gap-3 rounded-full border border-white/10 bg-zinc-800/75 px-3 py-2.5 backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.28)]">
-        {selectedMusic?.artworkUrl ? (
-          <img
-            src={selectedMusic.artworkUrl}
-            alt={selectedMusic?.title ?? "Selected music"}
-            className="h-10 w-10 rounded-xl object-cover"
-          />
-        ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-700 text-sm text-white">
-            ♪
-          </div>
-        )}
+              {previewUrl ? (
+                <>
+                  <div className="absolute left-5 right-5 top-3 z-20">
+                    <div className="flex items-center gap-3 rounded-full border border-zinc-200 bg-white/88 px-3 py-2.5 backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+                      {selectedMusic?.artworkUrl ? (
+                        <img
+                          src={selectedMusic.artworkUrl}
+                          alt={selectedMusic?.title ?? "Selected music"}
+                          className="h-10 w-10 rounded-xl object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-sm text-black">
+                          ♪
+                        </div>
+                      )}
 
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-white">
-            {selectedMusic?.title ?? "음악 추가"}
-          </p>
-          <p className="truncate text-xs text-zinc-300">
-            {selectedMusic?.artist ?? "탭해서 음악 선택"}
-          </p>
-        </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-black">
+                          {selectedMusic?.title ?? "음악 추가"}
+                        </p>
+                        <p className="truncate text-xs text-zinc-500">
+                          {selectedMusic?.artist ?? "탭해서 음악 선택"}
+                        </p>
+                      </div>
 
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation()
-            setUiState((prev) => ({
-              ...prev,
-              activeTool: "music",
-              selectedLayer: {
-                type: "music",
-                id: "music",
-              },
-            }))
-          }}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-700/90 text-xl leading-none text-white"
-        >
-          +
-        </button>
-      </div>
-    </div>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          setUiState((prev) => ({
+                            ...prev,
+                            activeTool: "music",
+                            selectedLayer: {
+                              type: "music",
+                              id: "music",
+                            },
+                          }))
+                        }}
+                        className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-xl leading-none text-black"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
 
-    {selectedMusic ? (
-      <div
-        onClick={(event) => {
-          event.stopPropagation()
-          setUiState((prev) => ({
-            ...prev,
-            activeTool: "music",
-            selectedLayer: {
-              type: "music",
-              id: "music",
-            },
-          }))
-        }}
-        className={`absolute z-10 max-w-[78%] -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing transition-all duration-150 ${
-          uiState.isDragging ? "scale-[1.08]" : "scale-100"
-        } ${
-          isMusicSelected
-            ? "ring-2 ring-pink-400 shadow-xl rounded-2xl"
-            : "opacity-90"
-        }`}
-        style={{
-          left: `${(selectedMusic.x ?? 0.22) * 100}%`,
-          top: `${(selectedMusic.y ?? 0.12) * 100}%`,
-          touchAction: "none",
-        }}
-        onMouseDown={handleMusicStickerMouseDown}
-        onTouchStart={handleMusicStickerTouchStart}
-      >
-        <div
-          className={`pointer-events-none border border-white/10 bg-black/65 backdrop-blur-sm ${
-            selectedMusicStyle === "minimal"
-              ? "rounded-full px-3 py-1.5"
-              : selectedMusicStyle === "bold"
-                ? "rounded-3xl px-4 py-3 shadow-2xl"
-                : "rounded-2xl px-3 py-2 shadow-lg"
-          }`}
-        >
-          {selectedMusicStyle === "minimal" ? (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-white">🎵</span>
-              <p className="max-w-[160px] truncate text-xs font-medium text-white">
-                {selectedMusic.title ?? "Selected music"}
-              </p>
+                  {selectedMusic ? (
+                    <div
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setUiState((prev) => ({
+                          ...prev,
+                          activeTool: "music",
+                          selectedLayer: {
+                            type: "music",
+                            id: "music",
+                          },
+                        }))
+                      }}
+                      className={`absolute z-10 max-w-[78%] -translate-x-1/2 -translate-y-1/2 cursor-grab transition-all duration-150 active:cursor-grabbing ${
+                        uiState.isDragging ? "scale-[1.08]" : "scale-100"
+                      } ${
+                        isMusicSelected
+                          ? "rounded-2xl ring-2 ring-pink-400 shadow-xl"
+                          : "opacity-90"
+                      }`}
+                      style={{
+                        left: `${(selectedMusic.x ?? 0.22) * 100}%`,
+                        top: `${(selectedMusic.y ?? 0.12) * 100}%`,
+                        touchAction: "none",
+                      }}
+                      onMouseDown={handleMusicStickerMouseDown}
+                      onTouchStart={handleMusicStickerTouchStart}
+                    >
+                      <div
+                        className={`pointer-events-none border border-zinc-200 bg-white/88 backdrop-blur-sm ${
+                          selectedMusicStyle === "minimal"
+                            ? "rounded-full px-3 py-1.5"
+                            : selectedMusicStyle === "bold"
+                              ? "rounded-3xl px-4 py-3 shadow-2xl"
+                              : "rounded-2xl px-3 py-2 shadow-lg"
+                        }`}
+                      >
+                        {selectedMusicStyle === "minimal" ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-black">🎵</span>
+                            <p className="max-w-[160px] truncate text-xs font-medium text-black">
+                              {selectedMusic.title ?? "Selected music"}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            {selectedMusic.artworkUrl ? (
+                              <img
+                                src={selectedMusic.artworkUrl}
+                                alt={selectedMusic.title ?? "Selected music"}
+                                className={`object-cover ${
+                                  selectedMusicStyle === "bold"
+                                    ? "h-12 w-12 rounded-2xl"
+                                    : "h-10 w-10 rounded-xl"
+                                }`}
+                              />
+                            ) : (
+                              <div
+                                className={`flex items-center justify-center bg-zinc-100 text-black ${
+                                  selectedMusicStyle === "bold"
+                                    ? "h-12 w-12 rounded-2xl text-base"
+                                    : "h-10 w-10 rounded-xl text-sm"
+                                }`}
+                              >
+                                🎵
+                              </div>
+                            )}
+
+                            <div className="min-w-0">
+                              <p
+                                className={`truncate font-medium uppercase tracking-[0.18em] text-pink-600 ${
+                                  selectedMusicStyle === "bold"
+                                    ? "text-[10px]"
+                                    : "text-[11px]"
+                                }`}
+                              >
+                                Music
+                              </p>
+                              <p
+                                className={`truncate font-semibold text-black ${
+                                  selectedMusicStyle === "bold"
+                                    ? "text-base"
+                                    : "text-sm"
+                                }`}
+                              >
+                                {selectedMusic.title ?? "Selected music"}
+                              </p>
+                              <p
+                                className={`truncate text-zinc-500 ${
+                                  selectedMusicStyle === "bold"
+                                    ? "text-sm"
+                                    : "text-xs"
+                                }`}
+                              >
+                                {selectedMusic.artist ?? ""}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              ) : null}
             </div>
-          ) : (
-            <div className="flex items-center gap-3">
-              {selectedMusic.artworkUrl ? (
-                <img
-                  src={selectedMusic.artworkUrl}
-                  alt={selectedMusic.title ?? "Selected music"}
-                  className={`object-cover ${
-                    selectedMusicStyle === "bold"
-                      ? "h-12 w-12 rounded-2xl"
-                      : "h-10 w-10 rounded-xl"
-                  }`}
-                />
-              ) : (
-                <div
-                  className={`flex items-center justify-center bg-white/10 text-white ${
-                    selectedMusicStyle === "bold"
-                      ? "h-12 w-12 rounded-2xl text-base"
-                      : "h-10 w-10 rounded-xl text-sm"
-                  }`}
-                >
-                  🎵
-                </div>
-              )}
-
-              <div className="min-w-0">
-                <p
-                  className={`truncate font-medium uppercase tracking-[0.18em] text-pink-300 ${
-                    selectedMusicStyle === "bold"
-                      ? "text-[10px]"
-                      : "text-[11px]"
-                  }`}
-                >
-                  Music
-                </p>
-                <p
-                  className={`truncate font-semibold text-white ${
-                    selectedMusicStyle === "bold"
-                      ? "text-base"
-                      : "text-sm"
-                  }`}
-                >
-                  {selectedMusic.title ?? "Selected music"}
-                </p>
-                <p
-                  className={`truncate text-zinc-300 ${
-                    selectedMusicStyle === "bold"
-                      ? "text-sm"
-                      : "text-xs"
-                  }`}
-                >
-                  {selectedMusic.artist ?? ""}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    ) : null}
-  </>
-) : null}
-
-</div>
 
             <div className="mt-4 w-full px-4 md:mx-auto md:max-w-[420px] md:px-0">
               <div className="flex items-end justify-between gap-3">
@@ -1107,8 +1097,8 @@ function handleSelectedLayerTouchStart(
                     }
                     className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
                       isMusicToolOpen
-                        ? "border-white/20 bg-white text-black shadow-lg"
-                        : "border-white/10 bg-white/10 text-white backdrop-blur-xl"
+                        ? "border-zinc-300 bg-white text-black shadow-sm"
+                        : "border-zinc-200 bg-white text-black backdrop-blur-xl"
                     }`}
                   >
                     <span className="text-lg leading-none">♫</span>
@@ -1125,8 +1115,8 @@ function handleSelectedLayerTouchStart(
                     }
                     className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
                       isTextToolOpen
-                        ? "border-white/20 bg-white text-black shadow-lg"
-                        : "border-white/10 bg-white/10 text-white backdrop-blur-xl"
+                        ? "border-zinc-300 bg-white text-black shadow-sm"
+                        : "border-zinc-200 bg-white text-black backdrop-blur-xl"
                     }`}
                   >
                     <span className="text-lg leading-none">Aa</span>
@@ -1136,7 +1126,7 @@ function handleSelectedLayerTouchStart(
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border border-white/10 bg-white/10 px-3 text-white backdrop-blur-xl transition-all"
+                    className="flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-3 text-black backdrop-blur-xl transition-all"
                   >
                     <span className="text-lg leading-none">▣</span>
                     <span className="mt-2 text-[11px] font-medium">오버레이</span>
@@ -1153,8 +1143,8 @@ function handleSelectedLayerTouchStart(
                     }
                     className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
                       isFilterToolOpen
-                        ? "border-white/20 bg-white text-black shadow-lg"
-                        : "border-white/10 bg-white/10 text-white backdrop-blur-xl"
+                        ? "border-zinc-300 bg-white text-black shadow-sm"
+                        : "border-zinc-200 bg-white text-black backdrop-blur-xl"
                     }`}
                   >
                     <span className="text-lg leading-none">◌</span>
@@ -1171,8 +1161,8 @@ function handleSelectedLayerTouchStart(
                     }
                     className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
                       isTrimToolOpen
-                        ? "border-white/20 bg-white text-black shadow-lg"
-                        : "border-white/10 bg-white/10 text-white backdrop-blur-xl"
+                        ? "border-zinc-300 bg-white text-black shadow-sm"
+                        : "border-zinc-200 bg-white text-black backdrop-blur-xl"
                     }`}
                   >
                     <span className="text-lg leading-none">⚙</span>
@@ -1200,13 +1190,13 @@ function handleSelectedLayerTouchStart(
             onClick={closeToolSheet}
           />
 
-          <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-2xl rounded-t-[32px] border border-zinc-800 bg-zinc-950/98 shadow-2xl backdrop-blur-xl">
+          <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-2xl rounded-t-[32px] border border-zinc-200 bg-white/98 shadow-[0_-8px_30px_rgba(0,0,0,0.06)] backdrop-blur-xl">
             <div className="mx-auto flex max-w-2xl items-center justify-between px-4 pb-3 pt-3">
-              <div className="mx-auto h-1.5 w-14 rounded-full bg-zinc-700" />
+              <div className="mx-auto h-1.5 w-14 rounded-full bg-zinc-300" />
             </div>
 
             <div className="flex items-center justify-between px-5 pb-3">
-              <p className="text-sm font-medium text-white">
+              <p className="text-sm font-medium text-black">
                 {isTextToolOpen
                   ? "Text"
                   : isMusicToolOpen
@@ -1219,7 +1209,7 @@ function handleSelectedLayerTouchStart(
               <button
                 type="button"
                 onClick={closeToolSheet}
-                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white transition hover:bg-white/10"
+                className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-black transition hover:bg-zinc-100"
               >
                 Close
               </button>
@@ -1227,13 +1217,13 @@ function handleSelectedLayerTouchStart(
 
             <div className="max-h-[62vh] overflow-y-auto px-4 pb-6">
               {isTextToolOpen ? (
-                <div className="space-y-5 rounded-[24px] border border-white/10 bg-black/60 p-5 backdrop-blur-xl">
+                <div className="space-y-5 rounded-[24px] border border-zinc-200 bg-white p-5">
                   <div className="flex items-center justify-between gap-3">
                     <div className="space-y-1">
-                      <p className="text-sm font-medium text-white">
+                      <p className="text-sm font-medium text-black">
                         Text overlay
                       </p>
-                      <p className="text-xs text-zinc-400">
+                      <p className="text-xs text-zinc-500">
                         Add text on top of your story preview
                       </p>
                     </div>
@@ -1242,7 +1232,7 @@ function handleSelectedLayerTouchStart(
                       <button
                         type="button"
                         onClick={handleRemoveTextOverlay}
-                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white transition hover:bg-white/10"
+                        className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-black transition hover:bg-zinc-100"
                       >
                         Remove
                       </button>
@@ -1250,7 +1240,7 @@ function handleSelectedLayerTouchStart(
                       <button
                         type="button"
                         onClick={handleAddTextOverlay}
-                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white transition hover:bg-white/10"
+                        className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-black transition hover:bg-zinc-100"
                       >
                         Add text
                       </button>
@@ -1265,54 +1255,55 @@ function handleSelectedLayerTouchStart(
                           handleOverlayTextChange(event.target.value)
                         }
                         placeholder="Write overlay text..."
-                        className="min-h-[120px] w-full resize-none rounded-[20px] border border-white/10 bg-white/5 px-4 py-4 text-sm text-white outline-none placeholder:text-zinc-500"
+                        className="min-h-[120px] w-full resize-none rounded-[20px] border border-zinc-200 bg-zinc-50 px-4 py-4 text-sm text-black outline-none placeholder:text-zinc-400"
                       />
 
                       <div className="space-y-3">
-                    
+                        <div>
+                          <p className="mb-2 text-xs font-medium text-zinc-500">
+                            Color
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {[
+                              "#FFFFFF",
+                              "#000000",
+                              "#FF0000",
+                              "#00FF00",
+                              "#0000FF",
+                              "#FFFF00",
+                              "#FF00FF",
+                              "#00FFFF",
+                              "#FFA500",
+                              "#800080",
+                            ].map((color) => {
+                              const isActive =
+                                (selectedTextOverlay.color ?? "#ffffff") ===
+                                color
 
-   <div>
-  <p className="mb-2 text-xs font-medium text-zinc-400">
-    Color
-  </p>
-  <div className="flex flex-wrap gap-2">
-    {[
-      "#FFFFFF",
-      "#000000",
-      "#FF0000",
-      "#00FF00",
-      "#0000FF",
-      "#FFFF00",
-      "#FF00FF",
-      "#00FFFF",
-      "#FFA500",
-      "#800080",
-    ].map((color) => {
-      const isActive =
-        (selectedTextOverlay.color ?? "#ffffff") === color
-
-      return (
-        <button
-          key={color}
-          type="button"
-          onClick={() => handleChangeTextOverlayColor(color)}
-          className={`h-8 w-8 rounded-full border transition ${
-            isActive
-              ? "border-white scale-110"
-              : "border-zinc-700 hover:scale-105"
-          }`}
-          style={{ backgroundColor: color }}
-          aria-label={`Select color ${color}`}
-        />
-      )
-    })}
-  </div>
-</div>
+                              return (
+                                <button
+                                  key={color}
+                                  type="button"
+                                  onClick={() =>
+                                    handleChangeTextOverlayColor(color)
+                                  }
+                                  className={`h-8 w-8 rounded-full border transition ${
+                                    isActive
+                                      ? "border-black scale-110"
+                                      : "border-zinc-300 hover:scale-105"
+                                  }`}
+                                  style={{ backgroundColor: color }}
+                                  aria-label={`Select color ${color}`}
+                                />
+                              )
+                            })}
+                          </div>
+                        </div>
                       </div>
 
-<div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-400">
-  Drag to move. Pinch with two fingers to resize.
-</div>
+                      <div className="rounded-[18px] border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-500">
+                        Drag to move. Pinch with two fingers to resize.
+                      </div>
 
                       <p className="text-xs text-zinc-500">
                         x: {selectedTextOverlay.x.toFixed(2)} / y:{" "}
@@ -1320,7 +1311,7 @@ function handleSelectedLayerTouchStart(
                       </p>
                     </>
                   ) : (
-                    <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-4 text-sm text-zinc-400">
+                    <div className="rounded-[18px] border border-zinc-200 bg-zinc-50 px-4 py-4 text-sm text-zinc-500">
                       Tap "Add text" to start, then drag it on the preview.
                     </div>
                   )}
@@ -1328,27 +1319,26 @@ function handleSelectedLayerTouchStart(
               ) : null}
 
               {isFilterToolOpen ? (
-                <div className="space-y-4 rounded-[24px] border border-white/10 bg-black/60 p-5 backdrop-blur-xl">
+                <div className="space-y-4 rounded-[24px] border border-zinc-200 bg-white p-5">
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-white">Filter</p>
-<p className="text-sm font-medium text-white">
-  Swipe to change filters
-</p>
+                    <p className="text-sm font-medium text-black">Filter</p>
+                    <p className="text-sm font-medium text-black">
+                      Swipe to change filters
+                    </p>
                   </div>
 
-       <p className="text-xs text-zinc-500">
-  Left or right on the preview
-</p>
-
+                  <p className="text-xs text-zinc-500">
+                    Left or right on the preview
+                  </p>
                 </div>
               ) : null}
 
               {isMusicToolOpen ? (
-                <div className="space-y-5 rounded-[24px] border border-white/10 bg-black/60 p-5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.45)]">
+                <div className="space-y-5 rounded-[24px] border border-zinc-200 bg-white p-5 shadow-sm">
                   <div className="flex items-center justify-between gap-3">
                     <div className="space-y-1">
-                      <p className="text-sm font-medium text-white">Music</p>
-                      <p className="text-xs text-zinc-400">
+                      <p className="text-sm font-medium text-black">Music</p>
+                      <p className="text-xs text-zinc-500">
                         Add background music to your story
                       </p>
                     </div>
@@ -1357,7 +1347,7 @@ function handleSelectedLayerTouchStart(
                       <button
                         type="button"
                         onClick={handleRemoveMusic}
-                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white transition hover:bg-white/10"
+                        className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-black transition hover:bg-zinc-100"
                       >
                         Remove
                       </button>
@@ -1369,18 +1359,18 @@ function handleSelectedLayerTouchStart(
                       value={musicQuery}
                       onChange={(event) => setMusicQuery(event.target.value)}
                       placeholder="Search music..."
-                      className="w-full rounded-[20px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
+                      className="w-full rounded-[20px] border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-black outline-none placeholder:text-zinc-400"
                     />
 
                     <div className="space-y-2">
                       {!musicQuery.trim() ? (
-                        <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-4 text-sm text-zinc-400">
+                        <div className="rounded-[18px] border border-zinc-200 bg-zinc-50 px-4 py-4 text-sm text-zinc-500">
                           Search music to add, then drag it on the preview.
                         </div>
                       ) : null}
 
                       {isSearchingMusic ? (
-                        <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-400">
+                        <div className="rounded-[18px] border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-500">
                           Searching...
                         </div>
                       ) : null}
@@ -1388,7 +1378,7 @@ function handleSelectedLayerTouchStart(
                       {!isSearchingMusic &&
                       musicQuery.trim() &&
                       musicResults.length === 0 ? (
-                        <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-400">
+                        <div className="rounded-[18px] border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-500">
                           No results
                         </div>
                       ) : null}
@@ -1415,8 +1405,8 @@ function handleSelectedLayerTouchStart(
                               }
                               className={`flex w-full items-center justify-between rounded-[20px] border px-4 py-3 text-left transition ${
                                 isSelected
-                                  ? "border-white/20 bg-white text-black shadow-lg"
-                                  : "border-white/10 bg-white/5 text-white hover:bg-white/10"
+                                  ? "border-zinc-300 bg-white text-black shadow-sm"
+                                  : "border-zinc-200 bg-zinc-50 text-black hover:bg-zinc-100"
                               }`}
                             >
                               <div className="flex min-w-0 items-center gap-3">
@@ -1427,24 +1417,16 @@ function handleSelectedLayerTouchStart(
                                     className="h-10 w-10 rounded-md object-cover"
                                   />
                                 ) : (
-                                  <div className="flex h-10 w-10 items-center justify-center rounded-md bg-zinc-800 text-xs text-zinc-400">
+                                  <div className="flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-xs text-zinc-500">
                                     🎵
                                   </div>
                                 )}
 
                                 <div className="min-w-0">
-                                  <p
-                                    className={`truncate text-sm font-medium ${
-                                      isSelected ? "text-black" : "text-white"
-                                    }`}
-                                  >
+                                  <p className="truncate text-sm font-medium text-black">
                                     {option.title}
                                   </p>
-                                  <p
-                                    className={`truncate text-xs ${
-                                      isSelected ? "text-zinc-600" : "text-zinc-400"
-                                    }`}
-                                  >
+                                  <p className="truncate text-xs text-zinc-500">
                                     {option.artist}
                                   </p>
                                 </div>
@@ -1452,7 +1434,7 @@ function handleSelectedLayerTouchStart(
 
                               <span
                                 className={`shrink-0 text-xs font-medium ${
-                                  isSelected ? "text-black" : "text-zinc-400"
+                                  isSelected ? "text-black" : "text-zinc-500"
                                 }`}
                               >
                                 {isSelected ? "Selected" : "Pick"}
@@ -1463,7 +1445,7 @@ function handleSelectedLayerTouchStart(
                     </div>
 
                     {selectedMusic ? (
-                      <div className="rounded-[20px] border border-white/10 bg-white/5 px-4 py-3">
+                      <div className="rounded-[20px] border border-zinc-200 bg-zinc-50 px-4 py-3">
                         <div className="flex items-center gap-3">
                           {selectedMusic?.artworkUrl ? (
                             <img
@@ -1472,19 +1454,19 @@ function handleSelectedLayerTouchStart(
                               className="h-10 w-10 rounded-xl object-cover"
                             />
                           ) : (
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-800 text-sm text-zinc-300">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-sm text-zinc-500">
                               🎵
                             </div>
                           )}
 
                           <div className="min-w-0">
-                            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-pink-300">
+                            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-pink-600">
                               Selected
                             </p>
-                            <p className="truncate text-sm font-semibold text-white">
+                            <p className="truncate text-sm font-semibold text-black">
                               {selectedMusic?.title ?? "Selected music"}
                             </p>
-                            <p className="truncate text-xs text-zinc-400">
+                            <p className="truncate text-xs text-zinc-500">
                               {selectedMusic?.artist ?? ""}
                             </p>
                           </div>
@@ -1493,14 +1475,14 @@ function handleSelectedLayerTouchStart(
                     ) : null}
 
                     {selectedMusic ? (
-                      <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-400">
+                      <div className="rounded-[18px] border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-500">
                         Drag the music sticker directly on the preview.
                       </div>
                     ) : null}
 
                     {selectedMusic && isMusicSelected ? (
-                      <div className="rounded-[20px] border border-white/10 bg-white/5 p-3">
-                        <p className="mb-2 text-xs font-medium text-zinc-400">
+                      <div className="rounded-[20px] border border-zinc-200 bg-zinc-50 p-3">
+                        <p className="mb-2 text-xs font-medium text-zinc-500">
                           Sticker style
                         </p>
 
@@ -1510,8 +1492,8 @@ function handleSelectedLayerTouchStart(
                             onClick={() => handleChangeMusicStyle("default")}
                             className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
                               selectedMusicStyle === "default"
-                                ? "border-pink-500 bg-pink-500/10 text-white"
-                                : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
+                                ? "border-pink-500 bg-pink-500/10 text-black"
+                                : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100"
                             }`}
                           >
                             Default
@@ -1522,8 +1504,8 @@ function handleSelectedLayerTouchStart(
                             onClick={() => handleChangeMusicStyle("minimal")}
                             className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
                               selectedMusicStyle === "minimal"
-                                ? "border-pink-500 bg-pink-500/10 text-white"
-                                : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
+                                ? "border-pink-500 bg-pink-500/10 text-black"
+                                : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100"
                             }`}
                           >
                             Minimal
@@ -1534,8 +1516,8 @@ function handleSelectedLayerTouchStart(
                             onClick={() => handleChangeMusicStyle("bold")}
                             className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
                               selectedMusicStyle === "bold"
-                                ? "border-pink-500 bg-pink-500/10 text-white"
-                                : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
+                                ? "border-pink-500 bg-pink-500/10 text-black"
+                                : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100"
                             }`}
                           >
                             Bold
@@ -1548,9 +1530,9 @@ function handleSelectedLayerTouchStart(
               ) : null}
 
               {isTrimToolOpen ? (
-                <div className="rounded-[24px] border border-white/10 bg-black/60 p-5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.45)]">
+                <div className="rounded-[24px] border border-zinc-200 bg-white p-5 shadow-sm">
                   {!file ? (
-                    <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-400">
+                    <div className="rounded-[18px] border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-500">
                       Select a video to enable trimming.
                     </div>
                   ) : null}
