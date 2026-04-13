@@ -505,7 +505,7 @@ y: overlay.y + (nextY - overlay.y) * 0.35,
   }
 
   function handleChangeTextOverlayScale(overlayId: string, scale: number) {
-    const nextScale = Math.min(2.4, Math.max(0.6, scale))
+    const nextScale = Math.min(4, Math.max(0.8, scale))
 
     setEditorState((prev) => ({
       ...prev,
