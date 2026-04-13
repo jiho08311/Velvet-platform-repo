@@ -786,7 +786,7 @@ export function CreateStoryForm({
                 )
               })}
 
-          {selectedMusic ? (
+        {selectedMusic ? (
   <>
     <div className="absolute left-4 right-4 top-14 z-20">
       <div className="flex items-center gap-3 rounded-full border border-white/10 bg-zinc-800/70 px-3 py-2 backdrop-blur-md">
