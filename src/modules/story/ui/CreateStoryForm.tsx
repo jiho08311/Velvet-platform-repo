@@ -738,14 +738,14 @@ export function CreateStoryForm({
                   selectedLayer: null,
                 }))
               }}
-           className="relative w-full aspect-[9/16] overflow-hidden bg-white"
+           className="relative w-full aspect-[9/16] overflow-hidden bg-black"
             >
               {previewUrl ? (
                 <div className="absolute inset-0">
                   {file?.type.startsWith("video/") ? (
                     <video
                       src={previewUrl}
-                      className="absolute inset-0 h-full w-full object-cover"
+                      className="absolute inset-0 h-full w-full object-contain"
                       style={getFilterStyle(selectedFilterPreset)}
                       autoPlay
                       muted
@@ -755,7 +755,7 @@ export function CreateStoryForm({
                   ) : (
                     <img
                       src={previewUrl}
-                      className="absolute inset-0 h-full w-full object-cover"
+                      className="absolute inset-0 h-full w-full object-contain"
                       style={getFilterStyle(selectedFilterPreset)}
                       alt="Story preview"
                     />
@@ -769,7 +769,7 @@ export function CreateStoryForm({
                     className="flex flex-col items-center justify-center gap-4 text-center transition active:scale-[0.96]"
                   >
 
-<p className="text-sm font-semibold text-zinc-800">
+<p className="text-base font-semibold text-zinc-900">
   Start your story
 </p>
 
@@ -1088,7 +1088,7 @@ export function CreateStoryForm({
               </div>
 
               {file ? (
-                <p className="mt-3 truncate px-1 text-center text-xs text-zinc-500">
+                <p className="mt-3 truncate px-1 text-center ">
                   {file.name}
                 </p>
               ) : null}
