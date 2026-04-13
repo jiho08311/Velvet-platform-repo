@@ -82,7 +82,7 @@ export function StoryList({
     <>
       <section className="space-y-3">
         <div className="px-1">
-          <h2 className="text-sm font-semibold text-white">Stories</h2>
+          <h2 className="text-base font-semibold text-white">Stories</h2>
         </div>
 
         <div className="overflow-x-auto">
@@ -98,7 +98,7 @@ export function StoryList({
               >
                 <div className="relative">
                   <div className="rounded-full bg-gradient-to-br from-pink-500 to-fuchsia-500 p-[2px]">
-                    <div className="h-16 w-16 overflow-hidden rounded-full bg-zinc-950">
+                    <div className="h-20 w-20 overflow-hidden rounded-full bg-zinc-950">
                       {myGroup.creatorAvatarUrl ? (
                         <img
                           src={myGroup.creatorAvatarUrl}
@@ -145,7 +145,7 @@ export function StoryList({
                 className="flex shrink-0 flex-col items-center gap-2 transition hover:scale-105"
               >
                 <div className="relative">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-800 text-xl text-white">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-zinc-800 text-2xl text-white">
                     +
                   </div>
 
@@ -185,7 +185,7 @@ export function StoryList({
                         : "rounded-full bg-zinc-700 p-[2px]"
                     }
                   >
-                    <div className="h-16 w-16 overflow-hidden rounded-full bg-zinc-950">
+                    <div className="h-20 w-20 overflow-hidden rounded-full bg-zinc-950">
                       {group.creatorAvatarUrl ? (
                         <img
                           src={group.creatorAvatarUrl}
@@ -200,7 +200,7 @@ export function StoryList({
                     </div>
                   </div>
 
-                  <span className="max-w-[72px] truncate text-xs text-zinc-300">
+                  <span className="max-w-[72px] truncate text-sm text-white">
                     {group.creatorName}
                   </span>
                 </button>
