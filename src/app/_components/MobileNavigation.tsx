@@ -15,7 +15,6 @@ const navigationItems: NavigationItem[] = [
   { href: "/feed", label: "Feed", icon: Home },
   { href: "/search", label: "Search", icon: Search },
   { href: "/messages", label: "Messages", icon: Mail },
-  // ❌ Alerts 제거
   { href: "/profile", label: "Profile", icon: User },
 ]
 
@@ -82,8 +81,6 @@ export function MobileNavigation() {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-900 bg-zinc-950/95 pb-[max(env(safe-area-inset-bottom),0px)] backdrop-blur-xl md:hidden">
       <div className="mx-auto grid max-w-3xl grid-cols-5 gap-1 px-3 py-2">
-
-        {/* 기존 4개 */}
         {navigationItems.map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(`${item.href}/`)
@@ -112,7 +109,6 @@ export function MobileNavigation() {
           )
         })}
 
-        {/* 🔥 Creator 버튼 */}
         {isAuthenticated === null || isCreator === null ? (
           <div className="flex min-h-[60px] items-center justify-center">
             <div className="h-5 w-5 animate-pulse rounded bg-zinc-700" />
@@ -122,53 +118,62 @@ export function MobileNavigation() {
             href="/sign-in?next=%2Fbecome-creator"
             className="flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-2xl bg-[#C2185B]/15 text-[10px] font-semibold text-[#F472B6] hover:bg-[#C2185B]/25"
           >
-          <Sparkles
-  className={`h-5 w-5 ${
-    pathname.startsWith("/become-creator")
-      ? "text-zinc-950"
-      : "text-zinc-500"
-  }`}
-/>
-            Creator
+            <Sparkles className="h-5 w-5 text-[#F472B6]" />
+            <span className="text-[#F472B6]">Creator</span>
           </Link>
         ) : isCreator ? (
           <Link
             href="/dashboard"
-className={`flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-2xl px-2 text-center text-[10px] font-semibold transition ${
-  pathname.startsWith("/dashboard")
-    ? "bg-zinc-100"
-    : "text-zinc-500 hover:bg-zinc-900 hover:text-white"
-}`}
+            className={`flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-2xl px-2 text-center text-[10px] font-semibold transition ${
+              pathname.startsWith("/dashboard")
+                ? "bg-zinc-100"
+                : "text-zinc-500 hover:bg-zinc-900 hover:text-white"
+            }`}
           >
-        <LayoutDashboard
-  className={`h-5 w-5 ${
-    pathname.startsWith("/dashboard")
-      ? "text-zinc-950"
-      : "text-zinc-500"
-  }`}
-/>
-            Dashboard
+            <LayoutDashboard
+              className={`h-5 w-5 ${
+                pathname.startsWith("/dashboard")
+                  ? "text-zinc-950"
+                  : "text-zinc-500"
+              }`}
+            />
+            <span
+              className={
+                pathname.startsWith("/dashboard")
+                  ? "text-zinc-950"
+                  : "text-zinc-500"
+              }
+            >
+              Dashboard
+            </span>
           </Link>
         ) : (
           <Link
             href="/become-creator"
-className={`flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-semibold ${
-  pathname.startsWith("/become-creator")
-    ? "bg-[#C2185B] text-white"
-    : "bg-[#C2185B]/15 text-[#F472B6] hover:bg-[#C2185B]/25"
-}`}
+            className={`flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-semibold ${
+              pathname.startsWith("/become-creator")
+                ? "bg-[#C2185B] text-white"
+                : "bg-[#C2185B]/15 text-[#F472B6] hover:bg-[#C2185B]/25"
+            }`}
           >
-   <Sparkles
-  className={`h-5 w-5 ${
-    pathname.startsWith("/become-creator")
-      ? "text-zinc-950"
-      : "text-zinc-500"
-  }`}
-/>
-            Creator
+            <Sparkles
+              className={`h-5 w-5 ${
+                pathname.startsWith("/become-creator")
+                  ? "text-white"
+                  : "text-[#F472B6]"
+              }`}
+            />
+            <span
+              className={
+                pathname.startsWith("/become-creator")
+                  ? "text-white"
+                  : "text-[#F472B6]"
+              }
+            >
+              Creator
+            </span>
           </Link>
         )}
-
       </div>
     </nav>
   )
