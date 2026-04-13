@@ -484,13 +484,6 @@ export async function createPostWithMediaWorkflow({
 
   await createPostBlocks(post.id, blocksToInsert)
 
-  void moderatePostAsync({
-    postId: post.id,
-    content,
-    files,
-    shouldApproveOnSuccess: !hasVideo,
-  })
-
   if (hasVideo) {
     console.log("🔥 CALL processVideoModeration", {
       postId: post.id,
@@ -500,6 +493,13 @@ export async function createPostWithMediaWorkflow({
     await enqueueVideoModeration({
       postId: post.id,
       media,
+    })
+  } else {
+    await moderatePostAsync({
+      postId: post.id,
+      content,
+      files,
+      shouldApproveOnSuccess: true,
     })
   }
 
