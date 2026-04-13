@@ -368,7 +368,7 @@ const storyMusicStyle = storyMusic?.style ?? "default"
                   <video
                     ref={videoRef}
                     src={story.mediaUrl}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-contain"
                     style={getFilterStyle(selectedFilterPreset)}
                     autoPlay
                     muted
@@ -408,7 +408,7 @@ const storyMusicStyle = storyMusic?.style ?? "default"
                   <img
                     src={story.mediaUrl}
                     alt={story.text ?? "Story media"}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-contain"
                     style={getFilterStyle(selectedFilterPreset)}
                   />
                 )}
