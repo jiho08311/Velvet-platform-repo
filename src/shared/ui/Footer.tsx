@@ -1,7 +1,7 @@
 export default function Footer() {
   return (
-    <footer className="w-full border-t border-zinc-900 bg-zinc-950 text-sm text-zinc-500">
-      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 md:px-6">
+<footer className="w-full border-t border-zinc-900 bg-zinc-950 pb-[88px] text-sm text-zinc-500 md:pb-0">
+  <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 md:px-6">
         <p className="text-zinc-400">Velvet</p>
 
         {/* 사업자 정보 */}
