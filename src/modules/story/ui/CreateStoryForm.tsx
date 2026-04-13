@@ -343,9 +343,9 @@ export function CreateStoryForm({
   }
 
   function handleFilterSwipeStart(clientX: number) {
-    if (!previewUrl || uiState.isDragging) {
-      return
-    }
+ if (!previewUrl || uiState.isDragging || activeTool !== "filter") {
+  return
+}
 
     filterSwipeStartXRef.current = clientX
     filterSwipeTriggeredRef.current = false
@@ -353,10 +353,9 @@ export function CreateStoryForm({
   }
 
   function handleFilterSwipeMove(clientX: number) {
-    if (!previewUrl || uiState.isDragging) {
-      return
-    }
-
+if (!previewUrl || uiState.isDragging || activeTool !== "filter") {
+  return
+}
     const startX = filterSwipeStartXRef.current
 
     if (startX === null) {
@@ -519,9 +518,9 @@ export function CreateStoryForm({
   ) {
     resetFilterSwipe()
 
-    if (selectedLayer?.type !== "text") {
-      return
-    }
+if (selectedLayer?.type !== "text" || activeTool !== "text") {
+  return
+}
 
     event.preventDefault()
     event.stopPropagation()
@@ -558,9 +557,9 @@ export function CreateStoryForm({
   ) {
     resetFilterSwipe()
 
-    if (selectedLayer?.type !== "text") {
-      return
-    }
+if (selectedLayer?.type !== "text" || activeTool !== "text") {
+  return
+}
 
     event.stopPropagation()
 
@@ -643,6 +642,11 @@ export function CreateStoryForm({
     event: React.MouseEvent<HTMLDivElement>
   ) {
     resetFilterSwipe()
+
+if (activeTool !== "music") {
+  return
+}
+
     event.preventDefault()
 
     event.stopPropagation()
@@ -678,6 +682,11 @@ export function CreateStoryForm({
     event: React.TouchEvent<HTMLDivElement>
   ) {
     resetFilterSwipe()
+
+if (activeTool !== "music") {
+  return
+}
+
     event.stopPropagation()
     setUiState((prev) => ({
       ...prev,
@@ -799,21 +808,27 @@ export function CreateStoryForm({
                 }))
               }}
               onTouchStart={(event) => {
+                 if (activeTool === "filter") {
                 handleFilterSwipeStart(event.touches[0]?.clientX ?? 0)
+                 }
               }}
               onTouchMove={(event) => {
+                if (activeTool === "filter") {
                 handleFilterSwipeMove(event.touches[0]?.clientX ?? 0)
+                }
               }}
               onTouchEnd={resetFilterSwipe}
               onTouchCancel={resetFilterSwipe}
               onMouseDown={(event) => {
+                 if (activeTool === "filter") {
                 handleFilterSwipeStart(event.clientX)
+                 }
               }}
-              onMouseMove={(event) => {
-                if ((event.buttons & 1) === 1) {
-                  handleFilterSwipeMove(event.clientX)
-                }
-              }}
+          onMouseMove={(event) => {
+  if (activeTool === "filter" && (event.buttons & 1) === 1) {
+    handleFilterSwipeMove(event.clientX)
+  }
+}}
               onMouseUp={resetFilterSwipe}
               className="relative w-full aspect-[9/16] overflow-hidden bg-white"
             >
