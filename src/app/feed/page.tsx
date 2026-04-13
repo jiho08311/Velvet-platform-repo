@@ -183,7 +183,7 @@ export default async function FeedPage() {
           <div className="sticky top-24 space-y-4">
             <Card className="border-zinc-800 bg-zinc-900/70 p-4">
               <div className="space-y-4">
-                <h2 className="text-sm font-semibold text-white">
+                <h2 className="text-base font-semibold text-white">
                   Recommended for you
                 </h2>
 
@@ -210,7 +210,7 @@ export default async function FeedPage() {
                             <p className="truncate text-sm font-medium text-white">
                               {creator.displayName ?? creator.username}
                             </p>
-                            <p className="truncate text-xs text-zinc-400">
+                            <p className="truncate text-sm text-zinc-300">
                               @{creator.username}
                             </p>
                           </div>
