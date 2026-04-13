@@ -94,7 +94,7 @@ export function StoryList({
                   setSelectedStories(myGroup.stories)
                   setSelectedIndex(0)
                 }}
-                className="flex shrink-0 flex-col items-center gap-2 transition hover:scale-105"
+                className="flex shrink-0 flex-col items-center gap-2 transition-transform duration-300 ease-out hover:scale-[1.04] animate-[storyIn_0.4s_ease-out]"
               >
                 <div className="relative">
                   <div className="rounded-full bg-gradient-to-br from-pink-500 to-fuchsia-500 p-[2px]">
@@ -142,7 +142,7 @@ export function StoryList({
               <button
                 type="button"
                 onClick={() => router.push("/story/new")}
-                className="flex shrink-0 flex-col items-center gap-2 transition hover:scale-105"
+                className="flex shrink-0 flex-col items-center gap-2 transition-transform duration-300 ease-out hover:scale-[1.04] animate-[storyIn_0.4s_ease-out]"
               >
                 <div className="relative">
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-zinc-800 text-2xl text-white">
@@ -176,12 +176,12 @@ export function StoryList({
                     setSelectedStories(group.stories)
                     setSelectedIndex(0)
                   }}
-                  className="flex shrink-0 flex-col items-center gap-2 transition hover:scale-105"
+                  className="flex shrink-0 flex-col items-center gap-2 transition-transform duration-300 ease-out hover:scale-[1.04] animate-[storyIn_0.4s_ease-out]"
                 >
                   <div
                     className={
-                      hasUnseenStory
-                        ? "rounded-full bg-gradient-to-br from-pink-500 via-fuchsia-500 to-orange-400 p-[2px]"
+hasUnseenStory
+  ? "rounded-full bg-gradient-to-br from-pink-500 via-fuchsia-500 to-orange-400 p-[2px] animate-[storyPulse_2.5s_ease-in-out_infinite]"
                         : "rounded-full bg-zinc-700 p-[2px]"
                     }
                   >
