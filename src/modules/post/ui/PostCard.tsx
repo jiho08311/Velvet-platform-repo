@@ -635,14 +635,14 @@ export function PostCard({
                 type="button"
                 onClick={handleLike}
                 disabled={isLikeLoading}
-                className="inline-flex items-center gap-1 px-1 py-1 text-sm text-zinc-300 transition hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+className="flex items-center gap-2 p-2 text-zinc-300 hover:text-white active:scale-95"
               >
                 {liked ? (
                   <HeartSolid className="h-4 w-4 text-pink-500" />
                 ) : (
-                  <HeartOutline className="h-4 w-4" />
+                  <HeartOutline className="h-6 w-6" />
                 )}
-                <span>{count}</span>
+       <span className="text-sm font-medium">{count}</span>
               </button>
 
               <button
@@ -657,9 +657,9 @@ export function PostCard({
                     loadComments()
                   }
                 }}
-                className="inline-flex items-center gap-1 px-1 py-1 text-sm text-zinc-300 transition hover:text-white active:scale-95"
+className="flex items-center gap-2 p-2 text-zinc-300 hover:text-white active:scale-95"
               >
-                <ChatBubbleOvalLeftIcon className="h-4 w-4" />
+                <ChatBubbleOvalLeftIcon className="h-6 w-6" />
                 <span>{commentsCount || comments.length}</span>
               </button>
             </div>
@@ -722,7 +722,7 @@ export function PostCard({
                             {comment.is_liked ? (
                               <HeartSolid className="h-4 w-4 text-pink-500" />
                             ) : (
-                              <HeartOutline className="h-4 w-4" />
+                              <HeartOutline className="h-6 w-6" />
                             )}
                             <span>{comment.likes_count ?? 0}</span>
                           </button>
