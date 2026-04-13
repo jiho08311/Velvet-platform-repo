@@ -824,11 +824,17 @@ function handleSelectedLayerTouchStart(
               <div className="pointer-events-none absolute inset-0 md:inset-[6%] md:rounded-[22px] md:border md:border-white/10" />
             
 
-              {previewUrl && showFilterIndicator ? (
-                <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full border border-white/10 bg-black/65 px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-white backdrop-blur-sm">
-                  {selectedFilterPreset}
-                </div>
-              ) : null}
+     {previewUrl && showFilterIndicator ? (
+  <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full border border-white/10 bg-black/65 px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-white backdrop-blur-sm">
+    {selectedFilterPreset}
+  </div>
+) : null}
+
+{previewUrl && !showFilterIndicator ? (
+  <div className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 text-[11px] text-zinc-400 opacity-60">
+    Swipe
+  </div>
+) : null}
 
 
               {editorState.textOverlays?.map((overlay) => {
@@ -1362,79 +1368,18 @@ function handleSelectedLayerTouchStart(
               ) : null}
 
               {isFilterToolOpen ? (
-                <div className="space-y-5 rounded-[24px] border border-white/10 bg-black/60 p-5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.45)]">
+                <div className="space-y-4 rounded-[24px] border border-white/10 bg-black/60 p-5 backdrop-blur-xl">
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-white">Filter</p>
-               <p className="text-xs text-zinc-400">
-  Swipe left or right on the preview to change filters
+<p className="text-sm font-medium text-white">
+  Swipe to change filters
 </p>
                   </div>
 
-            <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-400">
-  You can still tap a filter below, but swipe on the preview for Instagram-style browsing.
-</div>
+       <p className="text-xs text-zinc-500">
+  Left or right on the preview
+</p>
 
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleChangeFilter("none")}
-                      className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
-                        selectedFilterPreset === "none"
-                          ? "border-pink-500 bg-pink-500/10 text-white"
-                          : "border-white/10 bg-white/5 text-white hover:bg-white/10"
-                      }`}
-                    >
-                      None
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleChangeFilter("warm")}
-                      className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
-                        selectedFilterPreset === "warm"
-                          ? "border-pink-500 bg-pink-500/10 text-white"
-                          : "border-white/10 bg-white/5 text-white hover:bg-white/10"
-                      }`}
-                    >
-                      Warm
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleChangeFilter("cool")}
-                      className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
-                        selectedFilterPreset === "cool"
-                          ? "border-pink-500 bg-pink-500/10 text-white"
-                          : "border-white/10 bg-white/5 text-white hover:bg-white/10"
-                      }`}
-                    >
-                      Cool
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleChangeFilter("mono")}
-                      className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
-                        selectedFilterPreset === "mono"
-                          ? "border-pink-500 bg-pink-500/10 text-white"
-                          : "border-white/10 bg-white/5 text-white hover:bg-white/10"
-                      }`}
-                    >
-                      Mono
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleChangeFilter("vivid")}
-                      className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
-                        selectedFilterPreset === "vivid"
-                          ? "border-pink-500 bg-pink-500/10 text-white"
-                          : "border-white/10 bg-white/5 text-white hover:bg-white/10"
-                      }`}
-                    >
-                      Vivid
-                    </button>
-                  </div>
                 </div>
               ) : null}
 
