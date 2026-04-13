@@ -452,35 +452,39 @@ export function PostCard({
   function renderMedia(items: MediaItem[] = blockMedia) {
     if (items.length === 0) return null
 
-    if (items.length === 1) {
-      const item = items[0]
+if (items.length === 1) {
+  const item = items[0]
 
-      return (
-        <div className="overflow-hidden bg-black">
-          <div className="aspect-[4/5] w-full overflow-hidden">
-            {renderSingleMedia(item, "Post media")}
-          </div>
+  return (
+    <div className="overflow-hidden bg-black">
+      <div className="mx-auto w-full max-w-[470px] overflow-hidden">
+        <div className="aspect-[4/5] w-full overflow-hidden">
+          {renderSingleMedia(item, "Post media")}
         </div>
-      )
-    }
+      </div>
+    </div>
+  )
+}
 
-    return (
-      <div className="relative">
-        <div
-          onScroll={handleScroll}
-          className="flex snap-x snap-mandatory overflow-x-auto scrollbar-hide"
-        >
-          {items.map((item, index) => (
-            <div
-              key={`${item.id ?? item.url}-${index}`}
-              className="min-w-full snap-center"
-            >
-              <div className="aspect-[4/5] w-full overflow-hidden bg-zinc-900">
-                {renderSingleMedia(item, `Post media ${index + 1}`)}
-              </div>
+return (
+  <div className="relative">
+    <div className="mx-auto w-full max-w-[470px]">
+      <div
+        onScroll={handleScroll}
+        className="flex snap-x snap-mandatory overflow-x-auto scrollbar-hide"
+      >
+        {items.map((item, index) => (
+          <div
+            key={`${item.id ?? item.url}-${index}`}
+            className="min-w-full snap-center"
+          >
+            <div className="aspect-[4/5] w-full overflow-hidden bg-zinc-900">
+              {renderSingleMedia(item, `Post media ${index + 1}`)}
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
+      </div>
+    </div>
 
         <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1">
           {items.map((_, index) => (
@@ -556,7 +560,7 @@ export function PostCard({
           )}
 
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-white">
+            <p className="truncate text-base font-semibold text-white">
               {creatorName}
             </p>
           </div>
@@ -619,7 +623,7 @@ export function PostCard({
 
               {blockText ? (
                 <div className="px-3 pt-3">
-                  <p className="whitespace-pre-wrap text-sm leading-6 text-white/80">
+                  <p className="whitespace-pre-wrap text-base leading-7 text-white">
                     {blockText}
                   </p>
                 </div>
@@ -629,7 +633,8 @@ export function PostCard({
 
           <div className="flex items-center justify-between gap-3 px-3 pt-3">
             <div className="flex items-center gap-2">
-              <p className="text-xs text-zinc-500">
+            
+              <p className="text-sm text-zinc-300">
                 {formatPostDate(createdAt)}
               </p>
 
@@ -637,7 +642,7 @@ export function PostCard({
                 type="button"
                 onClick={handleLike}
                 disabled={isLikeLoading}
-                className="inline-flex items-center gap-1 px-1 py-1 text-xs text-zinc-400 transition hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-1 px-1 py-1 text-sm text-zinc-300 transition hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {liked ? (
                   <HeartSolid className="h-4 w-4 text-pink-500" />
@@ -659,7 +664,7 @@ export function PostCard({
                     loadComments()
                   }
                 }}
-                className="inline-flex items-center gap-1 px-1 py-1 text-xs text-zinc-400 transition hover:text-white active:scale-95"
+                className="inline-flex items-center gap-1 px-1 py-1 text-sm text-zinc-300 transition hover:text-white active:scale-95"
               >
                 <ChatBubbleOvalLeftIcon className="h-4 w-4" />
                 <span>{commentsCount || comments.length}</span>
@@ -719,7 +724,7 @@ export function PostCard({
                                 Boolean(comment.is_liked)
                               )
                             }
-                            className="inline-flex items-center gap-1.5 px-0 py-1 text-xs text-zinc-400 transition hover:text-white active:scale-95"
+                            className="inline-flex items-center gap-1.5 px-0 py-1 text-sm text-zinc-300 transition hover:text-white active:scale-95"
                           >
                             {comment.is_liked ? (
                               <HeartSolid className="h-4 w-4 text-pink-500" />
