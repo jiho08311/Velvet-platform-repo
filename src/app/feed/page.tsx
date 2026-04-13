@@ -17,6 +17,7 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { getStoryReadStateMap } from "@/modules/story/server/story-read-state"
 
 type FeedMediaItem = {
+  id?: string
   url: string
   type?: "image" | "video" | "audio" | "file"
 }
@@ -31,14 +32,19 @@ function normalizeMedia(item: unknown): FeedMediaItem[] {
   }
 
   const maybeItem = item as {
-    media?: Array<{ url: string; type?: "image" | "video" | "audio" | "file" }>
+    media?: Array<{
+      id?: string
+      url: string
+      type?: "image" | "video" | "audio" | "file"
+    }>
     mediaThumbnailUrls?: string[]
   }
 
   if (Array.isArray(maybeItem.media)) {
     return maybeItem.media.map((m) => ({
-      url: (m as any).url ?? (m as any).storagePath ?? "",
-      type: (m as any).type,
+      id: m.id,
+      url: m.url ?? "",
+      type: m.type,
     }))
   }
 

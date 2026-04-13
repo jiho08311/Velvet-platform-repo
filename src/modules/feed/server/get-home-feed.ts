@@ -15,10 +15,11 @@ export type HomeFeedItem = {
   isLocked: boolean
   lockReason?: "none" | "subscription" | "purchase"
   price?: number
-  media?: Array<{
-    url: string
-    type: MediaType
-  }>
+media?: Array<{
+  id: string
+  url: string
+  type: MediaType
+}>
   blocks?: Array<{
     id: string
     postId: string
@@ -82,6 +83,7 @@ type PostRow = {
 }
 
 type MediaRow = {
+  id: string
   post_id: string
   storage_path: string
   type: MediaType | null
@@ -296,7 +298,7 @@ export async function getHomeFeed(
 
   const { data: mediaRows, error: mediaError } = await supabaseAdmin
     .from("media")
-    .select("post_id, storage_path, type, mime_type, status, sort_order")
+ .select("id, post_id, storage_path, type, mime_type, status, sort_order")
     .in("post_id", postIds)
     .eq("status", "ready")
     .order("sort_order", { ascending: true })
@@ -322,19 +324,20 @@ export async function getHomeFeed(
 
       const selectedMediaRows = (mediaMap.get(post.id) ?? []).slice(0, 3)
 
-      const media = await Promise.all(
-        selectedMediaRows.map(async (item) => ({
-          url: await createMediaSignedUrl({
-            storagePath: item.storage_path,
-            viewerUserId,
-            creatorUserId,
-            visibility: post.visibility,
-            isSubscribed: false,
-            hasPurchased: false,
-          }),
-          type: resolveMediaType(item),
-        }))
-      )
+const media = await Promise.all(
+  selectedMediaRows.map(async (item) => ({
+    id: item.id,
+    url: await createMediaSignedUrl({
+      storagePath: item.storage_path,
+      viewerUserId,
+      creatorUserId,
+      visibility: post.visibility,
+      isSubscribed: false,
+      hasPurchased: false,
+    }),
+    type: resolveMediaType(item),
+  }))
+)
 
       return {
         id: post.id,
