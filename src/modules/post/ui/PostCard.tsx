@@ -527,13 +527,6 @@ export function PostCard({
     router.push(`/creator/${creator.username}`)
   }
 
-  const textGroups = groupedBlocks.filter(
-    (group): group is Extract<RenderGroup, { type: "text" }> => group.type === "text"
-  )
-
-  const mediaGroups = groupedBlocks.filter(
-    (group): group is Extract<RenderGroup, { type: "media" }> => group.type === "media"
-  )
 
   return (
     <article onClick={handleCardClick} className="group w-full">
@@ -585,34 +578,33 @@ export function PostCard({
       ) : (
         <>
           {hasBlocks ? (
-            <>
-              {mediaGroups.map((group, index) => (
-                <div key={`media-group-${index}`} className="mt-2 overflow-hidden">
-                  {group.mediaItems.length > 0 ? (
-                    renderMedia(group.mediaItems)
-                  ) : (
-                    <div className="flex min-h-[220px] items-center justify-center bg-zinc-900 text-sm text-zinc-500">
-                      {group.blocks.some((block) => block.type === "video")
-                        ? "Video is processing..."
-                        : "Media not available"}
-                    </div>
-                  )}
-                </div>
-              ))}
+<>
+  {groupedBlocks.map((group, index) => {
+    if (group.type === "text") {
+      return (
+        <div key={group.block.id} className="px-3 pt-3">
+          <p className="whitespace-pre-wrap text-[15px] leading-7 text-white font-medium">
+            {group.block.content}
+          </p>
+        </div>
+      )
+    }
 
-              {textGroups.length > 0 ? (
-                <div className="space-y-1 px-3 pt-3">
-                  {textGroups.map((group) => (
-                    <p
-                      key={group.block.id}
-                      className="whitespace-pre-wrap text-[15px] leading-7 text-white font-medium"
-                    >
-                      {group.block.content}
-                    </p>
-                  ))}
-                </div>
-              ) : null}
-            </>
+    return (
+      <div key={`media-group-${index}`} className="mt-2 overflow-hidden">
+        {group.mediaItems.length > 0 ? (
+          renderMedia(group.mediaItems)
+        ) : (
+          <div className="flex min-h-[220px] items-center justify-center bg-zinc-900 text-sm text-zinc-500">
+            {group.blocks.some((block) => block.type === "video")
+              ? "Video is processing..."
+              : "Media not available"}
+          </div>
+        )}
+      </div>
+    )
+  })}
+</>
           ) : (
             <>
               {blockMedia.length > 0 ? <div className="mt-2">{renderMedia()}</div> : null}

@@ -350,7 +350,9 @@ const media = await Promise.all(
         lockReason: "none",
         price: post.price ?? undefined,
         media,
-        blocks: (post.post_blocks ?? []).map((block) => ({
+    blocks: [...(post.post_blocks ?? [])]
+  .sort((a, b) => a.sort_order - b.sort_order)
+  .map((block) => ({
           id: block.id,
           postId: block.post_id,
           type: block.type,
