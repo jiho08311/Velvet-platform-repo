@@ -27,6 +27,7 @@ type CreateStoryFormProps = {
 const FILTER_PRESETS = ["none", "warm", "cool", "mono", "vivid"] as const
 type StoryFilterPreset = (typeof FILTER_PRESETS)[number]
 const FILTER_SWIPE_THRESHOLD = 40
+const TEXT_FONT_SIZES = ["sm", "md", "lg"] as const
 
 
 function clampPosition(value: number) {
@@ -254,6 +255,29 @@ export function CreateStoryForm({
         ),
       }
     })
+  }
+
+  function handleStepTextOverlayFontSize(direction: "down" | "up") {
+    if (!selectedTextOverlay) {
+      return
+    }
+
+    const currentFontSize = selectedTextOverlay.fontSize ?? "md"
+    const currentIndex = TEXT_FONT_SIZES.indexOf(currentFontSize)
+    const safeCurrentIndex = currentIndex >= 0 ? currentIndex : 1
+
+    const nextIndex =
+      direction === "up"
+        ? Math.min(TEXT_FONT_SIZES.length - 1, safeCurrentIndex + 1)
+        : Math.max(0, safeCurrentIndex - 1)
+
+    const nextFontSize = TEXT_FONT_SIZES[nextIndex]
+
+    if (nextFontSize === currentFontSize) {
+      return
+    }
+
+    handleChangeTextOverlayFontSize(nextFontSize)
   }
 
   function handleChangeTextOverlayAlign(align: "left" | "center" | "right") {
@@ -1175,7 +1199,7 @@ function handleSelectedLayerTouchStart(
 
             <div className="max-h-[62vh] overflow-y-auto px-4 pb-6">
               {isTextToolOpen ? (
-                <div className="space-y-5 rounded-[24px] border border-white/10 bg-black/60 p-5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.45)]">
+                <div className="space-y-5 rounded-[24px] border border-white/10 bg-black/60 p-5 backdrop-blur-xl">
                   <div className="flex items-center justify-between gap-3">
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-white">
@@ -1217,55 +1241,46 @@ function handleSelectedLayerTouchStart(
                       />
 
                       <div className="space-y-3">
-                        <div>
-                          <p className="mb-2 text-xs font-medium text-zinc-400">
-                            Size
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleChangeTextOverlayFontSize("sm")
-                              }
-                              className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
-                                (selectedTextOverlay.fontSize ?? "md") === "sm"
-                                  ? "border-pink-500 bg-pink-500/10 text-white"
-                                  : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
-                              }`}
-                            >
-                              Small
-                            </button>
+                    
+<div>
+  <p className="mb-2 text-xs font-medium text-zinc-400">
+    Size
+  </p>
 
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleChangeTextOverlayFontSize("md")
-                              }
-                              className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
-                                (selectedTextOverlay.fontSize ?? "md") === "md"
-                                  ? "border-pink-500 bg-pink-500/10 text-white"
-                                  : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
-                              }`}
-                            >
-                              Medium
-                            </button>
+  <div className="flex items-center justify-center gap-5 rounded-[20px] border border-white/10 bg-white/5 px-4 py-3">
+    <button
+      type="button"
+      onClick={() => handleStepTextOverlayFontSize("down")}
+      disabled={(selectedTextOverlay.fontSize ?? "md") === "sm"}
+      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xl text-white transition hover:bg-white/10 disabled:opacity-30"
+      aria-label="Decrease text size"
+    >
+      ‹
+    </button>
 
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleChangeTextOverlayFontSize("lg")
-                              }
-                              className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
-                                (selectedTextOverlay.fontSize ?? "md") === "lg"
-                                  ? "border-pink-500 bg-pink-500/10 text-white"
-                                  : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
-                              }`}
-                            >
-                              Large
-                            </button>
-                          </div>
-                        </div>
+    <span
+      className={`min-w-[44px] text-center font-semibold text-white ${
+        (selectedTextOverlay.fontSize ?? "md") === "sm"
+          ? "text-xl"
+          : (selectedTextOverlay.fontSize ?? "md") === "lg"
+            ? "text-4xl"
+            : "text-2xl"
+      }`}
+    >
+      Aa
+    </span>
 
+    <button
+      type="button"
+      onClick={() => handleStepTextOverlayFontSize("up")}
+      disabled={(selectedTextOverlay.fontSize ?? "md") === "lg"}
+      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xl text-white transition hover:bg-white/10 disabled:opacity-30"
+      aria-label="Increase text size"
+    >
+      ›
+    </button>
+  </div>
+</div>
                         <div>
                           <p className="mb-2 text-xs font-medium text-zinc-400">
                             Align
