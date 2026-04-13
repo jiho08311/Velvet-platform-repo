@@ -690,47 +690,7 @@ export function CreateStoryForm({
                 Story preview
               </div>
 
-{selectedMusic ? (
-  <div className="absolute left-3 right-3 top-12 z-20 flex items-center gap-3">
-    {/* 음악 카드 */}
-    <div className="flex flex-1 items-center gap-3 rounded-full bg-zinc-800/70 px-3 py-2 backdrop-blur-md">
-      {selectedMusic.artworkUrl ? (
-        <img
-          src={selectedMusic.artworkUrl}
-          alt={selectedMusic.title ?? "music"}
-          className="h-9 w-9 rounded-md object-cover"
-        />
-      ) : (
-        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-zinc-700 text-xs text-white">
-          ♪
-        </div>
-      )}
 
-      <div className="min-w-0">
-        <p className="truncate text-sm font-semibold text-white">
-          {selectedMusic.title ?? "Selected music"}
-        </p>
-        <p className="truncate text-xs text-zinc-300">
-          {selectedMusic.artist ?? ""}
-        </p>
-      </div>
-
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation()
-          setUiState((prev) => ({
-            ...prev,
-            activeTool: "music",
-          }))
-        }}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-700 text-white"
-      >
-        +
-      </button>
-    </div>
-  </div>
-) : null}
 
 
               {editorState.textOverlays?.map((overlay) => {
