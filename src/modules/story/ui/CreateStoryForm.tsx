@@ -1170,14 +1170,6 @@ willChange: "transform",
                     <span className="mt-2 text-[11px] font-medium">텍스트</span>
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border border-zinc-200 bg-white px-3 text-black backdrop-blur-xl transition-all"
-                  >
-                    <span className="text-lg leading-none">▣</span>
-                    <span className="mt-2 text-[11px] font-medium">오버레이</span>
-                  </button>
 
                   <button
                     type="button"
