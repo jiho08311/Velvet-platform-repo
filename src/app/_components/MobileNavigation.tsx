@@ -135,7 +135,7 @@ export function MobileNavigation() {
           <Link
             href="/dashboard"
 className={`flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-2xl px-2 text-center text-[10px] font-semibold transition ${
-  pathname.startsWith("/dashboard") || pathname.startsWith("/become-creator")
+  pathname.startsWith("/dashboard")
     ? "bg-zinc-100"
     : "text-zinc-500 hover:bg-zinc-900 hover:text-white"
 }`}
