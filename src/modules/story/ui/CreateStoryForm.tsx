@@ -746,14 +746,14 @@ export function CreateStoryForm({
                 )
               })}
 
-        {selectedMusic ? (
+{previewUrl ? (
   <>
     <div className="absolute left-6 right-4 top-16 z-20">
       <div className="flex items-center gap-3 rounded-full border border-white/10 bg-zinc-800/75 px-3 py-2.5 backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.28)]">
-        {selectedMusic.artworkUrl ? (
+        {selectedMusic?.artworkUrl ? (
           <img
             src={selectedMusic.artworkUrl}
-            alt={selectedMusic.title ?? "Selected music"}
+            alt={selectedMusic?.title ?? "Selected music"}
             className="h-10 w-10 rounded-xl object-cover"
           />
         ) : (
@@ -764,10 +764,10 @@ export function CreateStoryForm({
 
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-white">
-            {selectedMusic.title ?? "Selected music"}
+            {selectedMusic?.title ?? "음악 추가"}
           </p>
           <p className="truncate text-xs text-zinc-300">
-            {selectedMusic.artist ?? "추천 오디오"}
+            {selectedMusic?.artist ?? "탭해서 음악 선택"}
           </p>
         </div>
 
@@ -791,109 +791,112 @@ export function CreateStoryForm({
       </div>
     </div>
 
-    <div
-      onClick={(event) => {
-        event.stopPropagation()
-        setUiState((prev) => ({
-          ...prev,
-          activeTool: "music",
-          selectedLayer: {
-            type: "music",
-            id: "music",
-          },
-        }))
-      }}
-      className={`absolute z-10 max-w-[78%] -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing transition-all duration-150 ${
-        uiState.isDragging ? "scale-[1.08]" : "scale-100"
-      } ${
-        isMusicSelected
-          ? "ring-2 ring-pink-400 shadow-xl rounded-2xl"
-          : "opacity-90"
-      }`}
-      style={{
-        left: `${(selectedMusic.x ?? 0.22) * 100}%`,
-        top: `${(selectedMusic.y ?? 0.12) * 100}%`,
-        touchAction: "none",
-      }}
-      onMouseDown={handleMusicStickerMouseDown}
-      onTouchStart={handleMusicStickerTouchStart}
-    >
+    {selectedMusic ? (
       <div
-        className={`pointer-events-none border border-white/10 bg-black/65 backdrop-blur-sm ${
-          selectedMusicStyle === "minimal"
-            ? "rounded-full px-3 py-1.5"
-            : selectedMusicStyle === "bold"
-              ? "rounded-3xl px-4 py-3 shadow-2xl"
-              : "rounded-2xl px-3 py-2 shadow-lg"
+        onClick={(event) => {
+          event.stopPropagation()
+          setUiState((prev) => ({
+            ...prev,
+            activeTool: "music",
+            selectedLayer: {
+              type: "music",
+              id: "music",
+            },
+          }))
+        }}
+        className={`absolute z-10 max-w-[78%] -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing transition-all duration-150 ${
+          uiState.isDragging ? "scale-[1.08]" : "scale-100"
+        } ${
+          isMusicSelected
+            ? "ring-2 ring-pink-400 shadow-xl rounded-2xl"
+            : "opacity-90"
         }`}
+        style={{
+          left: `${(selectedMusic.x ?? 0.22) * 100}%`,
+          top: `${(selectedMusic.y ?? 0.12) * 100}%`,
+          touchAction: "none",
+        }}
+        onMouseDown={handleMusicStickerMouseDown}
+        onTouchStart={handleMusicStickerTouchStart}
       >
-        {selectedMusicStyle === "minimal" ? (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-white">🎵</span>
-            <p className="max-w-[160px] truncate text-xs font-medium text-white">
-              {selectedMusic.title ?? "Selected music"}
-            </p>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            {selectedMusic.artworkUrl ? (
-              <img
-                src={selectedMusic.artworkUrl}
-                alt={selectedMusic.title ?? "Selected music"}
-                className={`object-cover ${
-                  selectedMusicStyle === "bold"
-                    ? "h-12 w-12 rounded-2xl"
-                    : "h-10 w-10 rounded-xl"
-                }`}
-              />
-            ) : (
-              <div
-                className={`flex items-center justify-center bg-white/10 text-white ${
-                  selectedMusicStyle === "bold"
-                    ? "h-12 w-12 rounded-2xl text-base"
-                    : "h-10 w-10 rounded-xl text-sm"
-                }`}
-              >
-                🎵
-              </div>
-            )}
-
-            <div className="min-w-0">
-              <p
-                className={`truncate font-medium uppercase tracking-[0.18em] text-pink-300 ${
-                  selectedMusicStyle === "bold"
-                    ? "text-[10px]"
-                    : "text-[11px]"
-                }`}
-              >
-                Music
-              </p>
-              <p
-                className={`truncate font-semibold text-white ${
-                  selectedMusicStyle === "bold"
-                    ? "text-base"
-                    : "text-sm"
-                }`}
-              >
+        <div
+          className={`pointer-events-none border border-white/10 bg-black/65 backdrop-blur-sm ${
+            selectedMusicStyle === "minimal"
+              ? "rounded-full px-3 py-1.5"
+              : selectedMusicStyle === "bold"
+                ? "rounded-3xl px-4 py-3 shadow-2xl"
+                : "rounded-2xl px-3 py-2 shadow-lg"
+          }`}
+        >
+          {selectedMusicStyle === "minimal" ? (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-white">🎵</span>
+              <p className="max-w-[160px] truncate text-xs font-medium text-white">
                 {selectedMusic.title ?? "Selected music"}
               </p>
-              <p
-                className={`truncate text-zinc-300 ${
-                  selectedMusicStyle === "bold"
-                    ? "text-sm"
-                    : "text-xs"
-                }`}
-              >
-                {selectedMusic.artist ?? ""}
-              </p>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="flex items-center gap-3">
+              {selectedMusic.artworkUrl ? (
+                <img
+                  src={selectedMusic.artworkUrl}
+                  alt={selectedMusic.title ?? "Selected music"}
+                  className={`object-cover ${
+                    selectedMusicStyle === "bold"
+                      ? "h-12 w-12 rounded-2xl"
+                      : "h-10 w-10 rounded-xl"
+                  }`}
+                />
+              ) : (
+                <div
+                  className={`flex items-center justify-center bg-white/10 text-white ${
+                    selectedMusicStyle === "bold"
+                      ? "h-12 w-12 rounded-2xl text-base"
+                      : "h-10 w-10 rounded-xl text-sm"
+                  }`}
+                >
+                  🎵
+                </div>
+              )}
+
+              <div className="min-w-0">
+                <p
+                  className={`truncate font-medium uppercase tracking-[0.18em] text-pink-300 ${
+                    selectedMusicStyle === "bold"
+                      ? "text-[10px]"
+                      : "text-[11px]"
+                  }`}
+                >
+                  Music
+                </p>
+                <p
+                  className={`truncate font-semibold text-white ${
+                    selectedMusicStyle === "bold"
+                      ? "text-base"
+                      : "text-sm"
+                  }`}
+                >
+                  {selectedMusic.title ?? "Selected music"}
+                </p>
+                <p
+                  className={`truncate text-zinc-300 ${
+                    selectedMusicStyle === "bold"
+                      ? "text-sm"
+                      : "text-xs"
+                  }`}
+                >
+                  {selectedMusic.artist ?? ""}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    ) : null}
   </>
 ) : null}
-            </div>
+
+</div>
 
             <div className="mt-4 w-full px-4 md:mx-auto md:max-w-[420px] md:px-0">
               <div className="flex items-end justify-between gap-3">
@@ -1419,10 +1422,10 @@ export function CreateStoryForm({
                     {selectedMusic ? (
                       <div className="rounded-[20px] border border-white/10 bg-white/5 px-4 py-3">
                         <div className="flex items-center gap-3">
-                          {selectedMusic.artworkUrl ? (
+                          {selectedMusic?.artworkUrl ? (
                             <img
                               src={selectedMusic.artworkUrl}
-                              alt={selectedMusic.title ?? "Selected music"}
+                              alt={selectedMusic?.title ?? "Selected music"}
                               className="h-10 w-10 rounded-xl object-cover"
                             />
                           ) : (
@@ -1436,10 +1439,10 @@ export function CreateStoryForm({
                               Selected
                             </p>
                             <p className="truncate text-sm font-semibold text-white">
-                              {selectedMusic.title ?? "Selected music"}
+                              {selectedMusic?.title ?? "Selected music"}
                             </p>
                             <p className="truncate text-xs text-zinc-400">
-                              {selectedMusic.artist ?? ""}
+                              {selectedMusic?.artist ?? ""}
                             </p>
                           </div>
                         </div>

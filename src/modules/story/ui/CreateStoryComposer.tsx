@@ -285,7 +285,7 @@ export function CreateStoryComposer({
                     draft.file?.type.startsWith("video/") ? (
                       <video
                         src={previewUrl}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-contain"
                         style={getFilterStyle(selectedFilterPreset)}
                         autoPlay
                         muted
@@ -296,7 +296,7 @@ export function CreateStoryComposer({
                       <img
                         src={previewUrl}
                         alt="Story preview"
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-contain"
                         style={getFilterStyle(selectedFilterPreset)}
                       />
                     )

@@ -42,7 +42,7 @@ export function AppChrome({
           <AppSidebar />
         </div>
 
-        <main className="min-w-0 flex-1 px-0 pb-32 pt-4 md:px-6 md:pb-10 md:pt-6">
+        <main className="min-w-0 flex-1 px-0 pb-[140px] pt-4 md:px-6 md:pb-10 md:pt-6">
           <div className="mx-auto w-full">
             {children}
           </div>
