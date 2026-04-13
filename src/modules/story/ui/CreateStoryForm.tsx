@@ -738,7 +738,9 @@ export function CreateStoryForm({
                   selectedLayer: null,
                 }))
               }}
-           className="relative w-full aspect-[9/16] overflow-hidden bg-black"
+         className={`relative w-full aspect-[9/16] overflow-hidden ${
+  previewUrl ? "bg-black" : "bg-white"
+}`}
             >
               {previewUrl ? (
                 <div className="absolute inset-0">
