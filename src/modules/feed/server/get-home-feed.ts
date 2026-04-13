@@ -3,6 +3,8 @@ import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed
 
 type MediaType = "image" | "video" | "audio" | "file"
 
+type PostBlockType = "text" | "image" | "video" | "audio" | "file"
+
 export type HomeFeedItem = {
   id: string
   creatorId: string
@@ -16,6 +18,15 @@ export type HomeFeedItem = {
   media?: Array<{
     url: string
     type: MediaType
+  }>
+  blocks?: Array<{
+    id: string
+    postId: string
+    type: PostBlockType
+    content: string | null
+    mediaId: string | null
+    sortOrder: number
+    createdAt: string
   }>
   likesCount: number
   isLiked: boolean
@@ -59,6 +70,15 @@ type PostRow = {
   price: number | null
   created_at: string
   published_at: string | null
+  post_blocks?: Array<{
+    id: string
+    post_id: string
+    type: PostBlockType
+    content: string | null
+    media_id: string | null
+    sort_order: number
+    created_at: string
+  }>
 }
 
 type MediaRow = {
@@ -105,9 +125,25 @@ export async function getHomeFeed(
 
   let publicPostsQuery = supabaseAdmin
     .from("posts")
-    .select(
-      "id, creator_id, title, content, visibility, price, created_at, published_at"
-    )
+    .select(`
+      id,
+      creator_id,
+      title,
+      content,
+      visibility,
+      price,
+      created_at,
+      published_at,
+      post_blocks (
+        id,
+        post_id,
+        type,
+        content,
+        media_id,
+        sort_order,
+        created_at
+      )
+    `)
     .eq("status", "published")
     .eq("visibility", "public")
     .is("deleted_at", null)
@@ -134,24 +170,22 @@ export async function getHomeFeed(
     }
   }
 
-  const creatorIds = Array.from(
-    new Set(postList.map((post) => post.creator_id))
-  )
+  const creatorIds = Array.from(new Set(postList.map((post) => post.creator_id)))
 
   const { data: creators, error: creatorsError } = await supabaseAdmin
     .from("creators")
     .select(`
-    id,
-    user_id,
-    username,
-    display_name,
-    profiles!inner (
       id,
-      is_deactivated,
-      is_delete_pending,
-      deleted_at
-    )
-  `)
+      user_id,
+      username,
+      display_name,
+      profiles!inner (
+        id,
+        is_deactivated,
+        is_delete_pending,
+        deleted_at
+      )
+    `)
     .in("id", creatorIds)
     .eq("status", "active")
     .eq("profiles.is_deactivated", false)
@@ -178,9 +212,7 @@ export async function getHomeFeed(
     }
   }
 
-  const filteredPosts = postList.filter((post) =>
-    creatorMap.has(post.creator_id)
-  )
+  const filteredPosts = postList.filter((post) => creatorMap.has(post.creator_id))
 
   if (filteredPosts.length === 0) {
     return {
@@ -315,6 +347,15 @@ export async function getHomeFeed(
         lockReason: "none",
         price: post.price ?? undefined,
         media,
+        blocks: (post.post_blocks ?? []).map((block) => ({
+          id: block.id,
+          postId: block.post_id,
+          type: block.type,
+          content: block.content,
+          mediaId: block.media_id,
+          sortOrder: block.sort_order,
+          createdAt: block.created_at,
+        })),
         likesCount: likeCountMap.get(post.id) ?? 0,
         isLiked: myLikeSet.has(post.id),
         commentsCount: commentCountMap.get(post.id) ?? 0,
