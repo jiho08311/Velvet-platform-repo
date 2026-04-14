@@ -140,6 +140,11 @@ export function CreatePostForm({
   )
   const [draggingBlockId, setDraggingBlockId] = useState<string | null>(null)
 
+
+const [activeMediaToolByBlock, setActiveMediaToolByBlock] = useState<
+  Record<string, "text" | "filter" | "trim" | null>
+>({})
+
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const previewContainerRef = useRef<HTMLDivElement | null>(null)
   const overlayPinchStartDistanceRef = useRef<number | null>(null)
@@ -157,6 +162,21 @@ export function CreatePostForm({
       }
     }
   }, [])
+
+
+  function getActiveMediaTool(blockId: string) {
+  return activeMediaToolByBlock[blockId] ?? null
+}
+
+function setActiveMediaTool(
+  blockId: string,
+  tool: "text" | "filter" | "trim" | null
+) {
+  setActiveMediaToolByBlock((prev) => ({
+    ...prev,
+    [blockId]: tool,
+  }))
+}
 
   function updateTextBlock(blockId: string, value: string) {
     setBlocks((prev) =>
@@ -827,36 +847,57 @@ export function CreatePostForm({
 
                 <div
                   ref={block.type === "image" ? previewContainerRef : null}
-                  onTouchStart={(event) => {
-                    if (block.type !== "image") return
-                    handleFilterSwipeStart(event.touches[0]?.clientX ?? 0)
-                  }}
-                  onTouchMove={(event) => {
-                    if (block.type !== "image") return
+            onTouchStart={(event) => {
+  if (block.type !== "image") return
+  if (getActiveMediaTool(block.id) !== "filter") return
 
-                    handleFilterSwipeMove(
-                      event.touches[0]?.clientX ?? 0,
-                      block.id,
-                      (block.editorState?.image?.filter ?? "none") as PostFilterPreset
-                    )
-                  }}
-                  onTouchEnd={resetFilterSwipe}
-                  onTouchCancel={resetFilterSwipe}
-                  onMouseDown={(event) => {
-                    if (block.type !== "image") return
-                    handleFilterSwipeStart(event.clientX)
-                  }}
-                  onMouseMove={(event) => {
-                    if (block.type !== "image") return
-                    if ((event.buttons & 1) !== 1) return
+  handleFilterSwipeStart(event.touches[0]?.clientX ?? 0)
+}}
+onTouchMove={(event) => {
+  if (block.type !== "image") return
+  if (getActiveMediaTool(block.id) !== "filter") return
 
-                    handleFilterSwipeMove(
-                      event.clientX,
-                      block.id,
-                      (block.editorState?.image?.filter ?? "none") as PostFilterPreset
-                    )
-                  }}
-                  onMouseUp={resetFilterSwipe}
+  handleFilterSwipeMove(
+    event.touches[0]?.clientX ?? 0,
+    block.id,
+    (block.editorState?.image?.filter ?? "none") as PostFilterPreset
+  )
+}}
+onTouchEnd={() => {
+  if (block.type !== "image") return
+  if (getActiveMediaTool(block.id) !== "filter") return
+
+  resetFilterSwipe()
+}}
+onTouchCancel={() => {
+  if (block.type !== "image") return
+  if (getActiveMediaTool(block.id) !== "filter") return
+
+  resetFilterSwipe()
+}}
+onMouseDown={(event) => {
+  if (block.type !== "image") return
+  if (getActiveMediaTool(block.id) !== "filter") return
+
+  handleFilterSwipeStart(event.clientX)
+}}
+onMouseMove={(event) => {
+  if (block.type !== "image") return
+  if (getActiveMediaTool(block.id) !== "filter") return
+  if ((event.buttons & 1) !== 1) return
+
+  handleFilterSwipeMove(
+    event.clientX,
+    block.id,
+    (block.editorState?.image?.filter ?? "none") as PostFilterPreset
+  )
+}}
+onMouseUp={() => {
+  if (block.type !== "image") return
+  if (getActiveMediaTool(block.id) !== "filter") return
+
+  resetFilterSwipe()
+}}
                   className="relative aspect-[4/5] w-full overflow-hidden bg-zinc-950"
                 >
                   {block.type === "video" ? (
@@ -911,15 +952,24 @@ export function CreatePostForm({
                       </div>
 
                       {block.editorState?.image?.overlayText?.text ? (
-                        <div
-                          onMouseDown={(event) =>
-                            handleOverlayMouseDown(event, block.id)
-                          }
-                          onWheel={(event) => handleOverlayWheel(event, block.id)}
-                          onTouchStart={(event) =>
-                            handleOverlayTouchStart(event, block.id)
-                          }
-                          className="absolute z-10 max-w-[80%] cursor-grab select-none text-center active:cursor-grabbing"
+<div
+  onMouseDown={(event) => {
+    if (getActiveMediaTool(block.id) !== "text") return
+    handleOverlayMouseDown(event, block.id)
+  }}
+  onWheel={(event) => {
+    if (getActiveMediaTool(block.id) !== "text") return
+    handleOverlayWheel(event, block.id)
+  }}
+  onTouchStart={(event) => {
+    if (getActiveMediaTool(block.id) !== "text") return
+    handleOverlayTouchStart(event, block.id)
+  }}
+  className={`absolute z-10 max-w-[80%] select-none text-center ${
+    getActiveMediaTool(block.id) === "text"
+      ? "cursor-grab active:cursor-grabbing"
+      : "pointer-events-none"
+  }`}
                           style={{
                             left: `${block.editorState.image.overlayText.x * 100}%`,
                             top: `${block.editorState.image.overlayText.y * 100}%`,
@@ -938,17 +988,17 @@ export function CreatePostForm({
                         </div>
                       ) : null}
 
-                      {showFilterIndicator ? (
-                        <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full border border-zinc-200 bg-white/90 px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-black backdrop-blur-sm">
-                          {block.editorState?.image?.filter ?? "none"}
-                        </div>
-                      ) : null}
+               {getActiveMediaTool(block.id) === "filter" && showFilterIndicator ? (
+  <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full border border-zinc-200 bg-white/90 px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-black backdrop-blur-sm">
+    {block.editorState?.image?.filter ?? "none"}
+  </div>
+) : null}
 
-                      {!showFilterIndicator ? (
-                        <div className="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 text-[11px] text-zinc-400 opacity-80">
-                          Swipe
-                        </div>
-                      ) : null}
+          {getActiveMediaTool(block.id) === "filter" && !showFilterIndicator ? (
+  <div className="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 text-[11px] text-zinc-400 opacity-80">
+    Swipe
+  </div>
+) : null}
                     </>
                   )}
                 </div>
@@ -964,63 +1014,106 @@ export function CreatePostForm({
                         Add Text
                       </button>
 
-                      {block.editorState?.image?.overlayText ? (
-                        <>
-                          <input
-                            type="text"
-                            value={block.editorState.image.overlayText.text}
-                            onChange={(event) =>
-                              updateImageOverlayText(block.id, event.target.value)
-                            }
-                            placeholder="Write overlay text..."
-                            className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-500"
-                          />
+                      <div className="flex flex-wrap gap-2">
+  <button
+    type="button"
+    onClick={() => setActiveMediaTool(block.id, "text")}
+    className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+      getActiveMediaTool(block.id) === "text"
+        ? "bg-white text-black"
+        : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+    }`}
+  >
+    Text
+  </button>
 
-                          <div className="flex flex-wrap gap-2">
-                            {[
-                              "#FFFFFF",
-                              "#000000",
-                              "#FF0000",
-                              "#00FF00",
-                              "#0000FF",
-                              "#FFFF00",
-                              "#FF00FF",
-                              "#00FFFF",
-                              "#FFA500",
-                              "#800080",
-                            ].map((color) => {
-                              const isActive =
-                                (block.editorState?.image?.overlayText?.color ?? "#ffffff") ===
-                                color
+  <button
+    type="button"
+    onClick={() => setActiveMediaTool(block.id, "filter")}
+    className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+      getActiveMediaTool(block.id) === "filter"
+        ? "bg-white text-black"
+        : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+    }`}
+  >
+    Filter
+  </button>
+</div>
 
-                              return (
-                                <button
-                                  key={color}
-                                  type="button"
-                                  onClick={() => updateImageOverlayColor(block.id, color)}
-                                  className={`h-8 w-8 rounded-full border transition ${
-                                    isActive
-                                      ? "border-white scale-110"
-                                      : "border-zinc-600 hover:scale-105"
-                                  }`}
-                                  style={{ backgroundColor: color }}
-                                  aria-label={`Select color ${color}`}
-                                />
-                              )
-                            })}
-                          </div>
+{block.editorState?.image?.overlayText &&
+getActiveMediaTool(block.id) === "text" ? (
+  <>
+    <input
+      type="text"
+      value={block.editorState.image.overlayText.text}
+      onChange={(event) =>
+        updateImageOverlayText(block.id, event.target.value)
+      }
+      placeholder="Write overlay text..."
+      className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-500"
+    />
 
-                          <p className="text-xs text-zinc-500">
-                            Swipe on the preview to change filters. Drag text to move. Pinch or wheel to resize.
-                          </p>
-                        </>
-                      ) : null}
+    <div className="flex flex-wrap gap-2">
+      {[
+        "#FFFFFF",
+        "#000000",
+        "#FF0000",
+        "#00FF00",
+        "#0000FF",
+        "#FFFF00",
+        "#FF00FF",
+        "#00FFFF",
+        "#FFA500",
+        "#800080",
+      ].map((color) => {
+        const isActive =
+          (block.editorState?.image?.overlayText?.color ?? "#ffffff") === color
+
+        return (
+          <button
+            key={color}
+            type="button"
+            onClick={() => updateImageOverlayColor(block.id, color)}
+            className={`h-8 w-8 rounded-full border transition ${
+              isActive
+                ? "border-white scale-110"
+                : "border-zinc-600 hover:scale-105"
+            }`}
+            style={{ backgroundColor: color }}
+            aria-label={`Select color ${color}`}
+          />
+        )
+      })}
+    </div>
+
+    <p className="text-xs text-zinc-500">
+      Drag text to move. Pinch or wheel to resize.
+    </p>
+  </>
+) : null}
                     </div>
                   </div>
                 ) : null}
 
                 {block.type === "video" ? (
                   <div className="space-y-3 border-t border-zinc-800 bg-zinc-950/80 p-3">
+
+<div className="flex flex-wrap gap-2">
+  <button
+    type="button"
+    onClick={() => setActiveMediaTool(block.id, "trim")}
+    className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+      getActiveMediaTool(block.id) === "trim"
+        ? "bg-white text-black"
+        : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+    }`}
+  >
+    Trim
+  </button>
+</div>
+
+
+
                     <button
                       type="button"
                       onClick={() =>
@@ -1036,12 +1129,14 @@ export function CreatePostForm({
                         : "Muted"}
                     </button>
 
-                    <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-3">
-                      <StoryVideoTrimField
-                        file={block.file ?? null}
-                        onChange={(nextTrim) => handleVideoTrimChange(block.id, nextTrim)}
-                      />
-                    </div>
+           {getActiveMediaTool(block.id) === "trim" ? (
+  <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-3">
+    <StoryVideoTrimField
+      file={block.file ?? null}
+      onChange={(nextTrim) => handleVideoTrimChange(block.id, nextTrim)}
+    />
+  </div>
+) : null}
                   </div>
                 ) : null}
               </div>
