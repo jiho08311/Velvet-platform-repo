@@ -82,6 +82,8 @@ export function StoryViewer({
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const lastMarkedStoryIdRef = useRef<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+    const timerRef = useRef<number | null>(null)
+  const timerStartedAtRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (open) {
@@ -114,11 +116,25 @@ export function StoryViewer({
 
   function handlePrev() {
     if (isFirst) return
+
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+
+    timerStartedAtRef.current = null
     setCurrentIndex((prev) => prev - 1)
     setProgress(0)
   }
 
   async function handleNext() {
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+
+    timerStartedAtRef.current = null
+
     await markSeen()
 
     if (isLast) {
@@ -176,13 +192,47 @@ export function StoryViewer({
 
   useEffect(() => {
     if (!open || !story) return
+
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+
+    timerStartedAtRef.current = null
+    setProgress(0)
+  }, [open, story?.id])
+  const musicPreviewUrl = story?.editorState?.music?.previewUrl ?? null
+
+
+
+
+
+    useEffect(() => {
+    if (!open || !story) return
     if (!shouldUseFixedTimer) return
-    if (isPaused) return
 
-    const startedAt = Date.now() - (progress / 100) * IMAGE_STORY_DURATION_MS
+    if (isPaused) {
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current)
+        timerRef.current = null
+      }
+      return
+    }
 
-    const timer = window.setInterval(() => {
-      const elapsed = Date.now() - startedAt
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+
+    if (timerStartedAtRef.current === null) {
+      timerStartedAtRef.current =
+        Date.now() - (progress / 100) * IMAGE_STORY_DURATION_MS
+    }
+
+    timerRef.current = window.setInterval(() => {
+      if (timerStartedAtRef.current === null) return
+
+      const elapsed = Date.now() - timerStartedAtRef.current
       const nextProgress = Math.min(
         100,
         (elapsed / IMAGE_STORY_DURATION_MS) * 100
@@ -191,23 +241,26 @@ export function StoryViewer({
       setProgress(nextProgress)
 
       if (nextProgress >= 100) {
-        window.clearInterval(timer)
+        if (timerRef.current) {
+          window.clearInterval(timerRef.current)
+          timerRef.current = null
+        }
+
+        timerStartedAtRef.current = null
         void handleNext()
       }
     }, 50)
 
-    return () => window.clearInterval(timer)
-  }, [
-    currentIndex,
-    handleNext,
-    isPaused,
-    open,
-    progress,
-    shouldUseFixedTimer,
-    story,
-  ])
+    return () => {
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current)
+        timerRef.current = null
+      }
+    }
+  }, [currentIndex, handleNext, isPaused, open, shouldUseFixedTimer, story])
 
-  const musicPreviewUrl = story?.editorState?.music?.previewUrl ?? null
+
+  
 
   useEffect(() => {
     setHasAudioError(false)

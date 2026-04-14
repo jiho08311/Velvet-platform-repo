@@ -32,14 +32,14 @@ export default async function NewPostPage() {
 
   return (
     <main className="w-full px-0 py-8">
-      <div className="mb-6 space-y-2"> 
+      <div className="mb-6 space-y-2 px-0"> 
         <p className="text-xs font-medium uppercase tracking-[0.22em] text-pink-400">
           Create
         </p>
         <h1 className="text-2xl font-semibold text-white sm:text-3xl">
           Start a new post
         </h1>
-        <p className="max-w-2xl text-sm leading-6 text-zinc-400 sm:text-base">
+        <p className="text-sm leading-6 text-zinc-400 sm:text-base">
           Write naturally, mix text with media, and build the post in the order
           you want your fans to see it.
         </p>
