@@ -487,7 +487,7 @@ return (
 
       return (
         <div className="overflow-hidden">
-          <div className="aspect-[4/5] w-full overflow-hidden">
+          <div className="aspect-[4/5] lg:aspect-[4/4.6] w-full overflow-hidden">
    {renderSingleMedia(
   item,
   "Post media",
@@ -509,7 +509,7 @@ return (
               key={`${item.id ?? item.url}-${index}`}
               className="min-w-full snap-center"
             >
-              <div className="aspect-[4/5] w-full overflow-hidden">
+              <div className="aspect-[4/5] lg:aspect-[4/4.6] w-full overflow-hidden">
        {renderSingleMedia(
   item,
   `Post media ${index + 1}`,
