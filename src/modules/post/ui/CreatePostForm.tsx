@@ -57,7 +57,7 @@ function clampPosition(value: number) {
 }
 
 function clampScale(value: number) {
-  return Math.min(4, Math.max(0.8, value))
+  return Math.min(6, Math.max(0.8, value))
 }
 
 function getTouchDistance(
@@ -1156,13 +1156,7 @@ getActiveMediaTool(block.id) === "text" ? (
             <option value="subscribers">Subscribers</option>
           </select>
 
-          <button
-            type="button"
-            onClick={addTextBlock}
-            className="inline-flex h-12 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 px-5 text-sm font-medium text-white transition hover:border-zinc-600 hover:bg-zinc-800"
-          >
-            Add text
-          </button>
+ 
 
           <input
             ref={fileInputRef}

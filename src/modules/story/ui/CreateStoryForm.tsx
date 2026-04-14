@@ -646,14 +646,16 @@ export function CreateStoryForm({
         }
 
         const currentDistance = getTouchDistance(touchA, touchB)
-        const ratio = currentDistance / startDistance
+const ratio = currentDistance / startDistance
+const speed = 1.6 // 🔥 속도 조절
+
 
         setUiState((prev) => ({
           ...prev,
           isDragging: false,
         }))
 
-        handleChangeTextOverlayScale(safeOverlayId, startScale * ratio)
+    handleChangeTextOverlayScale(safeOverlayId, startScale * Math.pow(ratio, speed))
         return
       }
 
