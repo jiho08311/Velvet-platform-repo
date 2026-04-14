@@ -480,7 +480,7 @@ function setActiveMediaTool(
     if (!block || block.type !== "image") return
 
     const currentScale = block.editorState?.image?.overlayText?.scale ?? 1
-    const nextScale = currentScale + direction * 0.08
+    const nextScale = currentScale + direction * 0.12
 
     updateImageOverlayScale(blockId, nextScale)
   }
@@ -901,35 +901,39 @@ onMouseUp={() => {
                   className="relative aspect-[4/5] w-full overflow-hidden bg-zinc-950"
                 >
                   {block.type === "video" ? (
-                    <video
-                      src={block.previewUrl}
-                      controls
-                      muted={block.editorState?.video?.muted ?? true}
-                      onLoadedMetadata={(event) => {
-                        const trimStart = block.editorState?.video?.trimStart ?? 0
-                        if (trimStart > 0) {
-                          event.currentTarget.currentTime = trimStart
-                        }
-                      }}
-                      onTimeUpdate={(event) => {
-                        const video = event.currentTarget
-                        const trimStart = block.editorState?.video?.trimStart ?? 0
-                        const trimEnd = block.editorState?.video?.trimEnd ?? null
+           <video
+  src={block.previewUrl}
+  autoPlay
+  loop
+  playsInline
+  muted={block.editorState?.video?.muted ?? true}
+  preload="metadata"
+  onLoadedMetadata={(event) => {
+    const trimStart = block.editorState?.video?.trimStart ?? 0
+    if (trimStart > 0) {
+      event.currentTarget.currentTime = trimStart
+    }
+  }}
+  onTimeUpdate={(event) => {
+    const video = event.currentTarget
+    const trimStart = block.editorState?.video?.trimStart ?? 0
+    const trimEnd = block.editorState?.video?.trimEnd ?? null
 
-                        if (trimStart > 0 && video.currentTime < trimStart) {
-                          video.currentTime = trimStart
-                        }
+    if (trimStart > 0 && video.currentTime < trimStart) {
+      video.currentTime = trimStart
+    }
 
-                        if (
-                          trimEnd !== null &&
-                          trimEnd > trimStart &&
-                          video.currentTime >= trimEnd
-                        ) {
-                          video.pause()
-                        }
-                      }}
-                      className="h-full w-full object-cover"
-                    />
+    if (
+      trimEnd !== null &&
+      trimEnd > trimStart &&
+      video.currentTime >= trimEnd
+    ) {
+      video.currentTime = trimStart
+      void video.play()
+    }
+  }}
+  className="h-full w-full object-cover"
+/>
                   ) : (
                     <>
                       <div
@@ -1006,18 +1010,15 @@ onMouseUp={() => {
                 {block.type === "image" ? (
                   <div className="border-t border-zinc-800 bg-zinc-950/80 p-3 pt-0">
                     <div className="mt-3 space-y-3">
-                      <button
-                        type="button"
-                        onClick={() => enableImageOverlayText(block.id)}
-                        className="rounded-full bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:bg-zinc-700"
-                      >
-                        Add Text
-                      </button>
+                    
 
                       <div className="flex flex-wrap gap-2">
   <button
     type="button"
-    onClick={() => setActiveMediaTool(block.id, "text")}
+    onClick={() => {
+  enableImageOverlayText(block.id)
+  setActiveMediaTool(block.id, "text")
+}}
     className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
       getActiveMediaTool(block.id) === "text"
         ? "bg-white text-black"
@@ -1096,48 +1097,51 @@ getActiveMediaTool(block.id) === "text" ? (
                 ) : null}
 
                 {block.type === "video" ? (
-                  <div className="space-y-3 border-t border-zinc-800 bg-zinc-950/80 p-3">
 
-<div className="flex flex-wrap gap-2">
-  <button
-    type="button"
-    onClick={() => setActiveMediaTool(block.id, "trim")}
-    className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-      getActiveMediaTool(block.id) === "trim"
-        ? "bg-white text-black"
-        : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-    }`}
-  >
-    Trim
-  </button>
+
+<div className="space-y-3 border-t border-zinc-800 bg-zinc-950/80 p-3">
+  <div className="flex flex-wrap items-center gap-2">
+    <button
+      type="button"
+      onClick={() => setActiveMediaTool(block.id, "trim")}
+      className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+        getActiveMediaTool(block.id) === "trim"
+          ? "bg-white text-black"
+          : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+      }`}
+    >
+      Trim
+    </button>
+
+    <button
+      type="button"
+      onClick={() =>
+        updateVideoMuted(
+          block.id,
+          !(block.editorState?.video?.muted ?? true)
+        )
+      }
+      className="rounded-full bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:bg-zinc-700"
+    >
+      {(block.editorState?.video?.muted ?? true)
+        ? "Sound On"
+        : "Muted"}
+    </button>
+  </div>
+
+  {getActiveMediaTool(block.id) === "trim" ? (
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-3">
+      <StoryVideoTrimField
+        file={block.file ?? null}
+        onChange={(nextTrim) =>
+          handleVideoTrimChange(block.id, nextTrim)
+        }
+      />
+    </div>
+  ) : null}
 </div>
 
 
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        updateVideoMuted(
-                          block.id,
-                          !(block.editorState?.video?.muted ?? true)
-                        )
-                      }
-                      className="rounded-full bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:bg-zinc-700"
-                    >
-                      {(block.editorState?.video?.muted ?? true)
-                        ? "Sound On"
-                        : "Muted"}
-                    </button>
-
-           {getActiveMediaTool(block.id) === "trim" ? (
-  <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-3">
-    <StoryVideoTrimField
-      file={block.file ?? null}
-      onChange={(nextTrim) => handleVideoTrimChange(block.id, nextTrim)}
-    />
-  </div>
-) : null}
-                  </div>
                 ) : null}
               </div>
             )}

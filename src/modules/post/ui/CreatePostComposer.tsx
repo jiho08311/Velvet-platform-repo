@@ -100,7 +100,7 @@ export function CreatePostComposer({
         </div>
       ) : null}
 
-      <div className="border-b border-zinc-800 px-4 py-4">
+      <div className="border-b border-zinc-800 px-0 py-4">
         <CreatePostForm
           isSubmitting={isPending}
           onSubmitPost={({ visibility, files, blocks }) => {
