@@ -23,11 +23,13 @@ type CreatePostWithMediaWorkflowInput = {
   visibility?: "public" | "subscribers" | "paid"
   price?: number
   files: UploadedFileInput[]
-  blocks?: {
-    type: "text" | "image" | "video" | "audio" | "file"
-    content?: string | null
-    sortOrder: number
-  }[]
+ blocks?: {
+  type: "text" | "image" | "video" | "audio" | "file"
+  content?: string | null
+  sortOrder: number
+  mediaId?: string | null
+  editorState?: CreatePostBlockInput["editorState"]
+}[]
 }
 
 type MediaType = "image" | "video" | "audio" | "file"
@@ -365,11 +367,12 @@ export async function createPostWithMediaWorkflow({
           continue
         }
 
-        blocksToInsert.push({
-          type: "text",
-          content: trimmedContent,
-          sortOrder: block.sortOrder,
-        })
+     blocksToInsert.push({
+  type: "text",
+  content: trimmedContent,
+  sortOrder: block.sortOrder,
+  editorState: block.editorState ?? null,
+})
 
         continue
       }
@@ -418,11 +421,12 @@ export async function createPostWithMediaWorkflow({
         storagePath: mediaRow.storagePath,
       })
 
-      blocksToInsert.push({
-        type,
-        mediaId: mediaRow.id,
-        sortOrder: block.sortOrder,
-      })
+    blocksToInsert.push({
+  type,
+  mediaId: mediaRow.id,
+  sortOrder: block.sortOrder,
+  editorState: block.editorState ?? null,
+})
     }
   } else {
     for (const [index, file] of files.entries()) {

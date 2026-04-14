@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
-
+import type { PostBlockEditorState } from "../types"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
@@ -23,6 +23,7 @@ blocks?: {
   content?: string | null
   sortOrder: number
   mediaId?: string | null
+  editorState?: PostBlockEditorState
 }[]
 }
 
@@ -165,13 +166,14 @@ export async function updatePostAction({
     .eq("post_id", postId)
 
   if (blocks.length > 0) {
-    const insertData = blocks.map((block) => ({
-      post_id: postId,
-      type: block.type,
-      content: block.content ?? null,
-      media_id: block.mediaId ?? null,
-      sort_order: block.sortOrder,
-    }))
+   const insertData = blocks.map((block) => ({
+  post_id: postId,
+  type: block.type,
+  content: block.content ?? null,
+  media_id: block.mediaId ?? null,
+  sort_order: block.sortOrder,
+  editor_state: block.editorState ?? null,
+}))
 
     const { error: insertBlocksError } = await supabaseAdmin
       .from("post_blocks")

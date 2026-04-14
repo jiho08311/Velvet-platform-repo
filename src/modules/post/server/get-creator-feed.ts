@@ -2,6 +2,9 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
 import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 import { checkSubscription } from "@/modules/subscription/server/check-subscription"
+import type { PostBlockEditorState } from "../types"
+import type { PostBlockEditorState } from "../types"
+
 
 type CreatorFeedPost = {
   id: string
@@ -20,6 +23,7 @@ type CreatorFeedPost = {
     mediaId: string | null
     sortOrder: number
     createdAt: string
+    editorState: PostBlockEditorState | null
   }[]
   price: number
   isLocked: boolean
@@ -71,6 +75,7 @@ type PostBlockRow = {
   media_id: string | null
   sort_order: number
   created_at: string
+  editor_state: PostBlockEditorState | null
 }
 
 function resolveMediaType(row: MediaRow): MediaType {
@@ -232,7 +237,7 @@ export async function getCreatorFeed({
 
   const { data: blockRows, error: blockRowsError } = await supabaseAdmin
     .from("post_blocks")
-    .select("id, post_id, type, content, media_id, sort_order, created_at")
+    .select("id, post_id, type, content, media_id, sort_order, created_at, editor_state")
     .in("post_id", postIds)
     .order("sort_order", { ascending: true })
     .returns<PostBlockRow[]>()
@@ -274,6 +279,7 @@ export async function getCreatorFeed({
       mediaId: block.media_id,
       sortOrder: block.sort_order,
       createdAt: block.created_at,
+      editorState: block.editor_state ?? null,
     })
 
     blocksMap.set(block.post_id, current)

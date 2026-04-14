@@ -14,13 +14,14 @@ export async function getPostBlocks(
     throw error
   }
 
-  return (data ?? []).map((row) => ({
-    id: row.id,
-    postId: row.post_id,
-    type: row.type,
-    content: row.content,
-    mediaId: row.media_id,
-    sortOrder: row.sort_order,
-    createdAt: row.created_at,
-  }))
+return (data ?? []).map((row) => ({
+  id: row.id,
+  postId: row.post_id,
+  type: row.type,
+  content: row.content,
+  mediaId: row.media_id,
+  sortOrder: row.sort_order,
+  createdAt: row.created_at,
+  editorState: row.editor_state ?? null,
+}))
 }

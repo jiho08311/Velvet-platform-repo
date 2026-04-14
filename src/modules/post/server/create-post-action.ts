@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-
+import type { PostBlockEditorState } from "../types"
 import { createPostWithMediaWorkflow } from "@/workflows/create-post-with-media-workflow"
 
 type UploadedFileInput = {
@@ -24,6 +24,7 @@ type CreatePostActionInput = {
     content?: string | null
     sortOrder: number
      mediaId?: string | null
+     editorState?: PostBlockEditorState
   }[]
 }
 

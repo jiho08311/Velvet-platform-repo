@@ -15,6 +15,7 @@ export async function createPostBlocks(
     content: block.content ?? null,
     media_id: block.mediaId ?? null,
     sort_order: block.sortOrder,
+    editor_state: block.editorState ?? null,
   }))
 
   const { error } = await supabaseAdmin

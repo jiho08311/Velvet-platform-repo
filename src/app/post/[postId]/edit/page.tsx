@@ -77,19 +77,20 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
 <CreatePostForm
   isSubmitting={false}
   initialBlocks={post.blocks
-    .filter(
-      (
-        b
-      ): b is {
-        id: string
-        postId: string
-        type: "text" | "image" | "video"
-        content: string | null
-        mediaId: string | null
-        sortOrder: number
-        createdAt: string
-      } => b.type === "text" || b.type === "image" || b.type === "video"
-    )
+.filter(
+  (
+    b
+  ): b is {
+    id: string
+    postId: string
+    type: "text" | "image" | "video"
+    content: string | null
+    mediaId: string | null
+    sortOrder: number
+    createdAt: string
+    editorState: import("@/modules/post/types").PostBlockEditorState
+  } => b.type === "text" || b.type === "image" || b.type === "video"
+)
     .map((b) => ({
       type: b.type,
       content: b.content,
@@ -98,6 +99,7 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
         b.type !== "text"
           ? post.media.find((m) => m.id === b.mediaId)?.url ?? null
           : null,
+          editorState: b.editorState ?? null,
     }))}
   initialVisibility={
     fixedVisibility === "public" ? "public" : "subscribers"
