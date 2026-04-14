@@ -1,6 +1,7 @@
 "use client"
 
 import { FormEvent, useEffect, useRef, useState } from "react"
+import { StoryVideoTrimField } from "@/modules/media/ui/StoryVideoTrimField"
 import type { PostBlockEditorState } from "@/modules/post/types"
 
 type PostVisibility = "public" | "subscribers"
@@ -277,7 +278,7 @@ function resetFilterSwipe() {
       y: block.editorState?.image?.overlayText?.y ?? 0.15,
       color: block.editorState?.image?.overlayText?.color ?? "#ffffff",
       fontSize: block.editorState?.image?.overlayText?.fontSize ?? "md",
-      scale: block.editorState?.image?.overlayText?.scale ?? 1,
+      scale: block.editorState?.image?.overlayText?.scale ?? 2,
     } as const
   }
 
@@ -602,6 +603,41 @@ function resetFilterSwipe() {
       })
     )
   }
+
+
+function handleVideoTrimChange(
+  blockId: string,
+  nextTrim: {
+    duration: number
+    requiresTrim: boolean
+    startTime: number
+  }
+) {
+  setBlocks((prev) =>
+    prev.map((block) => {
+      if (block.id !== blockId) return block
+      if (block.type !== "video") return block
+
+      const trimStart = nextTrim.startTime
+      const trimEnd = nextTrim.requiresTrim
+        ? nextTrim.startTime + nextTrim.duration
+        : null
+
+      return {
+        ...block,
+        editorState: {
+          ...block.editorState,
+          video: {
+            trimStart,
+            trimEnd,
+            muted: block.editorState?.video?.muted ?? true,
+          },
+        },
+      }
+    })
+  )
+}
+
 
   function addTextBlock() {
     setBlocks((prev) => [
@@ -965,40 +1001,38 @@ function resetFilterSwipe() {
                               className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-500"
                             />
 
-                            <div className="flex flex-wrap gap-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updateImageOverlayColor(block.id, "#ffffff")
-                                }
-                                className="h-7 w-7 rounded-full border border-white/30 bg-white"
-                                aria-label="White text"
-                              />
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updateImageOverlayColor(block.id, "#f472b6")
-                                }
-                                className="h-7 w-7 rounded-full border border-white/10 bg-pink-400"
-                                aria-label="Pink text"
-                              />
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updateImageOverlayColor(block.id, "#fde047")
-                                }
-                                className="h-7 w-7 rounded-full border border-white/10 bg-yellow-300"
-                                aria-label="Yellow text"
-                              />
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updateImageOverlayColor(block.id, "#60a5fa")
-                                }
-                                className="h-7 w-7 rounded-full border border-white/10 bg-blue-400"
-                                aria-label="Blue text"
-                              />
-                            </div>
+                           <div className="flex flex-wrap gap-2">
+  {[
+    "#FFFFFF",
+    "#000000",
+    "#FF0000",
+    "#00FF00",
+    "#0000FF",
+    "#FFFF00",
+    "#FF00FF",
+    "#00FFFF",
+    "#FFA500",
+    "#800080",
+  ].map((color) => {
+    const isActive =
+      (block.editorState?.image?.overlayText?.color ?? "#ffffff") === color
+
+    return (
+      <button
+        key={color}
+        type="button"
+        onClick={() => updateImageOverlayColor(block.id, color)}
+        className={`h-8 w-8 rounded-full border transition ${
+          isActive
+            ? "border-white scale-110"
+            : "border-zinc-600 hover:scale-105"
+        }`}
+        style={{ backgroundColor: color }}
+        aria-label={`Select color ${color}`}
+      />
+    )
+  })}
+</div>
 
                        <p className="text-xs text-zinc-500">
   Swipe on the preview to change filters. Drag text to move. Pinch or wheel to resize.
@@ -1026,49 +1060,13 @@ function resetFilterSwipe() {
                         ? "Sound On"
                         : "Muted"}
                     </button>
+<div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-3">
+  <StoryVideoTrimField
+    file={block.file ?? null}
+    onChange={(nextTrim) => handleVideoTrimChange(block.id, nextTrim)}
+  />
+</div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <label className="space-y-1">
-                        <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500">
-                          Trim Start
-                        </span>
-                        <input
-                          type="number"
-                          min={0}
-                          step={0.1}
-                          value={block.editorState?.video?.trimStart ?? 0}
-                          onChange={(event) =>
-                            updateVideoTrimStart(
-                              block.id,
-                              Number(event.target.value) || 0
-                            )
-                          }
-                          className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none"
-                        />
-                      </label>
-
-                      <label className="space-y-1">
-                        <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500">
-                          Trim End
-                        </span>
-                        <input
-                          type="number"
-                          min={0}
-                          step={0.1}
-                          value={block.editorState?.video?.trimEnd ?? ""}
-                          onChange={(event) =>
-                            updateVideoTrimEnd(
-                              block.id,
-                              event.target.value === ""
-                                ? null
-                                : Number(event.target.value) || null
-                            )
-                          }
-                          placeholder="End"
-                          className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-500"
-                        />
-                      </label>
-                    </div>
                   </div>
                 ) : null}
               </div>
