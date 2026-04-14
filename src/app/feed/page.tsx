@@ -146,8 +146,8 @@ export default async function FeedPage() {
 
   return (
     <main className="min-h-screen">
-      <div className="grid w-full grid-cols-1 gap-6 px-0 py-2 sm:px-0 lg:grid-cols-[680px_280px] lg:justify-center">
-        <section className="min-w-0 w-full max-w-[680px] mx-auto lg:mx-0 space-y-3">
+      <div className="grid w-full grid-cols-1 gap-6 px-0 py-2 sm:px-0 lg:grid-cols-[632px_320px] lg:justify-center lg:gap-16 lg:pl-16 xl:gap-20 xl:pl-24">
+        <section className="min-w-0 w-full max-w-[632px] mx-auto lg:mx-0 lg:justify-self-end space-y-3">
 
           <StoryList
             stories={stories}
@@ -187,7 +187,7 @@ export default async function FeedPage() {
         </section>
 
         <aside className="hidden lg:block">
-          <div className="sticky top-24 space-y-4">
+          <div className="sticky top-24 space-y-4 ml-2">
             <Card className="border-zinc-800 bg-zinc-900/70 p-4">
               <div className="space-y-4">
                 <h2 className="text-base font-semibold text-white">
