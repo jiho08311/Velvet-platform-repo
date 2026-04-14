@@ -412,7 +412,7 @@ if (item.type === "video") {
           video.pause()
         }
       }}
-    className={`w-full h-auto object-cover transition-opacity duration-300 ${
+className={`h-full w-full object-cover transition-opacity duration-300 ${
   isVideoReady ? "opacity-100" : "opacity-0"
 }`}
     />
@@ -451,7 +451,7 @@ return (
   src={mediaUrl}
   alt={alt}
   style={getFilterStyle(block?.editorState?.image?.filter)}
-  className="w-full h-auto object-cover transition duration-300 group-hover:scale-[1.03]"
+  className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
 />
 
     {block?.editorState?.image?.overlayText?.text ? (
@@ -487,7 +487,7 @@ return (
 
       return (
         <div className="overflow-hidden">
-          <div className="w-full overflow-hidden">
+          <div className="aspect-[91/100] w-full overflow-hidden">
    {renderSingleMedia(
   item,
   "Post media",
@@ -509,7 +509,7 @@ return (
               key={`${item.id ?? item.url}-${index}`}
               className="min-w-full snap-center"
             >
-              <div className="w-full overflow-hidden">
+              <div className="aspect-[91/100] w-full overflow-hidden">
        {renderSingleMedia(
   item,
   `Post media ${index + 1}`,
