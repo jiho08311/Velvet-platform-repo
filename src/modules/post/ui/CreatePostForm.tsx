@@ -139,7 +139,7 @@ export function CreatePostForm({
     initialVisibility ?? "subscribers"
   )
   const [draggingBlockId, setDraggingBlockId] = useState<string | null>(null)
-
+const [dropTargetBlockId, setDropTargetBlockId] = useState<string | null>(null)
 
 const [activeMediaToolByBlock, setActiveMediaToolByBlock] = useState<
   Record<string, "text" | "filter" | "trim" | null>
@@ -660,14 +660,24 @@ function setActiveMediaTool(
     setDraggingBlockId(blockId)
   }
 
-  function handleDragEnd() {
-    setDraggingBlockId(null)
+function handleDragEnd() {
+  setDraggingBlockId(null)
+  setDropTargetBlockId(null)
+}
+
+function handleDragOver(
+  event: React.DragEvent<HTMLDivElement>,
+  targetBlockId: string
+) {
+  event.preventDefault()
+
+  if (!draggingBlockId || draggingBlockId === targetBlockId) {
+    setDropTargetBlockId(null)
+    return
   }
 
-  function handleDragOver(event: React.DragEvent<HTMLDivElement>) {
-    event.preventDefault()
-  }
-
+  setDropTargetBlockId(targetBlockId)
+}
   function handleDrop(targetBlockId: string) {
     if (!draggingBlockId || draggingBlockId === targetBlockId) {
       setDraggingBlockId(null)
@@ -681,9 +691,9 @@ function setActiveMediaTool(
       setDraggingBlockId(null)
       return
     }
-
-    moveBlock(fromIndex, toIndex)
-    setDraggingBlockId(null)
+moveBlock(fromIndex, toIndex)
+setDraggingBlockId(null)
+setDropTargetBlockId(null)
   }
 
   function removeBlock(blockId: string) {
@@ -766,10 +776,15 @@ function setActiveMediaTool(
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="space-y-4">
         {blocks.map((block, index) => (
-          <div
-            key={block.id}
-            onDragOver={handleDragOver}
-            onDrop={() => handleDrop(block.id)}
+        <div
+  key={block.id}
+  onDragOver={(event) => handleDragOver(event, block.id)}
+  onDrop={() => handleDrop(block.id)}
+  onDragLeave={() => {
+  if (dropTargetBlockId === block.id) {
+    setDropTargetBlockId(null)
+  }
+}}
             className={`space-y-3 rounded-[28px] border p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition ${
               draggingBlockId === block.id
                 ? "border-pink-500/60 bg-zinc-900/80"
@@ -791,7 +806,11 @@ function setActiveMediaTool(
                   draggable
                   onDragStart={() => handleDragStart(block.id)}
                   onDragEnd={handleDragEnd}
-                  className="inline-flex h-9 w-9 cursor-grab items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-sm text-white transition hover:bg-zinc-800 active:cursor-grabbing"
+                  className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-sm text-white transition hover:bg-zinc-800 ${
+  draggingBlockId === block.id
+    ? "cursor-grabbing"
+    : "cursor-grab active:cursor-grabbing"
+}`}
                   aria-label="Drag block"
                   title="Drag block"
                 >
@@ -1177,6 +1196,15 @@ getActiveMediaTool(block.id) === "text" ? (
             }}
             className="hidden"
           />
+
+<button
+  type="button"
+  onClick={addTextBlock}
+  className="inline-flex h-12 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-white transition hover:bg-zinc-800"
+>
+  Text
+</button>
+
 
           <button
             type="button"
