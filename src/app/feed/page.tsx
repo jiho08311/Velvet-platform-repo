@@ -146,7 +146,7 @@ export default async function FeedPage() {
 
   return (
     <main className="min-h-screen">
-      <div className="grid w-full grid-cols-1 gap-6 px-0 py-2 sm:px-0 lg:grid-cols-[632px_320px] lg:justify-center lg:gap-16 lg:pl-16 xl:gap-20 xl:pl-24">
+      <div className="grid w-full grid-cols-1 gap-6 px-0 py-2 sm:px-0 lg:grid-cols-[632px_320px] lg:justify-center lg:gap-16 lg:pl-20 xl:gap-20 xl:pl-28">
         <section className="min-w-0 w-full max-w-[632px] mx-auto lg:mx-0 lg:justify-self-end space-y-3">
 
           <StoryList
