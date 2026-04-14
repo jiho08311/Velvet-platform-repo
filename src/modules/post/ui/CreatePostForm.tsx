@@ -145,19 +145,19 @@ export function CreatePostForm({
   const overlayPinchStartDistanceRef = useRef<number | null>(null)
   const overlayPinchStartScaleRef = useRef<number | null>(null)
   const filterSwipeStartXRef = useRef<number | null>(null)
-const filterSwipeTriggeredRef = useRef(false)
-const filterIndicatorTimeoutRef = useRef<number | null>(null)
-const [showFilterIndicator, setShowFilterIndicator] = useState(false)
-const [filterSwipeOffsetX, setFilterSwipeOffsetX] = useState(0)
+  const filterSwipeTriggeredRef = useRef(false)
+  const filterIndicatorTimeoutRef = useRef<number | null>(null)
+  const [showFilterIndicator, setShowFilterIndicator] = useState(false)
+  const [filterSwipeOffsetX, setFilterSwipeOffsetX] = useState(0)
 
-
-useEffect(() => {
-  return () => {
-    if (filterIndicatorTimeoutRef.current) {
-      window.clearTimeout(filterIndicatorTimeoutRef.current)
+  useEffect(() => {
+    return () => {
+      if (filterIndicatorTimeoutRef.current) {
+        window.clearTimeout(filterIndicatorTimeoutRef.current)
+      }
     }
-  }
-}, [])
+  }, [])
+
   function updateTextBlock(blockId: string, value: string) {
     setBlocks((prev) =>
       prev.map((block) =>
@@ -189,87 +189,86 @@ useEffect(() => {
     )
   }
 
-
   function showActiveFilterIndicator() {
-  setShowFilterIndicator(true)
+    setShowFilterIndicator(true)
 
-  if (filterIndicatorTimeoutRef.current) {
-    window.clearTimeout(filterIndicatorTimeoutRef.current)
+    if (filterIndicatorTimeoutRef.current) {
+      window.clearTimeout(filterIndicatorTimeoutRef.current)
+    }
+
+    filterIndicatorTimeoutRef.current = window.setTimeout(() => {
+      setShowFilterIndicator(false)
+    }, 900)
   }
 
-  filterIndicatorTimeoutRef.current = window.setTimeout(() => {
-    setShowFilterIndicator(false)
-  }, 900)
-}
+  function moveImageFilterBy(
+    blockId: string,
+    currentPreset: PostFilterPreset,
+    direction: "next" | "prev"
+  ) {
+    const currentIndex = FILTER_PRESETS.indexOf(currentPreset)
+    const safeCurrentIndex = currentIndex >= 0 ? currentIndex : 0
 
-function moveImageFilterBy(
-  blockId: string,
-  currentPreset: PostFilterPreset,
-  direction: "next" | "prev"
-) {
-  const currentIndex = FILTER_PRESETS.indexOf(currentPreset)
-  const safeCurrentIndex = currentIndex >= 0 ? currentIndex : 0
+    const nextIndex =
+      direction === "next"
+        ? Math.min(FILTER_PRESETS.length - 1, safeCurrentIndex + 1)
+        : Math.max(0, safeCurrentIndex - 1)
 
-  const nextIndex =
-    direction === "next"
-      ? Math.min(FILTER_PRESETS.length - 1, safeCurrentIndex + 1)
-      : Math.max(0, safeCurrentIndex - 1)
+    const nextPreset = FILTER_PRESETS[nextIndex]
 
-  const nextPreset = FILTER_PRESETS[nextIndex]
+    if (nextPreset === currentPreset) {
+      showActiveFilterIndicator()
+      return
+    }
 
-  if (nextPreset === currentPreset) {
+    updateImageFilter(blockId, nextPreset)
     showActiveFilterIndicator()
-    return
   }
 
-  updateImageFilter(blockId, nextPreset)
-  showActiveFilterIndicator()
-}
-
-function handleFilterSwipeStart(clientX: number) {
-  filterSwipeStartXRef.current = clientX
-  filterSwipeTriggeredRef.current = false
-  setFilterSwipeOffsetX(0)
-}
-
-function handleFilterSwipeMove(
-  clientX: number,
-  blockId: string,
-  currentPreset: PostFilterPreset
-) {
-  const startX = filterSwipeStartXRef.current
-
-  if (startX === null) {
-    return
+  function handleFilterSwipeStart(clientX: number) {
+    filterSwipeStartXRef.current = clientX
+    filterSwipeTriggeredRef.current = false
+    setFilterSwipeOffsetX(0)
   }
 
-  const deltaX = clientX - startX
-  const clampedOffset = Math.max(-18, Math.min(18, deltaX * 0.18))
+  function handleFilterSwipeMove(
+    clientX: number,
+    blockId: string,
+    currentPreset: PostFilterPreset
+  ) {
+    const startX = filterSwipeStartXRef.current
 
-  setFilterSwipeOffsetX(clampedOffset)
+    if (startX === null) {
+      return
+    }
 
-  if (filterSwipeTriggeredRef.current) {
-    return
+    const deltaX = clientX - startX
+    const clampedOffset = Math.max(-18, Math.min(18, deltaX * 0.18))
+
+    setFilterSwipeOffsetX(clampedOffset)
+
+    if (filterSwipeTriggeredRef.current) {
+      return
+    }
+
+    if (Math.abs(deltaX) < FILTER_SWIPE_THRESHOLD) {
+      return
+    }
+
+    filterSwipeTriggeredRef.current = true
+
+    if (deltaX < 0) {
+      moveImageFilterBy(blockId, currentPreset, "next")
+    } else {
+      moveImageFilterBy(blockId, currentPreset, "prev")
+    }
   }
 
-  if (Math.abs(deltaX) < FILTER_SWIPE_THRESHOLD) {
-    return
+  function resetFilterSwipe() {
+    filterSwipeStartXRef.current = null
+    filterSwipeTriggeredRef.current = false
+    setFilterSwipeOffsetX(0)
   }
-
-  filterSwipeTriggeredRef.current = true
-
-  if (deltaX < 0) {
-    moveImageFilterBy(blockId, currentPreset, "next")
-  } else {
-    moveImageFilterBy(blockId, currentPreset, "prev")
-  }
-}
-
-function resetFilterSwipe() {
-  filterSwipeStartXRef.current = null
-  filterSwipeTriggeredRef.current = false
-  setFilterSwipeOffsetX(0)
-}
 
   function ensureImageOverlayText(block: EditorBlock) {
     return {
@@ -562,11 +561,23 @@ function resetFilterSwipe() {
     )
   }
 
-  function updateVideoTrimStart(blockId: string, trimStart: number) {
+  function handleVideoTrimChange(
+    blockId: string,
+    nextTrim: {
+      duration: number
+      requiresTrim: boolean
+      startTime: number
+    }
+  ) {
     setBlocks((prev) =>
       prev.map((block) => {
         if (block.id !== blockId) return block
         if (block.type !== "video") return block
+
+        const trimStart = nextTrim.startTime
+        const trimEnd = nextTrim.requiresTrim
+          ? nextTrim.startTime + nextTrim.duration
+          : null
 
         return {
           ...block,
@@ -574,27 +585,6 @@ function resetFilterSwipe() {
             ...block.editorState,
             video: {
               trimStart,
-              trimEnd: block.editorState?.video?.trimEnd ?? null,
-              muted: block.editorState?.video?.muted ?? true,
-            },
-          },
-        }
-      })
-    )
-  }
-
-  function updateVideoTrimEnd(blockId: string, trimEnd: number | null) {
-    setBlocks((prev) =>
-      prev.map((block) => {
-        if (block.id !== blockId) return block
-        if (block.type !== "video") return block
-
-        return {
-          ...block,
-          editorState: {
-            ...block.editorState,
-            video: {
-              trimStart: block.editorState?.video?.trimStart ?? 0,
               trimEnd,
               muted: block.editorState?.video?.muted ?? true,
             },
@@ -603,41 +593,6 @@ function resetFilterSwipe() {
       })
     )
   }
-
-
-function handleVideoTrimChange(
-  blockId: string,
-  nextTrim: {
-    duration: number
-    requiresTrim: boolean
-    startTime: number
-  }
-) {
-  setBlocks((prev) =>
-    prev.map((block) => {
-      if (block.id !== blockId) return block
-      if (block.type !== "video") return block
-
-      const trimStart = nextTrim.startTime
-      const trimEnd = nextTrim.requiresTrim
-        ? nextTrim.startTime + nextTrim.duration
-        : null
-
-      return {
-        ...block,
-        editorState: {
-          ...block.editorState,
-          video: {
-            trimStart,
-            trimEnd,
-            muted: block.editorState?.video?.muted ?? true,
-          },
-        },
-      }
-    })
-  )
-}
-
 
   function addTextBlock() {
     setBlocks((prev) => [
@@ -870,178 +825,198 @@ function handleVideoTrimChange(
                   ✕
                 </button>
 
-      <div
-  ref={block.type === "image" ? previewContainerRef : null}
-  onTouchStart={(event) => {
-    if (block.type !== "image") return
-    handleFilterSwipeStart(event.touches[0]?.clientX ?? 0)
-  }}
-  onTouchMove={(event) => {
-    if (block.type !== "image") return
+                <div
+                  ref={block.type === "image" ? previewContainerRef : null}
+                  onTouchStart={(event) => {
+                    if (block.type !== "image") return
+                    handleFilterSwipeStart(event.touches[0]?.clientX ?? 0)
+                  }}
+                  onTouchMove={(event) => {
+                    if (block.type !== "image") return
 
-    handleFilterSwipeMove(
-      event.touches[0]?.clientX ?? 0,
-      block.id,
-      (block.editorState?.image?.filter ?? "none") as PostFilterPreset
-    )
-  }}
-  onTouchEnd={resetFilterSwipe}
-  onTouchCancel={resetFilterSwipe}
-  onMouseDown={(event) => {
-    if (block.type !== "image") return
-    handleFilterSwipeStart(event.clientX)
-  }}
-  onMouseMove={(event) => {
-    if (block.type !== "image") return
-    if ((event.buttons & 1) !== 1) return
+                    handleFilterSwipeMove(
+                      event.touches[0]?.clientX ?? 0,
+                      block.id,
+                      (block.editorState?.image?.filter ?? "none") as PostFilterPreset
+                    )
+                  }}
+                  onTouchEnd={resetFilterSwipe}
+                  onTouchCancel={resetFilterSwipe}
+                  onMouseDown={(event) => {
+                    if (block.type !== "image") return
+                    handleFilterSwipeStart(event.clientX)
+                  }}
+                  onMouseMove={(event) => {
+                    if (block.type !== "image") return
+                    if ((event.buttons & 1) !== 1) return
 
-    handleFilterSwipeMove(
-      event.clientX,
-      block.id,
-      (block.editorState?.image?.filter ?? "none") as PostFilterPreset
-    )
-  }}
-  onMouseUp={resetFilterSwipe}
-  className="relative aspect-[4/5] w-full overflow-hidden bg-zinc-950"
->
+                    handleFilterSwipeMove(
+                      event.clientX,
+                      block.id,
+                      (block.editorState?.image?.filter ?? "none") as PostFilterPreset
+                    )
+                  }}
+                  onMouseUp={resetFilterSwipe}
+                  className="relative aspect-[4/5] w-full overflow-hidden bg-zinc-950"
+                >
                   {block.type === "video" ? (
                     <video
                       src={block.previewUrl}
                       controls
                       muted={block.editorState?.video?.muted ?? true}
+                      onLoadedMetadata={(event) => {
+                        const trimStart = block.editorState?.video?.trimStart ?? 0
+                        if (trimStart > 0) {
+                          event.currentTarget.currentTime = trimStart
+                        }
+                      }}
+                      onTimeUpdate={(event) => {
+                        const video = event.currentTarget
+                        const trimStart = block.editorState?.video?.trimStart ?? 0
+                        const trimEnd = block.editorState?.video?.trimEnd ?? null
+
+                        if (trimStart > 0 && video.currentTime < trimStart) {
+                          video.currentTime = trimStart
+                        }
+
+                        if (
+                          trimEnd !== null &&
+                          trimEnd > trimStart &&
+                          video.currentTime >= trimEnd
+                        ) {
+                          video.pause()
+                        }
+                      }}
                       className="h-full w-full object-cover"
                     />
                   ) : (
-              <>
-  <div
-    className="absolute inset-0"
-    style={{
-      transform: `translateX(${filterSwipeOffsetX}px)`,
-      transition:
-        filterSwipeStartXRef.current === null
-          ? "transform 180ms ease-out"
-          : "none",
-      willChange: "transform",
-    }}
-  >
-    <img
-      src={block.previewUrl}
-      alt="Selected media"
-      style={getFilterStyle(block.editorState?.image?.filter)}
-      className="h-full w-full object-cover"
-    />
-  </div>
+                    <>
+                      <div
+                        className="absolute inset-0"
+                        style={{
+                          transform: `translateX(${filterSwipeOffsetX}px)`,
+                          transition:
+                            filterSwipeStartXRef.current === null
+                              ? "transform 180ms ease-out"
+                              : "none",
+                          willChange: "transform",
+                        }}
+                      >
+                        <img
+                          src={block.previewUrl}
+                          alt="Selected media"
+                          style={getFilterStyle(block.editorState?.image?.filter)}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
 
-  {block.editorState?.image?.overlayText?.text ? (
-    <div
-      onMouseDown={(event) =>
-        handleOverlayMouseDown(event, block.id)
-      }
-      onWheel={(event) => handleOverlayWheel(event, block.id)}
-      onTouchStart={(event) =>
-        handleOverlayTouchStart(event, block.id)
-      }
-      className="absolute z-10 max-w-[80%] cursor-grab select-none text-center active:cursor-grabbing"
-      style={{
-        left: `${block.editorState.image.overlayText.x * 100}%`,
-        top: `${block.editorState.image.overlayText.y * 100}%`,
-        transform: `translate(-50%, -50%) scale(${block.editorState.image.overlayText.scale ?? 1})`,
-        touchAction: "none",
-      }}
-    >
-      <p
-        className="whitespace-pre-wrap text-base font-semibold drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)]"
-        style={{
-          color: block.editorState.image.overlayText.color,
-        }}
-      >
-        {block.editorState.image.overlayText.text}
-      </p>
-    </div>
-  ) : null}
+                      {block.editorState?.image?.overlayText?.text ? (
+                        <div
+                          onMouseDown={(event) =>
+                            handleOverlayMouseDown(event, block.id)
+                          }
+                          onWheel={(event) => handleOverlayWheel(event, block.id)}
+                          onTouchStart={(event) =>
+                            handleOverlayTouchStart(event, block.id)
+                          }
+                          className="absolute z-10 max-w-[80%] cursor-grab select-none text-center active:cursor-grabbing"
+                          style={{
+                            left: `${block.editorState.image.overlayText.x * 100}%`,
+                            top: `${block.editorState.image.overlayText.y * 100}%`,
+                            transform: `translate(-50%, -50%) scale(${block.editorState.image.overlayText.scale ?? 1})`,
+                            touchAction: "none",
+                          }}
+                        >
+                          <p
+                            className="whitespace-pre-wrap text-base font-semibold drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)]"
+                            style={{
+                              color: block.editorState.image.overlayText.color,
+                            }}
+                          >
+                            {block.editorState.image.overlayText.text}
+                          </p>
+                        </div>
+                      ) : null}
 
-  {showFilterIndicator ? (
-    <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full border border-zinc-200 bg-white/90 px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-black backdrop-blur-sm">
-      {block.editorState?.image?.filter ?? "none"}
-    </div>
-  ) : null}
+                      {showFilterIndicator ? (
+                        <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full border border-zinc-200 bg-white/90 px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-black backdrop-blur-sm">
+                          {block.editorState?.image?.filter ?? "none"}
+                        </div>
+                      ) : null}
 
-  {!showFilterIndicator ? (
-    <div className="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 text-[11px] text-zinc-400 opacity-80">
-      Swipe
-    </div>
-  ) : null}
-</>
+                      {!showFilterIndicator ? (
+                        <div className="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 text-[11px] text-zinc-400 opacity-80">
+                          Swipe
+                        </div>
+                      ) : null}
+                    </>
                   )}
                 </div>
 
                 {block.type === "image" ? (
-                  <>
- 
+                  <div className="border-t border-zinc-800 bg-zinc-950/80 p-3 pt-0">
+                    <div className="mt-3 space-y-3">
+                      <button
+                        type="button"
+                        onClick={() => enableImageOverlayText(block.id)}
+                        className="rounded-full bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:bg-zinc-700"
+                      >
+                        Add Text
+                      </button>
 
-                    <div className="border-t border-zinc-800 bg-zinc-950/80 p-3 pt-0">
-                      <div className="mt-3 space-y-3">
-                        <button
-                          type="button"
-                          onClick={() => enableImageOverlayText(block.id)}
-                          className="rounded-full bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:bg-zinc-700"
-                        >
-                          Add Text
-                        </button>
+                      {block.editorState?.image?.overlayText ? (
+                        <>
+                          <input
+                            type="text"
+                            value={block.editorState.image.overlayText.text}
+                            onChange={(event) =>
+                              updateImageOverlayText(block.id, event.target.value)
+                            }
+                            placeholder="Write overlay text..."
+                            className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-500"
+                          />
 
-                        {block.editorState?.image?.overlayText ? (
-                          <>
-                            <input
-                              type="text"
-                              value={block.editorState.image.overlayText.text}
-                              onChange={(event) =>
-                                updateImageOverlayText(block.id, event.target.value)
-                              }
-                              placeholder="Write overlay text..."
-                              className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-500"
-                            />
+                          <div className="flex flex-wrap gap-2">
+                            {[
+                              "#FFFFFF",
+                              "#000000",
+                              "#FF0000",
+                              "#00FF00",
+                              "#0000FF",
+                              "#FFFF00",
+                              "#FF00FF",
+                              "#00FFFF",
+                              "#FFA500",
+                              "#800080",
+                            ].map((color) => {
+                              const isActive =
+                                (block.editorState?.image?.overlayText?.color ?? "#ffffff") ===
+                                color
 
-                           <div className="flex flex-wrap gap-2">
-  {[
-    "#FFFFFF",
-    "#000000",
-    "#FF0000",
-    "#00FF00",
-    "#0000FF",
-    "#FFFF00",
-    "#FF00FF",
-    "#00FFFF",
-    "#FFA500",
-    "#800080",
-  ].map((color) => {
-    const isActive =
-      (block.editorState?.image?.overlayText?.color ?? "#ffffff") === color
+                              return (
+                                <button
+                                  key={color}
+                                  type="button"
+                                  onClick={() => updateImageOverlayColor(block.id, color)}
+                                  className={`h-8 w-8 rounded-full border transition ${
+                                    isActive
+                                      ? "border-white scale-110"
+                                      : "border-zinc-600 hover:scale-105"
+                                  }`}
+                                  style={{ backgroundColor: color }}
+                                  aria-label={`Select color ${color}`}
+                                />
+                              )
+                            })}
+                          </div>
 
-    return (
-      <button
-        key={color}
-        type="button"
-        onClick={() => updateImageOverlayColor(block.id, color)}
-        className={`h-8 w-8 rounded-full border transition ${
-          isActive
-            ? "border-white scale-110"
-            : "border-zinc-600 hover:scale-105"
-        }`}
-        style={{ backgroundColor: color }}
-        aria-label={`Select color ${color}`}
-      />
-    )
-  })}
-</div>
-
-                       <p className="text-xs text-zinc-500">
-  Swipe on the preview to change filters. Drag text to move. Pinch or wheel to resize.
-</p>
-                          </>
-                        ) : null}
-                      </div>
+                          <p className="text-xs text-zinc-500">
+                            Swipe on the preview to change filters. Drag text to move. Pinch or wheel to resize.
+                          </p>
+                        </>
+                      ) : null}
                     </div>
-                  </>
+                  </div>
                 ) : null}
 
                 {block.type === "video" ? (
@@ -1060,13 +1035,13 @@ function handleVideoTrimChange(
                         ? "Sound On"
                         : "Muted"}
                     </button>
-<div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-3">
-  <StoryVideoTrimField
-    file={block.file ?? null}
-    onChange={(nextTrim) => handleVideoTrimChange(block.id, nextTrim)}
-  />
-</div>
 
+                    <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-3">
+                      <StoryVideoTrimField
+                        file={block.file ?? null}
+                        onChange={(nextTrim) => handleVideoTrimChange(block.id, nextTrim)}
+                      />
+                    </div>
                   </div>
                 ) : null}
               </div>
