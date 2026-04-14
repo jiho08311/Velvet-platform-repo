@@ -1,6 +1,6 @@
 "use client"
 
-import { FormEvent, useRef, useState } from "react"
+import { FormEvent, useEffect, useRef, useState } from "react"
 import type { PostBlockEditorState } from "@/modules/post/types"
 
 type PostVisibility = "public" | "subscribers"
@@ -42,6 +42,10 @@ type EditorBlock = {
   mediaId?: string
   editorState?: PostBlockEditorState
 }
+
+const FILTER_PRESETS = ["none", "warm", "cool", "mono", "vivid"] as const
+type PostFilterPreset = (typeof FILTER_PRESETS)[number]
+const FILTER_SWIPE_THRESHOLD = 40
 
 function createBlockId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
@@ -139,7 +143,20 @@ export function CreatePostForm({
   const previewContainerRef = useRef<HTMLDivElement | null>(null)
   const overlayPinchStartDistanceRef = useRef<number | null>(null)
   const overlayPinchStartScaleRef = useRef<number | null>(null)
+  const filterSwipeStartXRef = useRef<number | null>(null)
+const filterSwipeTriggeredRef = useRef(false)
+const filterIndicatorTimeoutRef = useRef<number | null>(null)
+const [showFilterIndicator, setShowFilterIndicator] = useState(false)
+const [filterSwipeOffsetX, setFilterSwipeOffsetX] = useState(0)
 
+
+useEffect(() => {
+  return () => {
+    if (filterIndicatorTimeoutRef.current) {
+      window.clearTimeout(filterIndicatorTimeoutRef.current)
+    }
+  }
+}, [])
   function updateTextBlock(blockId: string, value: string) {
     setBlocks((prev) =>
       prev.map((block) =>
@@ -170,6 +187,88 @@ export function CreatePostForm({
       })
     )
   }
+
+
+  function showActiveFilterIndicator() {
+  setShowFilterIndicator(true)
+
+  if (filterIndicatorTimeoutRef.current) {
+    window.clearTimeout(filterIndicatorTimeoutRef.current)
+  }
+
+  filterIndicatorTimeoutRef.current = window.setTimeout(() => {
+    setShowFilterIndicator(false)
+  }, 900)
+}
+
+function moveImageFilterBy(
+  blockId: string,
+  currentPreset: PostFilterPreset,
+  direction: "next" | "prev"
+) {
+  const currentIndex = FILTER_PRESETS.indexOf(currentPreset)
+  const safeCurrentIndex = currentIndex >= 0 ? currentIndex : 0
+
+  const nextIndex =
+    direction === "next"
+      ? Math.min(FILTER_PRESETS.length - 1, safeCurrentIndex + 1)
+      : Math.max(0, safeCurrentIndex - 1)
+
+  const nextPreset = FILTER_PRESETS[nextIndex]
+
+  if (nextPreset === currentPreset) {
+    showActiveFilterIndicator()
+    return
+  }
+
+  updateImageFilter(blockId, nextPreset)
+  showActiveFilterIndicator()
+}
+
+function handleFilterSwipeStart(clientX: number) {
+  filterSwipeStartXRef.current = clientX
+  filterSwipeTriggeredRef.current = false
+  setFilterSwipeOffsetX(0)
+}
+
+function handleFilterSwipeMove(
+  clientX: number,
+  blockId: string,
+  currentPreset: PostFilterPreset
+) {
+  const startX = filterSwipeStartXRef.current
+
+  if (startX === null) {
+    return
+  }
+
+  const deltaX = clientX - startX
+  const clampedOffset = Math.max(-18, Math.min(18, deltaX * 0.18))
+
+  setFilterSwipeOffsetX(clampedOffset)
+
+  if (filterSwipeTriggeredRef.current) {
+    return
+  }
+
+  if (Math.abs(deltaX) < FILTER_SWIPE_THRESHOLD) {
+    return
+  }
+
+  filterSwipeTriggeredRef.current = true
+
+  if (deltaX < 0) {
+    moveImageFilterBy(blockId, currentPreset, "next")
+  } else {
+    moveImageFilterBy(blockId, currentPreset, "prev")
+  }
+}
+
+function resetFilterSwipe() {
+  filterSwipeStartXRef.current = null
+  filterSwipeTriggeredRef.current = false
+  setFilterSwipeOffsetX(0)
+}
 
   function ensureImageOverlayText(block: EditorBlock) {
     return {
@@ -735,10 +834,40 @@ export function CreatePostForm({
                   ✕
                 </button>
 
-                <div
-                  ref={block.type === "image" ? previewContainerRef : null}
-                  className="relative aspect-[4/5] w-full overflow-hidden bg-zinc-950"
-                >
+      <div
+  ref={block.type === "image" ? previewContainerRef : null}
+  onTouchStart={(event) => {
+    if (block.type !== "image") return
+    handleFilterSwipeStart(event.touches[0]?.clientX ?? 0)
+  }}
+  onTouchMove={(event) => {
+    if (block.type !== "image") return
+
+    handleFilterSwipeMove(
+      event.touches[0]?.clientX ?? 0,
+      block.id,
+      (block.editorState?.image?.filter ?? "none") as PostFilterPreset
+    )
+  }}
+  onTouchEnd={resetFilterSwipe}
+  onTouchCancel={resetFilterSwipe}
+  onMouseDown={(event) => {
+    if (block.type !== "image") return
+    handleFilterSwipeStart(event.clientX)
+  }}
+  onMouseMove={(event) => {
+    if (block.type !== "image") return
+    if ((event.buttons & 1) !== 1) return
+
+    handleFilterSwipeMove(
+      event.clientX,
+      block.id,
+      (block.editorState?.image?.filter ?? "none") as PostFilterPreset
+    )
+  }}
+  onMouseUp={resetFilterSwipe}
+  className="relative aspect-[4/5] w-full overflow-hidden bg-zinc-950"
+>
                   {block.type === "video" ? (
                     <video
                       src={block.previewUrl}
@@ -747,108 +876,72 @@ export function CreatePostForm({
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <>
-                      <img
-                        src={block.previewUrl}
-                        alt="Selected media"
-                        style={getFilterStyle(block.editorState?.image?.filter)}
-                        className="h-full w-full object-cover"
-                      />
+              <>
+  <div
+    className="absolute inset-0"
+    style={{
+      transform: `translateX(${filterSwipeOffsetX}px)`,
+      transition:
+        filterSwipeStartXRef.current === null
+          ? "transform 180ms ease-out"
+          : "none",
+      willChange: "transform",
+    }}
+  >
+    <img
+      src={block.previewUrl}
+      alt="Selected media"
+      style={getFilterStyle(block.editorState?.image?.filter)}
+      className="h-full w-full object-cover"
+    />
+  </div>
 
-                      {block.editorState?.image?.overlayText?.text ? (
-                        <div
-                          onMouseDown={(event) =>
-                            handleOverlayMouseDown(event, block.id)
-                          }
-                          onWheel={(event) => handleOverlayWheel(event, block.id)}
-                          onTouchStart={(event) =>
-                            handleOverlayTouchStart(event, block.id)
-                          }
-                          className="absolute z-10 max-w-[80%] cursor-grab select-none text-center active:cursor-grabbing"
-                          style={{
-                            left: `${block.editorState.image.overlayText.x * 100}%`,
-                            top: `${block.editorState.image.overlayText.y * 100}%`,
-                            transform: `translate(-50%, -50%) scale(${block.editorState.image.overlayText.scale ?? 1})`,
-                            touchAction: "none",
-                          }}
-                        >
-                          <p
-                            className="whitespace-pre-wrap text-base font-semibold drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)]"
-                            style={{
-                              color: block.editorState.image.overlayText.color,
-                            }}
-                          >
-                            {block.editorState.image.overlayText.text}
-                          </p>
-                        </div>
-                      ) : null}
-                    </>
+  {block.editorState?.image?.overlayText?.text ? (
+    <div
+      onMouseDown={(event) =>
+        handleOverlayMouseDown(event, block.id)
+      }
+      onWheel={(event) => handleOverlayWheel(event, block.id)}
+      onTouchStart={(event) =>
+        handleOverlayTouchStart(event, block.id)
+      }
+      className="absolute z-10 max-w-[80%] cursor-grab select-none text-center active:cursor-grabbing"
+      style={{
+        left: `${block.editorState.image.overlayText.x * 100}%`,
+        top: `${block.editorState.image.overlayText.y * 100}%`,
+        transform: `translate(-50%, -50%) scale(${block.editorState.image.overlayText.scale ?? 1})`,
+        touchAction: "none",
+      }}
+    >
+      <p
+        className="whitespace-pre-wrap text-base font-semibold drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)]"
+        style={{
+          color: block.editorState.image.overlayText.color,
+        }}
+      >
+        {block.editorState.image.overlayText.text}
+      </p>
+    </div>
+  ) : null}
+
+  {showFilterIndicator ? (
+    <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full border border-zinc-200 bg-white/90 px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-black backdrop-blur-sm">
+      {block.editorState?.image?.filter ?? "none"}
+    </div>
+  ) : null}
+
+  {!showFilterIndicator ? (
+    <div className="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 text-[11px] text-zinc-400 opacity-80">
+      Swipe
+    </div>
+  ) : null}
+</>
                   )}
                 </div>
 
                 {block.type === "image" ? (
                   <>
-                    <div className="flex flex-wrap gap-2 border-t border-zinc-800 bg-zinc-950/80 p-3">
-                      <button
-                        type="button"
-                        onClick={() => updateImageFilter(block.id, "none")}
-                        className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                          (block.editorState?.image?.filter ?? "none") === "none"
-                            ? "bg-pink-600 text-white"
-                            : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                        }`}
-                      >
-                        None
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => updateImageFilter(block.id, "warm")}
-                        className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                          block.editorState?.image?.filter === "warm"
-                            ? "bg-pink-600 text-white"
-                            : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                        }`}
-                      >
-                        Warm
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => updateImageFilter(block.id, "cool")}
-                        className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                          block.editorState?.image?.filter === "cool"
-                            ? "bg-pink-600 text-white"
-                            : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                        }`}
-                      >
-                        Cool
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => updateImageFilter(block.id, "mono")}
-                        className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                          block.editorState?.image?.filter === "mono"
-                            ? "bg-pink-600 text-white"
-                            : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                        }`}
-                      >
-                        Mono
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => updateImageFilter(block.id, "vivid")}
-                        className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                          block.editorState?.image?.filter === "vivid"
-                            ? "bg-pink-600 text-white"
-                            : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                        }`}
-                      >
-                        Vivid
-                      </button>
-                    </div>
+ 
 
                     <div className="border-t border-zinc-800 bg-zinc-950/80 p-3 pt-0">
                       <div className="mt-3 space-y-3">
@@ -907,9 +1000,9 @@ export function CreatePostForm({
                               />
                             </div>
 
-                            <p className="text-xs text-zinc-500">
-                              Drag to move. Pinch with two fingers or use the mouse wheel to resize.
-                            </p>
+                       <p className="text-xs text-zinc-500">
+  Swipe on the preview to change filters. Drag text to move. Pinch or wheel to resize.
+</p>
                           </>
                         ) : null}
                       </div>
