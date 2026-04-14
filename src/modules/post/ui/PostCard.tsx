@@ -568,7 +568,7 @@ return (
 
   return (
     <article onClick={handleCardClick} className="group w-full">
-      <div className="flex items-center justify-between px-4">
+      <div className="flex items-center justify-between px-0">
         <button
           type="button"
           onClick={handleCreatorClick}
@@ -648,7 +648,7 @@ return (
               {blockMedia.length > 0 ? <div className="mt-2">{renderMedia()}</div> : null}
 
               {blockText ? (
-                <div className="px-3 pt-3">
+                <div className="px-0 pt-3">
                   <p className="whitespace-pre-wrap text-[16px] leading-7 text-white font-medium">
                     {blockText}
                   </p>
@@ -657,7 +657,7 @@ return (
             </>
           )}
 
-   <div className="flex items-center gap-4 px-3 pt-3">
+   <div className="flex items-center gap-4 px-0 pt-3">
 
   {/* ❤️ 좋아요 */}
   <button
