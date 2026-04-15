@@ -44,6 +44,18 @@ function buildClientUploadPath(file: File) {
   return `creator/${now}-${random}${safeExtension}`
 }
 
+function toUtcIsoString(value: string): string | null {
+  if (!value) return null
+
+  const localDate = new Date(value)
+
+  if (Number.isNaN(localDate.getTime())) {
+    return null
+  }
+
+  return localDate.toISOString()
+}
+
 async function uploadFilesDirect(files: File[]): Promise<UploadedFileInput[]> {
   if (files.length === 0) {
     return []
@@ -116,12 +128,20 @@ export function CreatePostComposer({
 
                 const uploadedFiles = await uploadFilesDirect(files)
 
+                const resolvedPublishedAt =
+                  publishMode === "scheduled"
+                    ? toUtcIsoString(publishedAt ?? "")
+                    : null
+
+                if (publishMode === "scheduled" && !resolvedPublishedAt) {
+                  setError("예약 발행 시간을 올바르게 입력해주세요.")
+                  return
+                }
+
                 await createPostAction({
                   creatorId,
-          status:
-  publishMode === "scheduled" ? "scheduled" : "draft",
-                  publishedAt:
-                    publishMode === "scheduled" ? publishedAt : null,
+                  status: publishMode === "scheduled" ? "scheduled" : "draft",
+                  publishedAt: resolvedPublishedAt,
                   visibility,
                   files: uploadedFiles as never,
                   blocks: blocks as CreatePostBlockInput[],

@@ -30,6 +30,20 @@ type CreatePostActionInput = {
   }[]
 }
 
+function normalizeUtcIsoString(value: string | null | undefined): string | null {
+  if (!value) {
+    return null
+  }
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return null
+  }
+
+  return date.toISOString()
+}
+
 export async function createPostAction({
   creatorId,
   text = "",
@@ -40,16 +54,17 @@ export async function createPostAction({
   files = [],
   blocks = [],
 }: CreatePostActionInput): Promise<void> {
- const firstTextBlock = blocks.find(
-  (block) =>
-    block.type === "text" &&
-    (block.content?.trim() ?? "").length > 0
-)
+  const firstTextBlock = blocks.find(
+    (block) =>
+      block.type === "text" &&
+      (block.content?.trim() ?? "").length > 0
+  )
 
-const content =
-  text?.trim() ||
-  firstTextBlock?.content?.trim() ||
-  ""
+  const content =
+    text?.trim() ||
+    firstTextBlock?.content?.trim() ||
+    ""
+
   const hasMedia = files.length > 0
   const hasBlocks = blocks.length > 0
 
@@ -61,8 +76,11 @@ const content =
     throw new Error("Paid post price must be greater than 0")
   }
 
-  if (status === "scheduled" && !publishedAt) {
-    throw new Error("Scheduled post requires publishedAt")
+  const normalizedPublishedAt =
+    status === "scheduled" ? normalizeUtcIsoString(publishedAt) : null
+
+  if (status === "scheduled" && !normalizedPublishedAt) {
+    throw new Error("Scheduled post requires valid publishedAt")
   }
 
   try {
@@ -72,7 +90,7 @@ const content =
       visibility,
       price: visibility === "paid" ? price : 0,
       status,
-      publishedAt,
+      publishedAt: normalizedPublishedAt,
       files,
       blocks,
     })
