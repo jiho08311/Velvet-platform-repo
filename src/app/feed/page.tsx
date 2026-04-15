@@ -164,15 +164,6 @@ export default async function FeedPage() {
 
           {session ? <FeedComposer userId={session.userId} /> : null}
 
-          {firstUpcomingPost ? (
-            <UpcomingCard
-              title={firstUpcomingPost.title}
-              previewText={firstUpcomingPost.previewText}
-              scheduledAt={firstUpcomingPost.scheduledAt}
-              creator={firstUpcomingPost.creator}
-            />
-          ) : null}
-
           {feed.items.length === 0 ? (
             <FeedEmptyState
               title="No posts yet"
