@@ -42,7 +42,7 @@ export async function getPublicUpcomingPosts(
   const { data: posts, error: postsError } = await supabaseAdmin
     .from("posts")
     .select("id, creator_id, title, content, published_at")
-    .eq("status", "draft")
+  .eq("status", "scheduled")
     .eq("visibility", "public")
     .gt("published_at", now)
     .is("deleted_at", null)
