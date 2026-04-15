@@ -90,7 +90,6 @@ export function UpcomingCard({
           <Link
             href={`/creator/${creator.username}`}
             className="shrink-0"
-            aria-label={`${creatorName} creator page`}
           >
             <Avatar
               src={creator.avatarUrl}
@@ -105,10 +104,14 @@ export function UpcomingCard({
               href={`/creator/${creator.username}`}
               className="block"
             >
-              <p className="truncate text-base font-semibold text-zinc-900 transition hover:opacity-80">
+              <p className="truncate text-base font-semibold text-zinc-900 hover:opacity-80 transition">
                 {creatorName}
               </p>
             </Link>
+
+            <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+              Velvet drop
+            </p>
           </div>
         </div>
       </div>
