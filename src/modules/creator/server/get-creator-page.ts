@@ -24,6 +24,19 @@ type CommentRow = {
   post_id: string
 }
 
+type PostRow = {
+  id: string
+  creator_id: string
+  content: string | null
+  visibility: "public" | "subscribers" | "paid"
+  price: number
+  status: "published" | "scheduled"
+  created_at: string
+  published_at: string | null
+  visibility_status: "draft" | "published" | "processing" | "rejected" | null
+  moderation_status: "pending" | "approved" | "rejected" | null
+}
+
 export async function getCreatorPage({
   username,
   viewerUserId,
@@ -61,15 +74,22 @@ export async function getCreatorPage({
     })
   }
 
-  const { data: posts } = await supabaseAdmin
+  const { data: posts, error: postsError } = await supabaseAdmin
     .from("posts")
     .select(
-      "id, creator_id, content, visibility, price, created_at, published_at"
+      "id, creator_id, content, visibility, price, status, created_at, published_at, visibility_status, moderation_status"
     )
     .eq("creator_id", creator.id)
-    .eq("status", "published")
+    .or(
+      "and(status.eq.published,visibility_status.eq.published,moderation_status.eq.approved),and(status.eq.scheduled,visibility.eq.public,moderation_status.eq.approved)"
+    )
     .is("deleted_at", null)
-    .order("published_at", { ascending: false })
+    .order("created_at", { ascending: false })
+    .returns<PostRow[]>()
+
+  if (postsError) {
+    throw postsError
+  }
 
   const postList = posts ?? []
   const postIds = postList.map((post) => post.id)
@@ -105,7 +125,7 @@ export async function getCreatorPage({
   const { data: commentRows } = await supabaseAdmin
     .from("comments")
     .select("post_id")
-   .is("deleted_at", null)
+    .is("deleted_at", null)
     .in("post_id", postIds)
 
   const commentCountMap = new Map<string, number>()
@@ -131,10 +151,14 @@ export async function getCreatorPage({
     purchasedSet = new Set((payments ?? []).map((payment) => payment.target_id))
   }
 
+  const publishedPostIds = postList
+    .filter((post) => post.status === "published")
+    .map((post) => post.id)
+
   const { data: mediaRows } = await supabaseAdmin
     .from("media")
     .select("post_id, storage_path, type, mime_type, status, sort_order")
-    .in("post_id", postIds)
+    .in("post_id", publishedPostIds.length > 0 ? publishedPostIds : ["00000000-0000-0000-0000-000000000000"])
     .eq("status", "ready")
     .order("sort_order", { ascending: true })
 
@@ -148,6 +172,32 @@ export async function getCreatorPage({
 
   const items = await Promise.all(
     postList.map(async (post) => {
+      const isScheduled = post.status === "scheduled"
+
+      if (isScheduled) {
+        return {
+          id: post.id,
+          text: post.content ?? "",
+          isLocked: false,
+          price: post.price,
+          media: [],
+          createdAt: post.created_at,
+          publishedAt: post.published_at,
+          status: post.status,
+          likesCount: 0,
+          isLiked: false,
+          commentsCount: 0,
+          creatorId: creator.id,
+          creatorUserId: creator.user_id,
+          currentUserId: viewerUserId ?? null,
+          creator: {
+            username: creator.username,
+            displayName: profile.display_name ?? creator.username,
+            avatarUrl: profile.avatar_url ?? null,
+          },
+        }
+      }
+
       const hasPurchased = purchasedSet.has(post.id)
 
       const hasAccess = canViewPost({
@@ -178,10 +228,11 @@ export async function getCreatorPage({
         price: post.price,
         media,
         createdAt: post.published_at ?? post.created_at,
+        publishedAt: post.published_at,
+        status: post.status,
         likesCount: likeCountMap.get(post.id) ?? 0,
         isLiked: myLikeSet.has(post.id),
         commentsCount: commentCountMap.get(post.id) ?? 0,
-
         creatorId: creator.id,
         creatorUserId: creator.user_id,
         currentUserId: viewerUserId ?? null,

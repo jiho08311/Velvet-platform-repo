@@ -4,8 +4,6 @@ import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 import { checkSubscription } from "@/modules/subscription/server/check-subscription"
 import type { PostBlockEditorState } from "../types"
 
-
-
 type CreatorFeedPost = {
   id: string
   content: string | null
@@ -31,6 +29,8 @@ type CreatorFeedPost = {
   isLiked: boolean
   visibility: "public" | "subscribers" | "paid"
   commentsCount: number
+  status?: string
+  published_at?: string | null
 }
 
 type GetCreatorFeedInput = {
@@ -47,6 +47,7 @@ type PostRow = {
   price: number
   status: string
   created_at: string
+  published_at?: string | null
 }
 
 type MediaType = "image" | "video" | "audio" | "file"
@@ -128,12 +129,10 @@ export async function getCreatorFeed({
 
   const { data: posts, error } = await supabaseAdmin
     .from("posts")
-    .select("id, creator_id, content, visibility, price, status, created_at")
+    .select("id, creator_id, content, visibility, price, status, created_at, published_at")
     .eq("creator_id", creatorId)
-  .or(`
-  and(status.eq.published,visibility_status.eq.published),
-  and(status.eq.scheduled,visibility.eq.public)
-`)
+    .eq("status", "published")
+    .eq("visibility_status", "published")
     .eq("moderation_status", "approved")
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
@@ -289,9 +288,9 @@ export async function getCreatorFeed({
 
   return Promise.all(
     resolvedPosts.map(async (post) => {
-  const selectedMediaRows = post.isLocked
-  ? []
-  : (mediaMap.get(post.id) ?? [])
+      const selectedMediaRows = post.isLocked
+        ? []
+        : (mediaMap.get(post.id) ?? [])
 
       const media = await Promise.all(
         selectedMediaRows.map(async (item) => {

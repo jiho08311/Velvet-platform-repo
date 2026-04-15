@@ -70,6 +70,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
         isLiked: false,
         status: post.status,
         published_at: post.publishedAt,
+        publishedAt: post.publishedAt,
       }))
     : userId
       ? await getCreatorFeed({
@@ -93,6 +94,8 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
             likesCount: post.likesCount ?? 0,
             commentsCount: post.commentsCount ?? 0,
             isLiked: false,
+            status: "status" in post ? post.status : "published",
+            publishedAt: "publishedAt" in post ? post.publishedAt : null,
           })
         )
 
@@ -217,18 +220,20 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
             <div className="-mx-4">
               {posts.map((post) => {
                 const isScheduled =
-                  isOwner && "status" in post && post.status === "scheduled"
+                  "status" in post && post.status === "scheduled"
 
                 if (isScheduled) {
                   return (
                     <div key={post.id} className="px-4 py-3">
                       <UpcomingCard
-                        title="Scheduled post"
+                        title="Upcoming post"
                         previewText={post.content ?? null}
                         scheduledAt={
-                          "published_at" in post
-                            ? post.published_at ?? ""
-                            : ""
+                          "publishedAt" in post
+                            ? post.publishedAt ?? ""
+                            : "published_at" in post
+                              ? post.published_at ?? ""
+                              : ""
                         }
                         creator={{
                           username: creator.username,
