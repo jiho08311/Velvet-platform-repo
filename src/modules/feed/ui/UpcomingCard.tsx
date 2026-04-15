@@ -85,9 +85,9 @@ export function UpcomingCard({
   className="h-10 w-10 animate-pulse object-contain"
 />
 
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#C2185B]">
-              Upcoming
-            </p>
+     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#C2185B] animate-pulse">
+  Upcoming
+</p>
           </div>
 
           <p className="shrink-0 rounded-full border border-[#C2185B]/25 bg-[#C2185B]/10 px-3 py-1.5 text-xs font-medium text-[#C2185B]">
