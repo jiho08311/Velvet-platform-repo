@@ -227,7 +227,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                     <div key={post.id} className="px-4 py-3">
                       <UpcomingCard
                         title="Upcoming post"
-                        previewText={post.content ?? null}
+                        previewText={isOwner ? post.content ?? null : null}
                         scheduledAt={
                           "publishedAt" in post
                             ? post.publishedAt ?? ""
