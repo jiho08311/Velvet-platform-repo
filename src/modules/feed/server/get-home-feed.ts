@@ -13,6 +13,8 @@ export type HomeFeedItem = {
   text: string
   createdAt: string
   isLocked: boolean
+    status?: "draft" | "scheduled" | "published" | "archived"
+  publishedAt?: string | null
   lockReason?: "none" | "subscription" | "purchase"
   price?: number
 media?: Array<{
@@ -68,6 +70,7 @@ type PostRow = {
   title: string | null
   content: string | null
   visibility: "public" | "subscribers" | "paid"
+  status: "draft" | "scheduled" | "published" | "archived"
   price: number | null
   created_at: string
   published_at: string | null
@@ -134,6 +137,7 @@ export async function getHomeFeed(
       content,
       visibility,
       price,
+        status,
       created_at,
       published_at,
       post_blocks (
@@ -146,8 +150,9 @@ export async function getHomeFeed(
         created_at
       )
     `)
-    .eq("status", "published")
-    .eq("visibility", "public")
+.or(
+  "and(status.eq.published,visibility.eq.public,moderation_status.eq.approved),and(status.eq.scheduled,visibility.eq.public,moderation_status.eq.approved,published_at.gt.now())"
+)
     .is("deleted_at", null)
     .order("published_at", { ascending: false })
     .limit(limit)
@@ -342,6 +347,8 @@ const media = await Promise.all(
       return {
         id: post.id,
         creatorId: post.creator_id,
+        status: post.status,
+  publishedAt: post.published_at ?? null,
         creatorUserId,
         currentUserId: viewerUserId || undefined,
         text: post.content ?? post.title ?? "",

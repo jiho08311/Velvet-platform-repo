@@ -26,7 +26,7 @@ export function LockedPostCard({
     price > 0
 
   return (
-    <article className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/70 text-white">
+    <article className="overflow-hidden rounded-3xl border-2 border-[#C2185B]/40 bg-white text-zinc-900">
       <div className="relative">
         {previewThumbnailUrl ? (
           <div className="relative aspect-[4/5] overflow-hidden bg-zinc-950">
@@ -49,7 +49,7 @@ export function LockedPostCard({
 
         <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
           <div className="max-w-xs">
-            <p className="text-lg font-semibold text-white">
+            <p className="text-lg font-semibold text-zinc-900">
               프리미엄 콘텐츠 이용
             </p>
 
@@ -58,7 +58,7 @@ export function LockedPostCard({
                 ₩{formatPrice(price)}
               </p>
             ) : (
-              <p className="mt-2 text-sm leading-6 text-zinc-200">
+              <p className="mt-2 text-sm leading-6 text-zinc-600">
                 구독자만 볼 수 있는 콘텐츠입니다.
               </p>
             )}
@@ -69,7 +69,7 @@ export function LockedPostCard({
       </div>
 
       <div className="p-5">
-        <p className="line-clamp-3 whitespace-pre-wrap text-sm leading-6 text-zinc-300">
+        <p className="line-clamp-3 whitespace-pre-wrap text-sm leading-6 text-zinc-700">
           {previewText}
         </p>
 
