@@ -87,6 +87,25 @@ export function StoryList({
 
         <div className="overflow-x-auto">
           <div className="flex gap-3 px-1 pb-2">
+
+
+{/* 🔥 Drop (하드코딩 UI) */}
+<button
+  type="button"
+  onClick={() => router.push("/drops")}
+  className="flex shrink-0 flex-col items-center gap-2 transition-transform duration-300 ease-out hover:scale-[1.04]"
+>
+  <div className="flex h-20 min-w-[72px] items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-900 px-3">
+    <span className="text-xs font-semibold tracking-wide text-white">
+      DROP
+    </span>
+  </div>
+
+  <span className="text-xs font-medium text-white">
+    Drops
+  </span>
+</button>
+
             <button
               type="button"
               onClick={() => router.push("/story/new")}
