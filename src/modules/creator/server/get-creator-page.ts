@@ -80,9 +80,9 @@ export async function getCreatorPage({
       "id, creator_id, content, visibility, price, status, created_at, published_at, visibility_status, moderation_status"
     )
     .eq("creator_id", creator.id)
-    .or(
-      "and(status.eq.published,visibility_status.eq.published,moderation_status.eq.approved),and(status.eq.scheduled,visibility.eq.public,moderation_status.eq.approved)"
-    )
+  .or(
+  "and(status.eq.published,visibility_status.eq.published,moderation_status.eq.approved),and(status.eq.scheduled,visibility.eq.public,moderation_status.eq.approved,published_at.gt.now())"
+)
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .returns<PostRow[]>()
