@@ -56,40 +56,40 @@ export function FeedList({
 
   return (
     <section className="flex w-full flex-col gap-4">
-{posts.map((post) => {
-  const isScheduled = post.status === "scheduled"
+      {posts.map((post) => {
+        const isScheduled = post.status === "scheduled"
 
-  if (isScheduled) {
-    return (
-      <UpcomingCard
-        key={post.id}
-        title="Upcoming post"
-        previewText={null}
-        scheduledAt={post.publishedAt ?? ""}
-        creator={post.creator}
-      />
-    )
-  }
+        if (isScheduled) {
+          return (
+            <UpcomingCard
+              key={post.id}
+              title="Upcoming post"
+              previewText={null}
+              scheduledAt={post.publishedAt ?? ""}
+              creator={post.creator}
+            />
+          )
+        }
 
-  return (
-    <PostCard
-      key={post.id}
-      postId={post.postId}
-      text={post.text}
-      createdAt={post.createdAt}
-      media={post.media ?? []}
-      blocks={post.blocks ?? []}
-      isLocked={post.isLocked}
-      commentsCount={post.commentsCount}
-      likesCount={post.likesCount}
-      isLiked={post.isLiked}
-      creatorId={post.creatorId}
-      creatorUserId={post.creatorUserId}
-      currentUserId={post.currentUserId}
-      creator={post.creator}
-    />
-  )
-})}
+        return (
+          <PostCard
+            key={post.id}
+            postId={post.postId}
+            text={post.text}
+            createdAt={post.createdAt}
+            media={post.media ?? []}
+            blocks={post.blocks ?? []}
+            isLocked={post.isLocked}
+            commentsCount={post.commentsCount}
+            likesCount={post.likesCount}
+            isLiked={post.isLiked}
+            creatorId={post.creatorId}
+            creatorUserId={post.creatorUserId}
+            currentUserId={post.currentUserId}
+            creator={post.creator}
+          />
+        )
+      })}
     </section>
   )
 }
