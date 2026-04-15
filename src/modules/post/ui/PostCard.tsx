@@ -713,15 +713,6 @@ return (
   <PaperAirplaneIcon className="h-5 w-5" />
 </button>
 
-{/* ● Velvet 상태 아이콘 */}
-<div className="ml-auto flex items-center">
-  <img
-    src="/logo-mark-removebg.png"
-    alt=""
-    aria-hidden="true"
-    className="h-4 w-4 opacity-70"
-  />
-</div>
 
   {/* 📅 날짜 */}
   <p className="text-[13px] text-zinc-400">
