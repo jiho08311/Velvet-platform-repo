@@ -7,6 +7,8 @@ import {
   HeartIcon as HeartOutline,
   ChatBubbleOvalLeftIcon,
 } from "@heroicons/react/24/outline"
+import { PaperAirplaneIcon } from "@heroicons/react/24/outline"
+
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid"
 
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
@@ -694,6 +696,32 @@ return (
       {commentsCount || comments.length}
     </span>
   </button>
+
+
+{/* ✉️ 메시지 */}
+<button
+  type="button"
+  onClick={(event) => {
+    event.stopPropagation()
+
+    if (!creatorUserId) return
+
+    router.push(`/messages?creatorId=${creatorUserId}`)
+  }}
+  className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
+>
+  <PaperAirplaneIcon className="h-6 w-6" />
+</button>
+
+{/* ● Velvet 상태 아이콘 */}
+<div className="ml-auto flex items-center">
+  <img
+    src="/logo-mark-removebg.png"
+    alt=""
+    aria-hidden="true"
+    className="h-4 w-4 opacity-70"
+  />
+</div>
 
   {/* 📅 날짜 */}
   <p className="text-[13px] text-zinc-400">
