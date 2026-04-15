@@ -124,13 +124,13 @@ export function UpcomingCard({
           </div>
         </div>
                 <div className="mt-3 flex justify-end">
-          <Link
-            href="/drops"
-            className="text-xs font-medium text-zinc-500 transition hover:text-[#C2185B]"
-          >
-            See drops →
-          </Link>
-        </div>
+  <Link
+    href="/drops"
+    className="text-xs font-medium text-zinc-900 transition hover:underline"
+  >
+    See upcoming posts →
+  </Link>
+</div>
       </div>
 
     
