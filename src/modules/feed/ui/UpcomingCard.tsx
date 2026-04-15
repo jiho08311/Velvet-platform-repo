@@ -82,7 +82,7 @@ export function UpcomingCard({
   src="/logo-mark-removebg.png"
   alt=""
   aria-hidden="true"
-  className="h-6 w-6 animate-pulse object-contain"
+  className="h-8 w-8 animate-pulse object-contain"
 />
 
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#C2185B]">
