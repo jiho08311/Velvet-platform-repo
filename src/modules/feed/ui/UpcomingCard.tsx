@@ -77,9 +77,18 @@ export function UpcomingCard({
     <section className="px-4 py-3">
       <div className="rounded-3xl border-2 border-[#C2185B]/40 bg-white px-5 py-4 shadow-sm">
         <div className="flex items-center justify-between gap-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#C2185B]">
-            Upcoming
-          </p>
+          <div className="flex items-center gap-2">
+            <img
+              src="/logo-mark-removebg.png"
+              alt=""
+              aria-hidden="true"
+              className="h-4 w-4 animate-[velvetPulse_2.2s_ease-in-out_infinite] object-contain"
+            />
+
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#C2185B]">
+              Upcoming
+            </p>
+          </div>
 
           <p className="shrink-0 rounded-full border border-[#C2185B]/25 bg-[#C2185B]/10 px-3 py-1.5 text-xs font-medium text-[#C2185B]">
             {formatScheduledAt(scheduledAt)}
@@ -104,7 +113,7 @@ export function UpcomingCard({
               href={`/creator/${creator.username}`}
               className="block"
             >
-              <p className="truncate text-base font-semibold text-zinc-900 hover:opacity-80 transition">
+              <p className="truncate text-base font-semibold text-zinc-900 transition hover:opacity-80">
                 {creatorName}
               </p>
             </Link>
@@ -115,6 +124,18 @@ export function UpcomingCard({
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes velvetPulse {
+          0%,
+          100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.06);
+          }
+        }
+      `}</style>
     </section>
   )
 }
