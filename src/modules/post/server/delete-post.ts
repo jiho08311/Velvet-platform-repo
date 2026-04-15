@@ -21,7 +21,7 @@ export async function deletePost({
     })
     .eq("id", postId)
     .eq("creator_id", creatorId)
-    .in("status", ["draft", "published", "archived"])
+    .in("status", ["draft", "scheduled", "published", "archived"])
     .is("deleted_at", null)
 
   if (error) {
