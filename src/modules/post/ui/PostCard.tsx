@@ -710,7 +710,7 @@ return (
   }}
   className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
 >
-  <PaperAirplaneIcon className="h-6 w-6" />
+  <PaperAirplaneIcon className="h-5 w-5" />
 </button>
 
 {/* ● Velvet 상태 아이콘 */}
