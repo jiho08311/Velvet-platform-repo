@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { Avatar } from "@/shared/ui/Avatar"
 
 type UpcomingCardProps = {
@@ -65,7 +66,7 @@ function formatScheduledAt(value: string) {
 }
 
 export function UpcomingCard({
-  title,
+  title: _title,
   previewText: _previewText,
   scheduledAt,
   creator,
@@ -74,42 +75,40 @@ export function UpcomingCard({
 
   return (
     <section className="px-4 py-3">
-      <div className="rounded-3xl border-2 border-[#C2185B]/40 bg-white p-5 shadow-sm">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#C2185B]">
-              Upcoming
-            </p>
-
-            <h2 className="mt-3 truncate text-lg font-semibold text-zinc-900">
-              {creatorName}
-            </h2>
-
-            <p className="mt-1 text-sm text-zinc-600">
-              {title}
-            </p>
-          </div>
+      <div className="rounded-3xl border-2 border-[#C2185B]/40 bg-white px-5 py-4 shadow-sm">
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#C2185B]">
+            Upcoming
+          </p>
 
           <p className="shrink-0 rounded-full border border-[#C2185B]/25 bg-[#C2185B]/10 px-3 py-1.5 text-xs font-medium text-[#C2185B]">
             {formatScheduledAt(scheduledAt)}
           </p>
         </div>
 
-        <div className="mt-5 flex items-center gap-3">
-          <Avatar
-            src={creator.avatarUrl}
-            alt={creator.username}
-            fallback={creatorName}
-            size="md"
-          />
+        <div className="mt-4 flex items-center gap-3">
+          <Link
+            href={`/creator/${creator.username}`}
+            className="shrink-0"
+            aria-label={`${creatorName} creator page`}
+          >
+            <Avatar
+              src={creator.avatarUrl}
+              alt={creator.username}
+              fallback={creatorName}
+              size="md"
+            />
+          </Link>
 
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-zinc-900">
-              {creatorName}
-            </p>
-            <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
-              Velvet drop
-            </p>
+            <Link
+              href={`/creator/${creator.username}`}
+              className="block"
+            >
+              <p className="truncate text-base font-semibold text-zinc-900 transition hover:opacity-80">
+                {creatorName}
+              </p>
+            </Link>
           </div>
         </div>
       </div>
