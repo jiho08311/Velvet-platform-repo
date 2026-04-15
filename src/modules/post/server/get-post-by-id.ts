@@ -12,7 +12,7 @@ type PostRow = {
   content: string | null
   visibility: "public" | "subscribers" | "paid"
   price: number | null
-  status: "draft" | "published" | "archived"
+  status: "draft" | "scheduled" | "published" | "archived"
   visibility_status: "draft" | "published" | "processing" | "rejected" | null
   moderation_status: "pending" | "approved" | "rejected" | null
   created_at: string
@@ -42,7 +42,7 @@ export type PostDetail = {
   content: string | null
   visibility: "public" | "subscribers" | "paid"
   price: number | null
-  status: "draft" | "published" | "archived"
+  status: "draft" | "scheduled" | "published" | "archived"
   createdAt: string
   publishedAt: string | null
   isLocked: boolean

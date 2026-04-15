@@ -30,58 +30,7 @@ function formatCount(value: number | null | undefined) {
   return new Intl.NumberFormat("en-US").format(value ?? 0)
 }
 
-function formatScheduledAt(value: string | null | undefined) {
-  if (!value) return "Soon"
 
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return "Soon"
-  }
-
-  const now = new Date()
-  const diffMs = date.getTime() - now.getTime()
-  const diffHours = Math.round(diffMs / (1000 * 60 * 60))
-
-  const startOfToday = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate()
-  )
-  const startOfTarget = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate()
-  )
-
-  const diffDays = Math.round(
-    (startOfTarget.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24)
-  )
-
-  if (diffHours >= 1 && diffHours < 12) {
-    return `In ${diffHours} hours`
-  }
-
-  if (diffDays === 0) {
-    return new Intl.DateTimeFormat("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-    }).format(date)
-  }
-
-  if (diffDays === 1) {
-    return `Tomorrow ${new Intl.DateTimeFormat("en-US", {
-      hour: "numeric",
-    }).format(date)}`
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date)
-}
 
 function formatScheduledAt(value: string | null | undefined) {
   if (!value) return "Soon"

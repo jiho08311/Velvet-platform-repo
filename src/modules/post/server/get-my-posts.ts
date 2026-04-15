@@ -20,7 +20,7 @@ export type GetMyPostsInput = {
   creatorId: string
   limit?: number
   cursor?: string | null
-  status?: "draft" | "published"
+  status?: "draft" | "scheduled" | "published"
 }
 
 export type GetMyPostsResult = {
