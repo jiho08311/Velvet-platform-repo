@@ -6,6 +6,7 @@ import { getCreatorByUsername } from "@/modules/creator/server/get-creator-by-us
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 import { getCreatorDashboardSummary } from "@/modules/analytics/server/get-creator-dashboard-summary"
 import { getCreatorFeed } from "@/modules/post/server/get-creator-feed"
+import { getMyPosts } from "@/modules/post/server/get-my-posts"
 import { CreatePostComposer } from "@/modules/post/ui/CreatePostComposer"
 import { PostCard } from "@/modules/post/ui/PostCard"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
@@ -27,6 +28,112 @@ function formatPrice(amount: number) {
 
 function formatCount(value: number | null | undefined) {
   return new Intl.NumberFormat("en-US").format(value ?? 0)
+}
+
+function formatScheduledAt(value: string | null | undefined) {
+  if (!value) return "Soon"
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return "Soon"
+  }
+
+  const now = new Date()
+  const diffMs = date.getTime() - now.getTime()
+  const diffHours = Math.round(diffMs / (1000 * 60 * 60))
+
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  )
+  const startOfTarget = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  )
+
+  const diffDays = Math.round(
+    (startOfTarget.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24)
+  )
+
+  if (diffHours >= 1 && diffHours < 12) {
+    return `In ${diffHours} hours`
+  }
+
+  if (diffDays === 0) {
+    return new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date)
+  }
+
+  if (diffDays === 1) {
+    return `Tomorrow ${new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+    }).format(date)}`
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date)
+}
+
+function formatScheduledAt(value: string | null | undefined) {
+  if (!value) return "Soon"
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return "Soon"
+  }
+
+  const now = new Date()
+  const diffMs = date.getTime() - now.getTime()
+  const diffHours = Math.round(diffMs / (1000 * 60 * 60))
+
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  )
+  const startOfTarget = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  )
+
+  const diffDays = Math.round(
+    (startOfTarget.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24)
+  )
+
+  if (diffHours >= 1 && diffHours < 12) {
+    return `In ${diffHours} hours`
+  }
+
+  if (diffDays === 0) {
+    return new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date)
+  }
+
+  if (diffDays === 1) {
+    return `Tomorrow ${new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+    }).format(date)}`
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date)
 }
 
 export default async function CreatorPage({ params }: CreatorPageProps) {
@@ -53,30 +160,46 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
 
   const summary = await getCreatorDashboardSummary(creator.id)
 
-  const posts = userId
-    ? await getCreatorFeed({
-        creatorId: creator.id,
-        creatorUserId: creator.userId,
-        userId,
-      })
-    : ((await getCreatorPage({ username, viewerUserId: null }))?.posts ?? []).map(
-        (post) => ({
-          id: post.id,
-          content: post.text ?? "",
-          created_at: post.createdAt,
-          media: post.media ?? [],
-          blocks:
-            "blocks" in post && Array.isArray(post.blocks)
-              ? post.blocks
-              : [],
-          isLocked: post.isLocked,
-          lockReason: undefined,
-          price: post.price ?? 0,
-          likesCount: post.likesCount ?? 0,
-          commentsCount: post.commentsCount ?? 0,
-          isLiked: false,
+  const posts = isOwner
+    ? (await getMyPosts({ creatorId: creator.id })).items.map((post) => ({
+        id: post.id,
+        content: post.text ?? "",
+        created_at: post.createdAt,
+        media: post.media ?? [],
+        blocks: [],
+        isLocked: false,
+        lockReason: undefined,
+        price: 0,
+        likesCount: 0,
+        commentsCount: 0,
+        isLiked: false,
+        status: post.status,
+        published_at: post.publishedAt,
+      }))
+    : userId
+      ? await getCreatorFeed({
+          creatorId: creator.id,
+          creatorUserId: creator.userId,
+          userId,
         })
-      )
+      : ((await getCreatorPage({ username, viewerUserId: null }))?.posts ?? []).map(
+          (post) => ({
+            id: post.id,
+            content: post.text ?? "",
+            created_at: post.createdAt,
+            media: post.media ?? [],
+            blocks:
+              "blocks" in post && Array.isArray(post.blocks)
+                ? post.blocks
+                : [],
+            isLocked: post.isLocked,
+            lockReason: undefined,
+            price: post.price ?? 0,
+            likesCount: post.likesCount ?? 0,
+            commentsCount: post.commentsCount ?? 0,
+            isLiked: false,
+          })
+        )
 
   const viewerSubscription = userId
     ? await getViewerSubscription(userId, creator.id)
@@ -198,32 +321,42 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
           ) : (
             <div className="-mx-4">
               {posts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  postId={post.id}
-                  text={post.content ?? ""}
-                  createdAt={new Date(post.created_at).toLocaleString()}
-                  media={post.media ?? []}
-                  blocks={post.blocks ?? []}
-                  isLocked={post.isLocked}
-                  commentsCount={post.commentsCount}
-                  likesCount={post.likesCount}
-                  isLiked={post.isLiked}
-                  creatorId={creator.id}
-                  creatorUserId={creator.userId}
-                  currentUserId={userId ?? undefined}
-                  creator={{
-                    username: creator.username,
-                    displayName: creator.displayName ?? creator.username,
-                    avatarUrl: creator.avatarUrl ?? null,
-                  }}
-                />
+                <div key={post.id} className="relative">
+                  {isOwner && "status" in post && post.status === "scheduled" ? (
+                    <div className="absolute left-3 top-3 z-10 rounded-full bg-pink-600/90 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
+            Scheduled · {formatScheduledAt("published_at" in post ? post.published_at : null)}
+                    </div>
+                  ) : isOwner && "status" in post && post.status === "draft" ? (
+                    <div className="absolute left-3 top-3 z-10 rounded-full bg-zinc-900/80 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
+                      Draft
+                    </div>
+                  ) : null}
+
+                  <PostCard
+                    postId={post.id}
+                    text={post.content ?? ""}
+                    createdAt={new Date(post.created_at).toLocaleString()}
+                    media={post.media ?? []}
+                    blocks={post.blocks ?? []}
+                    isLocked={post.isLocked}
+                    commentsCount={post.commentsCount}
+                    likesCount={post.likesCount}
+                    isLiked={post.isLiked}
+                    creatorId={creator.id}
+                    creatorUserId={creator.userId}
+                    currentUserId={userId ?? undefined}
+                    creator={{
+                      username: creator.username,
+                      displayName: creator.displayName ?? creator.username,
+                      avatarUrl: creator.avatarUrl ?? null,
+                    }}
+                  />
+                </div>
               ))}
             </div>
           )}
         </div>
       </div>
-
     </main>
   )
 }

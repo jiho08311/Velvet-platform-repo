@@ -19,17 +19,18 @@ type CreatePostWithMediaWorkflowInput = {
   creatorId: string
   title?: string | null
   content?: string | null
-  status?: "draft" | "published" | "archived"
+  status?: "draft" | "scheduled" | "published" | "archived"
   visibility?: "public" | "subscribers" | "paid"
   price?: number
+  publishedAt?: string | null
   files: UploadedFileInput[]
- blocks?: {
-  type: "text" | "image" | "video" | "audio" | "file"
-  content?: string | null
-  sortOrder: number
-  mediaId?: string | null
-  editorState?: CreatePostBlockInput["editorState"]
-}[]
+  blocks?: {
+    type: "text" | "image" | "video" | "audio" | "file"
+    content?: string | null
+    sortOrder: number
+    mediaId?: string | null
+    editorState?: CreatePostBlockInput["editorState"]
+  }[]
 }
 
 type MediaType = "image" | "video" | "audio" | "file"
@@ -145,14 +146,17 @@ async function sleep(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-async function updatePostApproved(postId: string) {
+async function updatePostApproved(
+  postId: string,
+  status: "scheduled" | "published" = "published"
+) {
   const now = new Date().toISOString()
 
   const { error } = await supabaseAdmin
     .from("posts")
     .update({
-      status: "published",
-      visibility_status: "published",
+      status,
+      visibility_status: status === "scheduled" ? "draft" : "published",
       moderation_status: "approved",
       moderation_completed_at: now,
       updated_at: now,
@@ -257,11 +261,13 @@ async function moderatePostAsync({
   content,
   files,
   shouldApproveOnSuccess,
+  approvedStatus = "published",
 }: {
   postId: string
   content?: string | null
   files: Array<File | UploadedFileInput>
   shouldApproveOnSuccess: boolean
+  approvedStatus?: "scheduled" | "published"
 }) {
   try {
     await checkPostSafety({
@@ -270,7 +276,7 @@ async function moderatePostAsync({
     })
 
     if (shouldApproveOnSuccess) {
-      await updatePostApproved(postId)
+      await updatePostApproved(postId, approvedStatus)
     }
   } catch (error) {
     console.error("[moderation] blocked:", error)
@@ -298,6 +304,7 @@ export async function createPostWithMediaWorkflow({
   status = "draft",
   visibility = "subscribers",
   price = 0,
+  publishedAt = null,
   files,
   blocks = [],
 }: CreatePostWithMediaWorkflowInput) {
@@ -340,6 +347,7 @@ export async function createPostWithMediaWorkflow({
     status: hasVideo ? "draft" : status,
     visibility,
     price: resolvedprice,
+    publishedAt,
   })
 
   if (hasVideo) {
@@ -367,12 +375,12 @@ export async function createPostWithMediaWorkflow({
           continue
         }
 
-     blocksToInsert.push({
-  type: "text",
-  content: trimmedContent,
-  sortOrder: block.sortOrder,
-  editorState: block.editorState ?? null,
-})
+        blocksToInsert.push({
+          type: "text",
+          content: trimmedContent,
+          sortOrder: block.sortOrder,
+          editorState: block.editorState ?? null,
+        })
 
         continue
       }
@@ -421,12 +429,12 @@ export async function createPostWithMediaWorkflow({
         storagePath: mediaRow.storagePath,
       })
 
-    blocksToInsert.push({
-  type,
-  mediaId: mediaRow.id,
-  sortOrder: block.sortOrder,
-  editorState: block.editorState ?? null,
-})
+      blocksToInsert.push({
+        type,
+        mediaId: mediaRow.id,
+        sortOrder: block.sortOrder,
+        editorState: block.editorState ?? null,
+      })
     }
   } else {
     for (const [index, file] of files.entries()) {
@@ -499,11 +507,12 @@ export async function createPostWithMediaWorkflow({
       media,
     })
   } else {
-    await moderatePostAsync({
+      await moderatePostAsync({
       postId: post.id,
       content,
       files,
       shouldApproveOnSuccess: true,
+      approvedStatus: status === "scheduled" ? "scheduled" : "published",
     })
   }
 

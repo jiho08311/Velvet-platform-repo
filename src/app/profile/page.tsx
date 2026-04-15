@@ -231,6 +231,16 @@ export default async function ProfilePage() {
                       +{extraMediaCount}
                     </div>
                   ) : null}
+
+                  {post.status === "scheduled" ? (
+  <div className="absolute left-2 top-2 rounded-full bg-pink-600/90 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
+    Scheduled
+  </div>
+) : post.status === "draft" ? (
+  <div className="absolute left-2 top-2 rounded-full bg-zinc-900/80 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
+    Draft
+  </div>
+) : null}
                 </a>
               )
             })}

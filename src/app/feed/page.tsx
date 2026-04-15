@@ -5,9 +5,11 @@ import { getSession } from "@/modules/auth/server/get-session"
 import { requireActiveUser } from "@/modules/auth/server/require-active-user"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { getHomeFeed } from "@/modules/feed/server/get-home-feed"
+import { getPublicUpcomingPosts } from "@/modules/feed/server/get-public-upcoming-posts"
 import { FeedComposer } from "@/modules/feed/ui/FeedComposer"
 import { FeedEmptyState } from "@/modules/feed/ui/FeedEmptyState"
 import { FeedList } from "@/modules/feed/ui/FeedList"
+import { UpcomingCard } from "@/modules/feed/ui/UpcomingCard"
 import { getRecommendedCreators } from "@/modules/search/server/get-recommended-creators"
 import { getStories } from "@/modules/story/server/get-stories"
 
@@ -111,6 +113,7 @@ export default async function FeedPage() {
   }
 
   let feed
+  let upcomingPosts
   let recommendedCreators
   let stories
   let readStateMap: Record<string, string> = {}
@@ -121,11 +124,12 @@ export default async function FeedPage() {
   }
 
   if (session?.userId) {
-    ;[feed, recommendedCreators, stories] = await Promise.all([
+    ;[feed, upcomingPosts, recommendedCreators, stories] = await Promise.all([
       getHomeFeed({
         viewerUserId: session.userId,
         limit: 10,
       }),
+      getPublicUpcomingPosts(),
       getRecommendedCreators({
         viewerUserId: session.userId,
         limit: 3,
@@ -133,16 +137,19 @@ export default async function FeedPage() {
       getStories(session.userId),
     ])
   } else {
-    ;[feed, recommendedCreators, stories] = await Promise.all([
+    ;[feed, upcomingPosts, recommendedCreators, stories] = await Promise.all([
       getHomeFeed({
         limit: 10,
       } as any),
+      getPublicUpcomingPosts(),
       getRecommendedCreators({
         limit: 3,
       } as any),
       getStories(),
     ])
   }
+
+  const firstUpcomingPost = upcomingPosts[0] ?? null
 
   return (
     <main className="min-h-screen">
@@ -157,6 +164,15 @@ export default async function FeedPage() {
 
           {session ? <FeedComposer userId={session.userId} /> : null}
 
+          {firstUpcomingPost ? (
+            <UpcomingCard
+              title={firstUpcomingPost.title}
+              previewText={firstUpcomingPost.previewText}
+              scheduledAt={firstUpcomingPost.scheduledAt}
+              creator={firstUpcomingPost.creator}
+            />
+          ) : null}
+
           {feed.items.length === 0 ? (
             <FeedEmptyState
               title="No posts yet"
@@ -164,24 +180,24 @@ export default async function FeedPage() {
             />
           ) : (
             <FeedList
-  posts={feed.items.map((item) => ({
-  id: item.id,
-  postId: item.id,
-  creatorId: item.creatorId,
-  creatorUserId: item.creatorUserId,
-  currentUserId: session?.userId ?? undefined,
-  text: item.text,
-  createdAt: item.createdAt,
-  media: normalizeMedia(item),
-  blocks: "blocks" in item && Array.isArray(item.blocks) ? item.blocks : [],
-  isLocked: item.isLocked,
-  lockReason: item.lockReason,
-  price: normalizePrice(item),
-  commentsCount: item.commentsCount,
-  likesCount: item.likesCount,
-  isLiked: item.isLiked,
-  creator: item.creator,
-}))}
+              posts={feed.items.map((item) => ({
+                id: item.id,
+                postId: item.id,
+                creatorId: item.creatorId,
+                creatorUserId: item.creatorUserId,
+                currentUserId: session?.userId ?? undefined,
+                text: item.text,
+                createdAt: item.createdAt,
+                media: normalizeMedia(item),
+                blocks: "blocks" in item && Array.isArray(item.blocks) ? item.blocks : [],
+                isLocked: item.isLocked,
+                lockReason: item.lockReason,
+                price: normalizePrice(item),
+                commentsCount: item.commentsCount,
+                likesCount: item.likesCount,
+                isLiked: item.isLiked,
+                creator: item.creator,
+              }))}
             />
           )}
         </section>

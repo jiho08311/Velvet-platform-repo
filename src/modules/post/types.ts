@@ -1,4 +1,4 @@
-export type PostStatus = "published"
+export type PostStatus = "draft" | "scheduled" | "published" | "archived"
 
 export type PostVisibility =
   | "public"
@@ -74,6 +74,7 @@ export type CreatePostInput = {
   creatorId: string
   title?: string | null
   content?: string | null
+  status?: PostStatus
   visibility?: PostVisibility
   price?: number
   publishedAt?: string | null

@@ -5,7 +5,7 @@ export type CreatorStudioPost = {
   creatorId: string
   title: string | null
   content: string | null
-  status: "draft" | "published" | "archived"
+status: "draft" | "scheduled" | "published" | "archived"
   visibility: "public" | "subscribers" | "paid"
   createdAt: string
   updatedAt: string
@@ -27,7 +27,7 @@ export async function listCreatorStudioPosts({
       "id, creator_id, title, content, status, visibility, created_at, updated_at, deleted_at",
     )
     .eq("creator_id", creatorId)
-    .in("status", ["draft", "published", "archived"])
+    .in("status", ["draft", "scheduled", "published", "archived"])
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
 

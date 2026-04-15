@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/release-earnings",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/jobs/publish-posts",
+      "schedule": "*/1 * * * *"
     }
   ]
 }

@@ -103,7 +103,13 @@ export function CreatePostComposer({
       <div className="border-b border-zinc-800 px-0 py-4">
         <CreatePostForm
           isSubmitting={isPending}
-          onSubmitPost={({ visibility, files, blocks }) => {
+          onSubmitPost={({
+            visibility,
+            publishMode,
+            publishedAt,
+            files,
+            blocks,
+          }) => {
             startTransition(async () => {
               try {
                 setError(null)
@@ -112,6 +118,10 @@ export function CreatePostComposer({
 
                 await createPostAction({
                   creatorId,
+          status:
+  publishMode === "scheduled" ? "scheduled" : "draft",
+                  publishedAt:
+                    publishMode === "scheduled" ? publishedAt : null,
                   visibility,
                   files: uploadedFiles as never,
                   blocks: blocks as CreatePostBlockInput[],

@@ -16,37 +16,53 @@ type UploadedFileInput = {
 type CreatePostActionInput = {
   creatorId: string
   text?: string
+  status?: "draft" | "scheduled" | "published"
+  publishedAt?: string | null
   visibility: "public" | "subscribers" | "paid"
   price?: number
   files?: UploadedFileInput[]
-    blocks?: {
+  blocks?: {
     type: "text" | "image" | "video" | "audio" | "file"
     content?: string | null
     sortOrder: number
-     mediaId?: string | null
-     editorState?: PostBlockEditorState
+    mediaId?: string | null
+    editorState?: PostBlockEditorState
   }[]
 }
 
 export async function createPostAction({
   creatorId,
   text = "",
+  status = "published",
+  publishedAt = null,
   visibility,
   price = 0,
   files = [],
   blocks = [],
 }: CreatePostActionInput): Promise<void> {
-const content = text?.trim() ?? ""
+ const firstTextBlock = blocks.find(
+  (block) =>
+    block.type === "text" &&
+    (block.content?.trim() ?? "").length > 0
+)
+
+const content =
+  text?.trim() ||
+  firstTextBlock?.content?.trim() ||
+  ""
   const hasMedia = files.length > 0
+  const hasBlocks = blocks.length > 0
 
- const hasBlocks = blocks.length > 0
-
-if (!content && !hasMedia && !hasBlocks) {
-  throw new Error("Post must have text or media")
-}
+  if (!content && !hasMedia && !hasBlocks) {
+    throw new Error("Post must have text or media")
+  }
 
   if (visibility === "paid" && price <= 0) {
     throw new Error("Paid post price must be greater than 0")
+  }
+
+  if (status === "scheduled" && !publishedAt) {
+    throw new Error("Scheduled post requires publishedAt")
   }
 
   try {
@@ -55,10 +71,10 @@ if (!content && !hasMedia && !hasBlocks) {
       content: content || null,
       visibility,
       price: visibility === "paid" ? price : 0,
-      status: "published",
+      status,
+      publishedAt,
       files,
       blocks,
-    
     })
   } catch (error) {
     console.error("[createPostAction]", error)

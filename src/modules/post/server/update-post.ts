@@ -5,7 +5,7 @@ type UpdatePostInput = {
   creatorId: string;
   title?: string | null;
   content?: string | null;
-  status?: "draft" | "published" | "archived";
+  status?: "draft" | "scheduled" | "published" | "archived";
   visibility?: "public" | "subscribers" | "paid";
   price?: number;
   publishedAt?: string | null;
@@ -16,7 +16,7 @@ type PostRow = {
   creator_id: string;
   title: string | null;
   content: string | null;
-  status: "draft" | "published" | "archived";
+  status: "draft" | "scheduled" | "published" | "archived";
   visibility: "public" | "subscribers" | "paid";
   price: number;
   published_at: string | null;
@@ -39,7 +39,7 @@ export async function updatePost({
   creatorId: string;
   title?: string;
   content?: string;
-  status: "draft" | "published" | "archived";
+  status: "draft" | "scheduled" | "published" | "archived";
   visibility: "public" | "subscribers" | "paid";
   price: number;
   publishedAt?: string;
@@ -59,7 +59,7 @@ export async function updatePost({
   }
 
   if (status !== undefined) {
-    if (!["draft", "published", "archived"].includes(status)) {
+    if (!["draft", "scheduled", "published", "archived"].includes(status)) {
       throw new Error("Invalid post status");
     }
 

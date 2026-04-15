@@ -7,7 +7,7 @@ export type CreatorStudioPostDetail = {
   creatorId: string
   title: string | null
   content: string | null
-  status: "draft" | "published" | "archived"
+  status: "draft" | "scheduled" | "published" | "archived"
   visibility: "public" | "subscribers" | "paid"
   price: number
   createdAt: string
@@ -39,7 +39,7 @@ type PostRow = {
   creator_id: string
   title: string | null
   content: string | null
-  status: "draft" | "published" | "archived"
+  status: "draft" | "scheduled" | "published" | "archived"
   visibility: "public" | "subscribers" | "paid"
   price: number | null
   created_at: string
@@ -70,7 +70,7 @@ export async function getCreatorStudioPost({
     )
     .eq("id", postId)
     .eq("creator_id", creatorId)
-    .in("status", ["draft", "published", "archived"])
+    .in("status", ["draft", "scheduled", "published", "archived"])
     .is("deleted_at", null)
     .maybeSingle()
 

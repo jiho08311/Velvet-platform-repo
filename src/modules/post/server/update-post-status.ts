@@ -5,7 +5,7 @@ export async function updatePostStatus({
   status,
 }: {
   postId: string
-  status: "draft" | "published" | "archived"
+  status: "draft" | "scheduled" | "published" | "archived"
 }) {
   const { error } = await supabaseAdmin
     .from("posts")

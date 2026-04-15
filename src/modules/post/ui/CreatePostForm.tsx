@@ -5,7 +5,7 @@ import { StoryVideoTrimField } from "@/modules/media/ui/StoryVideoTrimField"
 import type { PostBlockEditorState } from "@/modules/post/types"
 
 type PostVisibility = "public" | "subscribers"
-
+type PublishMode = "now" | "scheduled"
 type CreatePostBlockInput = {
   type: "text" | "image" | "video" | "audio" | "file"
   content?: string | null
@@ -16,6 +16,8 @@ type CreatePostBlockInput = {
 
 type SubmitPostInput = {
   visibility: PostVisibility
+  publishMode: PublishMode
+  publishedAt: string | null
   files: File[]
   blocks: CreatePostBlockInput[]
 }
@@ -138,6 +140,9 @@ export function CreatePostForm({
   const [visibility, setVisibility] = useState<PostVisibility>(
     initialVisibility ?? "subscribers"
   )
+
+  const [publishMode, setPublishMode] = useState<PublishMode>("now")
+const [publishedAt, setPublishedAt] = useState("")
   const [draggingBlockId, setDraggingBlockId] = useState<string | null>(null)
 const [dropTargetBlockId, setDropTargetBlockId] = useState<string | null>(null)
 
@@ -757,15 +762,19 @@ setDropTargetBlockId(null)
       .map((block) => block.file!)
       .filter((file) => file.size > 0)
 
-    onSubmitPost({
-      visibility,
-      files,
-      blocks: submitBlocks,
-    })
+onSubmitPost({
+  visibility,
+  publishMode,
+  publishedAt: publishMode === "scheduled" ? publishedAt : null,
+  files,
+  blocks: submitBlocks,
+})
 
-    setBlocks([{ id: createBlockId(), type: "text", content: "" }])
-    setVisibility("subscribers")
-    setDraggingBlockId(null)
+ setBlocks([{ id: createBlockId(), type: "text", content: "" }])
+setVisibility("subscribers")
+setPublishMode("now")
+setPublishedAt("")
+setDraggingBlockId(null)
 
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
@@ -1179,7 +1188,23 @@ getActiveMediaTool(block.id) === "text" ? (
             <option value="subscribers">Subscribers</option>
           </select>
 
- 
+ <select
+  value={publishMode}
+  onChange={(e) => setPublishMode(e.target.value as PublishMode)}
+  className="h-12 rounded-full border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-white outline-none transition hover:bg-zinc-800 focus:border-pink-500"
+>
+  <option value="now">Publish now</option>
+  <option value="scheduled">Schedule</option>
+</select>
+
+{publishMode === "scheduled" ? (
+  <input
+    type="datetime-local"
+    value={publishedAt}
+    onChange={(e) => setPublishedAt(e.target.value)}
+    className="h-12 rounded-full border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-white outline-none transition hover:bg-zinc-800 focus:border-pink-500"
+  />
+) : null}
 
           <input
             ref={fileInputRef}
@@ -1222,7 +1247,13 @@ getActiveMediaTool(block.id) === "text" ? (
           disabled={isSubmitting}
           className="inline-flex h-12 items-center justify-center rounded-full bg-pink-600 px-6 text-sm font-semibold text-white transition hover:bg-pink-500 disabled:opacity-50"
         >
-          {isSubmitting ? "Publishing..." : "Publish"}
+    {isSubmitting
+  ? publishMode === "scheduled"
+    ? "Scheduling..."
+    : "Publishing..."
+  : publishMode === "scheduled"
+    ? "Schedule"
+    : "Publish"}
         </button>
       </div>
     </form>

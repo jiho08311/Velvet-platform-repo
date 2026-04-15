@@ -37,7 +37,7 @@ export function AppChrome({
     <div className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
       <AppHeader />
 
-      <div className="mx-auto flex w-full max-w-[1400px]">
+      <div className="mx-auto flex w-full max-w-[1100px] xl:max-w-[1200px]">
         <div className="hidden md:block self-start">
           <AppSidebar />
         </div>

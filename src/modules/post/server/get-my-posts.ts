@@ -5,7 +5,7 @@ export type MyPostListItem = {
   id: string
   creatorId: string
   text: string
-  status: "draft" | "published" | "archived"
+  status: "draft" | "scheduled" | "published" | "archived"
   visibility: "public" | "subscribers" | "paid"
   isLocked: boolean
   createdAt: string
@@ -37,7 +37,7 @@ type PostRow = {
   id: string
   creator_id: string
   content: string | null
-  status: "draft" | "published" | "archived"
+  status: "draft" | "scheduled" | "published" | "archived"
   visibility: "public" | "subscribers" | "paid"
   created_at: string
   published_at: string | null
