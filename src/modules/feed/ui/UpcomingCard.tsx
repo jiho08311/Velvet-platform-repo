@@ -78,12 +78,12 @@ export function UpcomingCard({
       <div className="rounded-3xl border-2 border-[#C2185B]/40 bg-white px-5 py-4 shadow-sm">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img
-              src="/logo-mark-removebg.png"
-              alt=""
-              aria-hidden="true"
-              className="h-4 w-4 animate-[velvetPulse_2.2s_ease-in-out_infinite] object-contain"
-            />
+         <img
+  src="/logo-mark-removebg.png"
+  alt=""
+  aria-hidden="true"
+  className="h-4 w-4 animate-pulse object-contain"
+/>
 
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#C2185B]">
               Upcoming
@@ -125,17 +125,7 @@ export function UpcomingCard({
         </div>
       </div>
 
-      <style jsx>{`
-        @keyframes velvetPulse {
-          0%,
-          100% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.06);
-          }
-        }
-      `}</style>
+    
     </section>
   )
 }
