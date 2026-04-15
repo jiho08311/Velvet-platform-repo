@@ -102,7 +102,7 @@ export function StoryList({
   </div>
 
   <span className="text-xs font-medium text-white">
-    Drops
+    Drop
   </span>
 </button>
 
