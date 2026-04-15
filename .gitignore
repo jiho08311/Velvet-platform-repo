@@ -19,3 +19,4 @@ supabase/.temp
 # editor
 .vscode
 .idea
+.env*.local
