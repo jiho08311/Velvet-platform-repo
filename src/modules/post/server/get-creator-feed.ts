@@ -131,9 +131,11 @@ export async function getCreatorFeed({
     .from("posts")
     .select("id, creator_id, content, visibility, price, status, created_at, published_at")
     .eq("creator_id", creatorId)
-    .eq("status", "published")
-    .eq("visibility_status", "published")
-    .eq("moderation_status", "approved")
+.or(`
+  and(status.eq.published,visibility_status.eq.published,moderation_status.eq.approved),
+  and(status.eq.scheduled,visibility.eq.public,moderation_status.eq.approved,published_at.gt.now())
+`)
+    
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .returns<PostRow[]>()
