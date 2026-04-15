@@ -6,8 +6,8 @@ import { useEffect, useRef, useState } from "react"
 import {
   HeartIcon as HeartOutline,
   ChatBubbleOvalLeftIcon,
-} from "@heroicons/react/24/outline"
-import { PaperAirplaneIcon } from "@heroicons/react/24/outline"
+  PaperAirplaneIcon,
+} from "@heroicons/react/24/solid"
 
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid"
 
@@ -666,7 +666,7 @@ return (
     type="button"
     onClick={handleLike}
     disabled={isLikeLoading}
-    className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
+    className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-90"
   >
     {liked ? (
       <HeartSolid className="h-6 w-6 text-pink-500" />
@@ -689,9 +689,9 @@ return (
         loadComments()
       }
     }}
-    className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
+    className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-90"
   >
-    <ChatBubbleOvalLeftIcon className="h-6 w-6" />
+    <ChatBubbleOvalLeftIcon className="h-8 w-8" />
     <span className="text-[14px] font-semibold">
       {commentsCount || comments.length}
     </span>
@@ -708,9 +708,9 @@ return (
 
     router.push(`/messages?creatorId=${creatorUserId}`)
   }}
-  className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
+  className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-90"
 >
-  <PaperAirplaneIcon className="h-5 w-5" />
+  <PaperAirplaneIcon className="h-8 w-8" />
 </button>
 
 
@@ -778,7 +778,7 @@ return (
                             {comment.is_liked ? (
                               <HeartSolid className="h-4 w-4 text-pink-500" />
                             ) : (
-                              <HeartOutline className="h-6 w-6" />
+                              <HeartOutline className="h-8 w-8" />
                             )}
                             <span>{comment.likes_count ?? 0}</span>
                           </button>
