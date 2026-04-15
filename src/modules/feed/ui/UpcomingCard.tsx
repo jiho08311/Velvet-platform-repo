@@ -40,7 +40,8 @@ function formatScheduledAt(value: string) {
   )
 
   const diffDays = Math.round(
-    (startOfTarget.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24)
+    (startOfTarget.getTime() - startOfToday.getTime()) /
+      (1000 * 60 * 60 * 24)
   )
 
   if (diffHours >= 1 && diffHours < 12) {
@@ -73,23 +74,23 @@ export function UpcomingCard({
 
   return (
     <section className="px-4 py-3">
-      <div className="rounded-3xl border border-[#C2185B]/35 bg-gradient-to-br from-zinc-900 via-zinc-950 to-zinc-950 p-5 shadow-[0_0_0_1px_rgba(194,24,91,0.08)]">
+      <div className="rounded-3xl border border-[#C2185B]/35 bg-white p-5 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#F472B6]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#C2185B]">
               Upcoming
             </p>
 
-            <h2 className="mt-3 truncate text-lg font-semibold text-white">
+            <h2 className="mt-3 truncate text-lg font-semibold text-zinc-900">
               {creatorName}
             </h2>
 
-            <p className="mt-1 text-sm text-zinc-400">
+            <p className="mt-1 text-sm text-zinc-600">
               {title}
             </p>
           </div>
 
-          <p className="shrink-0 rounded-full border border-[#C2185B]/25 bg-[#C2185B]/10 px-3 py-1.5 text-xs font-medium text-[#F9A8D4]">
+          <p className="shrink-0 rounded-full border border-[#C2185B]/25 bg-[#C2185B]/10 px-3 py-1.5 text-xs font-medium text-[#C2185B]">
             {formatScheduledAt(scheduledAt)}
           </p>
         </div>
@@ -103,7 +104,7 @@ export function UpcomingCard({
           />
 
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-white">
+            <p className="truncate text-sm font-medium text-zinc-900">
               {creatorName}
             </p>
             <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
