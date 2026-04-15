@@ -65,14 +65,16 @@ export async function getCreatorPage({
     return null
   }
 
-  let isSubscribed = false
+let isSubscribed = false
 
-  if (viewerUserId) {
-    isSubscribed = await checkSubscription({
-      userId: viewerUserId,
-      creatorId: creator.id,
-    })
-  }
+if (viewerUserId) {
+  isSubscribed = await checkSubscription({
+    userId: viewerUserId,
+    creatorId: creator.id,
+  })
+}
+
+const now = new Date().toISOString()
 
   const { data: posts, error: postsError } = await supabaseAdmin
     .from("posts")
@@ -80,9 +82,9 @@ export async function getCreatorPage({
       "id, creator_id, content, visibility, price, status, created_at, published_at, visibility_status, moderation_status"
     )
     .eq("creator_id", creator.id)
-  .or(
-  "and(status.eq.published,visibility_status.eq.published,moderation_status.eq.approved),and(status.eq.scheduled,visibility.eq.public,moderation_status.eq.approved,published_at.gt.now())"
-)
+ .or(
+    `and(status.eq.published,visibility_status.eq.published,moderation_status.eq.approved),and(status.eq.scheduled,visibility.eq.public,moderation_status.eq.approved,published_at.gt.${now})`
+  )
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .returns<PostRow[]>()

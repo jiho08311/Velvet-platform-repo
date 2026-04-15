@@ -126,15 +126,15 @@ export async function getCreatorFeed({
           creatorId,
         })
       : false
+      const now = new Date().toISOString()
 
   const { data: posts, error } = await supabaseAdmin
     .from("posts")
     .select("id, creator_id, content, visibility, price, status, created_at, published_at")
     .eq("creator_id", creatorId)
-.or(`
-  and(status.eq.published,visibility_status.eq.published,moderation_status.eq.approved),
-  and(status.eq.scheduled,visibility.eq.public,moderation_status.eq.approved,published_at.gt.now())
-`)
+.or(
+  `and(status.eq.published,visibility_status.eq.published,moderation_status.eq.approved),and(status.eq.scheduled,visibility.eq.public,moderation_status.eq.approved,published_at.gt.${now})`
+)
     
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
