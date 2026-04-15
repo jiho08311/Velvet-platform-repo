@@ -671,7 +671,7 @@ return (
     {liked ? (
       <HeartSolid className="h-6 w-6 text-pink-500" />
     ) : (
-      <HeartOutline className="h-6 w-6" />
+      <HeartOutline className="h-6 w-6 stroke-[2.5]" />
     )}
     <span className="text-[14px] font-semibold">{count}</span>
   </button>
@@ -691,7 +691,7 @@ return (
     }}
     className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
   >
-    <ChatBubbleOvalLeftIcon className="h-6 w-6" />
+    <ChatBubbleOvalLeftIcon className="h-6 w-6 stroke-[2.5]" />
     <span className="text-[14px] font-semibold">
       {commentsCount || comments.length}
     </span>
@@ -710,7 +710,7 @@ return (
   }}
   className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
 >
-  <PaperAirplaneIcon className="h-5 w-5" />
+  <PaperAirplaneIcon className="h-6 w-6 stroke-[2.5]" />
 </button>
 
 
@@ -778,7 +778,7 @@ return (
                             {comment.is_liked ? (
                               <HeartSolid className="h-4 w-4 text-pink-500" />
                             ) : (
-                              <HeartOutline className="h-6 w-6" />
+                              <HeartOutline className="h-6 w-6 stroke-[2.5]" />
                             )}
                             <span>{comment.likes_count ?? 0}</span>
                           </button>
