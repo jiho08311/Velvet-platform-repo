@@ -130,8 +130,10 @@ export async function getCreatorFeed({
     .from("posts")
     .select("id, creator_id, content, visibility, price, status, created_at")
     .eq("creator_id", creatorId)
-    .eq("status", "published")
-    .eq("visibility_status", "published")
+  .or(`
+  and(status.eq.published,visibility_status.eq.published),
+  and(status.eq.scheduled,visibility.eq.public)
+`)
     .eq("moderation_status", "approved")
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
