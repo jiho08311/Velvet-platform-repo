@@ -249,7 +249,7 @@ const textPosts = posts.filter((post) => (post.media?.length ?? 0) === 0)
           </section>
         )}
  {profile.isCreator && textPosts.length > 0 && (
-  <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5">
+  <section className="-mx-6 md:-mx-0">
     <div className="mb-4 flex items-center justify-between">
       <div>
         <h3 className="text-base font-semibold text-white">Updates</h3>
