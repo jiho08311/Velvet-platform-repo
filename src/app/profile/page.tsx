@@ -128,6 +128,8 @@ export default async function ProfilePage() {
 
   const posts = postResult.items
   const profile = normalizeProfileData(profileData, userData)
+  const mediaPosts = posts.filter((post) => (post.media?.length ?? 0) > 0)
+const textPosts = posts.filter((post) => (post.media?.length ?? 0) === 0)
 
   if (!profile) {
     return (
@@ -189,9 +191,9 @@ export default async function ProfilePage() {
           </div>
         </section>
 
-        {profile.isCreator && posts.length > 0 && (
+        {profile.isCreator && mediaPosts.length > 0 && (
           <section className="grid grid-cols-2 md:grid-cols-3 gap-[2px] bg-zinc-900">
-            {posts.map((post: MyPostListItem) => {
+       {mediaPosts.map((post: MyPostListItem) => {
               const media = post.media?.[0]
               const mediaCount = post.media?.length ?? 0
               const extraMediaCount = mediaCount > 1 ? mediaCount - 1 : 0
@@ -246,6 +248,27 @@ export default async function ProfilePage() {
             })}
           </section>
         )}
+        {profile.isCreator && textPosts.length > 0 && (
+  <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-4">
+    <h3 className="text-sm font-semibold text-zinc-400 mb-3">
+      Text posts
+    </h3>
+
+    <div className="flex flex-col gap-3">
+      {textPosts.map((post: MyPostListItem) => (
+        <a
+          key={post.id}
+          href={`/post/${post.id}`}
+          className="rounded-2xl bg-zinc-800 px-4 py-3 hover:bg-zinc-700 transition"
+        >
+          <p className="text-sm text-white line-clamp-3">
+            {post.text || "No content"}
+          </p>
+        </a>
+      ))}
+    </div>
+  </section>
+)}
       </div>
     </main>
   )
