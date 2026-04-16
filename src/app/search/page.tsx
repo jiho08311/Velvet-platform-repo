@@ -26,16 +26,40 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const { q = "" } = await searchParams
   const query = q.trim()
 
-const searchResult = query
-  ? await searchCreators({
-      query,
-      limit: 20,
-    })
-  : { items: [], nextCursor: null }
+  let searchResult: {
+    items: Awaited<ReturnType<typeof searchCreators>>["items"]
+    nextCursor: string | null
+  } = {
+    items: [],
+    nextCursor: null,
+  }
 
-  const [explorePosts, exploreCreators] = !query
-    ? await Promise.all([getExplorePosts(24), getExploreCreators(6)])
-    : [[], []]
+  if (query) {
+    try {
+      searchResult = await searchCreators({
+        query,
+        limit: 20,
+      })
+    } catch (error) {
+      console.error("[search/page] searchCreators failed:", error)
+    }
+  }
+
+  let explorePosts: Awaited<ReturnType<typeof getExplorePosts>> = []
+  let exploreCreators: Awaited<ReturnType<typeof getExploreCreators>> = []
+
+  if (!query) {
+    try {
+      ;[explorePosts, exploreCreators] = await Promise.all([
+        getExplorePosts(24),
+        getExploreCreators(6),
+      ])
+    } catch (error) {
+      console.error("[search/page] explore load failed:", error)
+      explorePosts = []
+      exploreCreators = []
+    }
+  }
 
   return (
     <main className="w-full py-6">
@@ -47,31 +71,31 @@ const searchResult = query
         <section className="space-y-4 px-4">
           <p className="text-sm text-zinc-400">Results for "{query}"</p>
 
-      {searchResult.items.length > 0 ? (
-  <SearchInfiniteList
-    query={query}
-    initialCreators={searchResult.items}
-    initialCursor={searchResult.nextCursor}
-  />
-) : (
-  <p className="text-sm text-zinc-500">No creators found</p>
-)}
+          {searchResult.items.length > 0 ? (
+            <SearchInfiniteList
+              query={query}
+              initialCreators={searchResult.items}
+              initialCursor={searchResult.nextCursor}
+            />
+          ) : (
+            <p className="text-sm text-zinc-500">No creators found</p>
+          )}
         </section>
       ) : (
-<>
-  <ExplorePostGrid posts={explorePosts.slice(0, 12)} />
+        <>
+          <ExplorePostGrid posts={explorePosts.slice(0, 12)} />
 
-  {exploreCreators.length > 0 && (
-    <section className="my-6 px-4">
-      <p className="mb-3 text-xs uppercase tracking-wider text-zinc-500">
-        Discover creators
-      </p>
-      <ExploreCreatorGrid creators={exploreCreators} />
-    </section>
-  )}
+          {exploreCreators.length > 0 && (
+            <section className="my-6 px-4">
+              <p className="mb-3 text-xs uppercase tracking-wider text-zinc-500">
+                Discover creators
+              </p>
+              <ExploreCreatorGrid creators={exploreCreators} />
+            </section>
+          )}
 
-  <ExplorePostGrid posts={explorePosts.slice(12)} />
-</>
+          <ExplorePostGrid posts={explorePosts.slice(12)} />
+        </>
       )}
     </main>
   )
