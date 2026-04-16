@@ -298,14 +298,15 @@ const selectedMediaRows = post.isLocked
 
       const media = await Promise.all(
         selectedMediaRows.map(async (item) => {
-          const url = await createMediaSignedUrl({
-            storagePath: item.storage_path,
-            viewerUserId: safeUserId,
-            creatorUserId: safeCreatorUserId,
-            visibility: post.visibility,
-            isSubscribed: hasSubscriptionAccess,
-            hasPurchased: post.hasPurchased,
-          })
+  const url = await createMediaSignedUrl({
+  storagePath: item.storage_path,
+  viewerUserId: safeUserId,
+  creatorUserId: safeCreatorUserId,
+  visibility: post.visibility,
+  isSubscribed: hasSubscriptionAccess,
+  hasPurchased: post.hasPurchased,
+  allowPreview: post.isLocked,
+})
 
           return {
             id: item.id,

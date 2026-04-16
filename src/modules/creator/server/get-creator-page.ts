@@ -218,13 +218,14 @@ const previewMediaRows = hasAccess
 
 const media = await Promise.all(
   previewMediaRows.map(async (item) => ({
-    url: await createMediaSignedUrl({
-      storagePath: item.storage_path,
-      viewerUserId: viewerUserId ?? "",
-      creatorUserId: creator.user_id,
-      visibility: post.visibility,
-      hasPurchased,
-    }),
+   url: await createMediaSignedUrl({
+  storagePath: item.storage_path,
+  viewerUserId: viewerUserId ?? "",
+  creatorUserId: creator.user_id,
+  visibility: post.visibility,
+  hasPurchased,
+  allowPreview: !hasAccess,
+}),
     type: item.type ?? "image",
   }))
 )

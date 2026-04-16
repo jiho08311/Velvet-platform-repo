@@ -9,6 +9,7 @@ type CreateMediaSignedUrlInput = {
   isSubscribed?: boolean
   hasPurchased?: boolean
   expiresIn?: number
+  allowPreview?: boolean
 }
 
 const MEDIA_BUCKET =
@@ -22,6 +23,7 @@ export async function createMediaSignedUrl({
   isSubscribed = false,
   hasPurchased = false,
   expiresIn = 60 * 60,
+  allowPreview = false,
 }: CreateMediaSignedUrlInput): Promise<string> {
   const resolvedStoragePath = storagePath?.trim() ?? ""
   const resolvedViewerUserId = viewerUserId?.trim() ?? ""
@@ -47,9 +49,9 @@ export async function createMediaSignedUrl({
         hasPurchased,
       })
 
-  if (!hasAccess) {
-    return ""
-  }
+if (!hasAccess && !allowPreview) {
+  return ""
+}
 
   const { data, error } = await supabaseAdmin.storage
     .from(MEDIA_BUCKET)
