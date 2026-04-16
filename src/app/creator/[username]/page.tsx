@@ -131,8 +131,8 @@ const mediaPosts = posts.filter(
 
   return (
     <main className="min-h-screen pb-24 lg:pb-0">
-      <div className="grid w-full grid-cols-1 gap-6 px-4 pb-6 pt-6 sm:px-4 lg:grid-cols-[600px_378px] lg:gap-8 lg:px-0">
-        <section className="min-w-0 w-full max-w-[600px] mx-auto lg:mx-0">
+      <div className="grid w-full grid-cols-1 gap-6 px-0 pb-6 pt-6 lg:grid-cols-[600px_378px] lg:gap-8 lg:px-0">
+        <section className="min-w-0 w-full max-w-[600px] px-4 mx-auto lg:mx-0 lg:px-0">
           <div className="h-40 w-full rounded-3xl bg-gradient-to-r from-[#C2185B] via-[#D81B60] to-[#F06292]" />
 
           <div className="mt-[-40px] flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
