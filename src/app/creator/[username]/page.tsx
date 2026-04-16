@@ -162,7 +162,7 @@ const mediaPosts = posts.filter(
               </div>
             </div>
 
-          <div className="flex w-full flex-col gap-3 sm:w-auto sm:items-end">
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:items-end sm:gap-4">
   {isOwner ? (
     <Link
       href="/profile/edit"
@@ -229,7 +229,7 @@ const mediaPosts = posts.filter(
             </p>
           ) : null}
 
-      <div className="mt-6 flex items-center gap-8 text-sm text-zinc-400">
+      <div className="mt-4 flex items-center gap-8 text-sm text-zinc-400">
   <div>
     <p className="text-base font-semibold text-white">{mediaPosts.length}</p>
     <p className="mt-1 text-zinc-500">Posts</p>
@@ -272,7 +272,7 @@ const mediaPosts = posts.filter(
         <aside className="hidden lg:block w-full max-w-[378px] mx-auto lg:mx-0">
           <div className="space-y-4 lg:sticky lg:top-24">
             {!isOwner ? (
-         <Card className="border-zinc-800 bg-zinc-900/70 p-5">
+  <Card className="border-zinc-800 bg-zinc-900/70 p-5">
   <div className="space-y-4">
     <div>
       <p className="text-lg font-semibold text-white">
