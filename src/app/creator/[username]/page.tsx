@@ -103,8 +103,13 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
           })
         )
 
-const mediaPosts = posts.filter((post) => (post.media?.length ?? 0) > 0)
-const textOnlyPosts = posts.filter((post) => (post.media?.length ?? 0) === 0)
+const mediaPosts = posts.filter(
+  (post) => (post.media ?? []).some((m) => m.url)
+)
+
+const textOnlyPosts = posts.filter(
+  (post) => !(post.media ?? []).some((m) => m.url)
+)
 
 
   const viewerSubscription = userId
