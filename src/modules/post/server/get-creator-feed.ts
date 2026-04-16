@@ -290,9 +290,11 @@ export async function getCreatorFeed({
 
   return Promise.all(
     resolvedPosts.map(async (post) => {
-      const selectedMediaRows = post.isLocked
-        ? []
-        : (mediaMap.get(post.id) ?? [])
+const allMediaRows = mediaMap.get(post.id) ?? []
+
+const selectedMediaRows = post.isLocked
+  ? allMediaRows.slice(0, 1) // 🔥 preview 1개만
+  : allMediaRows
 
       const media = await Promise.all(
         selectedMediaRows.map(async (item) => {

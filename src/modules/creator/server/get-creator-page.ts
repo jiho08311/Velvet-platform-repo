@@ -210,18 +210,24 @@ const now = new Date().toISOString()
         hasPurchased,
       })
 
-      const media = await Promise.all(
-        (hasAccess ? mediaMap.get(post.id) ?? [] : []).map(async (item) => ({
-          url: await createMediaSignedUrl({
-            storagePath: item.storage_path,
-            viewerUserId: viewerUserId ?? "",
-            creatorUserId: creator.user_id,
-            visibility: post.visibility,
-            hasPurchased,
-          }),
-          type: item.type ?? "image",
-        }))
-      )
+   const allMediaRows = mediaMap.get(post.id) ?? []
+
+const previewMediaRows = hasAccess
+  ? allMediaRows
+  : allMediaRows.slice(0, 1)
+
+const media = await Promise.all(
+  previewMediaRows.map(async (item) => ({
+    url: await createMediaSignedUrl({
+      storagePath: item.storage_path,
+      viewerUserId: viewerUserId ?? "",
+      creatorUserId: creator.user_id,
+      visibility: post.visibility,
+      hasPurchased,
+    }),
+    type: item.type ?? "image",
+  }))
+)
 
       return {
         id: post.id,
