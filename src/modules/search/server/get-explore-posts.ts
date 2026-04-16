@@ -39,11 +39,10 @@ type CreatorRow = {
   username: string
   display_name: string | null
   user_id: string
-  status: "active" | "pending" | "suspended" | "inactive"
-}
-
-type ProfileRow = {
-  id: string
+  profiles: {
+    id: string
+    is_deactivated: boolean
+  } | null
 }
 
 function shuffleArray<T>(items: T[]): T[] {
@@ -63,9 +62,7 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
 
   const { data: postRows, error: postError } = await supabaseAdmin
     .from("posts")
-    .select(
-      "id, creator_id, created_at, published_at, content, likes_count, comments_count"
-    )
+    .select("id, creator_id, created_at, published_at, content, likes_count, comments_count")
     .eq("status", "published")
     .eq("visibility", "public")
     .is("deleted_at", null)
@@ -108,41 +105,34 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
   }
 
   const postsWithMedia = posts.filter((post) => firstMediaMap.has(post.id))
+
   if (postsWithMedia.length === 0) return []
 
   const creatorIds = Array.from(
     new Set(postsWithMedia.map((post) => post.creator_id))
   )
 
-  const { data: profileRows, error: profileError } = await supabaseAdmin
-    .from("profiles")
-    .select("id")
-    .eq("is_deactivated", false)
-    .eq("is_delete_pending", false)
-    .is("deleted_at", null)
-    .returns<ProfileRow[]>()
-
-  if (profileError) throw profileError
-
-  const activeUserIds = new Set((profileRows ?? []).map((profile) => profile.id))
-
-  if (activeUserIds.size === 0) {
-    return []
-  }
-
   const { data: creatorRows, error: creatorError } = await supabaseAdmin
     .from("creators")
-    .select("id, username, display_name, user_id, status")
+    .select(`
+      id,
+      username,
+      display_name,
+      user_id,
+      profiles!inner (
+        id,
+        is_deactivated
+      )
+    `)
     .in("id", creatorIds)
     .eq("status", "active")
+    .eq("profiles.is_deactivated", false)
     .returns<CreatorRow[]>()
 
   if (creatorError) throw creatorError
 
   const creatorMap = new Map(
-    (creatorRows ?? [])
-      .filter((creator) => activeUserIds.has(creator.user_id))
-      .map((creator) => [creator.id, creator])
+    (creatorRows ?? []).map((creator) => [creator.id, creator])
   )
 
   const filteredPosts = postsWithMedia.filter((post) =>
