@@ -382,9 +382,9 @@ const media = await Promise.all(
 
   return {
     items,
-    nextCursor:
-      items.length === limit
-        ? items[items.length - 1]?.createdAt ?? null
-        : null,
+  nextCursor:
+  items.length === limit
+    ? items[items.length - 1]?.publishedAt ?? null
+    : null,
   }
 }

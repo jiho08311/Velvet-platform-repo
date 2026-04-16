@@ -8,7 +8,7 @@ import { getHomeFeed } from "@/modules/feed/server/get-home-feed"
 import { getPublicUpcomingPosts } from "@/modules/feed/server/get-public-upcoming-posts"
 import { FeedComposer } from "@/modules/feed/ui/FeedComposer"
 import { FeedEmptyState } from "@/modules/feed/ui/FeedEmptyState"
-import { FeedList } from "@/modules/feed/ui/FeedList"
+import { FeedInfiniteList } from "@/modules/feed/ui/FeedInfiniteList"
 import { getRecommendedCreators } from "@/modules/search/server/get-recommended-creators"
 import { getStories } from "@/modules/story/server/get-stories"
 
@@ -161,35 +161,38 @@ export default async function FeedPage() {
           {session ? <FeedComposer userId={session.userId} /> : null}
 
           {feed.items.length === 0 ? (
-            <FeedEmptyState
-              title="No posts yet"
-              description="Posts from creators you follow will appear here."
-            />
-          ) : (
-            <FeedList
-              posts={feed.items.map((item) => ({
-                id: item.id,
-                postId: item.id,
-                creatorId: item.creatorId,
-                creatorUserId: item.creatorUserId,
-                currentUserId: session?.userId ?? undefined,
-                text: item.text,
-                createdAt: item.createdAt,
-                status: item.status,
-                publishedAt: item.publishedAt ?? null,
-                media: normalizeMedia(item),
-                blocks:
-                  "blocks" in item && Array.isArray(item.blocks) ? item.blocks : [],
-                isLocked: item.isLocked,
-                lockReason: item.lockReason,
-                price: normalizePrice(item),
-                commentsCount: item.commentsCount,
-                likesCount: item.likesCount,
-                isLiked: item.isLiked,
-                creator: item.creator,
-              }))}
-            />
-          )}
+  <FeedEmptyState
+    title="No posts yet"
+    description="Posts from creators you follow will appear here."
+  />
+) : (
+  <FeedInfiniteList
+    initialPosts={feed.items.map((item) => ({
+      id: item.id,
+      postId: item.id,
+      creatorId: item.creatorId,
+      creatorUserId: item.creatorUserId,
+      currentUserId: session?.userId ?? undefined,
+      text: item.text,
+      createdAt: item.createdAt,
+      status: item.status,
+      publishedAt: item.publishedAt ?? null,
+      media: normalizeMedia(item),
+      blocks:
+        "blocks" in item && Array.isArray(item.blocks) ? item.blocks : [],
+      isLocked: item.isLocked,
+      lockReason: item.lockReason,
+      price: normalizePrice(item),
+      commentsCount: item.commentsCount,
+      likesCount: item.likesCount,
+      isLiked: item.isLiked,
+      creator: item.creator,
+    }))}
+    initialCursor={feed.nextCursor}
+    currentUserId={session?.userId ?? undefined}
+  />
+)}
+         
         </section>
 
         <aside className="hidden lg:block">
