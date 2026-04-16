@@ -8,12 +8,15 @@ import { getCreatorDashboardSummary } from "@/modules/analytics/server/get-creat
 import { getCreatorFeed } from "@/modules/post/server/get-creator-feed"
 import { getMyPosts } from "@/modules/post/server/get-my-posts"
 import { CreatePostComposer } from "@/modules/post/ui/CreatePostComposer"
-import { PostCard } from "@/modules/post/ui/PostCard"
-import { UpcomingCard } from "@/modules/feed/ui/UpcomingCard"
+
+
 import { ReportButton } from "@/modules/report/ui/ReportButton"
 import { getViewerSubscription } from "@/modules/subscription/server/get-viewer-subscription"
 import { SubscriptionStatusCard } from "@/modules/subscription/ui/SubscriptionStatusCard"
 import { Card } from "@/shared/ui/Card"
+import { CreatorContentTabs } from "@/modules/creator/ui/CreatorContentTabs"
+
+
 
 type CreatorPageProps = {
   params: Promise<{
@@ -100,6 +103,18 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
           })
         )
 
+  const updatePosts = posts.filter(
+  (post) =>
+    (post.media?.length ?? 0) === 0 ||
+    post.status !== "published"
+)
+
+const mediaPosts = posts.filter(
+  (post) =>
+    (post.media?.length ?? 0) > 0 &&
+    post.status === "published"
+)
+
   const viewerSubscription = userId
     ? await getViewerSubscription(userId, creator.id)
     : {
@@ -115,14 +130,14 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
         : "inactive"
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen pb-24 lg:pb-0">
       <div className="grid w-full grid-cols-1 gap-6 px-4 pb-6 pt-6 sm:px-4 lg:grid-cols-[600px_378px] lg:gap-8 lg:px-0">
         <section className="min-w-0 w-full max-w-[600px] mx-auto lg:mx-0">
           <div className="h-40 w-full rounded-3xl bg-gradient-to-r from-[#C2185B] via-[#D81B60] to-[#F06292]" />
 
-          <div className="mt-[-40px] flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex items-end gap-4">
-              <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-zinc-950 bg-zinc-900">
+          <div className="mt-[-40px] flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex items-end gap-4 sm:gap-5">
+              <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-zinc-950 bg-zinc-900 shadow-[0_0_0_1px_rgba(39,39,42,0.6)]">
                 {creator.avatarUrl ? (
                   <img
                     src={creator.avatarUrl}
@@ -139,48 +154,52 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
               </div>
 
               <div className="pb-1">
-                <h1 className="text-xl font-semibold text-white">
+                <h1 className="text-2xl font-semibold tracking-tight text-white">
                   {creator.displayName ?? creator.username}
                 </h1>
 
-                <p className="text-sm text-zinc-400">@{creator.username}</p>
+                <p className="mt-1 text-sm text-zinc-500">@{creator.username}</p>
               </div>
             </div>
 
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
-              {isOwner ? (
-             <Link
-  href="/profile/edit"
-  className="inline-flex h-12 w-full items-center justify-center rounded-full bg-zinc-800 px-4 text-sm font-semibold text-white hover:bg-zinc-700 sm:w-auto"
->
-                  Edit profile
-                </Link>
-              ) : (
-                <>
-                  <p className="text-sm font-medium text-white">
-                    {formatPrice(creator.subscriptionPrice)}
-                    <span className="ml-1 text-zinc-400">구독</span>
-                  </p>
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:items-end">
+  {isOwner ? (
+    <Link
+      href="/profile/edit"
+      className="inline-flex h-12 w-full items-center justify-center rounded-full bg-zinc-800 px-4 text-sm font-semibold text-white transition hover:bg-zinc-700 sm:w-auto"
+    >
+      Edit profile
+    </Link>
+  ) : (
+    <>
+      <div className="text-left sm:text-right">
+        <p className="text-lg font-semibold text-white">
+          {formatPrice(creator.subscriptionPrice)}
+        </p>
+        <p className="mt-1 text-xs text-zinc-500">
+          monthly subscription
+        </p>
+      </div>
 
-                  <div className="w-full sm:min-w-[180px]">
-                    <SubscribeButton
-                      creatorId={creator.id}
-                      creatorUserId={creator.userId}
-                      currentUserId={userId ?? undefined}
-                      creatorUsername={creator.username}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+      <div className="w-full sm:min-w-[220px]">
+        <SubscribeButton
+          creatorId={creator.id}
+          creatorUserId={creator.userId}
+          currentUserId={userId ?? undefined}
+          creatorUsername={creator.username}
+        />
+      </div>
+    </>
+  )}
+</div>
           </div>
 
-          <p className="mt-4 text-sm text-zinc-400">
-            {creator.bio ?? "No bio yet."}
-          </p>
+      <p className="mt-6 max-w-2xl text-sm leading-6 text-zinc-400">
+  {creator.bio ?? "No bio yet."}
+</p>
 
           {!isOwner ? (
-            <div className="mt-2">
+            <div className="mt-3">
               <ReportButton
                 targetType="creator"
                 targetId={creator.id}
@@ -191,7 +210,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
           ) : null}
 
           {!isOwner ? (
-            <div className="mt-4">
+            <div className="mt-5">
               <SubscriptionStatusCard
                 status={subscriptionStatus}
                 currentPeriodEndAt={
@@ -210,75 +229,41 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
             </p>
           ) : null}
 
-          <div className="mt-4 flex items-center gap-4 text-xs text-zinc-500">
-            <span>{formatCount(summary?.subscriberCount)} users</span>
-            <span>{formatCount(posts.length)} posts</span>
-          </div>
+      <div className="mt-6 flex items-center gap-8 text-sm text-zinc-400">
+  <div>
+    <p className="text-base font-semibold text-white">{mediaPosts.length}</p>
+    <p className="mt-1 text-zinc-500">Posts</p>
+  </div>
 
-          <div className="mt-6">
+  <div>
+    <p className="text-base font-semibold text-white">{updatePosts.length}</p>
+<p className="mt-1 text-zinc-500">Updates</p>
+  </div>
+
+  <div>
+    <p className="text-base font-semibold text-white">
+      {formatCount(summary?.subscriberCount)}
+    </p>
+<p className="mt-1 text-zinc-500">Subscribers</p>
+  </div>
+</div>
+
+          <div className="mt-8">
             {isOwner ? <CreatePostComposer creatorId={creator.id} /> : null}
 
             {posts.length === 0 ? (
               <div className="text-center text-sm text-zinc-500">No posts yet</div>
             ) : (
               <div className="-mx-4 lg:mx-0">
-                {posts.map((post) => {
-                  const isScheduled =
-                    "status" in post && post.status === "scheduled"
-
-                  if (isScheduled) {
-                    return (
-                      <div key={post.id} className="px-4 py-3 lg:px-0">
-                        <UpcomingCard
-                          title="Upcoming post"
-                          previewText={isOwner ? post.content ?? null : null}
-                          scheduledAt={
-                            "publishedAt" in post
-                              ? post.publishedAt ?? ""
-                              : "published_at" in post
-                                ? post.published_at ?? ""
-                                : ""
-                          }
-                          creator={{
-                            username: creator.username,
-                            displayName: creator.displayName ?? creator.username,
-                            avatarUrl: creator.avatarUrl ?? null,
-                          }}
-                        />
-                      </div>
-                    )
-                  }
-
-                  return (
-                    <div key={post.id} className="relative">
-                      {isOwner && "status" in post && post.status === "draft" ? (
-                        <div className="absolute left-3 top-3 z-10 rounded-full bg-zinc-900/80 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
-                          Draft
-                        </div>
-                      ) : null}
-
-                      <PostCard
-                        postId={post.id}
-                        text={post.content ?? ""}
-                        createdAt={new Date(post.created_at).toLocaleString()}
-                        media={post.media ?? []}
-                        blocks={post.blocks ?? []}
-                        isLocked={post.isLocked}
-                        commentsCount={post.commentsCount}
-                        likesCount={post.likesCount}
-                        isLiked={post.isLiked}
-                        creatorId={creator.id}
-                        creatorUserId={creator.userId}
-                        currentUserId={userId ?? undefined}
-                        creator={{
-                          username: creator.username,
-                          displayName: creator.displayName ?? creator.username,
-                          avatarUrl: creator.avatarUrl ?? null,
-                        }}
-                      />
-                    </div>
-                  )
-                })}
+               <CreatorContentTabs
+  mediaPosts={mediaPosts}
+  updatePosts={updatePosts}
+  creatorId={creator.id}
+  creatorUserId={creator.userId}
+  creatorUsername={creator.username}
+  currentUserId={userId ?? undefined}
+  isOwner={isOwner}
+/>
               </div>
             )}
           </div>
@@ -287,27 +272,57 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
         <aside className="hidden lg:block w-full max-w-[378px] mx-auto lg:mx-0">
           <div className="space-y-4 lg:sticky lg:top-24">
             {!isOwner ? (
-              <Card className="border-zinc-800 bg-zinc-900/70 p-5">
-                <div className="space-y-4">
-                  <SubscriptionStatusCard
-                    status={subscriptionStatus}
-                    currentPeriodEndAt={
-                      viewerSubscription.subscription?.currentPeriodEndAt
-                    }
-                    cancelAtPeriodEnd={Boolean(
-                      viewerSubscription.subscription?.cancelAtPeriodEnd
-                    )}
-                  />
+         <Card className="border-zinc-800 bg-zinc-900/70 p-5">
+  <div className="space-y-4">
+    <div>
+      <p className="text-lg font-semibold text-white">
+        {formatPrice(creator.subscriptionPrice)}
+      </p>
+      <p className="mt-1 text-sm text-zinc-500">
+        monthly subscription
+      </p>
+    </div>
 
-                  <p className="text-sm text-zinc-500">
-                    구독자 전용 콘텐츠를 확인할 수 있어요
-                  </p>
-                </div>
-              </Card>
+    <p className="text-sm leading-6 text-zinc-400">
+      Subscribe to unlock posts, updates, and subscriber-only content from{" "}
+      {creator.displayName ?? creator.username}.
+    </p>
+
+    <SubscribeButton
+      creatorId={creator.id}
+      creatorUserId={creator.userId}
+      currentUserId={userId ?? undefined}
+      creatorUsername={creator.username}
+    />
+  </div>
+</Card>
             ) : null}
           </div>
         </aside>
       </div>
+      {!isOwner ? (
+  <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800 bg-zinc-950/95 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-3 backdrop-blur-xl lg:hidden">
+    <div className="mx-auto flex max-w-md items-center justify-between gap-3">
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-white">
+          {formatPrice(creator.subscriptionPrice)}
+        </p>
+        <p className="text-xs text-zinc-500">
+          Unlock subscriber content
+        </p>
+      </div>
+
+      <div className="w-full max-w-[220px] shrink-0">
+        <SubscribeButton
+          creatorId={creator.id}
+          creatorUserId={creator.userId}
+          currentUserId={userId ?? undefined}
+          creatorUsername={creator.username}
+        />
+      </div>
+    </div>
+  </div>
+) : null}
     </main>
   )
 }
