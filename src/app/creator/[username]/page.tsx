@@ -13,6 +13,7 @@ import { UpcomingCard } from "@/modules/feed/ui/UpcomingCard"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
 import { getViewerSubscription } from "@/modules/subscription/server/get-viewer-subscription"
 import { SubscriptionStatusCard } from "@/modules/subscription/ui/SubscriptionStatusCard"
+import { Card } from "@/shared/ui/Card"
 
 type CreatorPageProps = {
   params: Promise<{
@@ -115,126 +116,160 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
 
   return (
     <main className="min-h-screen">
-      <div className="w-full px-4 pb-6 pt-6">
-        <div className="h-40 w-full rounded-3xl bg-gradient-to-r from-[#C2185B] via-[#D81B60] to-[#F06292]" />
+      <div className="grid w-full grid-cols-1 gap-6 px-4 pb-6 pt-6 sm:px-4 lg:grid-cols-[600px_378px] lg:gap-8 lg:px-0">
+        <section className="min-w-0 w-full max-w-[600px] mx-auto lg:mx-0">
+          <div className="h-40 w-full rounded-3xl bg-gradient-to-r from-[#C2185B] via-[#D81B60] to-[#F06292]" />
 
-        <div className="mt-[-40px] flex items-end justify-between gap-4">
-          <div className="flex items-end gap-4">
-            <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-zinc-950 bg-zinc-900">
-              {creator.avatarUrl ? (
-                <img
-                  src={creator.avatarUrl}
-                  alt={creator.displayName ?? creator.username}
-                  className="h-full w-full object-cover"
-                />
+          <div className="mt-[-40px] flex items-end justify-between gap-4">
+            <div className="flex items-end gap-4">
+              <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-zinc-950 bg-zinc-900">
+                {creator.avatarUrl ? (
+                  <img
+                    src={creator.avatarUrl}
+                    alt={creator.displayName ?? creator.username}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-xl font-semibold text-white">
+                    {(creator.displayName ?? creator.username)
+                      .slice(0, 1)
+                      .toUpperCase()}
+                  </div>
+                )}
+              </div>
+
+              <div className="pb-1">
+                <h1 className="text-xl font-semibold text-white">
+                  {creator.displayName ?? creator.username}
+                </h1>
+
+                <p className="text-sm text-zinc-400">@{creator.username}</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-end gap-2">
+              {isOwner ? (
+                <Link
+                  href="/profile/edit"
+                  className="inline-flex h-12 items-center justify-center rounded-full bg-zinc-800 px-4 text-sm font-semibold text-white hover:bg-zinc-700"
+                >
+                  Edit profile
+                </Link>
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-xl font-semibold text-white">
-                  {(creator.displayName ?? creator.username)
-                    .slice(0, 1)
-                    .toUpperCase()}
-                </div>
+                <>
+                  <p className="text-sm font-medium text-white">
+                    {formatPrice(creator.subscriptionPrice)}
+                    <span className="ml-1 text-zinc-400">구독</span>
+                  </p>
+
+                  <div className="w-full min-w-[180px]">
+                    <SubscribeButton
+                      creatorId={creator.id}
+                      creatorUserId={creator.userId}
+                      currentUserId={userId ?? undefined}
+                      creatorUsername={creator.username}
+                    />
+                  </div>
+                </>
               )}
             </div>
-
-            <div className="pb-1">
-              <h1 className="text-xl font-semibold text-white">
-                {creator.displayName ?? creator.username}
-              </h1>
-
-              <p className="text-sm text-zinc-400">@{creator.username}</p>
-            </div>
           </div>
 
-          <div className="flex flex-col items-end gap-2 md:flex">
-            {isOwner ? (
-              <Link
-                href="/profile/edit"
-                className="rounded-full bg-zinc-800 px-4 py-2 text-sm text-white hover:bg-zinc-700"
-              >
-                Edit
-              </Link>
-            ) : (
-              <>
-                <p className="text-sm font-medium text-white">
-                  {formatPrice(creator.subscriptionPrice)}
-                  <span className="ml-1 text-zinc-400">구독</span>
-                </p>
-
-                <SubscribeButton
-                  creatorId={creator.id}
-                  creatorUserId={creator.userId}
-                  currentUserId={userId ?? undefined}
-                  creatorUsername={creator.username}
-                />
-              </>
-            )}
-          </div>
-        </div>
-
-        <p className="mt-4 text-sm text-zinc-400">
-          {creator.bio ?? "No bio yet."}
-        </p>
-
-        {!isOwner ? (
-          <div className="mt-2">
-            <ReportButton
-              targetType="creator"
-              targetId={creator.id}
-              pathname={pathname}
-              currentUserId={userId ?? undefined}
-            />
-          </div>
-        ) : null}
-
-        {!isOwner ? (
-          <div className="mt-4">
-            <SubscriptionStatusCard
-              status={subscriptionStatus}
-              currentPeriodEndAt={
-                viewerSubscription.subscription?.currentPeriodEndAt
-              }
-              cancelAtPeriodEnd={Boolean(
-                viewerSubscription.subscription?.cancelAtPeriodEnd
-              )}
-            />
-          </div>
-        ) : null}
-
-        {!isOwner ? (
-          <p className="mt-2 text-sm text-zinc-500">
-            구독자 전용 콘텐츠를 확인할 수 있어요
+          <p className="mt-4 text-sm text-zinc-400">
+            {creator.bio ?? "No bio yet."}
           </p>
-        ) : null}
 
-        <div className="mt-4 flex items-center gap-4 text-xs text-zinc-500">
-          <span>{formatCount(summary?.subscriberCount)} users</span>
-          <span>{formatCount(posts.length)} posts</span>
-        </div>
+          {!isOwner ? (
+            <div className="mt-2">
+              <ReportButton
+                targetType="creator"
+                targetId={creator.id}
+                pathname={pathname}
+                currentUserId={userId ?? undefined}
+              />
+            </div>
+          ) : null}
 
-        <div className="mt-6">
-          {isOwner ? <CreatePostComposer creatorId={creator.id} /> : null}
+          {!isOwner ? (
+            <div className="mt-4">
+              <SubscriptionStatusCard
+                status={subscriptionStatus}
+                currentPeriodEndAt={
+                  viewerSubscription.subscription?.currentPeriodEndAt
+                }
+                cancelAtPeriodEnd={Boolean(
+                  viewerSubscription.subscription?.cancelAtPeriodEnd
+                )}
+              />
+            </div>
+          ) : null}
 
-          {posts.length === 0 ? (
-            <div className="text-center text-sm text-zinc-500">No posts yet</div>
-          ) : (
-            <div className="-mx-4">
-              {posts.map((post) => {
-                const isScheduled =
-                  "status" in post && post.status === "scheduled"
+          {!isOwner ? (
+            <p className="mt-2 text-sm text-zinc-500">
+              구독자 전용 콘텐츠를 확인할 수 있어요
+            </p>
+          ) : null}
 
-                if (isScheduled) {
+          <div className="mt-4 flex items-center gap-4 text-xs text-zinc-500">
+            <span>{formatCount(summary?.subscriberCount)} users</span>
+            <span>{formatCount(posts.length)} posts</span>
+          </div>
+
+          <div className="mt-6">
+            {isOwner ? <CreatePostComposer creatorId={creator.id} /> : null}
+
+            {posts.length === 0 ? (
+              <div className="text-center text-sm text-zinc-500">No posts yet</div>
+            ) : (
+              <div className="-mx-4 lg:mx-0">
+                {posts.map((post) => {
+                  const isScheduled =
+                    "status" in post && post.status === "scheduled"
+
+                  if (isScheduled) {
+                    return (
+                      <div key={post.id} className="px-4 py-3 lg:px-0">
+                        <UpcomingCard
+                          title="Upcoming post"
+                          previewText={isOwner ? post.content ?? null : null}
+                          scheduledAt={
+                            "publishedAt" in post
+                              ? post.publishedAt ?? ""
+                              : "published_at" in post
+                                ? post.published_at ?? ""
+                                : ""
+                          }
+                          creator={{
+                            username: creator.username,
+                            displayName: creator.displayName ?? creator.username,
+                            avatarUrl: creator.avatarUrl ?? null,
+                          }}
+                        />
+                      </div>
+                    )
+                  }
+
                   return (
-                    <div key={post.id} className="px-4 py-3">
-                      <UpcomingCard
-                        title="Upcoming post"
-                        previewText={isOwner ? post.content ?? null : null}
-                        scheduledAt={
-                          "publishedAt" in post
-                            ? post.publishedAt ?? ""
-                            : "published_at" in post
-                              ? post.published_at ?? ""
-                              : ""
-                        }
+                    <div key={post.id} className="relative">
+                      {isOwner && "status" in post && post.status === "draft" ? (
+                        <div className="absolute left-3 top-3 z-10 rounded-full bg-zinc-900/80 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
+                          Draft
+                        </div>
+                      ) : null}
+
+                      <PostCard
+                        postId={post.id}
+                        text={post.content ?? ""}
+                        createdAt={new Date(post.created_at).toLocaleString()}
+                        media={post.media ?? []}
+                        blocks={post.blocks ?? []}
+                        isLocked={post.isLocked}
+                        commentsCount={post.commentsCount}
+                        likesCount={post.likesCount}
+                        isLiked={post.isLiked}
+                        creatorId={creator.id}
+                        creatorUserId={creator.userId}
+                        currentUserId={userId ?? undefined}
                         creator={{
                           username: creator.username,
                           displayName: creator.displayName ?? creator.username,
@@ -243,41 +278,35 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                       />
                     </div>
                   )
-                }
+                })}
+              </div>
+            )}
+          </div>
+        </section>
 
-                return (
-                  <div key={post.id} className="relative">
-                    {isOwner && "status" in post && post.status === "draft" ? (
-                      <div className="absolute left-3 top-3 z-10 rounded-full bg-zinc-900/80 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
-                        Draft
-                      </div>
-                    ) : null}
+        <aside className="hidden lg:block w-full max-w-[378px] mx-auto lg:mx-0">
+          <div className="space-y-4 lg:sticky lg:top-24">
+            {!isOwner ? (
+              <Card className="border-zinc-800 bg-zinc-900/70 p-5">
+                <div className="space-y-4">
+                  <SubscriptionStatusCard
+                    status={subscriptionStatus}
+                    currentPeriodEndAt={
+                      viewerSubscription.subscription?.currentPeriodEndAt
+                    }
+                    cancelAtPeriodEnd={Boolean(
+                      viewerSubscription.subscription?.cancelAtPeriodEnd
+                    )}
+                  />
 
-                    <PostCard
-                      postId={post.id}
-                      text={post.content ?? ""}
-                      createdAt={new Date(post.created_at).toLocaleString()}
-                      media={post.media ?? []}
-                      blocks={post.blocks ?? []}
-                      isLocked={post.isLocked}
-                      commentsCount={post.commentsCount}
-                      likesCount={post.likesCount}
-                      isLiked={post.isLiked}
-                      creatorId={creator.id}
-                      creatorUserId={creator.userId}
-                      currentUserId={userId ?? undefined}
-                      creator={{
-                        username: creator.username,
-                        displayName: creator.displayName ?? creator.username,
-                        avatarUrl: creator.avatarUrl ?? null,
-                      }}
-                    />
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
+                  <p className="text-sm text-zinc-500">
+                    구독자 전용 콘텐츠를 확인할 수 있어요
+                  </p>
+                </div>
+              </Card>
+            ) : null}
+          </div>
+        </aside>
       </div>
     </main>
   )
