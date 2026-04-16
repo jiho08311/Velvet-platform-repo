@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import type { PostBlockEditorState } from "../types"
 import { createPostWithMediaWorkflow } from "@/workflows/create-post-with-media-workflow"
+import { localDateTimeToUtcIso } from "@/shared/lib/date-time"
+
 
 type UploadedFileInput = {
   path: string
@@ -30,19 +32,6 @@ type CreatePostActionInput = {
   }[]
 }
 
-function normalizeUtcIsoString(value: string | null | undefined): string | null {
-  if (!value) {
-    return null
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return null
-  }
-
-  return date.toISOString()
-}
 
 export async function createPostAction({
   creatorId,
@@ -76,8 +65,8 @@ export async function createPostAction({
     throw new Error("Paid post price must be greater than 0")
   }
 
-  const normalizedPublishedAt =
-    status === "scheduled" ? normalizeUtcIsoString(publishedAt) : null
+const normalizedPublishedAt =
+  status === "scheduled" ? localDateTimeToUtcIso(publishedAt) : null
 
   if (status === "scheduled" && !normalizedPublishedAt) {
     throw new Error("Scheduled post requires valid publishedAt")

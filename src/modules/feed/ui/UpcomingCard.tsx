@@ -27,7 +27,7 @@ function formatScheduledAt(value: string) {
 
   const now = new Date()
   const diffMs = date.getTime() - now.getTime()
-  const diffHours = Math.round(diffMs / (1000 * 60 * 60))
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
 
   const startOfToday = new Date(
     now.getFullYear(),
@@ -40,18 +40,25 @@ function formatScheduledAt(value: string) {
     date.getDate()
   )
 
-  const diffDays = Math.round(
+  const diffDays = Math.floor(
     (startOfTarget.getTime() - startOfToday.getTime()) /
       (1000 * 60 * 60 * 24)
   )
 
-  if (diffHours >= 1 && diffHours < 12) {
+  if (diffHours > 0 && diffHours < 12) {
     return `In ${diffHours} hours`
   }
 
-  if (diffDays === 0) {
+ if (diffDays === 0) {
+  const hours = date.getHours()
+
+  // 밤 시간대만 Tonight
+  if (hours >= 18) {
     return `Tonight ${formatHour(date)}`
   }
+
+  return `Today ${formatHour(date)}`
+}
 
   if (diffDays === 1) {
     return `Tomorrow ${formatHour(date)}`
