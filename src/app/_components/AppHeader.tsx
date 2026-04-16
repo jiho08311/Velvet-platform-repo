@@ -33,31 +33,31 @@ export function AppHeader({
     return href
   }
 
-useEffect(() => {
-  async function fetchAuth() {
-    try {
-      const res = await fetch("/api/notifications", {
-        method: "HEAD",
-        cache: "no-store",
-      })
+  useEffect(() => {
+    async function fetchAuth() {
+      try {
+        const res = await fetch("/api/notifications", {
+          method: "HEAD",
+          cache: "no-store",
+        })
 
-      if (!res.ok) {
+        if (!res.ok) {
+          setIsAuthenticated(false)
+          return
+        }
+
+        setIsAuthenticated(true)
+      } catch {
         setIsAuthenticated(false)
-        return
       }
-
-      setIsAuthenticated(true)
-    } catch {
-      setIsAuthenticated(false)
     }
-  }
 
-  fetchAuth()
-}, [])
+    fetchAuth()
+  }, [])
 
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-900/80 bg-zinc-950/90 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 px-4 py-3 md:px-6">
+      <div className="mx-auto flex max-w-[1242px] items-center justify-between gap-3 px-4 py-3 md:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <Link href={resolveHref("/feed")} className="flex items-center gap-3">
             <Image

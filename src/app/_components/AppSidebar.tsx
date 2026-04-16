@@ -94,9 +94,9 @@ export function AppSidebar() {
   }, [isAuthenticated])
 
   return (
-    <aside className="w-16 shrink-0">
-      <div className="flex flex-col items-center px-2 py-4">
-        <nav className="flex w-full flex-col items-center gap-2">
+    <aside className="w-full">
+      <div className="flex flex-col items-center px-2 py-4 md:items-start md:px-10">
+        <nav className="flex w-full flex-col items-center gap-2 md:items-start">
           {navigationItems.map((item) => {
             const isActive =
               pathname === item.href ||
@@ -125,7 +125,7 @@ export function AppSidebar() {
           })}
         </nav>
 
-        <div className="mt-6 flex w-full flex-col items-center gap-2">
+        <div className="mt-6 flex w-full flex-col items-center gap-2 md:items-start">
           {isAuthenticated === null || isCreator === null ? (
             <div className="h-12 w-12 animate-pulse rounded-xl bg-zinc-800" />
           ) : isAuthenticated === false ? (

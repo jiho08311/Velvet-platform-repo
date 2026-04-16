@@ -17,9 +17,9 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) {
-    redirect("/feed")
-  }
+if (!user) {
+  redirect("/sign-in")
+}
 
   const { data: profile, error } = await supabaseAdmin
     .from("profiles")

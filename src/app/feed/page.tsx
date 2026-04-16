@@ -9,7 +9,6 @@ import { getPublicUpcomingPosts } from "@/modules/feed/server/get-public-upcomin
 import { FeedComposer } from "@/modules/feed/ui/FeedComposer"
 import { FeedEmptyState } from "@/modules/feed/ui/FeedEmptyState"
 import { FeedList } from "@/modules/feed/ui/FeedList"
-import { UpcomingCard } from "@/modules/feed/ui/UpcomingCard"
 import { getRecommendedCreators } from "@/modules/search/server/get-recommended-creators"
 import { getStories } from "@/modules/story/server/get-stories"
 
@@ -149,13 +148,10 @@ export default async function FeedPage() {
     ])
   }
 
-  const firstUpcomingPost = upcomingPosts[0] ?? null
-
   return (
     <main className="min-h-screen">
-      <div className="grid w-full grid-cols-1 gap-6 px-0 py-2 sm:px-0 lg:grid-cols-[632px_320px] lg:justify-center lg:gap-16 lg:pl-40 xl:gap-20 xl:pl-48">
-        <section className="min-w-0 w-full max-w-[632px] mx-auto lg:mx-0 lg:justify-self-end space-y-3">
-
+      <div className="grid w-full grid-cols-1 gap-6 px-0 py-2 sm:px-0 lg:grid-cols-[600px_378px] lg:gap-4">
+        <section className="min-w-0 w-full max-w-[600px] mx-auto lg:mx-0 space-y-3">
           <StoryList
             stories={stories}
             readStateMap={readStateMap}
@@ -171,35 +167,33 @@ export default async function FeedPage() {
             />
           ) : (
             <FeedList
-posts={feed.items.map((item) => ({
-  id: item.id,
-  postId: item.id,
-  creatorId: item.creatorId,
-  creatorUserId: item.creatorUserId,
-  currentUserId: session?.userId ?? undefined,
-  text: item.text,
-  createdAt: item.createdAt,
-
-  // 🔥 추가 (핵심)
-  status: item.status,
-  publishedAt: item.publishedAt ?? null,
-
-  media: normalizeMedia(item),
-  blocks: "blocks" in item && Array.isArray(item.blocks) ? item.blocks : [],
-  isLocked: item.isLocked,
-  lockReason: item.lockReason,
-  price: normalizePrice(item),
-  commentsCount: item.commentsCount,
-  likesCount: item.likesCount,
-  isLiked: item.isLiked,
-  creator: item.creator,
-}))}
+              posts={feed.items.map((item) => ({
+                id: item.id,
+                postId: item.id,
+                creatorId: item.creatorId,
+                creatorUserId: item.creatorUserId,
+                currentUserId: session?.userId ?? undefined,
+                text: item.text,
+                createdAt: item.createdAt,
+                status: item.status,
+                publishedAt: item.publishedAt ?? null,
+                media: normalizeMedia(item),
+                blocks:
+                  "blocks" in item && Array.isArray(item.blocks) ? item.blocks : [],
+                isLocked: item.isLocked,
+                lockReason: item.lockReason,
+                price: normalizePrice(item),
+                commentsCount: item.commentsCount,
+                likesCount: item.likesCount,
+                isLiked: item.isLiked,
+                creator: item.creator,
+              }))}
             />
           )}
         </section>
 
         <aside className="hidden lg:block">
-          <div className="sticky top-24 space-y-4 ml-2">
+          <div className="sticky top-24 space-y-4">
             <Card className="border-zinc-800 bg-zinc-900/70 p-4">
               <div className="space-y-4">
                 <h2 className="text-base font-semibold text-white">
