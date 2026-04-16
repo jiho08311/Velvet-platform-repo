@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Avatar } from "@/shared/ui/Avatar"
+import { formatInUserTimeZone } from "@/shared/lib/date-time"
 
 type UpcomingCardProps = {
   title: string
@@ -10,66 +11,6 @@ type UpcomingCardProps = {
     displayName: string | null
     avatarUrl: string | null
   }
-}
-
-function formatHour(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-  }).format(date)
-}
-
-function formatScheduledAt(value: string) {
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  const now = new Date()
-  const diffMs = date.getTime() - now.getTime()
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-
-  const startOfToday = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate()
-  )
-  const startOfTarget = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate()
-  )
-
-  const diffDays = Math.floor(
-    (startOfTarget.getTime() - startOfToday.getTime()) /
-      (1000 * 60 * 60 * 24)
-  )
-
-  if (diffHours > 0 && diffHours < 12) {
-    return `In ${diffHours} hours`
-  }
-
- if (diffDays === 0) {
-  const hours = date.getHours()
-
-  // 밤 시간대만 Tonight
-  if (hours >= 18) {
-    return `Tonight ${formatHour(date)}`
-  }
-
-  return `Today ${formatHour(date)}`
-}
-
-  if (diffDays === 1) {
-    return `Tomorrow ${formatHour(date)}`
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date)
 }
 
 export function UpcomingCard({
@@ -85,28 +26,25 @@ export function UpcomingCard({
       <div className="rounded-3xl border-2 border-[#C2185B]/40 bg-white px-5 py-4 shadow-sm">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-         <img
-  src="/logo-mark-removebg.png"
-  alt=""
-  aria-hidden="true"
-  className="h-10 w-10 animate-pulse object-contain"
-/>
+            <img
+              src="/logo-mark-removebg.png"
+              alt=""
+              aria-hidden="true"
+              className="h-10 w-10 animate-pulse object-contain"
+            />
 
-     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#C2185B] animate-pulse">
-  Upcoming
-</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#C2185B] animate-pulse">
+              Upcoming
+            </p>
           </div>
 
           <p className="shrink-0 rounded-full border border-[#C2185B]/25 bg-[#C2185B]/10 px-3 py-1.5 text-xs font-medium text-[#C2185B]">
-            {formatScheduledAt(scheduledAt)}
+    {formatInUserTimeZone(scheduledAt, { withTime: true })}
           </p>
         </div>
 
         <div className="mt-4 flex items-center gap-3">
-          <Link
-            href={`/creator/${creator.username}`}
-            className="shrink-0"
-          >
+          <Link href={`/creator/${creator.username}`} className="shrink-0">
             <Avatar
               src={creator.avatarUrl}
               alt={creator.username}
@@ -130,17 +68,16 @@ export function UpcomingCard({
             </p>
           </div>
         </div>
-                <div className="mt-3 flex justify-end">
-  <Link
-    href="/drops"
-    className="text-xs font-medium !text-zinc-700 transition hover:underline"
-  >
-    See upcoming posts →
-  </Link>
-</div>
-      </div>
 
-    
+        <div className="mt-3 flex justify-end">
+          <Link
+            href="/drops"
+            className="text-xs font-medium !text-zinc-700 transition hover:underline"
+          >
+            See upcoming posts →
+          </Link>
+        </div>
+      </div>
     </section>
   )
 }

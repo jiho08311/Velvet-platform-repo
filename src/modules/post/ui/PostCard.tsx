@@ -10,7 +10,7 @@ import {
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline"
 
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid"
-
+import { formatInUserTimeZone } from "@/shared/lib/date-time"
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
 
@@ -74,13 +74,7 @@ editorState?: PostBlockEditorState | null
 }
 
 function formatPostDate(value: string) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-  }).format(date)
+  return formatInUserTimeZone(value, { withTime: false })
 }
 
 function getFilterStyle(filter?: string) {
