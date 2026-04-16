@@ -7,7 +7,7 @@ import { getUserById } from "@/modules/user/server/get-user-by-id"
 import { getMyPosts } from "@/modules/post/server/get-my-posts"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
-
+import { ProfileContentTabs } from "@/modules/profile/ui/ProfileContentTabs"
 type ProfileData = {
   id: string
   displayName: string
@@ -128,8 +128,17 @@ export default async function ProfilePage() {
 
   const posts = postResult.items
   const profile = normalizeProfileData(profileData, userData)
-  const mediaPosts = posts.filter((post) => (post.media?.length ?? 0) > 0)
-const textPosts = posts.filter((post) => (post.media?.length ?? 0) === 0)
+const updatePosts = posts.filter(
+  (post) =>
+    (post.media?.length ?? 0) === 0 ||
+    post.status === "scheduled"
+)
+
+const mediaPosts = posts.filter(
+  (post) =>
+    (post.media?.length ?? 0) > 0 &&
+    post.status !== "scheduled"
+)
 
   if (!profile) {
     return (
@@ -146,196 +155,82 @@ const textPosts = posts.filter((post) => (post.media?.length ?? 0) === 0)
   return (
     <main className="min-h-screen bg-zinc-950 px-6 py-10 text-zinc-100">
       <div className="mx-auto max-w-4xl flex flex-col gap-8">
-        <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-6">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 overflow-hidden rounded-full bg-zinc-800">
-                {profile.avatarUrl ? (
-                  <img
-                    src={profile.avatarUrl}
-                    alt={profile.displayName}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-lg font-semibold text-white">
-                    {profile.displayName.slice(0, 1).toUpperCase()}
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <h2 className="text-2xl">{profile.displayName}</h2>
-                <p className="text-sm text-zinc-400">@{profile.username}</p>
-              </div>
-            </div>
-
-            <Link
-              href="/profile/edit"
-              className="rounded-full border border-zinc-700 px-4 py-2 text-sm hover:bg-zinc-800"
-            >
-              Edit profile
-            </Link>
-          </div>
-
-          <p className="mt-4 text-sm text-zinc-300">
-            {profile.bio || "No bio yet"}
-          </p>
-
-          <div className="mt-3">
-            <ReportButton
-              targetType="user"
-              targetId={profile.id}
-              pathname="/profile"
-              currentUserId={userId}
-            />
-          </div>
-        </section>
-
-        {profile.isCreator && mediaPosts.length > 0 && (
-          <section className="grid grid-cols-2 md:grid-cols-3 gap-[2px] bg-zinc-900">
-       {mediaPosts.map((post: MyPostListItem) => {
-              const media = post.media?.[0]
-              const mediaCount = post.media?.length ?? 0
-              const extraMediaCount = mediaCount > 1 ? mediaCount - 1 : 0
-
-              return (
-                <a
-                  key={post.id}
-                  href={`/post/${post.id}`}
-                  className="relative aspect-square overflow-hidden bg-zinc-800"
-                >
-                  {media?.url ? (
-                    media.type === "video" ? (
-                      <video
-                        src={media.url}
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        preload="metadata"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <img
-                        src={media.url}
-                        alt=""
-                        className="h-full w-full object-cover hover:opacity-90"
-                      />
-                    )
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-xs text-zinc-500">
-                      No media
-                    </div>
-                  )}
-
-                  {extraMediaCount > 0 ? (
-                    <div className="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
-                      +{extraMediaCount}
-                    </div>
-                  ) : null}
-
-                  {post.status === "scheduled" ? (
-  <div className="absolute left-2 top-2 rounded-full bg-pink-600/90 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
-    Scheduled
-  </div>
-) : post.status === "draft" ? (
-  <div className="absolute left-2 top-2 rounded-full bg-zinc-900/80 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
-    Draft
-  </div>
-) : null}
-                </a>
-              )
-            })}
-          </section>
-        )}
- {profile.isCreator && textPosts.length > 0 && (
-  <section className="-mx-6 md:-mx-0">
-    <div className="mb-4 flex items-center justify-between">
-      <div>
-        <h3 className="text-base font-semibold text-white">Updates</h3>
-        <p className="mt-1 text-sm text-zinc-500">
-          Text-only posts from your profile
-        </p>
-      </div>
-
-      <div className="rounded-full border border-zinc-800 bg-zinc-950/80 px-3 py-1 text-xs font-medium text-zinc-400">
-        {textPosts.length}
-      </div>
+   <section className="flex flex-col gap-5">
+  <div className="flex items-start gap-5">
+    <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full bg-zinc-800">
+      {profile.avatarUrl ? (
+        <img
+          src={profile.avatarUrl}
+          alt={profile.displayName}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-3xl font-semibold text-white">
+          {profile.displayName.slice(0, 1).toUpperCase()}
+        </div>
+      )}
     </div>
 
-    <div className="flex flex-col gap-3">
-      {textPosts.map((post: MyPostListItem) => {
-        const visibilityLabel =
-          post.visibility === "public"
-            ? "Public"
-            : post.visibility === "subscribers"
-              ? "Subscribers"
-              : "Paid"
+    <div className="min-w-0 flex-1">
+      <div className="flex items-center gap-3">
+        <h1 className="truncate text-xl font-semibold text-white">
+          {profile.displayName}
+        </h1>
+        <p className="truncate text-sm text-zinc-500">@{profile.username}</p>
+      </div>
 
-        const statusLabel =
-          post.status === "scheduled"
-            ? "Scheduled"
-            : post.status === "draft"
-              ? "Draft"
-              : "Published"
+      <div className="mt-4 grid grid-cols-3 gap-4">
+        <div>
+          <p className="text-lg font-semibold text-white">{mediaPosts.length}</p>
+          <p className="text-sm text-zinc-500">Posts</p>
+        </div>
 
-        const metaDate =
-          post.status === "scheduled" && post.publishedAt
-            ? `Scheduled · ${new Date(post.publishedAt).toLocaleDateString()}`
-            : `Created · ${new Date(post.createdAt).toLocaleDateString()}`
+        <div>
+          <p className="text-lg font-semibold text-white">{updatePosts.length}</p>
+          <p className="text-sm text-zinc-500">Updates</p>
+        </div>
 
-        return (
-          <a
-            key={post.id}
-            href={`/post/${post.id}`}
-            className="group rounded-3xl border border-zinc-800 bg-zinc-950/70 p-5 transition-all hover:border-zinc-700 hover:bg-zinc-900"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2">
-                {post.status === "scheduled" ? (
-                  <span className="rounded-full bg-pink-600/90 px-2.5 py-1 text-[11px] font-semibold text-white">
-                    {statusLabel}
-                  </span>
-                ) : post.status === "draft" ? (
-                  <span className="rounded-full bg-zinc-800 px-2.5 py-1 text-[11px] font-semibold text-white">
-                    {statusLabel}
-                  </span>
-                ) : (
-                  <span className="rounded-full bg-zinc-900 px-2.5 py-1 text-[11px] font-semibold text-zinc-300">
-                    {statusLabel}
-                  </span>
-                )}
-
-                <span className="rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-[11px] font-medium text-zinc-400">
-                  {visibilityLabel}
-                </span>
-              </div>
-
-              <span className="text-xs text-zinc-600 transition group-hover:text-zinc-400">
-                View post →
-              </span>
-            </div>
-
-            <div className="mt-4 min-h-[72px]">
-              <p className="line-clamp-4 whitespace-pre-wrap text-[15px] font-medium leading-6 text-zinc-100">
-                {post.text || "No content"}
-              </p>
-            </div>
-
-            <div className="mt-4 flex items-center justify-between border-t border-zinc-800 pt-3">
-              <p className="text-xs text-zinc-500">{metaDate}</p>
-
-              <div className="flex items-center gap-1 text-xs text-zinc-500">
-                <span className="h-1.5 w-1.5 rounded-full bg-zinc-600" />
-                Text post
-              </div>
-            </div>
-          </a>
-        )
-      })}
+        <div>
+          <p className="text-lg font-semibold text-white">0</p>
+          <p className="text-sm text-zinc-500">Subscribers</p>
+        </div>
+      </div>
     </div>
-  </section>
+  </div>
+
+  <div>
+    <p className="text-sm font-medium text-white">{profile.displayName}</p>
+    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-300">
+      {profile.bio || "No bio yet"}
+    </p>
+  </div>
+
+  <div className="grid grid-cols-2 gap-3">
+    <Link
+      href="/profile/edit"
+      className="inline-flex h-11 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm font-semibold text-white transition hover:bg-zinc-800"
+    >
+      Edit profile
+    </Link>
+
+    <Link
+      href={`/creator/${profile.username}`}
+      className="inline-flex h-11 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm font-semibold text-white transition hover:bg-zinc-800"
+    >
+      View creator page
+    </Link>
+  </div>
+</section>
+
+
+
+{profile.isCreator && (
+  <ProfileContentTabs
+    mediaPosts={mediaPosts}
+    updatePosts={updatePosts}
+  />
 )}
+
       </div>
     </main>
   )
