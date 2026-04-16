@@ -130,7 +130,7 @@ const mediaPosts = posts.filter(
         : "inactive"
 
   return (
-    <main className="min-h-screen pb-24 lg:pb-0">
+    <main className="min-h-screen">
       <div className="grid w-full grid-cols-1 gap-6 px-0 pb-6 pt-6 lg:grid-cols-[600px_378px] lg:gap-8 lg:px-0">
         <section className="min-w-0 w-full max-w-[600px] px-4 mx-auto lg:mx-0 lg:px-0">
           <div className="h-40 w-full rounded-3xl bg-gradient-to-r from-[#C2185B] via-[#D81B60] to-[#F06292]" />
@@ -300,29 +300,7 @@ const mediaPosts = posts.filter(
           </div>
         </aside>
       </div>
-      {!isOwner ? (
-  <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800 bg-zinc-950/95 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-3 backdrop-blur-xl lg:hidden">
-    <div className="mx-auto flex max-w-md items-center justify-between gap-3">
-      <div className="min-w-0">
-        <p className="text-sm font-semibold text-white">
-          {formatPrice(creator.subscriptionPrice)}
-        </p>
-        <p className="text-xs text-zinc-500">
-          Unlock subscriber content
-        </p>
-      </div>
-
-      <div className="w-full max-w-[220px] shrink-0">
-        <SubscribeButton
-          creatorId={creator.id}
-          creatorUserId={creator.userId}
-          currentUserId={userId ?? undefined}
-          creatorUsername={creator.username}
-        />
-      </div>
-    </div>
-  </div>
-) : null}
+    
     </main>
   )
 }
