@@ -248,24 +248,91 @@ const textPosts = posts.filter((post) => (post.media?.length ?? 0) === 0)
             })}
           </section>
         )}
-        {profile.isCreator && textPosts.length > 0 && (
-  <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-4">
-    <h3 className="text-sm font-semibold text-zinc-400 mb-3">
-      Text posts
-    </h3>
+ {profile.isCreator && textPosts.length > 0 && (
+  <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5">
+    <div className="mb-4 flex items-center justify-between">
+      <div>
+        <h3 className="text-base font-semibold text-white">Updates</h3>
+        <p className="mt-1 text-sm text-zinc-500">
+          Text-only posts from your profile
+        </p>
+      </div>
+
+      <div className="rounded-full border border-zinc-800 bg-zinc-950/80 px-3 py-1 text-xs font-medium text-zinc-400">
+        {textPosts.length}
+      </div>
+    </div>
 
     <div className="flex flex-col gap-3">
-      {textPosts.map((post: MyPostListItem) => (
-        <a
-          key={post.id}
-          href={`/post/${post.id}`}
-          className="rounded-2xl bg-zinc-800 px-4 py-3 hover:bg-zinc-700 transition"
-        >
-          <p className="text-sm text-white line-clamp-3">
-            {post.text || "No content"}
-          </p>
-        </a>
-      ))}
+      {textPosts.map((post: MyPostListItem) => {
+        const visibilityLabel =
+          post.visibility === "public"
+            ? "Public"
+            : post.visibility === "subscribers"
+              ? "Subscribers"
+              : "Paid"
+
+        const statusLabel =
+          post.status === "scheduled"
+            ? "Scheduled"
+            : post.status === "draft"
+              ? "Draft"
+              : "Published"
+
+        const metaDate =
+          post.status === "scheduled" && post.publishedAt
+            ? `Scheduled · ${new Date(post.publishedAt).toLocaleDateString()}`
+            : `Created · ${new Date(post.createdAt).toLocaleDateString()}`
+
+        return (
+          <a
+            key={post.id}
+            href={`/post/${post.id}`}
+            className="group rounded-3xl border border-zinc-800 bg-zinc-950/70 p-5 transition-all hover:border-zinc-700 hover:bg-zinc-900"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {post.status === "scheduled" ? (
+                  <span className="rounded-full bg-pink-600/90 px-2.5 py-1 text-[11px] font-semibold text-white">
+                    {statusLabel}
+                  </span>
+                ) : post.status === "draft" ? (
+                  <span className="rounded-full bg-zinc-800 px-2.5 py-1 text-[11px] font-semibold text-white">
+                    {statusLabel}
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-zinc-900 px-2.5 py-1 text-[11px] font-semibold text-zinc-300">
+                    {statusLabel}
+                  </span>
+                )}
+
+                <span className="rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-[11px] font-medium text-zinc-400">
+                  {visibilityLabel}
+                </span>
+              </div>
+
+              <span className="text-xs text-zinc-600 transition group-hover:text-zinc-400">
+                View post →
+              </span>
+            </div>
+
+            <div className="mt-4 min-h-[72px]">
+              <p className="line-clamp-4 whitespace-pre-wrap text-[15px] font-medium leading-6 text-zinc-100">
+                {post.text || "No content"}
+              </p>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between border-t border-zinc-800 pt-3">
+              <p className="text-xs text-zinc-500">{metaDate}</p>
+
+              <div className="flex items-center gap-1 text-xs text-zinc-500">
+                <span className="h-1.5 w-1.5 rounded-full bg-zinc-600" />
+                Text post
+              </div>
+            </div>
+          </a>
+        )
+      })}
     </div>
   </section>
 )}
