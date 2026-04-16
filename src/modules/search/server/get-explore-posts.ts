@@ -23,8 +23,6 @@ type PostRow = {
   created_at: string
   published_at: string | null
   content: string | null
-  likes_count: number | null
-  comments_count: number | null
 }
 
 type MediaRow = {
@@ -45,6 +43,14 @@ type CreatorRow = {
   } | null
 }
 
+type PostLikeRow = {
+  post_id: string
+}
+
+type CommentRow = {
+  post_id: string
+}
+
 function shuffleArray<T>(items: T[]): T[] {
   const next = [...items]
 
@@ -62,7 +68,7 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
 
   const { data: postRows, error: postError } = await supabaseAdmin
     .from("posts")
-    .select("id, creator_id, created_at, published_at, content, likes_count, comments_count")
+    .select("id, creator_id, created_at, published_at, content")
     .eq("status", "published")
     .eq("visibility", "public")
     .is("deleted_at", null)
@@ -107,6 +113,37 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
   const postsWithMedia = posts.filter((post) => firstMediaMap.has(post.id))
 
   if (postsWithMedia.length === 0) return []
+
+  const filteredPostIds = postsWithMedia.map((post) => post.id)
+
+  const { data: likeRows, error: likeError } = await supabaseAdmin
+    .from("post_likes")
+    .select("post_id")
+    .in("post_id", filteredPostIds)
+    .returns<PostLikeRow[]>()
+
+  if (likeError) throw likeError
+
+  const likeCountMap = new Map<string, number>()
+
+  for (const row of likeRows ?? []) {
+    likeCountMap.set(row.post_id, (likeCountMap.get(row.post_id) ?? 0) + 1)
+  }
+
+  const { data: commentRows, error: commentError } = await supabaseAdmin
+    .from("comments")
+    .select("post_id")
+    .in("post_id", filteredPostIds)
+    .is("deleted_at", null)
+    .returns<CommentRow[]>()
+
+  if (commentError) throw commentError
+
+  const commentCountMap = new Map<string, number>()
+
+  for (const row of commentRows ?? []) {
+    commentCountMap.set(row.post_id, (commentCountMap.get(row.post_id) ?? 0) + 1)
+  }
 
   const creatorIds = Array.from(
     new Set(postsWithMedia.map((post) => post.creator_id))
@@ -173,8 +210,8 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
         mediaType: media.type === "video" ? "video" : "image",
         createdAt: post.published_at ?? post.created_at,
         text: post.content ?? null,
-        likesCount: post.likes_count ?? 0,
-        commentsCount: post.comments_count ?? 0,
+        likesCount: likeCountMap.get(post.id) ?? 0,
+        commentsCount: commentCountMap.get(post.id) ?? 0,
       }
     })
   )

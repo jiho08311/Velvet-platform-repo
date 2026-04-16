@@ -48,18 +48,23 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   let explorePosts: Awaited<ReturnType<typeof getExplorePosts>> = []
   let exploreCreators: Awaited<ReturnType<typeof getExploreCreators>> = []
 
-  if (!query) {
-    try {
-      ;[explorePosts, exploreCreators] = await Promise.all([
-        getExplorePosts(24),
-        getExploreCreators(6),
-      ])
-    } catch (error) {
-      console.error("[search/page] explore load failed:", error)
-      explorePosts = []
-      exploreCreators = []
-    }
+if (!query) {
+  try {
+    explorePosts = await getExplorePosts(24)
+    console.log("[search/page] explorePosts count:", explorePosts.length)
+  } catch (error) {
+    console.error("[search/page] getExplorePosts failed:", error)
+    explorePosts = []
   }
+
+  try {
+    exploreCreators = await getExploreCreators(6)
+    console.log("[search/page] exploreCreators count:", exploreCreators.length)
+  } catch (error) {
+    console.error("[search/page] getExploreCreators failed:", error)
+    exploreCreators = []
+  }
+}
 
   return (
     <main className="w-full py-6">
