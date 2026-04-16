@@ -120,7 +120,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
         <section className="min-w-0 w-full max-w-[600px] mx-auto lg:mx-0">
           <div className="h-40 w-full rounded-3xl bg-gradient-to-r from-[#C2185B] via-[#D81B60] to-[#F06292]" />
 
-          <div className="mt-[-40px] flex items-end justify-between gap-4">
+          <div className="mt-[-40px] flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex items-end gap-4">
               <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-zinc-950 bg-zinc-900">
                 {creator.avatarUrl ? (
@@ -147,12 +147,12 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
               </div>
             </div>
 
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
               {isOwner ? (
-                <Link
-                  href="/profile/edit"
-                  className="inline-flex h-12 items-center justify-center rounded-full bg-zinc-800 px-4 text-sm font-semibold text-white hover:bg-zinc-700"
-                >
+             <Link
+  href="/profile/edit"
+  className="inline-flex h-12 w-full items-center justify-center rounded-full bg-zinc-800 px-4 text-sm font-semibold text-white hover:bg-zinc-700 sm:w-auto"
+>
                   Edit profile
                 </Link>
               ) : (
@@ -162,7 +162,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                     <span className="ml-1 text-zinc-400">구독</span>
                   </p>
 
-                  <div className="w-full min-w-[180px]">
+                  <div className="w-full sm:min-w-[180px]">
                     <SubscribeButton
                       creatorId={creator.id}
                       creatorUserId={creator.userId}

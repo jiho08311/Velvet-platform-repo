@@ -1,6 +1,9 @@
+"use client"
+
 import Link from "next/link"
 import { Avatar } from "@/shared/ui/Avatar"
 import { formatInUserTimeZone } from "@/shared/lib/date-time"
+
 
 type UpcomingCardProps = {
   title: string
