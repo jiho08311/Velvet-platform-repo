@@ -293,6 +293,38 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
         })
       )
 
+      const existingBlocks = blocksMap.get(post.id) ?? []
+
+      const fallbackBlocks: ExplorePostItem["blocks"] =
+        existingBlocks.length > 0
+          ? existingBlocks
+          : [
+              ...(post.content?.trim()
+                ? [
+                    {
+                      id: `${post.id}-fallback-text`,
+                      postId: post.id,
+                      type: "text" as const,
+                      content: post.content,
+                      mediaId: null,
+                      sortOrder: 0,
+                      createdAt: post.published_at ?? post.created_at,
+                      editorState: null,
+                    },
+                  ]
+                : []),
+              ...signedMedia.map((item, index) => ({
+                id: `${post.id}-fallback-media-${item.id}`,
+                postId: post.id,
+                type: item.type === "video" ? "video" as const : "image" as const,
+                content: null,
+                mediaId: item.id,
+                sortOrder: (post.content?.trim() ? 1 : 0) + index,
+                createdAt: post.published_at ?? post.created_at,
+                editorState: null,
+              })),
+            ]
+
       return {
         id: `${post.id}:${media.storage_path}`,
         postId: post.id,
@@ -308,7 +340,7 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
         likesCount: likeCountMap.get(post.id) ?? 0,
         commentsCount: commentCountMap.get(post.id) ?? 0,
         media: signedMedia,
-        blocks: blocksMap.get(post.id) ?? [],
+        blocks: fallbackBlocks,
       }
     })
   )

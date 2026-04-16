@@ -49,6 +49,22 @@ type ExplorePostGridProps = {
   posts: ExplorePostGridItem[]
 }
 
+type ViewerBlock =
+  | {
+      kind: "text"
+      id: string
+      content: string
+    }
+  | {
+      kind: "media"
+      id: string
+      items: Array<{
+        id: string
+        type: "image" | "video"
+        url: string
+      }>
+    }
+
 export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
   const router = useRouter()
   const [selected, setSelected] = useState<ExplorePostGridItem | null>(null)
@@ -92,6 +108,74 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
 
     return []
   }, [selected])
+
+  const viewerBlocks = useMemo<ViewerBlock[]>(() => {
+    const next: ViewerBlock[] = []
+
+    for (let i = 0; i < selectedBlocks.length; i += 1) {
+      const block = selectedBlocks[i]
+
+      if (block.type === "text") {
+        const content = block.content?.trim() ?? ""
+
+        if (content) {
+          next.push({
+            kind: "text",
+            id: block.id,
+            content,
+          })
+        }
+        continue
+      }
+
+      if (block.type === "image" || block.type === "video") {
+        const items: Array<{
+          id: string
+          type: "image" | "video"
+          url: string
+        }> = []
+
+        let cursor = i
+
+        while (cursor < selectedBlocks.length) {
+          const current = selectedBlocks[cursor]
+
+          if (current.type !== "image" && current.type !== "video") {
+            break
+          }
+
+          const mediaItem = current.mediaId
+            ? selectedMediaMap.get(current.mediaId)
+            : null
+
+          if (
+            mediaItem?.url &&
+            (current.type === "image" || current.type === "video")
+          ) {
+            items.push({
+              id: current.id,
+              type: current.type,
+              url: mediaItem.url,
+            })
+          }
+
+          cursor += 1
+        }
+
+        if (items.length > 0) {
+          next.push({
+            kind: "media",
+            id: block.id,
+            items,
+          })
+        }
+
+        i = cursor - 1
+      }
+    }
+
+    return next
+  }, [selectedBlocks, selectedMediaMap])
 
   useEffect(() => {
     if (!selected) return
@@ -244,48 +328,36 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
           >
             <div className="mx-auto flex min-h-full max-w-3xl flex-col bg-black px-4 pb-5 pt-20">
               <div className="space-y-4">
-                {selectedBlocks.map((block) => {
-                  if (block.type === "text") {
-                    const content = block.content?.trim() ?? ""
-
-                    if (!content) {
-                      return null
-                    }
-
+                {viewerBlocks.map((block) => {
+                  if (block.kind === "text") {
                     return (
                       <p
                         key={block.id}
                         className="whitespace-pre-wrap text-sm leading-6 text-zinc-300"
                       >
-                        {content}
+                        {block.content}
                       </p>
                     )
                   }
 
-                  if (block.type === "image" || block.type === "video") {
-                    const mediaItem = block.mediaId
-                      ? selectedMediaMap.get(block.mediaId)
-                      : null
-
-                    if (!mediaItem?.url) {
-                      return null
-                    }
+                  if (block.items.length === 1) {
+                    const item = block.items[0]
 
                     return (
                       <div
                         key={block.id}
                         className="overflow-hidden rounded-2xl bg-zinc-950"
                       >
-                        {block.type === "video" ? (
+                        {item.type === "video" ? (
                           <video
-                            src={mediaItem.url}
+                            src={item.url}
                             controls
                             playsInline
                             className="w-full"
                           />
                         ) : (
                           <img
-                            src={mediaItem.url}
+                            src={item.url}
                             alt={
                               selected.creatorDisplayName ??
                               selected.creatorUsername
@@ -297,7 +369,37 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
                     )
                   }
 
-                  return null
+                  return (
+                    <div
+                      key={block.id}
+                      className="flex snap-x snap-mandatory gap-2 overflow-x-auto rounded-2xl"
+                    >
+                      {block.items.map((item) => (
+                        <div
+                          key={item.id}
+                          className="w-full shrink-0 snap-center overflow-hidden rounded-2xl bg-zinc-950"
+                        >
+                          {item.type === "video" ? (
+                            <video
+                              src={item.url}
+                              controls
+                              playsInline
+                              className="w-full"
+                            />
+                          ) : (
+                            <img
+                              src={item.url}
+                              alt={
+                                selected.creatorDisplayName ??
+                                selected.creatorUsername
+                              }
+                              className="w-full object-cover"
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )
                 })}
               </div>
 
