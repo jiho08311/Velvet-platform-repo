@@ -17,7 +17,7 @@ export function ProfileContentTabs({
   return (
     <div className="flex flex-col">
       {/* Tabs */}
-      <div className="-mx-6 border-y border-zinc-800 md:-mx-0">
+      <div className="mt-2 -mx-4 border-y border-zinc-800 md:-mx-0">
         <div className="grid grid-cols-2">
           <button
             onClick={() => setActiveTab("posts")}
@@ -46,7 +46,7 @@ export function ProfileContentTabs({
       {/* Content */}
       {activeTab === "posts" ? (
         mediaPosts.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-[2px] bg-zinc-900">
+          <div className="mt-4 grid grid-cols-3 gap-[2px] bg-zinc-900 md:grid-cols-3">
             {mediaPosts.map((post) => {
               const media = post.media?.[0]
               const mediaCount = post.media?.length ?? 0
