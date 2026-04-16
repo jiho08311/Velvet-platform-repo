@@ -5,12 +5,16 @@ export type ExplorePostItem = {
   id: string
   postId: string
   creatorId: string
+  creatorUserId: string
   creatorUsername: string
   creatorDisplayName: string | null
   imageUrl: string
   mediaType?: "image" | "video"
-  mediaCount: number  
+  mediaCount: number
   createdAt: string
+  text: string | null
+  likesCount: number
+  commentsCount: number
 }
 
 type PostRow = {
@@ -18,6 +22,9 @@ type PostRow = {
   creator_id: string
   created_at: string
   published_at: string | null
+  content: string | null
+  likes_count: number | null
+  comments_count: number | null
 }
 
 type MediaRow = {
@@ -55,7 +62,7 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
 
   const { data: postRows, error: postError } = await supabaseAdmin
     .from("posts")
-    .select("id, creator_id, created_at, published_at")
+    .select("id, creator_id, created_at, published_at, content, likes_count, comments_count")
     .eq("status", "published")
     .eq("visibility", "public")
     .is("deleted_at", null)
@@ -153,18 +160,21 @@ const mediaCount = (mediaMap.get(post.id) ?? []).length
         hasPurchased: true,
       })
 
-    return {
-  id: `${post.id}:${media.storage_path}`,
-  postId: post.id,
-  creatorId: creator.id,
-  creatorUsername: creator.username,
-  creatorDisplayName: creator.display_name,
-  imageUrl,
-  mediaCount,
-  mediaType:
-    media.type === "video" ? "video" : "image",
-  createdAt: post.published_at ?? post.created_at,
-}
+return {
+        id: `${post.id}:${media.storage_path}`,
+        postId: post.id,
+        creatorId: creator.id,
+        creatorUserId: creator.user_id,
+        creatorUsername: creator.username,
+        creatorDisplayName: creator.display_name,
+        imageUrl,
+        mediaCount,
+        mediaType: media.type === "video" ? "video" : "image",
+        createdAt: post.published_at ?? post.created_at,
+        text: post.content ?? null,
+        likesCount: post.likes_count ?? 0,
+        commentsCount: post.comments_count ?? 0,
+      }
     })
   )
 }
