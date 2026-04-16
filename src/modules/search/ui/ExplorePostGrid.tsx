@@ -73,6 +73,9 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
   const [isLikeLoading, setIsLikeLoading] = useState(false)
   const [isCommentsOpen, setIsCommentsOpen] = useState(false)
+const [sliderIndexes, setSliderIndexes] = useState<Record<string, number>>({})
+
+
 
   const selectedMediaMap = useMemo(() => {
     return new Map((selected?.media ?? []).map((item) => [item.id, item]))
@@ -308,7 +311,10 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
             onClick={() => {
               setIsCommentsOpen(false)
               setIsViewerVisible(false)
-              setTimeout(() => setSelected(null), 180)
+        setTimeout(() => {
+  setSelected(null)
+  setSliderIndexes({})
+}, 180)
             }}
             className={`absolute left-4 top-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur transition duration-200 ${
               isViewerVisible
@@ -369,37 +375,65 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
                     )
                   }
 
-                  return (
-                    <div
-                      key={block.id}
-                      className="flex snap-x snap-mandatory gap-2 overflow-x-auto rounded-2xl"
-                    >
-                      {block.items.map((item) => (
-                        <div
-                          key={item.id}
-                          className="w-full shrink-0 snap-center overflow-hidden rounded-2xl bg-zinc-950"
-                        >
-                          {item.type === "video" ? (
-                            <video
-                              src={item.url}
-                              controls
-                              playsInline
-                              className="w-full"
-                            />
-                          ) : (
-                            <img
-                              src={item.url}
-                              alt={
-                                selected.creatorDisplayName ??
-                                selected.creatorUsername
-                              }
-                              className="w-full object-cover"
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )
+           return (
+  <div key={block.id} className="relative">
+
+ <div
+  className="flex snap-x snap-mandatory gap-2 overflow-x-auto rounded-2xl"
+  onScroll={(event) => {
+    const container = event.currentTarget
+    const slideWidth = container.clientWidth + 8
+    const nextIndex = Math.round(container.scrollLeft / slideWidth)
+
+    setSliderIndexes((prev) => ({
+      ...prev,
+      [block.id]: nextIndex,
+    }))
+  }}
+>
+      {block.items.map((item) => (
+        <div
+          key={item.id}
+          className="w-full shrink-0 snap-center overflow-hidden rounded-2xl bg-zinc-950"
+        >
+          {item.type === "video" ? (
+            <video
+              src={item.url}
+              controls
+              playsInline
+              className="w-full"
+            />
+          ) : (
+            <img
+              src={item.url}
+              alt={
+                selected.creatorDisplayName ??
+                selected.creatorUsername
+              }
+              className="w-full object-cover"
+            />
+          )}
+        </div>
+      ))}
+    </div>
+
+ <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/40 px-2 py-1">
+  {block.items.map((_, index) => {
+    const isActive = (sliderIndexes[block.id] ?? 0) === index
+
+    return (
+      <span
+        key={index}
+        className={`h-1.5 w-1.5 rounded-full ${
+          isActive ? "bg-white" : "bg-white/40"
+        }`}
+      />
+    )
+  })}
+</div>
+
+  </div>
+)
                 })}
               </div>
 
