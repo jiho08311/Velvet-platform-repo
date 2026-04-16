@@ -14,9 +14,6 @@ import { ReportButton } from "@/modules/report/ui/ReportButton"
 import { getViewerSubscription } from "@/modules/subscription/server/get-viewer-subscription"
 import { SubscriptionStatusCard } from "@/modules/subscription/ui/SubscriptionStatusCard"
 import { Card } from "@/shared/ui/Card"
-import { CreatorTextPostSection } from "@/modules/creator/ui/CreatorTextPostSection"
-
-
 
 type CreatorPageProps = {
   params: Promise<{
@@ -102,19 +99,6 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
             publishedAt: "publishedAt" in post ? post.publishedAt : null,
           })
         )
-
-const textOnlyPosts = posts.filter((post) => {
-  const hasNonTextBlock = (post.blocks ?? []).some(
-    (block) => block.type !== "text"
-  )
-
-  const hasMedia = (post.media ?? []).length > 0
-
-  return !hasNonTextBlock && !hasMedia
-})
-
-const topSectionPosts = posts.filter((post) => !textOnlyPosts.includes(post))
-
 
   const viewerSubscription = userId
     ? await getViewerSubscription(userId, creator.id)
@@ -234,125 +218,69 @@ const topSectionPosts = posts.filter((post) => !textOnlyPosts.includes(post))
           <div className="mt-6">
             {isOwner ? <CreatePostComposer creatorId={creator.id} /> : null}
 
-    {posts.length === 0 ? (
-  <div className="text-center text-sm text-zinc-500">No posts yet</div>
-) : (
-  <div className="space-y-8">
-{topSectionPosts.length > 0 ? (
-      <div className="-mx-4 lg:mx-0">
-      {topSectionPosts.map((post) => {
-          const isScheduled =
-            "status" in post && post.status === "scheduled"
+            {posts.length === 0 ? (
+              <div className="text-center text-sm text-zinc-500">No posts yet</div>
+            ) : (
+              <div className="-mx-4 lg:mx-0">
+                {posts.map((post) => {
+                  const isScheduled =
+                    "status" in post && post.status === "scheduled"
 
-          if (isScheduled) {
-            return (
-              <div key={post.id} className="px-4 py-3 lg:px-0">
-                <UpcomingCard
-                  title="Upcoming post"
-                  previewText={isOwner ? post.content ?? null : null}
-                  scheduledAt={
-                    "publishedAt" in post
-                      ? post.publishedAt ?? ""
-                      : "published_at" in post
-                        ? post.published_at ?? ""
-                        : ""
+                  if (isScheduled) {
+                    return (
+                      <div key={post.id} className="px-4 py-3 lg:px-0">
+                        <UpcomingCard
+                          title="Upcoming post"
+                          previewText={isOwner ? post.content ?? null : null}
+                          scheduledAt={
+                            "publishedAt" in post
+                              ? post.publishedAt ?? ""
+                              : "published_at" in post
+                                ? post.published_at ?? ""
+                                : ""
+                          }
+                          creator={{
+                            username: creator.username,
+                            displayName: creator.displayName ?? creator.username,
+                            avatarUrl: creator.avatarUrl ?? null,
+                          }}
+                        />
+                      </div>
+                    )
                   }
-                  creator={{
-                    username: creator.username,
-                    displayName: creator.displayName ?? creator.username,
-                    avatarUrl: creator.avatarUrl ?? null,
-                  }}
-                />
+
+                  return (
+                    <div key={post.id} className="relative">
+                      {isOwner && "status" in post && post.status === "draft" ? (
+                        <div className="absolute left-3 top-3 z-10 rounded-full bg-zinc-900/80 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
+                          Draft
+                        </div>
+                      ) : null}
+
+                      <PostCard
+                        postId={post.id}
+                        text={post.content ?? ""}
+                        createdAt={new Date(post.created_at).toLocaleString()}
+                        media={post.media ?? []}
+                        blocks={post.blocks ?? []}
+                        isLocked={post.isLocked}
+                        commentsCount={post.commentsCount}
+                        likesCount={post.likesCount}
+                        isLiked={post.isLiked}
+                        creatorId={creator.id}
+                        creatorUserId={creator.userId}
+                        currentUserId={userId ?? undefined}
+                        creator={{
+                          username: creator.username,
+                          displayName: creator.displayName ?? creator.username,
+                          avatarUrl: creator.avatarUrl ?? null,
+                        }}
+                      />
+                    </div>
+                  )
+                })}
               </div>
-            )
-          }
-
-          return (
-            <div key={post.id} className="relative">
-              {isOwner && "status" in post && post.status === "draft" ? (
-                <div className="absolute left-3 top-3 z-10 rounded-full bg-zinc-900/80 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
-                  Draft
-                </div>
-              ) : null}
-
-              <PostCard
-                postId={post.id}
-                text={post.content ?? ""}
-                createdAt={new Date(post.created_at).toLocaleString()}
-                media={post.media ?? []}
-                blocks={post.blocks ?? []}
-                isLocked={post.isLocked}
-                commentsCount={post.commentsCount}
-                likesCount={post.likesCount}
-                isLiked={post.isLiked}
-                creatorId={creator.id}
-                creatorUserId={creator.userId}
-                currentUserId={userId ?? undefined}
-                creator={{
-                  username: creator.username,
-                  displayName: creator.displayName ?? creator.username,
-                  avatarUrl: creator.avatarUrl ?? null,
-                }}
-              />
-            </div>
-          )
-        })}
-      </div>
-    ) : null}
-
-{textOnlyPosts.length > 0 ? (
-  <div className="space-y-3">
-    {textOnlyPosts
-      .filter((post) => "status" in post && post.status === "scheduled")
-      .map((post) => (
-        <div key={post.id} className="px-4 py-3 lg:px-0">
-          <UpcomingCard
-            title="Upcoming post"
-            previewText={isOwner ? post.content ?? null : null}
-            scheduledAt={
-              "publishedAt" in post
-                ? post.publishedAt ?? ""
-                : "published_at" in post
-                  ? post.published_at ?? ""
-                  : ""
-            }
-            creator={{
-              username: creator.username,
-              displayName: creator.displayName ?? creator.username,
-              avatarUrl: creator.avatarUrl ?? null,
-            }}
-          />
-        </div>
-      ))}
-
-    <CreatorTextPostSection
-      title="Text posts"
-      posts={textOnlyPosts
-        .filter((post) => !("status" in post && post.status === "scheduled"))
-        .map((post) => ({
-          id: post.id,
-          content: post.content ?? "",
-          created_at: post.created_at,
-          media: post.media ?? [],
-          blocks: post.blocks ?? [],
-          isLocked: post.isLocked,
-          commentsCount: post.commentsCount,
-          likesCount: post.likesCount,
-          isLiked: post.isLiked,
-          creatorId: creator.id,
-          creatorUserId: creator.userId,
-          currentUserId: userId ?? undefined,
-          creator: {
-            username: creator.username,
-            displayName: creator.displayName ?? creator.username,
-            avatarUrl: creator.avatarUrl ?? null,
-          },
-        }))}
-    />
-  </div>
-) : null}
-  </div>
-)}
+            )}
           </div>
         </section>
 
