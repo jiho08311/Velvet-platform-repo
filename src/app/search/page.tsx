@@ -38,7 +38,7 @@ const searchResult = query
     : [[], []]
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-6">
+    <main className="w-full px-4 py-6">
       <form action="/search" className="mb-6">
         <SearchInput defaultValue={query} />
       </form>
