@@ -38,13 +38,13 @@ const searchResult = query
     : [[], []]
 
   return (
-    <main className="w-full px-4 py-6">
-      <form action="/search" className="mb-6">
+    <main className="w-full py-6">
+      <form action="/search" className="mb-6 px-4">
         <SearchInput defaultValue={query} />
       </form>
 
       {query ? (
-        <section className="space-y-4">
+        <section className="space-y-4 px-4">
           <p className="text-sm text-zinc-400">Results for "{query}"</p>
 
       {searchResult.items.length > 0 ? (
@@ -58,20 +58,20 @@ const searchResult = query
 )}
         </section>
       ) : (
-        <>
-          <ExplorePostGrid posts={explorePosts.slice(0, 12)} />
+<>
+  <ExplorePostGrid posts={explorePosts.slice(0, 12)} />
 
-          {exploreCreators.length > 0 && (
-            <section className="my-6">
-              <p className="mb-3 text-xs uppercase tracking-wider text-zinc-500">
-                Discover creators
-              </p>
-              <ExploreCreatorGrid creators={exploreCreators} />
-            </section>
-          )}
+  {exploreCreators.length > 0 && (
+    <section className="my-6 px-4">
+      <p className="mb-3 text-xs uppercase tracking-wider text-zinc-500">
+        Discover creators
+      </p>
+      <ExploreCreatorGrid creators={exploreCreators} />
+    </section>
+  )}
 
-          <ExplorePostGrid posts={explorePosts.slice(12)} />
-        </>
+  <ExplorePostGrid posts={explorePosts.slice(12)} />
+</>
       )}
     </main>
   )
