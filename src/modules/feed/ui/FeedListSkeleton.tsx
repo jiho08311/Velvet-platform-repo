@@ -10,12 +10,11 @@ export function FeedListSkeleton({
   return (
     <section className="flex w-full flex-col gap-4">
       {Array.from({ length: count }).map((_, index) => (
-        <SkeletonCard
-          key={index}
-          lines={index % 2 === 0 ? 3 : 2}
-          showAvatar
-          showMedia
-        />
+    <SkeletonCard
+  key={index}
+  lines={1}
+  showAvatar
+/>
       ))}
     </section>
   )
