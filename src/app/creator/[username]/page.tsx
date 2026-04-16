@@ -103,13 +103,17 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
           })
         )
 
-const mediaPosts = posts.filter(
-  (post) => (post.media ?? []).some((m) => m.url)
-)
+const textOnlyPosts = posts.filter((post) => {
+  const hasNonTextBlock = (post.blocks ?? []).some(
+    (block) => block.type !== "text"
+  )
 
-const textOnlyPosts = posts.filter(
-  (post) => !(post.media ?? []).some((m) => m.url)
-)
+  const hasMedia = (post.media ?? []).length > 0
+
+  return !hasNonTextBlock && !hasMedia
+})
+
+const topSectionPosts = posts.filter((post) => !textOnlyPosts.includes(post))
 
 
   const viewerSubscription = userId
@@ -234,9 +238,9 @@ const textOnlyPosts = posts.filter(
   <div className="text-center text-sm text-zinc-500">No posts yet</div>
 ) : (
   <div className="space-y-8">
-    {mediaPosts.length > 0 ? (
+{topSectionPosts.length > 0 ? (
       <div className="-mx-4 lg:mx-0">
-        {mediaPosts.map((post) => {
+      {topSectionPosts.map((post) => {
           const isScheduled =
             "status" in post && post.status === "scheduled"
 
