@@ -254,7 +254,7 @@ const mediaPosts = posts.filter(
             {posts.length === 0 ? (
               <div className="text-center text-sm text-zinc-500">No posts yet</div>
             ) : (
-           <div>
+       <div>
   <CreatorContentTabs
     mediaPosts={mediaPosts}
     updatePosts={updatePosts}
