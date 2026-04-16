@@ -2,6 +2,7 @@ import { requireActiveUser } from "@/modules/auth/server/require-active-user"
 import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { redirect } from "next/navigation"
 import { searchCreators } from "@/modules/search/server/search-creators"
+import { SearchInfiniteList } from "@/modules/search/ui/SearchInfiniteList"
 import { getExplorePosts } from "@/modules/search/server/get-explore-posts"
 import { getExploreCreators } from "@/modules/search/server/get-explore-creators"
 
@@ -25,12 +26,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const { q = "" } = await searchParams
   const query = q.trim()
 
-  const creators = query
-    ? await searchCreators({
-        query,
-        limit: 20,
-      })
-    : []
+const searchResult = query
+  ? await searchCreators({
+      query,
+      limit: 20,
+    })
+  : { items: [], nextCursor: null }
 
   const [explorePosts, exploreCreators] = !query
     ? await Promise.all([getExplorePosts(24), getExploreCreators(6)])
@@ -46,34 +47,15 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <section className="space-y-4">
           <p className="text-sm text-zinc-400">Results for "{query}"</p>
 
-          {creators.length > 0 ? (
-            <div className="grid gap-2">
-              {creators.map((creator) => (
-                <a
-                  key={creator.id}
-                  href={`/creator/${creator.username}`}
-                  className="group flex items-center gap-3 rounded-2xl bg-zinc-900 px-4 py-3 transition hover:bg-zinc-800"
-                >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-700 text-sm font-semibold text-white">
-                    {(creator.displayName ?? creator.username)
-                      .slice(0, 1)
-                      .toUpperCase()}
-                  </div>
-
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-white">
-                      {creator.displayName}
-                    </p>
-                    <p className="truncate text-xs text-zinc-400">
-                      @{creator.username}
-                    </p>
-                  </div>
-                </a>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-zinc-500">No creators found</p>
-          )}
+      {searchResult.items.length > 0 ? (
+  <SearchInfiniteList
+    query={query}
+    initialCreators={searchResult.items}
+    initialCursor={searchResult.nextCursor}
+  />
+) : (
+  <p className="text-sm text-zinc-500">No creators found</p>
+)}
         </section>
       ) : (
         <>

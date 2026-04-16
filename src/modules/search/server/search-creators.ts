@@ -5,6 +5,7 @@ import type { CreatorSearchResult } from "../types"
 export type SearchCreatorsInput = {
   query: string
   limit?: number
+  cursor?: string | null
 }
 
 type CreatorRow = {
@@ -22,23 +23,37 @@ type ProfileRow = {
 
 export async function searchCreators(
   input: SearchCreatorsInput
-): Promise<CreatorSearchResult[]> {
+): Promise<{
+  items: CreatorSearchResult[]
+  nextCursor: string | null
+}> {
   const query = input.query.trim()
 
   if (!query) {
-    return []
+  return {
+    items: [],
+    nextCursor: null,
   }
+}
 
-  const limit = Math.max(1, Math.min(input.limit ?? 10, 50))
+const limit = Math.max(1, Math.min(input.limit ?? 10, 50))
+const cursor = input.cursor?.trim() || null
 
-  const { data: profileRows, error: profileError } = await supabaseAdmin
-    .from("profiles")
-    .select("id, username, display_name")
-    .eq("is_deactivated", false)
-    .eq("is_delete_pending", false)
-    .is("deleted_at", null)
-    .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
-    .limit(limit)
+let profilesQuery = supabaseAdmin
+  .from("profiles")
+  .select("id, username, display_name")
+  .eq("is_deactivated", false)
+  .eq("is_delete_pending", false)
+  .is("deleted_at", null)
+  .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
+  .order("username", { ascending: true })
+  .limit(limit)
+
+if (cursor) {
+  profilesQuery = profilesQuery.gt("username", cursor)
+}
+
+const { data: profileRows, error: profileError } = await profilesQuery
 
   if (profileError) {
     throw profileError
@@ -46,9 +61,12 @@ export async function searchCreators(
 
   const matchedProfiles = (profileRows ?? []) as ProfileRow[]
 
-  if (matchedProfiles.length === 0) {
-    return []
+if (matchedProfiles.length === 0) {
+  return {
+    items: [],
+    nextCursor: null,
   }
+}
 
   const profileIds = matchedProfiles.map((profile) => profile.id)
 
@@ -69,19 +87,27 @@ export async function searchCreators(
     ])
   )
 
-  return matchedProfiles
-    .filter((profile) => creatorMap.has(profile.id))
-    .map((profile) => {
-      const creator = creatorMap.get(profile.id)!
+const items = matchedProfiles
+  .filter((profile) => creatorMap.has(profile.id))
+  .map((profile) => {
+    const creator = creatorMap.get(profile.id)!
 
-      return {
-        id: creator.id,
-        bio: null,
-        username: creator.username,
-        displayName: profile.display_name ?? profile.username,
-        avatarUrl: null,
-        headline: null,
-        isVerified: false,
-      }
-    })
+    return {
+      id: creator.id,
+      bio: null,
+      username: creator.username,
+      displayName: profile.display_name ?? profile.username,
+      avatarUrl: null,
+      headline: null,
+      isVerified: false,
+    }
+  })
+
+return {
+  items,
+  nextCursor:
+    items.length === limit
+      ? matchedProfiles[matchedProfiles.length - 1]?.username ?? null
+      : null,
+}
 }

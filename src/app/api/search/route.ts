@@ -5,9 +5,11 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
 
-    const query = (searchParams.get("query") ?? "").trim()
-    const limitParam = searchParams.get("limit")
-    const limit = limitParam ? Number(limitParam) : undefined
+const query = searchParams.get("query") ?? ""
+const limitParam = searchParams.get("limit")
+const cursor = searchParams.get("cursor")
+
+const limit = limitParam ? Number(limitParam) : undefined
 
     if (!query) {
       return NextResponse.json(
@@ -18,14 +20,19 @@ export async function GET(request: Request) {
       )
     }
 
-    const creators = await searchCreators({ query, limit })
+const result = await searchCreators({
+  query,
+  limit,
+  cursor,
+})
 
-    return NextResponse.json(
-      {
-        creators,
-      },
-      { status: 200 }
-    )
+  return NextResponse.json(
+  {
+    creators: result.items,
+    nextCursor: result.nextCursor,
+  },
+  { status: 200 }
+)
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Search failed"
