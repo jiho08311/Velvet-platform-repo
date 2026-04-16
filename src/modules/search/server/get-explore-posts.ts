@@ -15,6 +15,24 @@ export type ExplorePostItem = {
   text: string | null
   likesCount: number
   commentsCount: number
+  media: Array<{
+    id: string
+    postId: string
+    type: "image" | "video" | "audio" | "file"
+    url: string
+    mimeType: string | null
+    sortOrder: number
+  }>
+  blocks: Array<{
+    id: string
+    postId: string
+    type: "text" | "image" | "video" | "audio" | "file"
+    content: string | null
+    mediaId: string | null
+    sortOrder: number
+    createdAt: string
+    editorState: unknown | null
+  }>
 }
 
 type PostRow = {
@@ -26,8 +44,10 @@ type PostRow = {
 }
 
 type MediaRow = {
+  id: string
   post_id: string
   storage_path: string
+  mime_type: string | null
   sort_order: number
   type: "image" | "video" | "audio" | "file" | null
 }
@@ -51,6 +71,17 @@ type CommentRow = {
   post_id: string
 }
 
+type PostBlockRow = {
+  id: string
+  post_id: string
+  type: "text" | "image" | "video" | "audio" | "file"
+  content: string | null
+  media_id: string | null
+  sort_order: number
+  created_at: string
+  editor_state: unknown | null
+}
+
 function shuffleArray<T>(items: T[]): T[] {
   const next = [...items]
 
@@ -60,6 +91,28 @@ function shuffleArray<T>(items: T[]): T[] {
   }
 
   return next
+}
+
+function resolveMediaType(
+  type: MediaRow["type"],
+  mimeType: string | null
+): "image" | "video" | "audio" | "file" {
+  if (
+    type === "image" ||
+    type === "video" ||
+    type === "audio" ||
+    type === "file"
+  ) {
+    return type
+  }
+
+  if (typeof mimeType === "string") {
+    if (mimeType.startsWith("image/")) return "image"
+    if (mimeType.startsWith("video/")) return "video"
+    if (mimeType.startsWith("audio/")) return "audio"
+  }
+
+  return "file"
 }
 
 export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
@@ -85,7 +138,7 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
 
   const { data: mediaRows, error: mediaError } = await supabaseAdmin
     .from("media")
-    .select("post_id, storage_path, sort_order, type")
+    .select("id, post_id, storage_path, mime_type, sort_order, type")
     .in("post_id", postIds)
     .in("type", ["image", "video"])
     .eq("status", "ready")
@@ -145,6 +198,34 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
     commentCountMap.set(row.post_id, (commentCountMap.get(row.post_id) ?? 0) + 1)
   }
 
+  const { data: blockRows, error: blockError } = await supabaseAdmin
+    .from("post_blocks")
+    .select("id, post_id, type, content, media_id, sort_order, created_at, editor_state")
+    .in("post_id", filteredPostIds)
+    .order("sort_order", { ascending: true })
+    .returns<PostBlockRow[]>()
+
+  if (blockError) throw blockError
+
+  const blocksMap = new Map<string, ExplorePostItem["blocks"]>()
+
+  for (const block of blockRows ?? []) {
+    const current = blocksMap.get(block.post_id) ?? []
+
+    current.push({
+      id: block.id,
+      postId: block.post_id,
+      type: block.type,
+      content: block.content,
+      mediaId: block.media_id,
+      sortOrder: block.sort_order,
+      createdAt: block.created_at,
+      editorState: block.editor_state ?? null,
+    })
+
+    blocksMap.set(block.post_id, current)
+  }
+
   const creatorIds = Array.from(
     new Set(postsWithMedia.map((post) => post.creator_id))
   )
@@ -184,19 +265,33 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
     shuffledPosts.map(async (post) => {
       const creator = creatorMap.get(post.creator_id)
       const media = firstMediaMap.get(post.id)
-      const mediaCount = (mediaMap.get(post.id) ?? []).length
+      const mediaRowsForPost = mediaMap.get(post.id) ?? []
+      const mediaCount = mediaRowsForPost.length
 
       if (!creator || !media) {
         throw new Error("Invalid explore post data")
       }
 
-      const imageUrl = await createMediaSignedUrl({
-        storagePath: media.storage_path,
-        viewerUserId: creator.user_id,
-        creatorUserId: creator.user_id,
-        visibility: "public",
-        hasPurchased: true,
-      })
+      const signedMedia = await Promise.all(
+        mediaRowsForPost.map(async (item) => {
+          const url = await createMediaSignedUrl({
+            storagePath: item.storage_path,
+            viewerUserId: creator.user_id,
+            creatorUserId: creator.user_id,
+            visibility: "public",
+            hasPurchased: true,
+          })
+
+          return {
+            id: item.id,
+            postId: item.post_id,
+            type: resolveMediaType(item.type, item.mime_type),
+            url,
+            mimeType: item.mime_type,
+            sortOrder: item.sort_order,
+          }
+        })
+      )
 
       return {
         id: `${post.id}:${media.storage_path}`,
@@ -205,13 +300,15 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
         creatorUserId: creator.user_id,
         creatorUsername: creator.username,
         creatorDisplayName: creator.display_name,
-        imageUrl,
+        imageUrl: signedMedia[0]?.url ?? "",
         mediaCount,
-        mediaType: media.type === "video" ? "video" : "image",
+        mediaType: signedMedia[0]?.type === "video" ? "video" : "image",
         createdAt: post.published_at ?? post.created_at,
         text: post.content ?? null,
         likesCount: likeCountMap.get(post.id) ?? 0,
         commentsCount: commentCountMap.get(post.id) ?? 0,
+        media: signedMedia,
+        blocks: blocksMap.get(post.id) ?? [],
       }
     })
   )

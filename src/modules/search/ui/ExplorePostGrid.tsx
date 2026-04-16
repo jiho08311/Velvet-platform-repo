@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   ArrowLeftIcon,
@@ -25,6 +25,24 @@ type ExplorePostGridItem = {
   likesCount: number
   commentsCount: number
   createdAt: string
+  media?: Array<{
+    id: string
+    postId: string
+    type: "image" | "video" | "audio" | "file"
+    url: string
+    mimeType: string | null
+    sortOrder: number
+  }>
+  blocks?: Array<{
+    id: string
+    postId: string
+    type: "text" | "image" | "video" | "audio" | "file"
+    content: string | null
+    mediaId: string | null
+    sortOrder: number
+    createdAt: string
+    editorState: unknown | null
+  }>
 }
 
 type ExplorePostGridProps = {
@@ -39,6 +57,41 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
   const [isLikeLoading, setIsLikeLoading] = useState(false)
   const [isCommentsOpen, setIsCommentsOpen] = useState(false)
+
+  const selectedMediaMap = useMemo(() => {
+    return new Map((selected?.media ?? []).map((item) => [item.id, item]))
+  }, [selected])
+
+  const selectedBlocks = useMemo(() => {
+    if (!selected) {
+      return []
+    }
+
+    const blocks = [...(selected.blocks ?? [])].sort(
+      (a, b) => a.sortOrder - b.sortOrder
+    )
+
+    if (blocks.length > 0) {
+      return blocks
+    }
+
+    if (selected.text?.trim()) {
+      return [
+        {
+          id: `${selected.postId}-fallback-text`,
+          postId: selected.postId,
+          type: "text" as const,
+          content: selected.text,
+          mediaId: null,
+          sortOrder: 0,
+          createdAt: selected.createdAt,
+          editorState: null,
+        },
+      ]
+    }
+
+    return []
+  }, [selected])
 
   useEffect(() => {
     if (!selected) return
@@ -183,85 +236,118 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
           </button>
 
           <div
-            className={`flex h-full w-full flex-col transition duration-300 ease-out ${
+            className={`h-full overflow-y-auto transition duration-300 ease-out ${
               isViewerVisible
                 ? "translate-y-0 opacity-100"
                 : "translate-y-4 opacity-0"
             }`}
           >
-            <div className="relative flex-1 overflow-hidden bg-black">
-              {selected.mediaType === "video" ? (
-                <video
-                  src={selected.imageUrl}
-                  controls
-                  autoPlay
-                  playsInline
-                  className={`h-full w-full object-contain transition duration-300 ease-out ${
-                    isViewerVisible
-                      ? "scale-100 opacity-100"
-                      : "scale-[0.96] opacity-0"
-                  }`}
-                />
-              ) : (
-                <img
-                  src={selected.imageUrl}
-                  alt={selected.creatorDisplayName ?? selected.creatorUsername}
-                  className={`h-full w-full object-contain transition duration-300 ease-out ${
-                    isViewerVisible
-                      ? "scale-100 opacity-100"
-                      : "scale-[0.96] opacity-0"
-                  }`}
-                />
-              )}
-            </div>
+            <div className="mx-auto flex min-h-full max-w-3xl flex-col bg-black px-4 pb-5 pt-20">
+              <div className="space-y-4">
+                {selectedBlocks.map((block) => {
+                  if (block.type === "text") {
+                    const content = block.content?.trim() ?? ""
 
-            <div className="border-t border-zinc-800 bg-black px-4 pb-5 pt-4">
-              <div className="flex items-center gap-4 text-zinc-200">
-                <button
-                  type="button"
-                  onClick={() => handleLike(selected.postId, selected.likesCount)}
-                  disabled={isLikeLoading}
-                  className="flex items-center gap-1.5"
-                >
-                  {likedPostIds[selected.postId] ? (
-                    <HeartSolid className="h-6 w-6 text-pink-500" />
-                  ) : (
-                    <HeartOutline className="h-6 w-6 stroke-[2.2]" />
-                  )}
-                  <span className="text-sm font-semibold">
-                    {likeCounts[selected.postId] ?? selected.likesCount}
-                  </span>
-                </button>
+                    if (!content) {
+                      return null
+                    }
 
-                <button
-                  type="button"
-                  onClick={() => setIsCommentsOpen(true)}
-                  className="flex items-center gap-1.5"
-                >
-                  <ChatBubbleOvalLeftIcon className="h-6 w-6 stroke-[2.2]" />
-                  <span className="text-sm font-semibold">
-                    {selected.commentsCount}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    router.push(`/messages?creatorId=${selected.creatorUserId}`)
+                    return (
+                      <p
+                        key={block.id}
+                        className="whitespace-pre-wrap text-sm leading-6 text-zinc-300"
+                      >
+                        {content}
+                      </p>
+                    )
                   }
-                  className="flex items-center gap-1.5"
-                >
-                  <PaperAirplaneIcon className="h-6 w-6 stroke-[2.2]" />
-                </button>
+
+                  if (block.type === "image" || block.type === "video") {
+                    const mediaItem = block.mediaId
+                      ? selectedMediaMap.get(block.mediaId)
+                      : null
+
+                    if (!mediaItem?.url) {
+                      return null
+                    }
+
+                    return (
+                      <div
+                        key={block.id}
+                        className="overflow-hidden rounded-2xl bg-zinc-950"
+                      >
+                        {block.type === "video" ? (
+                          <video
+                            src={mediaItem.url}
+                            controls
+                            playsInline
+                            className="w-full"
+                          />
+                        ) : (
+                          <img
+                            src={mediaItem.url}
+                            alt={
+                              selected.creatorDisplayName ??
+                              selected.creatorUsername
+                            }
+                            className="w-full object-cover"
+                          />
+                        )}
+                      </div>
+                    )
+                  }
+
+                  return null
+                })}
               </div>
 
-              <div className="mt-4">
-                <p className="text-sm font-semibold text-white">
-                  {selected.creatorDisplayName ?? selected.creatorUsername}
-                </p>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-300">
-                  {selected.text ?? ""}
-                </p>
+              <div className="mt-6 border-t border-zinc-800 pt-4">
+                <div className="flex items-center gap-4 text-zinc-200">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleLike(selected.postId, selected.likesCount)
+                    }
+                    disabled={isLikeLoading}
+                    className="flex items-center gap-1.5"
+                  >
+                    {likedPostIds[selected.postId] ? (
+                      <HeartSolid className="h-6 w-6 text-pink-500" />
+                    ) : (
+                      <HeartOutline className="h-6 w-6 stroke-[2.2]" />
+                    )}
+                    <span className="text-sm font-semibold">
+                      {likeCounts[selected.postId] ?? selected.likesCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsCommentsOpen(true)}
+                    className="flex items-center gap-1.5"
+                  >
+                    <ChatBubbleOvalLeftIcon className="h-6 w-6 stroke-[2.2]" />
+                    <span className="text-sm font-semibold">
+                      {selected.commentsCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      router.push(`/messages?creatorId=${selected.creatorUserId}`)
+                    }
+                    className="flex items-center gap-1.5"
+                  >
+                    <PaperAirplaneIcon className="h-6 w-6 stroke-[2.2]" />
+                  </button>
+                </div>
+
+                <div className="mt-4">
+                  <p className="text-sm font-semibold text-white">
+                    {selected.creatorDisplayName ?? selected.creatorUsername}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
