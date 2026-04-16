@@ -39,10 +39,11 @@ type CreatorRow = {
   username: string
   display_name: string | null
   user_id: string
-  profiles: {
-    id: string
-    is_deactivated: boolean
-  } | null
+  status: "active" | "pending" | "suspended" | "inactive"
+}
+
+type ProfileRow = {
+  id: string
 }
 
 function shuffleArray<T>(items: T[]): T[] {
@@ -62,7 +63,9 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
 
   const { data: postRows, error: postError } = await supabaseAdmin
     .from("posts")
-    .select("id, creator_id, created_at, published_at, content, likes_count, comments_count")
+    .select(
+      "id, creator_id, created_at, published_at, content, likes_count, comments_count"
+    )
     .eq("status", "published")
     .eq("visibility", "public")
     .is("deleted_at", null)
@@ -77,66 +80,74 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
 
   const postIds = posts.map((post) => post.id)
 
-const { data: mediaRows, error: mediaError } = await supabaseAdmin
-  .from("media")
-  .select("post_id, storage_path, sort_order, type")
-  .in("post_id", postIds)
-  .in("type", ["image", "video"])
-  .eq("status", "ready")
-  .order("sort_order", { ascending: true })
-  .returns<MediaRow[]>()
+  const { data: mediaRows, error: mediaError } = await supabaseAdmin
+    .from("media")
+    .select("post_id, storage_path, sort_order, type")
+    .in("post_id", postIds)
+    .in("type", ["image", "video"])
+    .eq("status", "ready")
+    .order("sort_order", { ascending: true })
+    .returns<MediaRow[]>()
 
   if (mediaError) throw mediaError
+
   const mediaMap = new Map<string, MediaRow[]>()
 
-for (const media of mediaRows ?? []) {
-  const current = mediaMap.get(media.post_id) ?? []
-  current.push(media)
-  mediaMap.set(media.post_id, current)
-}
-
-const firstMediaMap = new Map<string, MediaRow>()
-
-for (const media of mediaRows ?? []) {
-  if (!firstMediaMap.has(media.post_id)) {
-    firstMediaMap.set(media.post_id, media)
+  for (const media of mediaRows ?? []) {
+    const current = mediaMap.get(media.post_id) ?? []
+    current.push(media)
+    mediaMap.set(media.post_id, current)
   }
-}
 
-const postsWithMedia = posts.filter((post) => firstMediaMap.has(post.id))
+  const firstMediaMap = new Map<string, MediaRow>()
 
-if (postsWithMedia.length === 0) return []
+  for (const media of mediaRows ?? []) {
+    if (!firstMediaMap.has(media.post_id)) {
+      firstMediaMap.set(media.post_id, media)
+    }
+  }
 
-const creatorIds = Array.from(
-  new Set(postsWithMedia.map((post) => post.creator_id))
-)
+  const postsWithMedia = posts.filter((post) => firstMediaMap.has(post.id))
+  if (postsWithMedia.length === 0) return []
+
+  const creatorIds = Array.from(
+    new Set(postsWithMedia.map((post) => post.creator_id))
+  )
+
+  const { data: profileRows, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select("id")
+    .eq("is_deactivated", false)
+    .eq("is_delete_pending", false)
+    .is("deleted_at", null)
+    .returns<ProfileRow[]>()
+
+  if (profileError) throw profileError
+
+  const activeUserIds = new Set((profileRows ?? []).map((profile) => profile.id))
+
+  if (activeUserIds.size === 0) {
+    return []
+  }
 
   const { data: creatorRows, error: creatorError } = await supabaseAdmin
     .from("creators")
-    .select(`
-      id,
-      username,
-      display_name,
-      user_id,
-      profiles!inner (
-        id,
-        is_deactivated
-      )
-    `)
+    .select("id, username, display_name, user_id, status")
     .in("id", creatorIds)
     .eq("status", "active")
-    .eq("profiles.is_deactivated", false)
     .returns<CreatorRow[]>()
 
   if (creatorError) throw creatorError
 
   const creatorMap = new Map(
-    (creatorRows ?? []).map((creator) => [creator.id, creator])
+    (creatorRows ?? [])
+      .filter((creator) => activeUserIds.has(creator.user_id))
+      .map((creator) => [creator.id, creator])
   )
 
-const filteredPosts = postsWithMedia.filter((post) =>
-  creatorMap.has(post.creator_id)
-)
+  const filteredPosts = postsWithMedia.filter((post) =>
+    creatorMap.has(post.creator_id)
+  )
 
   if (filteredPosts.length === 0) return []
 
@@ -145,8 +156,8 @@ const filteredPosts = postsWithMedia.filter((post) =>
   return Promise.all(
     shuffledPosts.map(async (post) => {
       const creator = creatorMap.get(post.creator_id)
-const media = firstMediaMap.get(post.id)
-const mediaCount = (mediaMap.get(post.id) ?? []).length
+      const media = firstMediaMap.get(post.id)
+      const mediaCount = (mediaMap.get(post.id) ?? []).length
 
       if (!creator || !media) {
         throw new Error("Invalid explore post data")
@@ -160,7 +171,7 @@ const mediaCount = (mediaMap.get(post.id) ?? []).length
         hasPurchased: true,
       })
 
-return {
+      return {
         id: `${post.id}:${media.storage_path}`,
         postId: post.id,
         creatorId: creator.id,
