@@ -9,6 +9,7 @@ import {
   PaperAirplaneIcon,
 } from "@heroicons/react/24/outline"
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid"
+import { SearchExploreCommentsDrawer } from "./SearchExploreCommentsDrawer"
 
 type ExplorePostGridItem = {
   id: string
@@ -35,10 +36,11 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
   const [selected, setSelected] = useState<ExplorePostGridItem | null>(null)
   const [isViewerVisible, setIsViewerVisible] = useState(false)
   const [likedPostIds, setLikedPostIds] = useState<Record<string, boolean>>({})
-const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
-const [isLikeLoading, setIsLikeLoading] = useState(false)
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
+  const [isLikeLoading, setIsLikeLoading] = useState(false)
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false)
 
-    useEffect(() => {
+  useEffect(() => {
     if (!selected) return
 
     const timer = window.setTimeout(() => {
@@ -65,35 +67,48 @@ const [isLikeLoading, setIsLikeLoading] = useState(false)
   }
 
   async function handleLike(postId: string, initialLikesCount: number) {
-  if (isLikeLoading) return
+    if (isLikeLoading) return
 
-  const liked = likedPostIds[postId] ?? false
-  const currentCount = likeCounts[postId] ?? initialLikesCount
+    const liked = likedPostIds[postId] ?? false
+    const currentCount = likeCounts[postId] ?? initialLikesCount
 
-  try {
-    setIsLikeLoading(true)
+    try {
+      setIsLikeLoading(true)
 
-    const response = await fetch(`/api/post/${postId}/like`, {
-      method: liked ? "DELETE" : "POST",
-    })
+      const response = await fetch(`/api/post/${postId}/like`, {
+        method: liked ? "DELETE" : "POST",
+      })
 
-    if (!response.ok) {
-      return
+      if (!response.ok) {
+        return
+      }
+
+      setLikedPostIds((prev) => ({
+        ...prev,
+        [postId]: !liked,
+      }))
+
+      setLikeCounts((prev) => ({
+        ...prev,
+        [postId]: liked ? Math.max(0, currentCount - 1) : currentCount + 1,
+      }))
+    } finally {
+      setIsLikeLoading(false)
     }
-
-    setLikedPostIds((prev) => ({
-      ...prev,
-      [postId]: !liked,
-    }))
-
-    setLikeCounts((prev) => ({
-      ...prev,
-      [postId]: liked ? Math.max(0, currentCount - 1) : currentCount + 1,
-    }))
-  } finally {
-    setIsLikeLoading(false)
   }
-}
+
+  function handleCommentCreated() {
+    setSelected((prev) => {
+      if (!prev) {
+        return prev
+      }
+
+      return {
+        ...prev,
+        commentsCount: prev.commentsCount + 1,
+      }
+    })
+  }
 
   return (
     <>
@@ -101,10 +116,11 @@ const [isLikeLoading, setIsLikeLoading] = useState(false)
         {posts.map((post) => (
           <div
             key={post.id}
-       onClick={() => {
-  setSelected(post)
-  setIsViewerVisible(false)
-}}
+            onClick={() => {
+              setSelected(post)
+              setIsViewerVisible(false)
+              setIsCommentsOpen(false)
+            }}
             className="group block cursor-pointer overflow-hidden bg-zinc-900"
           >
             <div className="relative aspect-square overflow-hidden bg-zinc-950">
@@ -146,72 +162,80 @@ const [isLikeLoading, setIsLikeLoading] = useState(false)
 
       {selected ? (
         <div
-  className={`fixed inset-0 z-[70] bg-black transition duration-200 ${
-    isViewerVisible ? "bg-black/95" : "bg-black/0"
-  }`}
->
+          className={`fixed inset-0 z-[70] bg-black transition duration-200 ${
+            isViewerVisible ? "bg-black/95" : "bg-black/0"
+          }`}
+        >
           <button
             type="button"
             onClick={() => {
+              setIsCommentsOpen(false)
               setIsViewerVisible(false)
               setTimeout(() => setSelected(null), 180)
             }}
             className={`absolute left-4 top-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur transition duration-200 ${
-  isViewerVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
-}`}
+              isViewerVisible
+                ? "translate-y-0 opacity-100"
+                : "-translate-y-2 opacity-0"
+            }`}
           >
             <ArrowLeftIcon className="h-7 w-7" />
           </button>
 
-     <div
-  className={`flex h-full w-full flex-col transition duration-300 ease-out ${
-    isViewerVisible
-      ? "opacity-100 translate-y-0"
-      : "opacity-0 translate-y-4"
-  }`}
->
+          <div
+            className={`flex h-full w-full flex-col transition duration-300 ease-out ${
+              isViewerVisible
+                ? "translate-y-0 opacity-100"
+                : "translate-y-4 opacity-0"
+            }`}
+          >
             <div className="relative flex-1 overflow-hidden bg-black">
               {selected.mediaType === "video" ? (
-   <video
-  src={selected.imageUrl}
-  controls
-  autoPlay
-  playsInline
-  className={`h-full w-full object-contain transition duration-300 ease-out ${
-    isViewerVisible ? "scale-100 opacity-100" : "scale-[0.96] opacity-0"
-  }`}
-/>
+                <video
+                  src={selected.imageUrl}
+                  controls
+                  autoPlay
+                  playsInline
+                  className={`h-full w-full object-contain transition duration-300 ease-out ${
+                    isViewerVisible
+                      ? "scale-100 opacity-100"
+                      : "scale-[0.96] opacity-0"
+                  }`}
+                />
               ) : (
-          <img
-  src={selected.imageUrl}
-  alt={selected.creatorDisplayName ?? selected.creatorUsername}
-  className={`h-full w-full object-contain transition duration-300 ease-out ${
-    isViewerVisible ? "scale-100 opacity-100" : "scale-[0.96] opacity-0"
-  }`}
-/>
+                <img
+                  src={selected.imageUrl}
+                  alt={selected.creatorDisplayName ?? selected.creatorUsername}
+                  className={`h-full w-full object-contain transition duration-300 ease-out ${
+                    isViewerVisible
+                      ? "scale-100 opacity-100"
+                      : "scale-[0.96] opacity-0"
+                  }`}
+                />
               )}
             </div>
 
             <div className="border-t border-zinc-800 bg-black px-4 pb-5 pt-4">
               <div className="flex items-center gap-4 text-zinc-200">
-             <button
-  type="button"
-  onClick={() => handleLike(selected.postId, selected.likesCount)}
-  disabled={isLikeLoading}
-  className="flex items-center gap-1.5"
->
-  {likedPostIds[selected.postId] ? (
-    <HeartSolid className="h-6 w-6 text-pink-500" />
-  ) : (
-    <HeartOutline className="h-6 w-6 stroke-[2.2]" />
-  )}
-  <span className="text-sm font-semibold">
-    {likeCounts[selected.postId] ?? selected.likesCount}
-  </span>
-</button>
+                <button
+                  type="button"
+                  onClick={() => handleLike(selected.postId, selected.likesCount)}
+                  disabled={isLikeLoading}
+                  className="flex items-center gap-1.5"
+                >
+                  {likedPostIds[selected.postId] ? (
+                    <HeartSolid className="h-6 w-6 text-pink-500" />
+                  ) : (
+                    <HeartOutline className="h-6 w-6 stroke-[2.2]" />
+                  )}
+                  <span className="text-sm font-semibold">
+                    {likeCounts[selected.postId] ?? selected.likesCount}
+                  </span>
+                </button>
 
                 <button
                   type="button"
+                  onClick={() => setIsCommentsOpen(true)}
                   className="flex items-center gap-1.5"
                 >
                   <ChatBubbleOvalLeftIcon className="h-6 w-6 stroke-[2.2]" />
@@ -241,6 +265,13 @@ const [isLikeLoading, setIsLikeLoading] = useState(false)
               </div>
             </div>
           </div>
+
+          <SearchExploreCommentsDrawer
+            postId={selected.postId}
+            isOpen={isCommentsOpen}
+            onClose={() => setIsCommentsOpen(false)}
+            onCommentCreated={handleCommentCreated}
+          />
         </div>
       ) : null}
     </>
