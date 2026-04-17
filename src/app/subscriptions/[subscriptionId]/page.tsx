@@ -17,7 +17,7 @@ function formatDate(value?: string | null) {
 }
 
 function getStatusClassName(
-  status: "incomplete" | "active" | "canceled" | "expired"
+  status: "active" | "canceled" | "expired" | "inactive"
 ) {
   if (status === "active") {
     return "border-emerald-500/20 bg-emerald-500/15 text-emerald-300"
@@ -27,8 +27,8 @@ function getStatusClassName(
     return "border-amber-500/20 bg-amber-500/15 text-amber-300"
   }
 
-  if (status === "incomplete") {
-    return "border-sky-500/20 bg-sky-500/15 text-sky-300"
+ if (status === "inactive") {
+    return "border-zinc-700 bg-zinc-800/70 text-zinc-300"
   }
 
   return "border-zinc-700 bg-zinc-800/70 text-zinc-300"
