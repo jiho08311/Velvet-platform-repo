@@ -18,9 +18,9 @@ export function isPostUpcomingVisible(
     return false
   }
 
-  if (input.visibility !== "public") {
-    return false
-  }
+if (input.visibility !== "public" && input.visibility !== "subscribers") {
+  return false
+}
 
   if (input.moderationStatus !== "approved") {
     return false

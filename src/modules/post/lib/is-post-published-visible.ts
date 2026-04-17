@@ -17,9 +17,9 @@ export function isPostPublishedVisible(
     return false
   }
 
-  if (input.visibility !== "public") {
-    return false
-  }
+if (input.visibility !== "public" && input.visibility !== "subscribers") {
+  return false
+}
 
   if (input.visibilityStatus !== "published") {
     return false
