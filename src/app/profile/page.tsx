@@ -8,6 +8,7 @@ import { getMyPosts } from "@/modules/post/server/get-my-posts"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
 import { ProfileContentTabs } from "@/modules/profile/ui/ProfileContentTabs"
+import { getCreatorDashboardSummary } from "@/modules/analytics/server/get-creator-dashboard-summary"
 type ProfileData = {
   id: string
   displayName: string
@@ -118,13 +119,16 @@ export default async function ProfilePage() {
   const creator = await getCreatorByUserId(userId)
   const creatorId = creator?.id
 
-  const [profileData, userData, postResult] = await Promise.all([
-    getProfileByUserId(userId),
-    getUserById(userId),
-    creatorId
-      ? getMyPosts({ creatorId })
-      : Promise.resolve({ items: [] }),
-  ])
+  const [profileData, userData, postResult, summary] = await Promise.all([
+  getProfileByUserId(userId),
+  getUserById(userId),
+  creatorId
+    ? getMyPosts({ creatorId })
+    : Promise.resolve({ items: [] }),
+  creatorId
+    ? getCreatorDashboardSummary(creatorId)
+    : Promise.resolve(null),
+])
 
 const posts = postResult.items
 const profile = normalizeProfileData(profileData, userData)
@@ -200,7 +204,9 @@ const mediaPosts = posts.filter(
           </div>
 
           <div>
-            <p className="text-lg font-semibold text-white md:text-xl">0</p>
+     <p className="text-lg font-semibold text-white md:text-xl">
+  {summary?.subscriberCount ?? 0}
+</p>
             <p className="text-sm text-zinc-500">Subscribers</p>
           </div>
         </div>

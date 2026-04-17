@@ -1,4 +1,4 @@
-import { createClient } from "@/infrastructure/supabase/server"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import type { CreatorDashboardSummary } from "@/modules/analytics/types"
 
 type PaymentRow = {
@@ -11,14 +11,14 @@ type PaymentRow = {
 export async function getCreatorDashboardSummary(
   creatorId: string
 ): Promise<CreatorDashboardSummary> {
-  const supabase = await createClient()
+ 
 
-  const { count: totalCount } = await supabase
-    .from("subscriptions")
-    .select("*", { count: "exact", head: true })
-    .eq("creator_id", creatorId)
+const { count: totalCount } = await supabaseAdmin
+  .from("subscriptions")
+  .select("*", { count: "exact", head: true })
+  .eq("creator_id", creatorId)
 
-  const { count: activeCount } = await supabase
+ const { count: activeCount } = await supabaseAdmin
     .from("subscriptions")
     .select("*", { count: "exact", head: true })
     .eq("creator_id", creatorId)
@@ -28,7 +28,7 @@ export async function getCreatorDashboardSummary(
   startOfMonth.setDate(1)
   startOfMonth.setHours(0, 0, 0, 0)
 
-  const { data: payments, error: paymentsError } = await supabase
+const { data: payments, error: paymentsError } = await supabaseAdmin
     .from("payments")
     .select("id, amount, type, created_at")
     .eq("creator_id", creatorId)
