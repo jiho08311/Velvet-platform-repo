@@ -1,4 +1,5 @@
 import { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"
+import { resolveSubscriptionState } from "@/modules/subscription/lib/resolve-subscription-state"
 
 export async function checkSubscription({
   userId,
@@ -12,5 +13,14 @@ export async function checkSubscription({
     creatorId,
   })
 
-  return subscription !== null
+  if (!subscription) return false
+
+  const resolved = resolveSubscriptionState({
+    status: subscription.status,
+    currentPeriodEndAt: subscription.currentPeriodEnd,
+    cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+    canceledAt: subscription.canceledAt,
+  })
+
+  return resolved.hasAccess
 }
