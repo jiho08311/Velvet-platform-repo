@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
 
 type CreatorRow = {
   id: string
@@ -38,37 +39,48 @@ export async function getCreatorByUsername(username?: string) {
 
   if (creatorError) throw creatorError
   if (!creator) return null
-  if (creator.status !== "active") {
-  return null
-}
 
   const { data: profile, error: profileError } = await supabaseAdmin
     .from("profiles")
-  .select(
-  "id, username, display_name, avatar_url, bio, is_deactivated, is_delete_pending, deleted_at, is_banned"
-)
+    .select(
+      "id, username, display_name, avatar_url, bio, is_deactivated, is_delete_pending, deleted_at, is_banned"
+    )
     .eq("id", creator.user_id)
     .maybeSingle<ProfileRow>()
 
   if (profileError) throw profileError
 
-if (
-  !profile ||
-  profile.is_deactivated ||
-  profile.is_delete_pending ||
-  profile.deleted_at ||
-  profile.is_banned
-) {
-  return null
-}
+  if (
+    !isPublicCreatorProfileVisible({
+      creator: {
+        status: creator.status,
+      },
+      profile: profile
+        ? {
+            isDeactivated: profile.is_deactivated,
+            isDeletePending: profile.is_delete_pending,
+            deletedAt: profile.deleted_at,
+            isBanned: profile.is_banned,
+          }
+        : null,
+    })
+  ) {
+    return null
+  }
+
+  if (!profile) {
+    return null
+  }
+
+  const resolvedProfile = profile
 
   return {
     id: creator.id,
     userId: creator.user_id,
     username: creator.username,
-    displayName: profile.display_name ?? profile.username,
-    avatarUrl: profile.avatar_url ?? null,
-    bio: profile.bio ?? "",
+    displayName: resolvedProfile.display_name ?? resolvedProfile.username,
+    avatarUrl: resolvedProfile.avatar_url ?? null,
+    bio: resolvedProfile.bio ?? "",
     status: creator.status,
     subscriptionPrice: creator.subscription_price,
     subscriptionCurrency: creator.subscription_currency,

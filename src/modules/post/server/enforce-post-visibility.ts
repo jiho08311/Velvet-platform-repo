@@ -1,33 +1,26 @@
 import type { Post } from "../types"
+import { canViewPost } from "./can-view-post"
 
 type EnforcePostVisibilityParams = {
   post: Post
-  isOwner: boolean
+  creatorUserId: string
+  viewerUserId?: string | null
   isSubscribed: boolean
   hasPurchased: boolean
 }
 
 export function enforcePostVisibility({
   post,
-  isOwner,
+  creatorUserId,
+  viewerUserId,
   isSubscribed,
   hasPurchased,
 }: EnforcePostVisibilityParams): boolean {
-  if (isOwner) {
-    return true
-  }
-
-  if (post.visibility === "public") {
-    return true
-  }
-
-  if (post.visibility === "subscribers") {
-    return isSubscribed
-  }
-
-  if (post.visibility === "paid") {
-    return hasPurchased
-  }
-
-  return false
+  return canViewPost({
+    viewerUserId: viewerUserId ?? null,
+    creatorUserId,
+    visibility: post.visibility,
+    isSubscribed,
+    hasPurchased,
+  })
 }

@@ -1,5 +1,7 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
+import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
 
 type MediaType = "image" | "video" | "audio" | "file"
 
@@ -13,15 +15,15 @@ export type HomeFeedItem = {
   text: string
   createdAt: string
   isLocked: boolean
-    status?: "draft" | "scheduled" | "published" | "archived"
+  status?: "draft" | "scheduled" | "published" | "archived"
   publishedAt?: string | null
   lockReason?: "none" | "subscription" | "purchase"
   price?: number
-media?: Array<{
-  id: string
-  url: string
-  type: MediaType
-}>
+  media?: Array<{
+    id: string
+    url: string
+    type: MediaType
+  }>
   blocks?: Array<{
     id: string
     postId: string
@@ -57,6 +59,14 @@ type CreatorRow = {
   user_id: string
   username: string
   display_name: string | null
+  status: "active" | "pending" | "suspended" | "inactive"
+  profiles: {
+    id: string
+    is_deactivated: boolean | null
+    is_delete_pending: boolean | null
+    deleted_at: string | null
+    is_banned: boolean | null
+  } | null
 }
 
 type ProfileRow = {
@@ -74,6 +84,9 @@ type PostRow = {
   price: number | null
   created_at: string
   published_at: string | null
+  visibility_status: "draft" | "published" | "processing" | "rejected" | null
+  moderation_status: "pending" | "approved" | "rejected" | null
+  deleted_at: string | null
   post_blocks?: Array<{
     id: string
     post_id: string
@@ -126,7 +139,9 @@ export async function getHomeFeed(
   input: GetHomeFeedInput
 ): Promise<GetHomeFeedResult> {
   const viewerUserId = input.viewerUserId?.trim() ?? ""
-  const limit = Math.max(1, Math.min(input.limit ?? 20, 100))
+  const safeLimit = Math.max(1, Math.min(input.limit ?? 20, 100))
+  const fetchLimit = Math.max(safeLimit * 3, 60)
+  const now = new Date().toISOString()
 
   let publicPostsQuery = supabaseAdmin
     .from("posts")
@@ -137,9 +152,12 @@ export async function getHomeFeed(
       content,
       visibility,
       price,
-        status,
+      status,
       created_at,
       published_at,
+      visibility_status,
+      moderation_status,
+      deleted_at,
       post_blocks (
         id,
         post_id,
@@ -150,12 +168,10 @@ export async function getHomeFeed(
         created_at
       )
     `)
-.or(
-  "and(status.eq.published,visibility.eq.public,visibility_status.eq.published,moderation_status.eq.approved),and(status.eq.scheduled,visibility.eq.public,moderation_status.eq.approved,published_at.gt.now())"
-)
+    .eq("visibility", "public")
     .is("deleted_at", null)
     .order("published_at", { ascending: false })
-    .limit(limit)
+    .limit(fetchLimit)
 
   if (input.cursor) {
     publicPostsQuery = publicPostsQuery.lt("published_at", input.cursor)
@@ -168,38 +184,48 @@ export async function getHomeFeed(
     throw publicPostsError
   }
 
-  const postList = publicPosts ?? []
+  const visiblePostCandidates = (publicPosts ?? []).filter((post) => {
+    const publicState = getPostPublicState({
+      status: post.status,
+      visibility: post.visibility,
+      visibilityStatus: post.visibility_status,
+      moderationStatus: post.moderation_status,
+      publishedAt: post.published_at,
+      deletedAt: post.deleted_at,
+      now,
+    })
 
-  if (postList.length === 0) {
+    return publicState === "published" || publicState === "upcoming"
+  })
+
+  if (visiblePostCandidates.length === 0) {
     return {
       items: [],
       nextCursor: null,
     }
   }
 
-  const creatorIds = Array.from(new Set(postList.map((post) => post.creator_id)))
+  const creatorIds = Array.from(
+    new Set(visiblePostCandidates.map((post) => post.creator_id))
+  )
 
   const { data: creators, error: creatorsError } = await supabaseAdmin
     .from("creators")
-.select(`
-  id,
-  user_id,
-  username,
-  display_name,
-  profiles!inner (
-    id,
-    is_deactivated,
-    is_delete_pending,
-    deleted_at,
-    is_banned
-  )
-`)
+    .select(`
+      id,
+      user_id,
+      username,
+      display_name,
+      status,
+      profiles!inner (
+        id,
+        is_deactivated,
+        is_delete_pending,
+        deleted_at,
+        is_banned
+      )
+    `)
     .in("id", creatorIds)
- .eq("status", "active")
-.eq("profiles.is_deactivated", false)
-.eq("profiles.is_delete_pending", false)
-.eq("profiles.is_banned", false)
-.is("profiles.deleted_at", null)
     .returns<CreatorRow[]>()
 
   if (creatorsError) {
@@ -207,11 +233,25 @@ export async function getHomeFeed(
   }
 
   const creatorMap = new Map<string, CreatorRow>()
-  const creatorUserIds: string[] = []
 
   for (const creator of creators ?? []) {
-    creatorMap.set(creator.id, creator)
-    creatorUserIds.push(creator.user_id)
+    if (
+      isPublicCreatorProfileVisible({
+        creator: {
+          status: creator.status,
+        },
+        profile: creator.profiles
+          ? {
+              isDeactivated: creator.profiles.is_deactivated,
+              isDeletePending: creator.profiles.is_delete_pending,
+              deletedAt: creator.profiles.deleted_at,
+              isBanned: creator.profiles.is_banned,
+            }
+          : null,
+      })
+    ) {
+      creatorMap.set(creator.id, creator)
+    }
   }
 
   if (creatorMap.size === 0) {
@@ -221,7 +261,9 @@ export async function getHomeFeed(
     }
   }
 
-  const filteredPosts = postList.filter((post) => creatorMap.has(post.creator_id))
+  const filteredPosts = visiblePostCandidates
+    .filter((post) => creatorMap.has(post.creator_id))
+    .slice(0, safeLimit)
 
   if (filteredPosts.length === 0) {
     return {
@@ -229,6 +271,14 @@ export async function getHomeFeed(
       nextCursor: null,
     }
   }
+
+  const creatorUserIds = Array.from(
+    new Set(
+      filteredPosts
+        .map((post) => creatorMap.get(post.creator_id)?.user_id ?? "")
+        .filter((value) => value.length > 0)
+    )
+  )
 
   const { data: profiles, error: profilesError } = await supabaseAdmin
     .from("profiles")
@@ -303,10 +353,31 @@ export async function getHomeFeed(
     )
   }
 
+  const publishedPostIds = filteredPosts
+    .filter((post) => {
+      const publicState = getPostPublicState({
+        status: post.status,
+        visibility: post.visibility,
+        visibilityStatus: post.visibility_status,
+        moderationStatus: post.moderation_status,
+        publishedAt: post.published_at,
+        deletedAt: post.deleted_at,
+        now,
+      })
+
+      return publicState === "published"
+    })
+    .map((post) => post.id)
+
   const { data: mediaRows, error: mediaError } = await supabaseAdmin
     .from("media")
- .select("id, post_id, storage_path, type, mime_type, status, sort_order")
-    .in("post_id", postIds)
+    .select("id, post_id, storage_path, type, mime_type, status, sort_order")
+    .in(
+      "post_id",
+      publishedPostIds.length > 0
+        ? publishedPostIds
+        : ["00000000-0000-0000-0000-000000000000"]
+    )
     .eq("status", "ready")
     .order("sort_order", { ascending: true })
     .returns<MediaRow[]>()
@@ -325,32 +396,68 @@ export async function getHomeFeed(
 
   const items: HomeFeedItem[] = await Promise.all(
     filteredPosts.map(async (post) => {
+      const publicState = getPostPublicState({
+        status: post.status,
+        visibility: post.visibility,
+        visibilityStatus: post.visibility_status,
+        moderationStatus: post.moderation_status,
+        publishedAt: post.published_at,
+        deletedAt: post.deleted_at,
+        now,
+      })
+
       const creator = creatorMap.get(post.creator_id)
       const creatorUserId = creator?.user_id ?? ""
       const profile = profileMap.get(creatorUserId)
 
+      if (publicState === "upcoming") {
+        return {
+          id: post.id,
+          creatorId: post.creator_id,
+          status: post.status,
+          publishedAt: post.published_at ?? null,
+          creatorUserId,
+          currentUserId: viewerUserId || undefined,
+          text: post.content ?? post.title ?? "",
+          createdAt: post.created_at,
+          isLocked: false,
+          lockReason: "none",
+          price: post.price ?? undefined,
+          media: [],
+          blocks: [],
+          likesCount: 0,
+          isLiked: false,
+          commentsCount: 0,
+          creator: {
+            username: creator?.username ?? "",
+            displayName: creator?.display_name ?? null,
+            avatarUrl: profile?.avatar_url ?? null,
+          },
+        }
+      }
+
       const selectedMediaRows = (mediaMap.get(post.id) ?? []).slice(0, 3)
 
-const media = await Promise.all(
-  selectedMediaRows.map(async (item) => ({
-    id: item.id,
-    url: await createMediaSignedUrl({
-      storagePath: item.storage_path,
-      viewerUserId,
-      creatorUserId,
-      visibility: post.visibility,
-      isSubscribed: false,
-      hasPurchased: false,
-    }),
-    type: resolveMediaType(item),
-  }))
-)
+      const media = await Promise.all(
+        selectedMediaRows.map(async (item) => ({
+          id: item.id,
+          url: await createMediaSignedUrl({
+            storagePath: item.storage_path,
+            viewerUserId,
+            creatorUserId,
+            visibility: post.visibility,
+            isSubscribed: false,
+            hasPurchased: false,
+          }),
+          type: resolveMediaType(item),
+        }))
+      )
 
       return {
         id: post.id,
         creatorId: post.creator_id,
         status: post.status,
-  publishedAt: post.published_at ?? null,
+        publishedAt: post.published_at ?? null,
         creatorUserId,
         currentUserId: viewerUserId || undefined,
         text: post.content ?? post.title ?? "",
@@ -359,17 +466,17 @@ const media = await Promise.all(
         lockReason: "none",
         price: post.price ?? undefined,
         media,
-    blocks: [...(post.post_blocks ?? [])]
-  .sort((a, b) => a.sort_order - b.sort_order)
-  .map((block) => ({
-          id: block.id,
-          postId: block.post_id,
-          type: block.type,
-          content: block.content,
-          mediaId: block.media_id,
-          sortOrder: block.sort_order,
-          createdAt: block.created_at,
-        })),
+        blocks: [...(post.post_blocks ?? [])]
+          .sort((a, b) => a.sort_order - b.sort_order)
+          .map((block) => ({
+            id: block.id,
+            postId: block.post_id,
+            type: block.type,
+            content: block.content,
+            mediaId: block.media_id,
+            sortOrder: block.sort_order,
+            createdAt: block.created_at,
+          })),
         likesCount: likeCountMap.get(post.id) ?? 0,
         isLiked: myLikeSet.has(post.id),
         commentsCount: commentCountMap.get(post.id) ?? 0,
@@ -384,9 +491,9 @@ const media = await Promise.all(
 
   return {
     items,
-  nextCursor:
-  items.length === limit
-    ? items[items.length - 1]?.publishedAt ?? null
-    : null,
+    nextCursor:
+      items.length === safeLimit
+        ? items[items.length - 1]?.publishedAt ?? null
+        : null,
   }
 }

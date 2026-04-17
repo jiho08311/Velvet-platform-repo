@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
 
 import type { CreatorSearchResult } from "../types"
 
@@ -19,6 +20,10 @@ type ProfileRow = {
   id: string
   username: string
   display_name: string | null
+  is_deactivated: boolean | null
+  is_delete_pending: boolean | null
+  deleted_at: string | null
+  is_banned: boolean | null
 }
 
 export async function searchCreators(
@@ -30,31 +35,29 @@ export async function searchCreators(
   const query = input.query.trim()
 
   if (!query) {
-  return {
-    items: [],
-    nextCursor: null,
+    return {
+      items: [],
+      nextCursor: null,
+    }
   }
-}
 
-const limit = Math.max(1, Math.min(input.limit ?? 10, 50))
-const cursor = input.cursor?.trim() || null
+  const limit = Math.max(1, Math.min(input.limit ?? 10, 50))
+  const cursor = input.cursor?.trim() || null
 
-let profilesQuery = supabaseAdmin
-  .from("profiles")
-  .select("id, username, display_name")
-  .eq("is_deactivated", false)
-  .eq("is_delete_pending", false)
-  .eq("is_banned", false)
-  .is("deleted_at", null)
-  .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
-  .order("username", { ascending: true })
-  .limit(limit)
+  let profilesQuery = supabaseAdmin
+    .from("profiles")
+    .select(
+      "id, username, display_name, is_deactivated, is_delete_pending, deleted_at, is_banned"
+    )
+    .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
+    .order("username", { ascending: true })
+    .limit(limit)
 
-if (cursor) {
-  profilesQuery = profilesQuery.gt("username", cursor)
-}
+  if (cursor) {
+    profilesQuery = profilesQuery.gt("username", cursor)
+  }
 
-const { data: profileRows, error: profileError } = await profilesQuery
+  const { data: profileRows, error: profileError } = await profilesQuery
 
   if (profileError) {
     throw profileError
@@ -62,12 +65,12 @@ const { data: profileRows, error: profileError } = await profilesQuery
 
   const matchedProfiles = (profileRows ?? []) as ProfileRow[]
 
-if (matchedProfiles.length === 0) {
-  return {
-    items: [],
-    nextCursor: null,
+  if (matchedProfiles.length === 0) {
+    return {
+      items: [],
+      nextCursor: null,
+    }
   }
-}
 
   const profileIds = matchedProfiles.map((profile) => profile.id)
 
@@ -75,7 +78,7 @@ if (matchedProfiles.length === 0) {
     .from("creators")
     .select("id, user_id, username, status")
     .in("user_id", profileIds)
-    .eq("status", "active") // 🔥 추가
+    .eq("status", "active")
 
   if (creatorError) {
     throw creatorError
@@ -88,27 +91,41 @@ if (matchedProfiles.length === 0) {
     ])
   )
 
-const items = matchedProfiles
-  .filter((profile) => creatorMap.has(profile.id))
-  .map((profile) => {
-    const creator = creatorMap.get(profile.id)!
+  const items = matchedProfiles
+    .filter((profile) =>
+      isPublicCreatorProfileVisible({
+        creator: creatorMap.has(profile.id)
+          ? {
+              status: creatorMap.get(profile.id)?.status,
+            }
+          : null,
+        profile: {
+          isDeactivated: profile.is_deactivated,
+          isDeletePending: profile.is_delete_pending,
+          deletedAt: profile.deleted_at,
+          isBanned: profile.is_banned,
+        },
+      })
+    )
+    .map((profile) => {
+      const creator = creatorMap.get(profile.id)!
 
-    return {
-      id: creator.id,
-      bio: null,
-      username: creator.username,
-      displayName: profile.display_name ?? profile.username,
-      avatarUrl: null,
-      headline: null,
-      isVerified: false,
-    }
-  })
+      return {
+        id: creator.id,
+        bio: null,
+        username: creator.username,
+        displayName: profile.display_name ?? profile.username,
+        avatarUrl: null,
+        headline: null,
+        isVerified: false,
+      }
+    })
 
-return {
-  items,
-  nextCursor:
-    items.length === limit
-      ? matchedProfiles[matchedProfiles.length - 1]?.username ?? null
-      : null,
-}
+  return {
+    items,
+    nextCursor:
+      items.length === limit
+        ? matchedProfiles[matchedProfiles.length - 1]?.username ?? null
+        : null,
+  }
 }

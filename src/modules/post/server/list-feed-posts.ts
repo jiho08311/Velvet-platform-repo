@@ -1,5 +1,7 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
+import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
 
 type SubscriptionRow = {
   creator_id: string
@@ -10,12 +12,28 @@ type PostRow = {
   creator_id: string
   title: string | null
   content: string | null
-  status: "draft" | "published" | "archived"
+  status: "draft" | "scheduled" | "published" | "archived"
   visibility: "public" | "subscribers" | "paid"
   price: number
   published_at: string | null
   created_at: string
   updated_at: string
+  visibility_status: "draft" | "published" | "processing" | "rejected" | null
+  moderation_status: "pending" | "approved" | "rejected" | null
+  deleted_at: string | null
+}
+
+type CreatorRow = {
+  id: string
+  user_id: string
+  status: "active" | "pending" | "suspended" | "inactive"
+  profiles: {
+    id: string
+    is_deactivated: boolean | null
+    is_delete_pending: boolean | null
+    deleted_at: string | null
+    is_banned: boolean | null
+  } | null
 }
 
 type MediaType = "image" | "video" | "audio" | "file"
@@ -62,7 +80,7 @@ export async function listFeedPosts({
     creatorId: string
     title?: string
     content?: string
-    status: "draft" | "published" | "archived"
+    status: "draft" | "scheduled" | "published" | "archived"
     visibility: "public" | "subscribers" | "paid"
     price: number
     publishedAt?: string
@@ -74,6 +92,9 @@ export async function listFeedPosts({
     }>
   }>
 > {
+  const safeLimit = Math.max(1, Math.min(limit, 100))
+  const now = new Date().toISOString()
+
   const { data: subscriptions, error: subscriptionsError } = await supabaseAdmin
     .from("subscriptions")
     .select("creator_id")
@@ -93,26 +114,85 @@ export async function listFeedPosts({
     return []
   }
 
+  const { data: creatorRows, error: creatorError } = await supabaseAdmin
+    .from("creators")
+    .select(`
+      id,
+      user_id,
+      status,
+      profiles!inner (
+        id,
+        is_deactivated,
+        is_delete_pending,
+        deleted_at,
+        is_banned
+      )
+    `)
+    .in("id", creatorIds)
+    .returns<CreatorRow[]>()
+
+  if (creatorError) {
+    throw creatorError
+  }
+
+  const visibleCreatorMap = new Map(
+    (creatorRows ?? [])
+      .filter((creator) =>
+        isPublicCreatorProfileVisible({
+          creator: {
+            status: creator.status,
+          },
+          profile: creator.profiles
+            ? {
+                isDeactivated: creator.profiles.is_deactivated,
+                isDeletePending: creator.profiles.is_delete_pending,
+                deletedAt: creator.profiles.deleted_at,
+                isBanned: creator.profiles.is_banned,
+              }
+            : null,
+        })
+      )
+      .map((creator) => [creator.id, creator])
+  )
+
+  const visibleCreatorIds = Array.from(visibleCreatorMap.keys())
+
+  if (visibleCreatorIds.length === 0) {
+    return []
+  }
+
   const { data: posts, error: postsError } = await supabaseAdmin
     .from("posts")
     .select(
-      "id, creator_id, title, content, status, visibility, price, published_at, created_at, updated_at"
+      "id, creator_id, title, content, status, visibility, price, published_at, created_at, updated_at, visibility_status, moderation_status, deleted_at"
     )
-    .in("creator_id", creatorIds)
-  .eq("status", "published")
-.eq("visibility_status", "published")
-.eq("moderation_status", "approved")
-.is("deleted_at", null)
-.in("visibility", ["public", "subscribers"])
+    .in("creator_id", visibleCreatorIds)
+    .in("visibility", ["public", "subscribers"])
+    .is("deleted_at", null)
     .order("published_at", { ascending: false })
-    .limit(limit)
+    .limit(safeLimit * 3)
     .returns<PostRow[]>()
 
   if (postsError) {
     throw postsError
   }
 
-  const resolvedPosts = posts ?? []
+  const resolvedPosts = (posts ?? [])
+    .filter((post) => {
+      return (
+        getPostPublicState({
+          status: post.status,
+          visibility: post.visibility,
+          visibilityStatus: post.visibility_status,
+          moderationStatus: post.moderation_status,
+          publishedAt: post.published_at,
+          deletedAt: post.deleted_at,
+          now,
+        }) === "published"
+      )
+    })
+    .slice(0, safeLimit)
+
   const postIds = resolvedPosts.map((post) => post.id)
 
   if (postIds.length === 0) {
@@ -141,6 +221,9 @@ export async function listFeedPosts({
 
   return Promise.all(
     resolvedPosts.map(async (post) => {
+      const creator = visibleCreatorMap.get(post.creator_id)
+      const creatorUserId = creator?.user_id ?? ""
+
       const selectedMediaRows = (mediaMap.get(post.id) ?? []).slice(0, 3)
 
       const media = await Promise.all(
@@ -148,7 +231,7 @@ export async function listFeedPosts({
           const url = await createMediaSignedUrl({
             storagePath: item.storage_path,
             viewerUserId: userId,
-            creatorUserId: post.creator_id,
+            creatorUserId,
             visibility: post.visibility,
             isSubscribed: true,
             hasPurchased: false,

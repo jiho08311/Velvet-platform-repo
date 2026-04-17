@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
 
 type CreatorRow = {
   id: string
@@ -18,8 +19,8 @@ type ProfileRow = {
   bio: string | null
   is_deactivated: boolean | null
   is_delete_pending: boolean | null
-deleted_at: string | null
-is_banned: boolean | null
+  deleted_at: string | null
+  is_banned: boolean | null
 }
 
 type ListCreatorsInput = {
@@ -58,15 +59,13 @@ export async function listCreators({
 
   const userIds = creators.map((creator) => creator.user_id)
 
-const { data: profiles, error: profilesError } = await supabaseAdmin
-  .from("profiles")
-  .select("id, username, display_name, avatar_url, bio, is_deactivated, is_delete_pending, deleted_at, is_banned")
-  .in("id", userIds)
-  .eq("is_deactivated", false)
-  .eq("is_delete_pending", false)
-  .eq("is_banned", false)
-  .is("deleted_at", null)
-  .returns<ProfileRow[]>()
+  const { data: profiles, error: profilesError } = await supabaseAdmin
+    .from("profiles")
+    .select(
+      "id, username, display_name, avatar_url, bio, is_deactivated, is_delete_pending, deleted_at, is_banned"
+    )
+    .in("id", userIds)
+    .returns<ProfileRow[]>()
 
   if (profilesError) throw profilesError
 
@@ -75,7 +74,23 @@ const { data: profiles, error: profilesError } = await supabaseAdmin
   )
 
   return creators
-    .filter((creator) => profileMap.has(creator.user_id))
+    .filter((creator) =>
+      isPublicCreatorProfileVisible({
+        creator: {
+          status: creator.status,
+        },
+        profile: profileMap.has(creator.user_id)
+          ? {
+              isDeactivated:
+                profileMap.get(creator.user_id)?.is_deactivated ?? null,
+              isDeletePending:
+                profileMap.get(creator.user_id)?.is_delete_pending ?? null,
+              deletedAt: profileMap.get(creator.user_id)?.deleted_at ?? null,
+              isBanned: profileMap.get(creator.user_id)?.is_banned ?? null,
+            }
+          : null,
+      })
+    )
     .map((creator) => {
       const profile = profileMap.get(creator.user_id)!
 

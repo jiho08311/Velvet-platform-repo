@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
-
+import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
+import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
 export type ExplorePostItem = {
   id: string
   postId: string
@@ -41,6 +42,11 @@ type PostRow = {
   created_at: string
   published_at: string | null
   content: string | null
+  status: "draft" | "scheduled" | "published" | "archived"
+  visibility: "public" | "subscribers" | "paid"
+  visibility_status: "draft" | "published" | "processing" | "rejected" | null
+  moderation_status: "pending" | "approved" | "rejected" | null
+  deleted_at: string | null
 }
 
 type MediaRow = {
@@ -57,9 +63,13 @@ type CreatorRow = {
   username: string
   display_name: string | null
   user_id: string
+  status: "active" | "pending" | "suspended" | "inactive"
   profiles: {
     id: string
-    is_deactivated: boolean
+    is_deactivated: boolean | null
+    is_delete_pending: boolean | null
+    deleted_at: string | null
+    is_banned: boolean | null
   } | null
 }
 
@@ -118,10 +128,13 @@ function resolveMediaType(
 export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
   const safeLimit = Math.max(1, Math.min(limit, 60))
   const fetchSize = Math.max(safeLimit * 3, 60)
+  const now = new Date().toISOString()
 
   const { data: postRows, error: postError } = await supabaseAdmin
     .from("posts")
-    .select("id, creator_id, created_at, published_at, content")
+    .select(
+      "id, creator_id, created_at, published_at, content, status, visibility, visibility_status, moderation_status, deleted_at"
+    )
     .eq("status", "published")
     .eq("visibility", "public")
     .is("deleted_at", null)
@@ -131,7 +144,20 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
 
   if (postError) throw postError
 
-  const posts = postRows ?? []
+  const posts = (postRows ?? []).filter((post) => {
+    return (
+      getPostPublicState({
+        status: post.status,
+        visibility: post.visibility,
+        visibilityStatus: post.visibility_status,
+        moderationStatus: post.moderation_status,
+        publishedAt: post.published_at,
+        deletedAt: post.deleted_at,
+        now,
+      }) === "published"
+    )
+  })
+
   if (posts.length === 0) return []
 
   const postIds = posts.map((post) => post.id)
@@ -237,29 +263,47 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
       username,
       display_name,
       user_id,
+      status,
       profiles!inner (
         id,
-        is_deactivated
+        is_deactivated,
+        is_delete_pending,
+        deleted_at,
+        is_banned
       )
     `)
     .in("id", creatorIds)
-    .eq("status", "active")
-    .eq("profiles.is_deactivated", false)
     .returns<CreatorRow[]>()
 
   if (creatorError) throw creatorError
 
   const creatorMap = new Map(
-    (creatorRows ?? []).map((creator) => [creator.id, creator])
+    ((creatorRows ?? []) as CreatorRow[])
+      .filter((creator) =>
+        isPublicCreatorProfileVisible({
+          creator: {
+            status: creator.status,
+          },
+          profile: creator.profiles
+            ? {
+                isDeactivated: creator.profiles.is_deactivated,
+                isDeletePending: creator.profiles.is_delete_pending,
+                deletedAt: creator.profiles.deleted_at,
+                isBanned: creator.profiles.is_banned,
+              }
+            : null,
+        })
+      )
+      .map((creator) => [creator.id, creator])
   )
 
-  const filteredPosts = postsWithMedia.filter((post) =>
+  const visiblePosts = postsWithMedia.filter((post) =>
     creatorMap.has(post.creator_id)
   )
 
-  if (filteredPosts.length === 0) return []
+  if (visiblePosts.length === 0) return []
 
-  const shuffledPosts = shuffleArray(filteredPosts).slice(0, safeLimit)
+  const shuffledPosts = shuffleArray(visiblePosts).slice(0, safeLimit)
 
   return Promise.all(
     shuffledPosts.map(async (post) => {
@@ -316,7 +360,7 @@ export async function getExplorePosts(limit = 24): Promise<ExplorePostItem[]> {
               ...signedMedia.map((item, index) => ({
                 id: `${post.id}-fallback-media-${item.id}`,
                 postId: post.id,
-                type: item.type === "video" ? "video" as const : "image" as const,
+                type: item.type === "video" ? ("video" as const) : ("image" as const),
                 content: null,
                 mediaId: item.id,
                 sortOrder: (post.content?.trim() ? 1 : 0) + index,

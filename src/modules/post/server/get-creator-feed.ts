@@ -2,6 +2,7 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
 import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 import { checkSubscription } from "@/modules/subscription/server/check-subscription"
+import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
 import type { PostBlockEditorState } from "../types"
 
 type CreatorFeedPost = {
@@ -48,6 +49,9 @@ type PostRow = {
   status: string
   created_at: string
   published_at?: string | null
+  visibility_status?: string | null
+  moderation_status?: string | null
+  deleted_at?: string | null
 }
 
 type MediaType = "image" | "video" | "audio" | "file"
@@ -126,16 +130,18 @@ export async function getCreatorFeed({
           creatorId,
         })
       : false
-      const now = new Date().toISOString()
+
+  const now = new Date().toISOString()
 
   const { data: posts, error } = await supabaseAdmin
     .from("posts")
-    .select("id, creator_id, content, visibility, price, status, created_at, published_at")
+    .select(
+      "id, creator_id, content, visibility, price, status, created_at, published_at, visibility_status, moderation_status, deleted_at"
+    )
     .eq("creator_id", creatorId)
-.or(
-  `and(status.eq.published,visibility_status.eq.published,moderation_status.eq.approved),and(status.eq.scheduled,visibility.eq.public,moderation_status.eq.approved,published_at.gt.${now})`
-)
-    
+    .or(
+      `and(status.eq.published,visibility_status.eq.published,moderation_status.eq.approved),and(status.eq.scheduled,visibility.eq.public,moderation_status.eq.approved,published_at.gt.${now})`
+    )
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .returns<PostRow[]>()
@@ -144,8 +150,44 @@ export async function getCreatorFeed({
     throw error
   }
 
+  const visiblePosts = (posts ?? []).filter((post) => {
+    const publicState = getPostPublicState({
+      status: post.status,
+      visibility: post.visibility,
+      visibilityStatus: post.visibility_status ?? null,
+      moderationStatus: post.moderation_status ?? null,
+      publishedAt: post.published_at ?? null,
+      deletedAt: post.deleted_at ?? null,
+      now,
+    })
+
+    return publicState !== "hidden"
+  })
+
   const resolvedPosts = await Promise.all(
-    (posts ?? []).map(async (post) => {
+    visiblePosts.map(async (post) => {
+      const publicState = getPostPublicState({
+        status: post.status,
+        visibility: post.visibility,
+        visibilityStatus: post.visibility_status ?? null,
+        moderationStatus: post.moderation_status ?? null,
+        publishedAt: post.published_at ?? null,
+        deletedAt: post.deleted_at ?? null,
+        now,
+      })
+
+      if (publicState === "upcoming") {
+        return {
+          ...post,
+          price: post.price,
+          hasPurchased: false,
+          isLocked: false,
+          lockReason: "none" as PostLockReason,
+          content: post.content,
+          publicState,
+        }
+      }
+
       const isSubscribersOnly = post.visibility === "subscribers"
       const isPaidPost = post.visibility === "paid" && post.price > 0
 
@@ -177,6 +219,7 @@ export async function getCreatorFeed({
         isLocked,
         lockReason,
         content: isLocked ? null : post.content,
+        publicState,
       }
     })
   )
@@ -229,12 +272,19 @@ export async function getCreatorFeed({
 
   if (postIds.length === 0) {
     return resolvedPosts.map((post) => ({
-      ...post,
+      id: post.id,
+      content: post.content,
+      created_at: post.created_at,
       media: [],
       blocks: [],
+      price: post.price,
+      isLocked: post.isLocked,
       likesCount: 0,
       isLiked: false,
+      visibility: post.visibility,
       commentsCount: 0,
+      status: post.status,
+      published_at: post.published_at ?? null,
     }))
   }
 
@@ -290,23 +340,41 @@ export async function getCreatorFeed({
 
   return Promise.all(
     resolvedPosts.map(async (post) => {
-const allMediaRows = mediaMap.get(post.id) ?? []
+      if (post.publicState === "upcoming") {
+        return {
+          id: post.id,
+          content: post.content,
+          created_at: post.created_at,
+          media: [],
+          blocks: [],
+          price: post.price,
+          isLocked: false,
+          likesCount: likeCountMap.get(post.id) ?? 0,
+          isLiked: myLikeSet.has(post.id),
+          visibility: post.visibility,
+          commentsCount: commentCountMap.get(post.id) ?? 0,
+          status: post.status,
+          published_at: post.published_at ?? null,
+        }
+      }
 
-const selectedMediaRows = post.isLocked
-  ? allMediaRows.slice(0, 1) // 🔥 preview 1개만
-  : allMediaRows
+      const allMediaRows = mediaMap.get(post.id) ?? []
+
+      const selectedMediaRows = post.isLocked
+        ? allMediaRows.slice(0, 1)
+        : allMediaRows
 
       const media = await Promise.all(
         selectedMediaRows.map(async (item) => {
-  const url = await createMediaSignedUrl({
-  storagePath: item.storage_path,
-  viewerUserId: safeUserId,
-  creatorUserId: safeCreatorUserId,
-  visibility: post.visibility,
-  isSubscribed: hasSubscriptionAccess,
-  hasPurchased: post.hasPurchased,
-  allowPreview: post.isLocked,
-})
+          const url = await createMediaSignedUrl({
+            storagePath: item.storage_path,
+            viewerUserId: safeUserId,
+            creatorUserId: safeCreatorUserId,
+            visibility: post.visibility,
+            isSubscribed: hasSubscriptionAccess,
+            hasPurchased: post.hasPurchased,
+            allowPreview: post.isLocked,
+          })
 
           return {
             id: item.id,
@@ -317,12 +385,19 @@ const selectedMediaRows = post.isLocked
       )
 
       return {
-        ...post,
+        id: post.id,
+        content: post.content,
+        created_at: post.created_at,
         media,
         blocks: post.isLocked ? [] : blocksMap.get(post.id) ?? [],
+        price: post.price,
+        isLocked: post.isLocked,
         likesCount: likeCountMap.get(post.id) ?? 0,
         isLiked: myLikeSet.has(post.id),
+        visibility: post.visibility,
         commentsCount: commentCountMap.get(post.id) ?? 0,
+        status: post.status,
+        published_at: post.published_at ?? null,
       }
     })
   )

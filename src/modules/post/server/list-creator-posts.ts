@@ -2,18 +2,36 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
 import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 import { checkSubscription } from "@/modules/subscription/server/check-subscription"
+import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
+import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
 
 type PostRow = {
   id: string
   creator_id: string
   title: string | null
   content: string | null
-  status: "draft" | "published" | "archived"
+  status: "draft" | "scheduled" | "published" | "archived"
   visibility: "public" | "subscribers" | "paid"
   price: number
   published_at: string | null
   created_at: string
   updated_at: string
+  visibility_status: "draft" | "published" | "processing" | "rejected" | null
+  moderation_status: "pending" | "approved" | "rejected" | null
+  deleted_at: string | null
+}
+
+type CreatorRow = {
+  id: string
+  user_id: string
+  status: "active" | "pending" | "suspended" | "inactive"
+  profiles: {
+    id: string
+    is_deactivated: boolean | null
+    is_delete_pending: boolean | null
+    deleted_at: string | null
+    is_banned: boolean | null
+  } | null
 }
 
 type MediaRow = {
@@ -42,7 +60,7 @@ export async function listCreatorPosts({
     creatorId: string
     title?: string
     content?: string
-    status: "draft" | "published" | "archived"
+    status: "draft" | "scheduled" | "published" | "archived"
     visibility: "public" | "subscribers" | "paid"
     price: number
     publishedAt?: string
@@ -57,40 +75,92 @@ export async function listCreatorPosts({
       ? userId.trim()
       : undefined
 
+  const safeLimit = Math.max(1, Math.min(limit, 100))
+  const now = new Date().toISOString()
+
+  const { data: creator, error: creatorError } = await supabaseAdmin
+    .from("creators")
+    .select(`
+      id,
+      user_id,
+      status,
+      profiles!inner (
+        id,
+        is_deactivated,
+        is_delete_pending,
+        deleted_at,
+        is_banned
+      )
+    `)
+    .eq("id", creatorId)
+    .maybeSingle<CreatorRow>()
+
+  if (creatorError) {
+    throw creatorError
+  }
+
+  if (!creator) {
+    return []
+  }
+
+  const isOwner = !!safeUserId && safeUserId === creator.user_id
+
+  if (
+    !isOwner &&
+    !isPublicCreatorProfileVisible({
+      creator: {
+        status: creator.status,
+      },
+      profile: creator.profiles
+        ? {
+            isDeactivated: creator.profiles.is_deactivated,
+            isDeletePending: creator.profiles.is_delete_pending,
+            deletedAt: creator.profiles.deleted_at,
+            isBanned: creator.profiles.is_banned,
+          }
+        : null,
+    })
+  ) {
+    return []
+  }
+
   let query = supabaseAdmin
     .from("posts")
     .select(
-      "id, creator_id, title, content, status, visibility, price, published_at, created_at, updated_at"
+      "id, creator_id, title, content, status, visibility, price, published_at, created_at, updated_at, visibility_status, moderation_status, deleted_at"
     )
     .eq("creator_id", creatorId)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false })
-    .limit(limit)
+    .limit(safeLimit * 3)
 
   if (status) {
     query = query.eq("status", status)
   }
 
-if (!safeUserId || safeUserId !== creatorId) {
-  query = query
-    .eq("status", "published")
-    .eq("visibility_status", "published")
-    .eq("moderation_status", "approved")
-    .is("deleted_at", null)
-}
-
-
-
-
   const { data, error } = await query.returns<PostRow[]>()
-
-
-
 
   if (error) {
     throw error
   }
 
-  const posts = data ?? []
+  const posts = isOwner
+    ? (data ?? []).slice(0, safeLimit)
+    : (data ?? [])
+        .filter((post) => {
+          return (
+            getPostPublicState({
+              status: post.status,
+              visibility: post.visibility,
+              visibilityStatus: post.visibility_status,
+              moderationStatus: post.moderation_status,
+              publishedAt: post.published_at,
+              deletedAt: post.deleted_at,
+              now,
+            }) === "published"
+          )
+        })
+        .slice(0, safeLimit)
 
   if (posts.length === 0) {
     return []
@@ -112,7 +182,7 @@ if (!safeUserId || safeUserId !== creatorId) {
     if (post.visibility === "subscribers") {
       if (!safeUserId) {
         isLocked = true
-      } else {
+      } else if (!isOwner) {
         isSubscribed = await checkSubscription({
           userId: safeUserId,
           creatorId: post.creator_id,
@@ -121,13 +191,15 @@ if (!safeUserId || safeUserId !== creatorId) {
         if (!isSubscribed) {
           isLocked = true
         }
+      } else {
+        isSubscribed = true
       }
     }
 
     if (post.visibility === "paid") {
       if (!safeUserId) {
         isLocked = true
-      } else {
+      } else if (!isOwner) {
         hasPurchased = await hasPurchasedPost({
           userId: safeUserId,
           postId: post.id,
@@ -136,22 +208,18 @@ if (!safeUserId || safeUserId !== creatorId) {
         if (!hasPurchased) {
           isLocked = true
         }
+      } else {
+        hasPurchased = true
       }
     }
 
-    const nextPost: PostRow & {
-      isLocked?: boolean
-      isSubscribed: boolean
-      hasPurchased: boolean
-    } = {
+    filteredPosts.push({
       ...post,
       isLocked,
       isSubscribed,
       hasPurchased,
       content: isLocked ? null : post.content,
-    }
-
-    filteredPosts.push(nextPost)
+    })
   }
 
   const postIds = filteredPosts.map((post) => post.id)
@@ -187,7 +255,7 @@ if (!safeUserId || safeUserId !== creatorId) {
           createMediaSignedUrl({
             storagePath: item.storage_path,
             viewerUserId: safeUserId,
-            creatorUserId: post.creator_id,
+            creatorUserId: creator.user_id,
             visibility: post.visibility,
             isSubscribed: post.isSubscribed,
             hasPurchased: post.hasPurchased,

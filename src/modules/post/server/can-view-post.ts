@@ -1,18 +1,20 @@
 export type CanViewPostInput = {
   visibility: "public" | "subscribers" | "paid"
   viewerUserId: string | null | undefined
-  creatorId?: string | null
+  creatorUserId: string | null | undefined
   isSubscribed: boolean
   hasPurchased?: boolean
 }
 
 export function canViewPost(input: CanViewPostInput): boolean {
   const viewerUserId = input.viewerUserId?.trim() ?? ""
-  const creatorId = input.creatorId?.trim() ?? ""
+  const creatorUserId = input.creatorUserId?.trim() ?? ""
 
-  if (!creatorId) return false
+  if (!creatorUserId) {
+    return false
+  }
 
-  if (viewerUserId && viewerUserId === creatorId) {
+  if (viewerUserId && viewerUserId === creatorUserId) {
     return true
   }
 

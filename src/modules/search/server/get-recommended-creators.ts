@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
 
 import type { CreatorSearchResult } from "../types"
 
@@ -11,6 +12,7 @@ type CreatorRow = {
   id: string
   user_id: string
   username: string
+  status: "active" | "pending" | "suspended" | "inactive"
   created_at?: string
 }
 
@@ -19,6 +21,10 @@ type ProfileRow = {
   username: string
   display_name: string | null
   avatar_url: string | null
+  is_deactivated: boolean | null
+  is_delete_pending: boolean | null
+  deleted_at: string | null
+  is_banned: boolean | null
 }
 
 type SubscriptionRow = {
@@ -51,11 +57,12 @@ export async function getRecommendedCreators({
 
   const { data: creatorRows, error: creatorError } = await supabaseAdmin
     .from("creators")
-    .select("id, user_id, username, created_at")
+    .select("id, user_id, username, status, created_at")
     .neq("user_id", viewerUserId)
     .eq("status", "active")
     .order("created_at", { ascending: false })
     .limit(30)
+    .returns<CreatorRow[]>()
 
   if (creatorError) {
     throw creatorError
@@ -72,13 +79,12 @@ export async function getRecommendedCreators({
   const profileIds = filteredCreators.map((creator) => creator.user_id)
 
   const { data: profileRows, error: profileError } = await supabaseAdmin
- .from("profiles")
-.select("id, username, display_name, avatar_url")
-.in("id", profileIds)
-.eq("is_deactivated", false)
-.eq("is_delete_pending", false)
-.is("deleted_at", null)
-.eq("is_banned", false)
+    .from("profiles")
+    .select(
+      "id, username, display_name, avatar_url, is_deactivated, is_delete_pending, deleted_at, is_banned"
+    )
+    .in("id", profileIds)
+    .returns<ProfileRow[]>()
 
   if (profileError) {
     throw profileError
@@ -89,7 +95,23 @@ export async function getRecommendedCreators({
   )
 
   return filteredCreators
-    .filter((creator) => profileMap.has(creator.user_id))
+    .filter((creator) =>
+      isPublicCreatorProfileVisible({
+        creator: {
+          status: creator.status,
+        },
+        profile: profileMap.has(creator.user_id)
+          ? {
+              isDeactivated:
+                profileMap.get(creator.user_id)?.is_deactivated ?? null,
+              isDeletePending:
+                profileMap.get(creator.user_id)?.is_delete_pending ?? null,
+              deletedAt: profileMap.get(creator.user_id)?.deleted_at ?? null,
+              isBanned: profileMap.get(creator.user_id)?.is_banned ?? null,
+            }
+          : null,
+      })
+    )
     .slice(0, safeLimit)
     .map((creator) => {
       const profile = profileMap.get(creator.user_id)!

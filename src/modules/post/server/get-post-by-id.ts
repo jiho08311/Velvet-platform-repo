@@ -4,6 +4,8 @@ import { getPostBlocks } from "./get-post-blocks"
 import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 import { getPostAccess } from "./get-post-access"
 import { getPostMedia } from "./get-post-media"
+import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
+import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
 
 type PostRow = {
   id: string
@@ -17,6 +19,7 @@ type PostRow = {
   moderation_status: "pending" | "approved" | "rejected" | null
   created_at: string
   published_at: string | null
+  deleted_at?: string | null
 }
 
 type CreatorRow = {
@@ -24,6 +27,14 @@ type CreatorRow = {
   user_id: string
   username: string
   display_name: string | null
+  status: "active" | "pending" | "suspended" | "inactive"
+  profiles: {
+    id: string
+    is_deactivated: boolean | null
+    is_delete_pending: boolean | null
+    deleted_at: string | null
+    is_banned: boolean | null
+  } | null
 }
 
 type SubscriptionRow = {
@@ -77,7 +88,7 @@ export async function getPostById(
   const { data: post, error: postError } = await supabaseAdmin
     .from("posts")
     .select(
-      "id, creator_id, title, content, visibility, price, status, visibility_status, moderation_status, created_at, published_at"
+      "id, creator_id, title, content, visibility, price, status, visibility_status, moderation_status, created_at, published_at, deleted_at"
     )
     .eq("id", resolvedPostId)
     .is("deleted_at", null)
@@ -93,7 +104,20 @@ export async function getPostById(
 
   const { data: creator, error: creatorError } = await supabaseAdmin
     .from("creators")
-    .select("id, user_id, username, display_name")
+    .select(`
+      id,
+      user_id,
+      username,
+      display_name,
+      status,
+      profiles!inner (
+        id,
+        is_deactivated,
+        is_delete_pending,
+        deleted_at,
+        is_banned
+      )
+    `)
     .eq("id", post.creator_id)
     .maybeSingle<CreatorRow>()
 
@@ -110,12 +134,35 @@ export async function getPostById(
     creator.user_id === resolvedViewerUserId
 
   if (!isOwner) {
-    const isPubliclyAvailable =
-      post.status === "published" &&
-      post.visibility_status === "published" &&
-      post.moderation_status === "approved"
+    const isVisibleCreator = isPublicCreatorProfileVisible({
+      creator: {
+        status: creator.status,
+      },
+      profile: creator.profiles
+        ? {
+            isDeactivated: creator.profiles.is_deactivated,
+            isDeletePending: creator.profiles.is_delete_pending,
+            deletedAt: creator.profiles.deleted_at,
+            isBanned: creator.profiles.is_banned,
+          }
+        : null,
+    })
 
-    if (!isPubliclyAvailable) {
+    if (!isVisibleCreator) {
+      return null
+    }
+
+    const publicState = getPostPublicState({
+      status: post.status,
+      visibility: post.visibility,
+      visibilityStatus: post.visibility_status,
+      moderationStatus: post.moderation_status,
+      publishedAt: post.published_at,
+      deletedAt: post.deleted_at ?? null,
+      now: new Date().toISOString(),
+    })
+
+    if (publicState !== "published") {
       return null
     }
   }
