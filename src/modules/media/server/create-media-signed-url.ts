@@ -43,7 +43,7 @@ export async function createMediaSignedUrl({
     ? true
     : canViewPost({
         viewerUserId: resolvedViewerUserId,
-        creatorId: resolvedCreatorUserId,
+  creatorUserId: resolvedCreatorUserId,
         visibility,
         isSubscribed,
         hasPurchased,
