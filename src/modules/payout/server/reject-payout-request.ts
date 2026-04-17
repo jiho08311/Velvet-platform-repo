@@ -39,4 +39,17 @@ export async function rejectPayoutRequest({
   if (!data) {
     throw new Error("Payout request not found or not pending")
   }
+
+  const { error: releaseError } = await supabaseAdmin
+    .from("earnings")
+    .update({
+      status: "available",
+      payout_request_id: null,
+    })
+    .eq("payout_request_id", safePayoutRequestId)
+    .eq("status", "requested")
+
+  if (releaseError) {
+    throw releaseError
+  }
 }

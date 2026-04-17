@@ -1,7 +1,8 @@
+type SubscriptionDisplayStatus = "active" | "canceled" | "expired" | "inactive"
+
 type SubscriptionStatusCardProps = {
-  status: "active" | "canceled" | "expired" | "inactive"
+  status: SubscriptionDisplayStatus
   currentPeriodEndAt?: string | null
-  cancelAtPeriodEnd?: boolean
 }
 
 function formatDate(value?: string | null) {
@@ -23,7 +24,6 @@ function formatDate(value?: string | null) {
 export function SubscriptionStatusCard({
   status,
   currentPeriodEndAt,
-  cancelAtPeriodEnd = false,
 }: SubscriptionStatusCardProps) {
   const formattedEndDate = formatDate(currentPeriodEndAt)
 
@@ -51,7 +51,7 @@ export function SubscriptionStatusCard({
     )
   }
 
-  if (status === "canceled" || cancelAtPeriodEnd) {
+  if (status === "canceled") {
     return (
       <div className="rounded-3xl border border-yellow-500/20 bg-zinc-900/70 p-5">
         <p className="text-sm font-medium text-white">구독 종료 예정</p>

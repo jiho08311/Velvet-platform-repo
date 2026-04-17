@@ -1,6 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createEarning } from "@/modules/payout/server/create-earning"
-import { markEarningAsAvailable } from "@/modules/payout/server/mark-earning-as-available"
 import { upsertSubscription } from "@/modules/subscription/server/upsert-subscription"
 import { createNotification } from "@/modules/notification/server/create-notification"
 
@@ -65,6 +64,31 @@ async function processSettlement(payment: {
   }
 }
 
+async function activateSubscriptionFromPayment(payment: {
+  id: string
+  user_id: string
+  creator_id: string | null
+  provider: PaymentProvider
+  confirmed_at: string | null
+}) {
+  if (!payment.creator_id) {
+    return
+  }
+
+  const currentPeriodStart = payment.confirmed_at ?? new Date().toISOString()
+
+  await upsertSubscription({
+    userId: payment.user_id,
+    creatorId: payment.creator_id,
+    status: "active",
+    provider: payment.provider,
+    providerSubscriptionId: payment.id,
+    currentPeriodStart,
+    currentPeriodEnd: addOneMonth(currentPeriodStart),
+    cancelAtPeriodEnd: false,
+  })
+}
+
 export async function confirmPayment({
   paymentId,
   paymentKey,
@@ -85,20 +109,8 @@ export async function confirmPayment({
   if (!existingPayment) return null
 
   if (existingPayment.status === "succeeded") {
-    if (existingPayment.type === "subscription" && existingPayment.creator_id) {
-      const currentPeriodStart =
-        existingPayment.confirmed_at ?? new Date().toISOString()
-
-      await upsertSubscription({
-        userId: existingPayment.user_id,
-        creatorId: existingPayment.creator_id,
-        status: "active",
-        provider: existingPayment.provider,
-        providerSubscriptionId: existingPayment.id,
-        currentPeriodStart,
-        currentPeriodEnd: addOneMonth(currentPeriodStart),
-        cancelAtPeriodEnd: false,
-      })
+    if (existingPayment.type === "subscription") {
+      await activateSubscriptionFromPayment(existingPayment)
     }
 
     await processSettlement({
@@ -204,19 +216,8 @@ export async function confirmPayment({
   if (error) throw error
   if (!data) return null
 
-  if (data.type === "subscription" && data.creator_id) {
-    const currentPeriodStart = data.confirmed_at ?? confirmedAt
-
-    await upsertSubscription({
-      userId: data.user_id,
-      creatorId: data.creator_id,
-      status: "active",
-      provider: data.provider,
-      providerSubscriptionId: data.id,
-      currentPeriodStart,
-      currentPeriodEnd: addOneMonth(currentPeriodStart),
-      cancelAtPeriodEnd: false,
-    })
+  if (data.type === "subscription") {
+    await activateSubscriptionFromPayment(data)
   }
 
   await processSettlement({

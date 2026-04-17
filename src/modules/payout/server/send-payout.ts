@@ -26,23 +26,21 @@ export async function sendPayout({ payoutId }: SendPayoutParams) {
     return payout
   }
 
-  if (payout.status !== "failed") {
+  if (payout.status !== "failed" && payout.status !== "pending" && payout.status !== "processing") {
     throw new Error("Payout is not sendable")
   }
 
   try {
-    const { data: updatedPayout, error: updateError } =
-      await supabaseAdmin
-        .from("payouts")
-        .update({
-          status: "paid",
-          paid_at: new Date().toISOString(),
-          failure_reason: null,
-        })
-        .eq("id", payout.id)
-        .eq("status", "failed")
-        .select("id, status, paid_at, failure_reason")
-        .single()
+    const { data: updatedPayout, error: updateError } = await supabaseAdmin
+      .from("payouts")
+      .update({
+        status: "paid",
+        paid_at: new Date().toISOString(),
+        failure_reason: null,
+      })
+      .eq("id", payout.id)
+      .select("id, status, paid_at, failure_reason")
+      .single()
 
     if (updateError) {
       throw updateError

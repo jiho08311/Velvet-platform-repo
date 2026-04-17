@@ -1,4 +1,5 @@
 import { createClient } from "@/infrastructure/supabase/server"
+import { resolveSubscriptionState } from "@/modules/subscription/lib/resolve-subscription-state"
 
 export type CreatorDashboard = {
   creatorId: string
@@ -9,6 +10,13 @@ export type CreatorDashboard = {
     total: number
     monthly: number
   }
+}
+
+type SubscriptionRow = {
+  status: "incomplete" | "active" | "canceled" | "expired"
+  current_period_end: string | null
+  cancel_at_period_end: boolean | null
+  canceled_at: string | null
 }
 
 export async function getCreatorDashboard(
@@ -24,7 +32,7 @@ export async function getCreatorDashboard(
 
   const [
     postsResult,
-    subscribersResult,
+    subscriptionsResult,
     monthlyPaymentsResult,
     totalPaymentsResult,
   ] = await Promise.all([
@@ -35,9 +43,9 @@ export async function getCreatorDashboard(
 
     supabase
       .from("subscriptions")
-      .select("*", { count: "exact", head: true })
+      .select("status, current_period_end, cancel_at_period_end, canceled_at")
       .eq("creator_id", id)
-      .eq("status", "active"),
+      .returns<SubscriptionRow[]>(),
 
     supabase
       .from("payments")
@@ -57,9 +65,20 @@ export async function getCreatorDashboard(
   ])
 
   if (postsResult.error) throw new Error("Failed to load creator dashboard")
-  if (subscribersResult.error) throw new Error("Failed to load creator dashboard")
+  if (subscriptionsResult.error) throw new Error("Failed to load creator dashboard")
   if (monthlyPaymentsResult.error) throw new Error("Failed to load creator dashboard")
   if (totalPaymentsResult.error) throw new Error("Failed to load creator dashboard")
+
+  const activeSubscriberCount = (subscriptionsResult.data ?? []).filter((row) => {
+    const resolved = resolveSubscriptionState({
+      status: row.status,
+      currentPeriodEndAt: row.current_period_end,
+      cancelAtPeriodEnd: row.cancel_at_period_end,
+      canceledAt: row.canceled_at,
+    })
+
+    return resolved.hasAccess
+  }).length
 
   const monthlyRevenue = (monthlyPaymentsResult.data ?? []).reduce(
     (sum, row) => {
@@ -93,7 +112,7 @@ export async function getCreatorDashboard(
   return {
     creatorId: id,
     postCount: postsResult.count ?? 0,
-    activeSubscriberCount: subscribersResult.count ?? 0,
+    activeSubscriberCount,
     earnings: {
       currency,
       total: totalRevenue,

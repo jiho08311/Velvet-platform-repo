@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { resolveSubscriptionState } from "@/modules/subscription/lib/resolve-subscription-state"
 
 type SubscriptionStatus =
   | "incomplete"
@@ -6,9 +7,15 @@ type SubscriptionStatus =
   | "canceled"
   | "expired"
 
+type SubscriptionDisplayStatus =
+  | "active"
+  | "canceled"
+  | "expired"
+  | "inactive"
+
 type SubscriptionView = {
   id: string
-  status: SubscriptionStatus
+  status: SubscriptionDisplayStatus
   startedAt: string | null
   creator: {
     id: string
@@ -35,7 +42,19 @@ type SubscriptionRow = {
   status: SubscriptionStatus
   current_period_start: string | null
   current_period_end: string | null
+  cancel_at_period_end?: boolean | null
+  canceled_at?: string | null
   creator: CreatorRow | CreatorRow[] | null
+}
+
+function toDisplayStatus(
+  status: ReturnType<typeof resolveSubscriptionState>["displayState"]
+): SubscriptionDisplayStatus {
+  if (status === "ending") {
+    return "canceled"
+  }
+
+  return status
 }
 
 export async function getSubscriptionById(
@@ -49,6 +68,8 @@ export async function getSubscriptionById(
       status,
       current_period_start,
       current_period_end,
+      cancel_at_period_end,
+      canceled_at,
       creator:creators(
         id,
         username,
@@ -74,9 +95,16 @@ export async function getSubscriptionById(
     return null
   }
 
+  const resolved = resolveSubscriptionState({
+    status: data.status,
+    currentPeriodEndAt: data.current_period_end,
+    cancelAtPeriodEnd: data.cancel_at_period_end ?? false,
+    canceledAt: data.canceled_at ?? null,
+  })
+
   return {
     id: data.id,
-    status: data.status,
+    status: toDisplayStatus(resolved.displayState),
     startedAt: data.current_period_start,
     creator: {
       id: creatorData.id,

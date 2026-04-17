@@ -34,7 +34,7 @@ export async function notifySubscriptionCanceledWorkflow({
 
   await createNotification({
     userId: creator.user_id,
-    type: "subscription_started",
+    type: "subscription_canceled",
     title:
       mode === "period_end"
         ? "Subscription cancellation scheduled"

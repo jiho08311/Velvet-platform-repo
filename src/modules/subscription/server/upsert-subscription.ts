@@ -53,6 +53,7 @@ export async function upsertSubscription({
     .eq("user_id", userId)
     .eq("creator_id", creatorId)
     .eq("status", "active")
+    .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle<SubscriptionRow>()
 
@@ -81,7 +82,7 @@ export async function upsertSubscription({
     }
   }
 
-  const canceledAt = status === "canceled" ? now : null
+  const canceledAt = status === "active" ? null : now
 
   if (existing) {
     const { data, error } = await supabaseAdmin
@@ -94,7 +95,7 @@ export async function upsertSubscription({
         current_period_start: resolvedCurrentPeriodStart,
         current_period_end: resolvedCurrentPeriodEnd,
         canceled_at: canceledAt,
-        cancel_at_period_end: cancelAtPeriodEnd,
+        cancel_at_period_end: status === "active" ? cancelAtPeriodEnd : false,
         updated_at: now,
       })
       .eq("id", existing.id)
@@ -121,7 +122,7 @@ export async function upsertSubscription({
       current_period_start: resolvedCurrentPeriodStart,
       current_period_end: resolvedCurrentPeriodEnd,
       canceled_at: canceledAt,
-      cancel_at_period_end: cancelAtPeriodEnd,
+      cancel_at_period_end: status === "active" ? cancelAtPeriodEnd : false,
     })
     .select(
       "id, user_id, creator_id, status, provider, provider_subscription_id, current_period_start, current_period_end, canceled_at, cancel_at_period_end, created_at, updated_at"

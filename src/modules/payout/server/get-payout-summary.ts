@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { getCreatorBalance } from "./get-creator-balance"
+import { resolvePayoutLifecycleState } from "@/modules/payout/lib/resolve-payout-state"
 
 type PayoutRow = {
   id: string
@@ -21,6 +22,7 @@ export type PayoutSummary = {
     id: string
     amount: number
     status: "pending" | "processing" | "paid" | "failed"
+    lifecycleState: "processing" | "paid" | "failed"
     createdAt: string
   }>
 }
@@ -69,11 +71,23 @@ export async function getPayoutSummary(
     availableBalance: balance.availableBalance,
     pendingAmount,
     recentPayouts:
-      payouts?.slice(0, 5).map((payout) => ({
-        id: payout.id,
-        amount: payout.amount ?? 0,
-        status: payout.status,
-        createdAt: payout.created_at,
-      })) ?? [],
+      payouts?.slice(0, 5).map((payout) => {
+        const lifecycle = resolvePayoutLifecycleState({
+          payoutStatus: payout.status,
+        })
+
+        return {
+          id: payout.id,
+          amount: payout.amount ?? 0,
+          status: payout.status,
+          lifecycleState:
+            lifecycle.state === "processing"
+              ? "processing"
+              : lifecycle.state === "paid"
+                ? "paid"
+                : "failed",
+          createdAt: payout.created_at,
+        }
+      }) ?? [],
   }
 }

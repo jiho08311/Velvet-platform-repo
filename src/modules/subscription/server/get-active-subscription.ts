@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { resolveSubscriptionState } from "@/modules/subscription/lib/resolve-subscription-state"
 
 type SubscriptionStatus = "incomplete" | "active" | "canceled" | "expired"
 type SubscriptionProvider = "toss" | "mock"
@@ -49,7 +50,6 @@ export async function getActiveSubscription({
     )
     .eq("user_id", userId)
     .eq("creator_id", creatorId)
-    .eq("status", "active")
     .order("created_at", { ascending: false })
     .returns<SubscriptionRow[]>()
 
@@ -58,38 +58,18 @@ export async function getActiveSubscription({
   }
 
   const rows = data ?? []
-  const now = Date.now()
 
   const activeRow =
     rows.find((row) => {
-      if (!row.current_period_end) {
-        return false
-      }
-
-      return new Date(row.current_period_end).getTime() > now
-    }) ?? null
-
-  const expiredRows = rows.filter((row) => {
-    if (!row.current_period_end) {
-      return false
-    }
-
-    return new Date(row.current_period_end).getTime() <= now
-  })
-
-  const expiredIds = expiredRows
-    .filter((row) => row.cancel_at_period_end)
-    .map((row) => row.id)
-
-  if (expiredIds.length > 0) {
-    await supabaseAdmin
-      .from("subscriptions")
-      .update({
-        status: "expired",
-        updated_at: new Date().toISOString(),
+      const resolved = resolveSubscriptionState({
+        status: row.status,
+        currentPeriodEndAt: row.current_period_end,
+        cancelAtPeriodEnd: row.cancel_at_period_end,
+        canceledAt: row.canceled_at,
       })
-      .in("id", expiredIds)
-  }
+
+      return resolved.hasAccess
+    }) ?? null
 
   if (!activeRow) {
     return null

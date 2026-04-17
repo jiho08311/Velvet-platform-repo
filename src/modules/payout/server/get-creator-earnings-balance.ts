@@ -8,13 +8,17 @@ type GetCreatorEarningsBalanceInput = {
 
 type EarningAmountRow = {
   net_amount: number | null
-  status: EarningStatus
+  status: EarningStatus | "requested"
   currency: string
+}
+
+export type CreatorResolvedEarningsBalance = CreatorEarningsBalance & {
+  requestedamount: number
 }
 
 export async function getCreatorEarningsBalance({
   creatorId,
-}: GetCreatorEarningsBalanceInput): Promise<CreatorEarningsBalance | null> {
+}: GetCreatorEarningsBalanceInput): Promise<CreatorResolvedEarningsBalance | null> {
   const supabase = await createSupabaseServerClient()
 
   const id = creatorId.trim()
@@ -37,6 +41,7 @@ export async function getCreatorEarningsBalance({
 
   let pendingamount = 0
   let availableamount = 0
+  let requestedamount = 0
   let paidOutamount = 0
   let reversedamount = 0
 
@@ -50,6 +55,11 @@ export async function getCreatorEarningsBalance({
 
     if (row.status === "available") {
       availableamount += amount
+      continue
+    }
+
+    if (row.status === "requested") {
+      requestedamount += amount
       continue
     }
 
@@ -68,6 +78,7 @@ export async function getCreatorEarningsBalance({
     currency: rows[0]?.currency ?? "KRW",
     pendingamount,
     availableamount,
+    requestedamount,
     paidOutamount,
     reversedamount,
   }

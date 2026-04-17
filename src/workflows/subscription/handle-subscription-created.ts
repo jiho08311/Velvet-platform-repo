@@ -1,6 +1,16 @@
 import { upsertSubscription } from "@/modules/subscription/server/upsert-subscription"
 import { createNotification } from "@/modules/notification/server/create-notification"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { resolveSubscriptionState } from "@/modules/subscription/lib/resolve-subscription-state"
+
+type ExistingSubscriptionRow = {
+  id: string
+  status: "incomplete" | "active" | "canceled" | "expired"
+  current_period_end: string | null
+  cancel_at_period_end: boolean | null
+  canceled_at: string | null
+  created_at: string
+}
 
 export async function handleSubscriptionCreated({
   userId,
@@ -9,26 +19,38 @@ export async function handleSubscriptionCreated({
   userId: string
   creatorId: string
 }) {
-  // 1. 기존 active 여부 확인
-  const { data: existing } = await supabaseAdmin
+  const { data: existingRows, error: existingError } = await supabaseAdmin
     .from("subscriptions")
-    .select("id")
+    .select(
+      "id, status, current_period_end, cancel_at_period_end, canceled_at, created_at"
+    )
     .eq("user_id", userId)
     .eq("creator_id", creatorId)
-    .eq("status", "active")
-    .maybeSingle()
+    .order("created_at", { ascending: false })
+    .returns<ExistingSubscriptionRow[]>()
 
-  const isNew = !existing
+  if (existingError) {
+    throw existingError
+  }
 
-  // 2. subscription upsert
+  const hasExistingAccessSubscription = (existingRows ?? []).some((row) => {
+    const resolved = resolveSubscriptionState({
+      status: row.status,
+      currentPeriodEndAt: row.current_period_end,
+      cancelAtPeriodEnd: row.cancel_at_period_end,
+      canceledAt: row.canceled_at,
+    })
+
+    return resolved.hasAccess
+  })
+
   const subscription = await upsertSubscription({
     userId,
     creatorId,
     status: "active",
   })
 
-  // 3. 신규 구독일 때만 notification
-  if (isNew) {
+  if (!hasExistingAccessSubscription) {
     const { data: creator } = await supabaseAdmin
       .from("creators")
       .select("user_id")

@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { resolveSubscriptionState } from "@/modules/subscription/lib/resolve-subscription-state"
 
 export type ViewerSubscriptionStatus = {
   isActive: boolean
@@ -19,6 +20,7 @@ type SubscriptionRow = {
   current_period_end: string | null
   cancel_at_period_end: boolean | null
   status: "active" | "canceled" | "expired"
+  canceled_at?: string | null
   created_at: string
 }
 
@@ -39,7 +41,7 @@ export async function getViewerSubscription(
   const { data, error } = await supabaseAdmin
     .from("subscriptions")
     .select(
-      "id, user_id, creator_id, current_period_end, cancel_at_period_end, status, created_at"
+      "id, user_id, creator_id, current_period_end, cancel_at_period_end, status, canceled_at, created_at"
     )
     .eq("user_id", viewerId)
     .eq("creator_id", creator)
@@ -60,15 +62,22 @@ export async function getViewerSubscription(
     }
   }
 
-  const isExpiredByDate =
-    row.current_period_end !== null &&
-    new Date(row.current_period_end).getTime() <= Date.now()
+  const resolved = resolveSubscriptionState({
+    status: row.status,
+    currentPeriodEndAt: row.current_period_end,
+    cancelAtPeriodEnd: row.cancel_at_period_end,
+    canceledAt: row.canceled_at ?? null,
+  })
 
-  const resolvedStatus =
-    row.status === "active" && isExpiredByDate ? "expired" : row.status
+  const resolvedStatus: "active" | "canceled" | "expired" =
+    resolved.displayState === "expired"
+      ? "expired"
+      : resolved.displayState === "ending"
+        ? "canceled"
+        : "active"
 
   return {
-    isActive: resolvedStatus === "active",
+    isActive: resolved.hasAccess,
     subscription: {
       id: row.id,
       viewerUserId: row.user_id,

@@ -12,5 +12,5 @@ export async function checkSubscription({
     creatorId,
   })
 
-  return Boolean(subscription)
+  return subscription !== null
 }

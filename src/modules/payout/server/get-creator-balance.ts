@@ -6,7 +6,12 @@ type GetCreatorBalanceParams = {
 
 type EarningRow = {
   net_amount: number | null
-  status: "pending" | "available" | "requested" | "paid_out" | "reversed"
+  status:
+    | "pending"
+    | "available"
+    | "requested"
+    | "paid_out"
+    | "reversed"
 }
 
 export type CreatorBalance = {

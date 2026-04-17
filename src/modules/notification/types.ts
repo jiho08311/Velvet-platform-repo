@@ -1,5 +1,6 @@
 export const NOTIFICATION_TYPES = [
   "subscription_started",
+  "subscription_canceled",
   "ppv_message_received",
   "ppv_message_purchased",
   "ppv_post_purchased",

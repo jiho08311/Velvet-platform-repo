@@ -44,10 +44,13 @@ export async function refundPayment({
     throw new Error("PAYMENT_NOT_REFUNDABLE")
   }
 
+  const now = new Date().toISOString()
+
   const { error: updateError } = await supabaseAdmin
     .from("payments")
     .update({
       status: "refunded",
+      updated_at: now,
     })
     .eq("id", payment.id)
     .eq("status", "succeeded")
@@ -60,13 +63,14 @@ export async function refundPayment({
     paymentId: payment.id,
   })
 
-  // 🔥 추가: subscription 환불 처리
   if (payment.type === "subscription" && payment.creator_id) {
     await supabaseAdmin
       .from("subscriptions")
       .update({
         status: "expired",
-        updated_at: new Date().toISOString(),
+        cancel_at_period_end: false,
+        canceled_at: now,
+        updated_at: now,
       })
       .eq("user_id", payment.user_id)
       .eq("creator_id", payment.creator_id)

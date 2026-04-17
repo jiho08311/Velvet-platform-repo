@@ -7,7 +7,7 @@ type MarkEarningsAsPaidOutInput = {
 type PaidOutEarningRow = {
   id: string
   payout_id: string | null
-  status: "pending" | "available" | "paid_out" | "reversed"
+  status: "requested" | "paid_out"
   paid_out_at: string | null
 }
 
@@ -29,7 +29,7 @@ export async function markEarningsAsPaidOut({
       paid_out_at: paidOutAt,
     })
     .eq("payout_id", safePayoutId)
-    .eq("status", "available")
+    .eq("status", "requested")
     .select("id, payout_id, status, paid_out_at")
     .returns<PaidOutEarningRow[]>()
 
