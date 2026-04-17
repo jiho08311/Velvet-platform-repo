@@ -151,7 +151,7 @@ export async function getHomeFeed(
       )
     `)
 .or(
-  "and(status.eq.published,visibility.eq.public,moderation_status.eq.approved),and(status.eq.scheduled,visibility.eq.public,moderation_status.eq.approved,published_at.gt.now())"
+  "and(status.eq.published,visibility.eq.public,visibility_status.eq.published,moderation_status.eq.approved),and(status.eq.scheduled,visibility.eq.public,moderation_status.eq.approved,published_at.gt.now())"
 )
     .is("deleted_at", null)
     .order("published_at", { ascending: false })
@@ -181,23 +181,25 @@ export async function getHomeFeed(
 
   const { data: creators, error: creatorsError } = await supabaseAdmin
     .from("creators")
-    .select(`
-      id,
-      user_id,
-      username,
-      display_name,
-      profiles!inner (
-        id,
-        is_deactivated,
-        is_delete_pending,
-        deleted_at
-      )
-    `)
+.select(`
+  id,
+  user_id,
+  username,
+  display_name,
+  profiles!inner (
+    id,
+    is_deactivated,
+    is_delete_pending,
+    deleted_at,
+    is_banned
+  )
+`)
     .in("id", creatorIds)
-    .eq("status", "active")
-    .eq("profiles.is_deactivated", false)
-    .eq("profiles.is_delete_pending", false)
-    .is("profiles.deleted_at", null)
+ .eq("status", "active")
+.eq("profiles.is_deactivated", false)
+.eq("profiles.is_delete_pending", false)
+.eq("profiles.is_banned", false)
+.is("profiles.deleted_at", null)
     .returns<CreatorRow[]>()
 
   if (creatorsError) {

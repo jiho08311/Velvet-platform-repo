@@ -154,13 +154,14 @@ async function updatePostApproved(
 
   const { error } = await supabaseAdmin
     .from("posts")
-    .update({
-      status,
-      visibility_status: status === "scheduled" ? "draft" : "published",
-      moderation_status: "approved",
-      moderation_completed_at: now,
-      updated_at: now,
-    })
+  .update({
+  status,
+  visibility_status: status === "scheduled" ? "draft" : "published",
+  moderation_status: "approved",
+  moderation_completed_at: now,
+  updated_at: now,
+  ...(status === "published" ? { published_at: now } : {}),
+})
     .eq("id", postId)
 
   if (error) {
