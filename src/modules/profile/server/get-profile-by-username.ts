@@ -14,6 +14,10 @@ type ProfileRow = {
   display_name: string
   avatar_url: string | null
   bio: string | null
+  is_deactivated: boolean
+is_delete_pending: boolean | null
+deleted_at: string | null
+is_banned: boolean
 }
 
 export async function getProfileByUsername(
@@ -21,7 +25,7 @@ export async function getProfileByUsername(
 ): Promise<PublicProfile | null> {
   const { data, error } = await supabaseAdmin
     .from("profiles")
-    .select("id, username, display_name, avatar_url, bio")
+    .select("id, username, display_name, avatar_url, bio, is_deactivated, is_delete_pending, deleted_at, is_banned")
     .eq("username", username)
     .maybeSingle<ProfileRow>()
 
@@ -29,9 +33,15 @@ export async function getProfileByUsername(
     throw error
   }
 
-  if (!data) {
-    return null
-  }
+ if (
+  !data ||
+  data.is_deactivated ||
+  data.is_delete_pending ||
+  data.deleted_at ||
+  data.is_banned
+) {
+  return null
+}
 
   return {
     id: data.id,

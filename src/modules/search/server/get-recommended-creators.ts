@@ -72,10 +72,13 @@ export async function getRecommendedCreators({
   const profileIds = filteredCreators.map((creator) => creator.user_id)
 
   const { data: profileRows, error: profileError } = await supabaseAdmin
-    .from("profiles")
-    .select("id, username, display_name, avatar_url")
-    .in("id", profileIds)
-    .eq("is_deactivated", false)
+ .from("profiles")
+.select("id, username, display_name, avatar_url")
+.in("id", profileIds)
+.eq("is_deactivated", false)
+.eq("is_delete_pending", false)
+.is("deleted_at", null)
+.eq("is_banned", false)
 
   if (profileError) {
     throw profileError

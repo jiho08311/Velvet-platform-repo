@@ -44,6 +44,7 @@ let profilesQuery = supabaseAdmin
   .select("id, username, display_name")
   .eq("is_deactivated", false)
   .eq("is_delete_pending", false)
+  .eq("is_banned", false)
   .is("deleted_at", null)
   .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
   .order("username", { ascending: true })

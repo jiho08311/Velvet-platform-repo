@@ -13,19 +13,23 @@ export async function searchUsers({
 
   if (!trimmed) return []
 
-  const { data, error } = await supabaseAdmin
-    .from("profiles")
-    .select(`
-      id,
-      username,
-      display_name,
-      avatar_url,
-      creators (
-        id
-      )
-    `)
-    .ilike("username", `%${trimmed}%`)
-    .limit(limit)
+const { data, error } = await supabaseAdmin
+  .from("profiles")
+  .select(`
+    id,
+    username,
+    display_name,
+    avatar_url,
+    creators (
+      id
+    )
+  `)
+  .eq("is_deactivated", false)
+  .eq("is_delete_pending", false)
+  .eq("is_banned", false)
+  .is("deleted_at", null)
+  .ilike("username", `%${trimmed}%`)
+  .limit(limit)
 
   if (error) throw error
 

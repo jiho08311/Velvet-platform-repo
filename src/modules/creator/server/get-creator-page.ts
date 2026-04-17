@@ -14,6 +14,9 @@ type ProfileRow = {
   avatar_url: string | null
   bio: string | null
   is_deactivated: boolean
+  is_delete_pending: boolean | null
+deleted_at: string | null
+is_banned: boolean
 }
 
 type PostLikeRow = {
@@ -48,23 +51,29 @@ export async function getCreatorPage({
   }
 
   const { data: creator } = await supabaseAdmin
-    .from("creators")
-    .select("id, user_id, username, display_name")
-    .ilike("username", normalized)
+ .from("creators")
+.select("id, user_id, username, display_name")
+.ilike("username", normalized)
+.eq("status", "active")
     .maybeSingle()
 
   if (!creator) return null
 
   const { data: profile } = await supabaseAdmin
     .from("profiles")
-    .select("id, display_name, avatar_url, bio, is_deactivated")
+    .select("id, display_name, avatar_url, bio, is_deactivated, is_delete_pending, deleted_at, is_banned")
     .eq("id", creator.user_id)
     .maybeSingle<ProfileRow>()
 
-  if (!profile || profile.is_deactivated) {
-    return null
-  }
-
+if (
+  !profile ||
+  profile.is_deactivated ||
+  profile.is_delete_pending ||
+  profile.deleted_at ||
+  profile.is_banned
+) {
+  return null
+}
 let isSubscribed = false
 
 if (viewerUserId) {

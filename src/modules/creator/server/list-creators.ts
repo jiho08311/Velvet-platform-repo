@@ -17,6 +17,9 @@ type ProfileRow = {
   avatar_url: string | null
   bio: string | null
   is_deactivated: boolean | null
+  is_delete_pending: boolean | null
+deleted_at: string | null
+is_banned: boolean | null
 }
 
 type ListCreatorsInput = {
@@ -55,12 +58,15 @@ export async function listCreators({
 
   const userIds = creators.map((creator) => creator.user_id)
 
-  const { data: profiles, error: profilesError } = await supabaseAdmin
-    .from("profiles")
-    .select("id, username, display_name, avatar_url, bio, is_deactivated")
-    .in("id", userIds)
-    .eq("is_deactivated", false)
-    .returns<ProfileRow[]>()
+const { data: profiles, error: profilesError } = await supabaseAdmin
+  .from("profiles")
+  .select("id, username, display_name, avatar_url, bio, is_deactivated, is_delete_pending, deleted_at, is_banned")
+  .in("id", userIds)
+  .eq("is_deactivated", false)
+  .eq("is_delete_pending", false)
+  .eq("is_banned", false)
+  .is("deleted_at", null)
+  .returns<ProfileRow[]>()
 
   if (profilesError) throw profilesError
 

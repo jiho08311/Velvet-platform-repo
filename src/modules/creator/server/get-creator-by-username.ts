@@ -20,6 +20,7 @@ type ProfileRow = {
   is_deactivated: boolean
   is_delete_pending: boolean | null
   deleted_at: string | null
+  is_banned: boolean
 }
 
 export async function getCreatorByUsername(username?: string) {
@@ -37,25 +38,29 @@ export async function getCreatorByUsername(username?: string) {
 
   if (creatorError) throw creatorError
   if (!creator) return null
+  if (creator.status !== "active") {
+  return null
+}
 
   const { data: profile, error: profileError } = await supabaseAdmin
     .from("profiles")
-    .select(
-      "id, username, display_name, avatar_url, bio, is_deactivated, is_delete_pending, deleted_at"
-    )
+  .select(
+  "id, username, display_name, avatar_url, bio, is_deactivated, is_delete_pending, deleted_at, is_banned"
+)
     .eq("id", creator.user_id)
     .maybeSingle<ProfileRow>()
 
   if (profileError) throw profileError
 
-  if (
-    !profile ||
-    profile.is_deactivated ||
-    profile.is_delete_pending ||
-    profile.deleted_at
-  ) {
-    return null
-  }
+if (
+  !profile ||
+  profile.is_deactivated ||
+  profile.is_delete_pending ||
+  profile.deleted_at ||
+  profile.is_banned
+) {
+  return null
+}
 
   return {
     id: creator.id,
