@@ -255,15 +255,11 @@ const mediaPosts = posts.filter(
               <div className="text-center text-sm text-zinc-500">No posts yet</div>
             ) : (
        <div>
-  <CreatorContentTabs
-    mediaPosts={mediaPosts}
-    updatePosts={updatePosts}
-    creatorId={creator.id}
-    creatorUserId={creator.userId}
-    creatorUsername={creator.username}
-    currentUserId={userId ?? undefined}
-    isOwner={isOwner}
-  />
+<CreatorContentTabs
+  mediaPosts={mediaPosts}
+  updatePosts={updatePosts}
+  isOwner={isOwner}
+/>
 </div>
             )}
           </div>

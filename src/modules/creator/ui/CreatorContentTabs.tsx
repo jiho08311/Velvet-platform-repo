@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 
 type CreatorContentTabPost = {
   id: string
@@ -22,10 +21,6 @@ type CreatorContentTabPost = {
 type CreatorContentTabsProps = {
   mediaPosts: CreatorContentTabPost[]
   updatePosts: CreatorContentTabPost[]
-  creatorId: string
-  creatorUserId: string
-  creatorUsername: string
-  currentUserId?: string
   isOwner: boolean
 }
 
@@ -44,10 +39,6 @@ function formatDate(value?: string | null) {
 export function CreatorContentTabs({
   mediaPosts,
   updatePosts,
-  creatorId,
-  creatorUserId,
-  creatorUsername,
-  currentUserId,
   isOwner,
 }: CreatorContentTabsProps) {
   const [activeTab, setActiveTab] = useState<"posts" | "updates">("posts")
@@ -135,30 +126,13 @@ export function CreatorContentTabs({
                     </div>
                   ) : null}
 
-                  {isLocked ? (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/25 px-4 text-center">
-                      <div className="rounded-full border border-white/15 bg-black/50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur">
-                        Locked
-                      </div>
-
-                    <p className="mt-3 text-sm font-medium text-white">
-  Unlock this post
-</p>
-
-               <div
-  className="mt-3 w-full max-w-[190px]"
-  onClick={(event) => event.stopPropagation()}
->
-                        <SubscribeButton
-                          creatorId={creatorId}
-                          creatorUserId={creatorUserId}
-                          currentUserId={currentUserId}
-                          creatorUsername={creatorUsername}
-                          embedded
-                        />
-                      </div>
-                    </div>
-                  ) : null}
+       {isLocked ? (
+  <div className="absolute inset-0 flex items-center justify-center bg-black/20 px-4 text-center">
+    <div className="rounded-full border border-white/15 bg-black/50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-white backdrop-blur">
+      Locked
+    </div>
+  </div>
+) : null}
                 </a>
               )
             })}
