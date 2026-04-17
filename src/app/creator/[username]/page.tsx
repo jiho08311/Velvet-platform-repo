@@ -122,11 +122,13 @@ const mediaPosts = posts.filter(
         subscription: null,
       }
 
-  const subscriptionStatus: "active" | "canceled" | "expired" | "inactive" =
-    viewerSubscription.isActive
-      ? "active"
-      : viewerSubscription.subscription
-        ? viewerSubscription.subscription.status
+ const status: "active" | "canceled" | "expired" | "inactive" =
+  viewerSubscription.isActive
+    ? "active"
+    : viewerSubscription.subscription?.status === "expired"
+      ? "expired"
+      : viewerSubscription.subscription?.status === "canceled"
+        ? "canceled"
         : "inactive"
 
   return (
@@ -211,15 +213,10 @@ const mediaPosts = posts.filter(
 
           {!isOwner ? (
             <div className="mt-5">
-              <SubscriptionStatusCard
-                status={subscriptionStatus}
-                currentPeriodEndAt={
-                  viewerSubscription.subscription?.currentPeriodEndAt
-                }
-                cancelAtPeriodEnd={Boolean(
-                  viewerSubscription.subscription?.cancelAtPeriodEnd
-                )}
-              />
+            <SubscriptionStatusCard
+  status={status}
+  currentPeriodEndAt={viewerSubscription.subscription?.currentPeriodEndAt}
+/>
             </div>
           ) : null}
 
