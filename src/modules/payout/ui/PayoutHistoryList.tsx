@@ -1,7 +1,7 @@
 import { EmptyState } from "@/shared/ui/EmptyState"
 import { StatusBadge } from "@/shared/ui/StatusBadge"
 
-type PayoutStatus = "pending" | "paid" | "failed"
+type PayoutStatus = "pending" | "processing" | "paid" | "failed"
 
 type PayoutListItem = {
   id: string

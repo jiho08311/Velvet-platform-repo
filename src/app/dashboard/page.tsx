@@ -229,21 +229,21 @@ if (creator.status !== "active") {
             </p>
           </div>
 
-          {payouts.length === 0 ? (
-            <PayoutEmptyState />
-          ) : (
-            <PayoutList
-              payouts={payouts.map((p) => ({
-                id: p.id,
-                amount: p.amount ?? 0,
-                currency: p.currency,
-                status: p.status,
-                createdAt: p.created_at,
-                paidAt: p.paid_at,
-                failureReason: p.failure_reason,
-              }))}
-            />
-          )}
+         {payouts.length === 0 ? (
+  <PayoutEmptyState />
+) : (
+  <PayoutList
+    payouts={payouts.map((p) => ({
+      id: p.id,
+      amount: p.amount,
+      currency: p.currency,
+      status: p.status,
+      createdAt: p.createdAt,
+      paidAt: p.paidAt,
+      failureReason: p.failureReason,
+    }))}
+  />
+)}
         </Card>
       </div>
     </main>
