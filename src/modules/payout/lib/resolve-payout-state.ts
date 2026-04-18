@@ -114,51 +114,21 @@ export type PayoutStatus =
   | "failed"
   | string
 
-export type PayoutLifecycleDisplayState =
+export type PayoutRequestLifecycleState =
   | "pending_request"
   | "approved"
   | "rejected"
-  | "processing"
-  | "paid"
-  | "failed"
   | "inactive"
 
-export type ResolvedPayoutLifecycleState = {
-  state: PayoutLifecycleDisplayState
+export type ResolvedPayoutRequestLifecycleState = {
+  state: PayoutRequestLifecycleState
   isTerminal: boolean
 }
 
-type ResolvePayoutLifecycleStateInput = {
+export function resolvePayoutRequestLifecycleState(input: {
   payoutRequestStatus?: PayoutRequestStatus | null
-  payoutStatus?: PayoutStatus | null
-}
-
-export function resolvePayoutLifecycleState(
-  input: ResolvePayoutLifecycleStateInput
-): ResolvedPayoutLifecycleState {
-  const payoutStatus = input.payoutStatus ?? null
+}): ResolvedPayoutRequestLifecycleState {
   const payoutRequestStatus = input.payoutRequestStatus ?? null
-
-  if (payoutStatus === "paid") {
-    return {
-      state: "paid",
-      isTerminal: true,
-    }
-  }
-
-  if (payoutStatus === "failed") {
-    return {
-      state: "failed",
-      isTerminal: true,
-    }
-  }
-
-  if (payoutStatus === "processing" || payoutStatus === "pending") {
-    return {
-      state: "processing",
-      isTerminal: false,
-    }
-  }
 
   if (payoutRequestStatus === "rejected") {
     return {
@@ -192,15 +162,13 @@ export type PayoutExecutionLifecycleState = "processing" | "paid" | "failed"
 export function resolvePayoutExecutionLifecycleState(input: {
   payoutStatus?: PayoutStatus | null
 }): PayoutExecutionLifecycleState {
-  const lifecycle = resolvePayoutLifecycleState({
-    payoutStatus: input.payoutStatus,
-  })
+  const payoutStatus = input.payoutStatus ?? null
 
-  if (lifecycle.state === "paid") {
+  if (payoutStatus === "paid") {
     return "paid"
   }
 
-  if (lifecycle.state === "failed") {
+  if (payoutStatus === "failed") {
     return "failed"
   }
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "./require-admin";
 import { markPayoutAsFailed } from "./mark-payout-as-failed";
 
 export type MarkPayoutAsFailedActionState = {
@@ -18,6 +19,8 @@ export async function markPayoutAsFailedAction(
   }
 
   try {
+    await requireAdmin();
+
     await markPayoutAsFailed(payoutRequestId);
     revalidatePath("/admin/payout-requests");
 

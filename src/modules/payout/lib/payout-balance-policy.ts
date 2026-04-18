@@ -93,9 +93,3 @@ export function resolvePayoutBalanceTotals(
     requestableAmount: sumRequestableEarnings(rows),
   }
 }
-
-export function resolveFullAvailablePayoutAmount(
-  rows: EarningBalanceRow[]
-): number {
-  return sumRequestableEarnings(rows)
-}

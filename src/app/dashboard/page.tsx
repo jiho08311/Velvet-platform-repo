@@ -33,7 +33,6 @@ async function requestPayoutAction() {
 
   await createPayoutRequest({
     creatorId: creator.id,
-    amount: 0,
     currency: "KRW",
   })
 
@@ -220,18 +219,7 @@ export default async function PayoutsPage() {
           {payouts.length === 0 ? (
             <PayoutEmptyState />
           ) : (
-         <PayoutList
-  payouts={payouts.map((p) => ({
-    id: p.id,
-    amount: p.amount,
-    currency: p.currency,
-    status: p.status,
-    lifecycleState: p.lifecycleState,
-    createdAt: p.createdAt,
-    paidAt: p.paidAt,
-    failureReason: p.failureReason,
-  }))}
-/>
+            <PayoutList payouts={payouts} />
           )}
         </Card>
       </div>

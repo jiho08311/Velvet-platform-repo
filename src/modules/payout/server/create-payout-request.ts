@@ -1,21 +1,26 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { getPayoutAccountReadiness } from "./get-payout-account-readiness"
 import { resolvePayoutRequestEligibility } from "@/modules/payout/lib/resolve-payout-state"
+import {
+  isRequestableEarning,
+  sumRequestableEarnings,
+} from "@/modules/payout/lib/payout-balance-policy"
 
 type CreatePayoutRequestInput = {
   creatorId: string
-  amount: number
+  amount?: number
   currency?: string
 }
 
 type RequestableEarningRow = {
   id: string
-  net_amount: number
+  net_amount: number | null
+  status: "pending" | "available" | "requested" | "paid_out" | "reversed"
+  payout_request_id: string | null
+  payout_id: string | null
 }
 
-export async function createPayoutRequest(
-  input: CreatePayoutRequestInput
-) {
+export async function createPayoutRequest(input: CreatePayoutRequestInput) {
   const creatorId = input.creatorId.trim()
 
   if (!creatorId) {
@@ -26,7 +31,7 @@ export async function createPayoutRequest(
 
   const { data: earnings, error: earningsError } = await supabaseAdmin
     .from("earnings")
-    .select("id, net_amount")
+    .select("id, net_amount, status, payout_request_id, payout_id")
     .eq("creator_id", creatorId)
     .eq("status", "available")
     .is("payout_request_id", null)
@@ -38,13 +43,15 @@ export async function createPayoutRequest(
     throw earningsError
   }
 
-  const requestableEarnings = (earnings ?? []).filter(
-    (earning) => (earning.net_amount ?? 0) > 0
-  )
+  const requestableEarnings = (earnings ?? []).filter((earning) => {
+    if (!isRequestableEarning(earning)) {
+      return false
+    }
 
-  const requestableAmount = requestableEarnings.reduce((sum, earning) => {
-    return sum + (earning.net_amount ?? 0)
-  }, 0)
+    return (earning.net_amount ?? 0) > 0
+  })
+
+  const requestableAmount = sumRequestableEarnings(requestableEarnings)
 
   const eligibility = resolvePayoutRequestEligibility({
     accountReadinessState: accountReadiness.state,
@@ -105,13 +112,19 @@ export async function createPayoutRequest(
     .select("id")
 
   if (updateError) {
-    await supabaseAdmin.from("payout_requests").delete().eq("id", payoutRequest.id)
+    await supabaseAdmin
+      .from("payout_requests")
+      .delete()
+      .eq("id", payoutRequest.id)
 
     throw updateError
   }
 
   if (!updatedEarnings || updatedEarnings.length !== selectedEarningIds.length) {
-    await supabaseAdmin.from("payout_requests").delete().eq("id", payoutRequest.id)
+    await supabaseAdmin
+      .from("payout_requests")
+      .delete()
+      .eq("id", payoutRequest.id)
 
     throw new Error("FAILED_TO_LOCK_EARNINGS_FOR_PAYOUT_REQUEST")
   }

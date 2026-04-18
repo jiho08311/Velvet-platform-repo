@@ -48,12 +48,10 @@ export async function getCreatorBalance({
     return sum + (earning.net_amount ?? 0)
   }, 0)
 
-  const totalPayouts = totals.paidOutAmount
-
   return {
     creatorId,
     totalEarnings,
-    totalPayouts,
+    totalPayouts: totals.paidOutAmount,
     availableBalance: totals.requestableAmount,
   }
 }

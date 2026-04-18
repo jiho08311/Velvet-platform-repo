@@ -1,4 +1,5 @@
 import { AdminPayoutRequestListItem } from "../server/list-payout-requests";
+import { AdminBadge } from "./AdminBadge";
 import { PayoutMarkAsFailedButton } from "./PayoutMarkAsFailedButton";
 import { PayoutMarkAsPaidButton } from "./PayoutMarkAsPaidButton";
 import { PayoutRequestApproveButton } from "./PayoutRequestApproveButton";
@@ -13,7 +14,7 @@ function formatAmount(amount: number, currency: string) {
     style: "currency",
     currency: currency || "KRW",
     maximumFractionDigits: 0,
-  }).format(amount );
+  }).format(amount);
 }
 
 function formatDate(value: string) {
@@ -23,61 +24,40 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-function getCreatorLabel(item: AdminPayoutRequestListItem) {
-  if (item.creator_display_name && item.creator_username) {
-    return `${item.creator_display_name} (@${item.creator_username})`;
-  }
+function renderActions(item: AdminPayoutRequestListItem) {
+  const { available_actions: actions } = item;
 
-  if (item.creator_display_name) {
-    return item.creator_display_name;
-  }
-
-  if (item.creator_username) {
-    return `@${item.creator_username}`;
-  }
-
-  return item.creator_id;
-}
-
-function renderAction(item: AdminPayoutRequestListItem) {
-  if (item.status === "pending") {
-    return (
-      <div className="flex flex-wrap gap-2">
-        <PayoutRequestApproveButton payoutRequestId={item.id} disabled={false} />
-        <PayoutRequestRejectButton payoutRequestId={item.id} disabled={false} />
-      </div>
-    );
-  }
-
-  if (item.status === "approved") {
-    return (
-      <div className="flex flex-wrap gap-2">
-        <PayoutMarkAsPaidButton payoutRequestId={item.id} disabled={false} />
-        <PayoutMarkAsFailedButton payoutRequestId={item.id} disabled={false} />
-      </div>
-    );
-  }
-
-  if (item.status === "paid") {
-    return (
-      <span className="inline-flex rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-400">
-        Completed
-      </span>
-    );
-  }
-
-  if (item.status === "rejected") {
+  if (
+    !actions.approve &&
+    !actions.reject &&
+    !actions.markAsPaid &&
+    !actions.markAsFailed
+  ) {
     return (
       <span className="inline-flex rounded-xl border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-400">
-        Rejected
+        No actions
       </span>
     );
   }
 
   return (
-    <span className="inline-flex rounded-xl border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-400">
-      {item.status}
-    </span>
+    <div className="flex flex-wrap gap-2">
+      {actions.approve ? (
+        <PayoutRequestApproveButton payoutRequestId={item.id} disabled={false} />
+      ) : null}
+
+      {actions.reject ? (
+        <PayoutRequestRejectButton payoutRequestId={item.id} disabled={false} />
+      ) : null}
+
+      {actions.markAsPaid ? (
+        <PayoutMarkAsPaidButton payoutRequestId={item.id} disabled={false} />
+      ) : null}
+
+      {actions.markAsFailed ? (
+        <PayoutMarkAsFailedButton payoutRequestId={item.id} disabled={false} />
+      ) : null}
+    </div>
   );
 }
 
@@ -109,7 +89,7 @@ export function PayoutRequestAdminList({
             className="grid grid-cols-5 gap-4 px-5 py-4 text-sm text-white"
           >
             <div className="min-w-0">
-              <p className="truncate font-medium">{getCreatorLabel(item)}</p>
+              <p className="truncate font-medium">{item.creator_label}</p>
               <p className="mt-1 truncate text-xs text-zinc-400">{item.id}</p>
             </div>
 
@@ -118,14 +98,24 @@ export function PayoutRequestAdminList({
             </div>
 
             <div>
-              <span className="inline-flex rounded-full border border-zinc-700 px-2 py-1 text-xs text-zinc-300">
-                {item.status}
-              </span>
+              <div className="flex flex-wrap gap-2">
+                {item.status_badges.map((badge) => (
+                  <AdminBadge
+                    key={`${item.id}-${badge.key}-${badge.label}`}
+                    label={badge.label}
+                    tone={badge.tone}
+                  />
+                ))}
+              </div>
+
+              {item.failure_message ? (
+                <p className="mt-2 text-xs text-red-400">{item.failure_message}</p>
+              ) : null}
             </div>
 
             <div className="text-zinc-300">{formatDate(item.created_at)}</div>
 
-            <div>{renderAction(item)}</div>
+            <div>{renderActions(item)}</div>
           </div>
         ))}
       </div>

@@ -1,15 +1,12 @@
 import { EmptyState } from "@/shared/ui/EmptyState"
 import { StatusBadge } from "@/shared/ui/StatusBadge"
-
-type PayoutStatus = "pending" | "processing" | "paid" | "failed"
-type PayoutLifecycleState = "processing" | "paid" | "failed"
+import type { PayoutExecutionLifecycleState } from "@/modules/payout/lib/resolve-payout-state"
 
 type PayoutListItem = {
   id: string
   amount: number
   currency?: string | null
-  status: PayoutStatus
-  lifecycleState: PayoutLifecycleState
+  lifecycleState: PayoutExecutionLifecycleState
   createdAt: string
   paidAt?: string | null
   failureReason?: string | null

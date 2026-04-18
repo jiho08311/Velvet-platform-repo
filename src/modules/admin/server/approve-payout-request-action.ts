@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { approvePayoutRequest } from "./approve-payout-request";
+import { requireAdmin } from "./require-admin";
+import { approvePayoutRequest } from "@/modules/payout/server/approve-payout-request";
 
 export type ApprovePayoutRequestActionState = {
   error: string | null;
@@ -18,14 +19,21 @@ export async function approvePayoutRequestAction(
   }
 
   try {
-   await approvePayoutRequest(payoutRequestId);
+    await requireAdmin();
+
+    await approvePayoutRequest({
+      payoutRequestId,
+    });
+
     revalidatePath("/admin/payout-requests");
 
     return { error: null };
   } catch (error) {
     return {
       error:
-        error instanceof Error ? error.message : "failed to approve payout request",
+        error instanceof Error
+          ? error.message
+          : "failed to approve payout request",
     };
   }
 }

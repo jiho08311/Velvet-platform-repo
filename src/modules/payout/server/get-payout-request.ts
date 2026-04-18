@@ -1,5 +1,8 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
-import { resolvePayoutLifecycleState } from "@/modules/payout/lib/resolve-payout-state"
+import {
+  resolvePayoutRequestLifecycleState,
+  type PayoutRequestLifecycleState,
+} from "@/modules/payout/lib/resolve-payout-state"
 
 type GetPayoutRequestParams = {
   payoutRequestId: string
@@ -21,14 +24,7 @@ export type PayoutRequest = {
   amount: number
   currency: string
   status: string
-  lifecycleState:
-    | "pending_request"
-    | "approved"
-    | "rejected"
-    | "processing"
-    | "paid"
-    | "failed"
-    | "inactive"
+  lifecycleState: PayoutRequestLifecycleState
   createdAt: string
   approvedAt: string | null
 }
@@ -60,7 +56,7 @@ export async function getPayoutRequest({
     amount: data.amount,
     currency: data.currency,
     status: data.status,
-    lifecycleState: resolvePayoutLifecycleState({
+    lifecycleState: resolvePayoutRequestLifecycleState({
       payoutRequestStatus: data.status,
     }).state,
     createdAt: data.created_at,

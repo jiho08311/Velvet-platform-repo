@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "./require-admin";
 import { markPayoutAsPaid } from "./mark-payout-as-paid";
 
 export type MarkPayoutAsPaidActionState = {
@@ -18,6 +19,8 @@ export async function markPayoutAsPaidAction(
   }
 
   try {
+    await requireAdmin();
+
     await markPayoutAsPaid(payoutRequestId);
     revalidatePath("/admin/payout-requests");
 

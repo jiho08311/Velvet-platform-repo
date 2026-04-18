@@ -1,5 +1,8 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
-import { resolvePayoutExecutionLifecycleState } from "@/modules/payout/lib/resolve-payout-state"
+import {
+  resolvePayoutExecutionLifecycleState,
+  type PayoutExecutionLifecycleState,
+} from "@/modules/payout/lib/resolve-payout-state"
 
 type ListCreatorPayoutsParams = {
   creatorId: string
@@ -20,7 +23,7 @@ export type CreatorPayout = {
   amount: number
   currency: string
   status: "pending" | "processing" | "paid" | "failed"
-  lifecycleState: "processing" | "paid" | "failed"
+  lifecycleState: PayoutExecutionLifecycleState
   createdAt: string
   paidAt: string | null
   failureReason: string | null

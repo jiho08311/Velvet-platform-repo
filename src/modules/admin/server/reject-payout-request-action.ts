@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { rejectPayoutRequest } from "./reject-payout-request";
+import { requireAdmin } from "./require-admin";
+import { rejectPayoutRequest } from "@/modules/payout/server/reject-payout-request";
 
 export type RejectPayoutRequestActionState = {
   error: string | null;
@@ -18,14 +19,21 @@ export async function rejectPayoutRequestAction(
   }
 
   try {
-    await rejectPayoutRequest(payoutRequestId);
+    await requireAdmin();
+
+    await rejectPayoutRequest({
+      payoutRequestId,
+    });
+
     revalidatePath("/admin/payout-requests");
 
     return { error: null };
   } catch (error) {
     return {
       error:
-        error instanceof Error ? error.message : "failed to reject payout request",
+        error instanceof Error
+          ? error.message
+          : "failed to reject payout request",
     };
   }
 }

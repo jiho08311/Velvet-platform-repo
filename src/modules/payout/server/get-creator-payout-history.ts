@@ -1,6 +1,9 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { requireUser } from "@/modules/auth/server/require-user"
-import { resolvePayoutExecutionLifecycleState } from "@/modules/payout/lib/resolve-payout-state"
+import {
+  resolvePayoutExecutionLifecycleState,
+  type PayoutExecutionLifecycleState,
+} from "@/modules/payout/lib/resolve-payout-state"
 
 type CreatorPayoutHistoryRow = {
   id: string
@@ -17,7 +20,7 @@ export type CreatorPayoutHistoryItem = {
   amount: number
   currency: string
   status: "pending" | "processing" | "paid" | "failed"
-  lifecycleState: "processing" | "paid" | "failed"
+  lifecycleState: PayoutExecutionLifecycleState
   paidAt: string | null
   failureReason: string | null
   createdAt: string
