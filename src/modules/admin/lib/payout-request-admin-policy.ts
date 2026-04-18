@@ -3,7 +3,6 @@ import {
   type PayoutExecutionLifecycleState,
   type PayoutRequestLifecycleState,
 } from "@/modules/payout/lib/resolve-payout-state"
-import { resolvePayoutExecutionPolicy } from "@/modules/payout/lib/payout-execution-policy"
 import { getPayoutExecutionLabel } from "@/modules/payout/lib/get-payout-execution-label"
 
 export type AdminPayoutAction =
@@ -75,21 +74,7 @@ function resolveActions({
     return []
   }
 
-  const executionPolicy = resolvePayoutExecutionPolicy({
-    status: payoutExecutionState,
-  })
-
-  const actions: AdminPayoutAction[] = []
-
-  if (executionPolicy.canSend) {
-    actions.push("mark_as_paid")
-  }
-
-  if (executionPolicy.canMarkAsFailed) {
-    actions.push("mark_as_failed")
-  }
-
-  return actions
+  return ["mark_as_paid", "mark_as_failed"]
 }
 
 function resolveBadges({

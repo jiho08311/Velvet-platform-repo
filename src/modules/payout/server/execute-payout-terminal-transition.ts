@@ -1,5 +1,4 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin";
-import { resolvePayoutExecutionPolicy } from "@/modules/payout/lib/payout-execution-policy";
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 /**
  * Canonical terminal execution authority for payout paid/failed transitions.
@@ -22,37 +21,37 @@ import { resolvePayoutExecutionPolicy } from "@/modules/payout/lib/payout-execut
  * - request-phase earnings release helpers
  * - read-side summaries / list shaping
  */
-type ExecutePayoutTerminalTransitionTarget = "paid" | "failed";
+type ExecutePayoutTerminalTransitionTarget = "paid" | "failed"
 
 type ExecutePayoutTerminalTransitionParams = {
-  payoutId: string;
-  targetState: ExecutePayoutTerminalTransitionTarget;
-  failureReason?: string;
-};
+  payoutId: string
+  targetState: ExecutePayoutTerminalTransitionTarget
+  failureReason?: string
+}
 
 type PayoutRow = {
-  id: string;
-  status: "pending" | "processing" | "paid" | "failed";
-  paid_at: string | null;
-  failure_reason: string | null;
-};
+  id: string
+  status: "pending" | "processing" | "paid" | "failed"
+  paid_at: string | null
+  failure_reason: string | null
+}
 
 type LinkedEarningRow = {
-  id: string;
-  status: "pending" | "available" | "requested" | "paid_out" | "reversed";
-  payout_id: string | null;
-  payout_request_id: string | null;
-  paid_out_at: string | null;
-};
+  id: string
+  status: "pending" | "available" | "requested" | "paid_out" | "reversed"
+  payout_id: string | null
+  payout_request_id: string | null
+  paid_out_at: string | null
+}
 
 function normalizePayoutId(payoutId: string): string {
-  const safePayoutId = payoutId.trim();
+  const safePayoutId = payoutId.trim()
 
   if (!safePayoutId) {
-    throw new Error("Invalid payout id");
+    throw new Error("Invalid payout id")
   }
 
-  return safePayoutId;
+  return safePayoutId
 }
 
 async function getPayoutOrThrow(payoutId: string): Promise<PayoutRow> {
@@ -60,13 +59,13 @@ async function getPayoutOrThrow(payoutId: string): Promise<PayoutRow> {
     .from("payouts")
     .select("id, status, paid_at, failure_reason")
     .eq("id", payoutId)
-    .single<PayoutRow>();
+    .single<PayoutRow>()
 
   if (error || !data) {
-    throw new Error("Payout not found");
+    throw new Error("Payout not found")
   }
 
-  return data;
+  return data
 }
 
 async function getLinkedRequestedEarnings(
@@ -77,13 +76,21 @@ async function getLinkedRequestedEarnings(
     .select("id, status, payout_id, payout_request_id, paid_out_at")
     .eq("payout_id", payoutId)
     .eq("status", "requested")
-    .returns<LinkedEarningRow[]>();
+    .returns<LinkedEarningRow[]>()
 
   if (error) {
-    throw error;
+    throw error
   }
 
-  return data ?? [];
+  return data ?? []
+}
+
+function resolvePayoutExecutionPolicy(payout: Pick<PayoutRow, "status">) {
+  return {
+    canSend: payout.status === "pending" || payout.status === "processing",
+    canMarkAsFailed:
+      payout.status === "pending" || payout.status === "processing",
+  }
 }
 
 /**
@@ -94,33 +101,33 @@ async function getLinkedRequestedEarnings(
  * - every linked requested earning has paid_out_at
  */
 async function verifyPaidPostcondition(params: {
-  payoutId: string;
-  earningIds: string[];
+  payoutId: string
+  earningIds: string[]
 }): Promise<void> {
-  const payout = await getPayoutOrThrow(params.payoutId);
+  const payout = await getPayoutOrThrow(params.payoutId)
 
   if (payout.status !== "paid") {
-    throw new Error("PAYOUT_PAID_POSTCONDITION_FAILED");
+    throw new Error("PAYOUT_PAID_POSTCONDITION_FAILED")
   }
 
   if (params.earningIds.length === 0) {
-    return;
+    return
   }
 
   const { data, error } = await supabaseAdmin
     .from("earnings")
     .select("id, status, payout_id, payout_request_id, paid_out_at")
     .in("id", params.earningIds)
-    .returns<LinkedEarningRow[]>();
+    .returns<LinkedEarningRow[]>()
 
   if (error) {
-    throw error;
+    throw error
   }
 
-  const rows = data ?? [];
+  const rows = data ?? []
 
   if (rows.length !== params.earningIds.length) {
-    throw new Error("PAID_EARNINGS_POSTCONDITION_COUNT_MISMATCH");
+    throw new Error("PAID_EARNINGS_POSTCONDITION_COUNT_MISMATCH")
   }
 
   const hasInvalidRow = rows.some((row) => {
@@ -128,11 +135,11 @@ async function verifyPaidPostcondition(params: {
       row.status !== "paid_out" ||
       row.payout_id !== params.payoutId ||
       !row.paid_out_at
-    );
-  });
+    )
+  })
 
   if (hasInvalidRow) {
-    throw new Error("PAID_EARNINGS_POSTCONDITION_FAILED");
+    throw new Error("PAID_EARNINGS_POSTCONDITION_FAILED")
   }
 }
 
@@ -144,33 +151,33 @@ async function verifyPaidPostcondition(params: {
  * - released earnings no longer point at payout / payout_request
  */
 async function verifyFailedPostcondition(params: {
-  payoutId: string;
-  releasedEarningIds: string[];
+  payoutId: string
+  releasedEarningIds: string[]
 }): Promise<void> {
-  const payout = await getPayoutOrThrow(params.payoutId);
+  const payout = await getPayoutOrThrow(params.payoutId)
 
   if (payout.status !== "failed") {
-    throw new Error("PAYOUT_FAILED_POSTCONDITION_FAILED");
+    throw new Error("PAYOUT_FAILED_POSTCONDITION_FAILED")
   }
 
   if (params.releasedEarningIds.length === 0) {
-    return;
+    return
   }
 
   const { data, error } = await supabaseAdmin
     .from("earnings")
     .select("id, status, payout_id, payout_request_id, paid_out_at")
     .in("id", params.releasedEarningIds)
-    .returns<LinkedEarningRow[]>();
+    .returns<LinkedEarningRow[]>()
 
   if (error) {
-    throw error;
+    throw error
   }
 
-  const rows = data ?? [];
+  const rows = data ?? []
 
   if (rows.length !== params.releasedEarningIds.length) {
-    throw new Error("FAILED_EARNINGS_POSTCONDITION_COUNT_MISMATCH");
+    throw new Error("FAILED_EARNINGS_POSTCONDITION_COUNT_MISMATCH")
   }
 
   const hasInvalidRow = rows.some((row) => {
@@ -178,11 +185,11 @@ async function verifyFailedPostcondition(params: {
       row.status !== "available" ||
       row.payout_id !== null ||
       row.payout_request_id !== null
-    );
-  });
+    )
+  })
 
   if (hasInvalidRow) {
-    throw new Error("FAILED_EARNINGS_POSTCONDITION_FAILED");
+    throw new Error("FAILED_EARNINGS_POSTCONDITION_FAILED")
   }
 }
 
@@ -191,21 +198,21 @@ export async function executePayoutTerminalTransition({
   targetState,
   failureReason,
 }: ExecutePayoutTerminalTransitionParams) {
-  const safePayoutId = normalizePayoutId(payoutId);
-  const payout = await getPayoutOrThrow(safePayoutId);
-  const policy = resolvePayoutExecutionPolicy(payout);
+  const safePayoutId = normalizePayoutId(payoutId)
+  const payout = await getPayoutOrThrow(safePayoutId)
+  const policy = resolvePayoutExecutionPolicy(payout)
 
   if (targetState === "paid" && !policy.canSend) {
-    throw new Error("PAYOUT_NOT_SENDABLE");
+    throw new Error("PAYOUT_NOT_SENDABLE")
   }
 
   if (targetState === "failed" && !policy.canMarkAsFailed) {
-    throw new Error("PAYOUT_NOT_FAILABLE");
+    throw new Error("PAYOUT_NOT_FAILABLE")
   }
 
-  const linkedRequestedEarnings = await getLinkedRequestedEarnings(safePayoutId);
-  const linkedRequestedEarningIds = linkedRequestedEarnings.map((row) => row.id);
-  const now = new Date().toISOString();
+  const linkedRequestedEarnings = await getLinkedRequestedEarnings(safePayoutId)
+  const linkedRequestedEarningIds = linkedRequestedEarnings.map((row) => row.id)
+  const now = new Date().toISOString()
 
   if (targetState === "paid") {
     const { data: updatedPayout, error: payoutUpdateError } = await supabaseAdmin
@@ -217,10 +224,10 @@ export async function executePayoutTerminalTransition({
       })
       .eq("id", safePayoutId)
       .select("id, status, paid_at, failure_reason")
-      .single<PayoutRow>();
+      .single<PayoutRow>()
 
     if (payoutUpdateError || !updatedPayout) {
-      throw payoutUpdateError ?? new Error("FAILED_TO_MARK_PAYOUT_AS_PAID");
+      throw payoutUpdateError ?? new Error("FAILED_TO_MARK_PAYOUT_AS_PAID")
     }
 
     if (linkedRequestedEarningIds.length > 0) {
@@ -234,7 +241,7 @@ export async function executePayoutTerminalTransition({
           .in("id", linkedRequestedEarningIds)
           .eq("status", "requested")
           .select("id")
-          .returns<Array<{ id: string }>>();
+          .returns<Array<{ id: string }>>()
 
       if (earningsUpdateError) {
         await supabaseAdmin
@@ -244,12 +251,15 @@ export async function executePayoutTerminalTransition({
             paid_at: payout.paid_at,
             failure_reason: payout.failure_reason,
           })
-          .eq("id", safePayoutId);
+          .eq("id", safePayoutId)
 
-        throw earningsUpdateError;
+        throw earningsUpdateError
       }
 
-      if (!updatedEarnings || updatedEarnings.length !== linkedRequestedEarningIds.length) {
+      if (
+        !updatedEarnings ||
+        updatedEarnings.length !== linkedRequestedEarningIds.length
+      ) {
         await supabaseAdmin
           .from("payouts")
           .update({
@@ -257,26 +267,26 @@ export async function executePayoutTerminalTransition({
             paid_at: payout.paid_at,
             failure_reason: payout.failure_reason,
           })
-          .eq("id", safePayoutId);
+          .eq("id", safePayoutId)
 
-        throw new Error("FAILED_TO_CLOSE_ALL_LINKED_EARNINGS_AS_PAID_OUT");
+        throw new Error("FAILED_TO_CLOSE_ALL_LINKED_EARNINGS_AS_PAID_OUT")
       }
     }
 
     await verifyPaidPostcondition({
       payoutId: safePayoutId,
       earningIds: linkedRequestedEarningIds,
-    });
+    })
 
     return {
       payoutId: safePayoutId,
       targetState,
       linkedEarningIds: linkedRequestedEarningIds,
-    };
+    }
   }
 
   const normalizedFailureReason =
-    failureReason?.trim() || "Marked as failed by admin";
+    failureReason?.trim() || "Marked as failed by admin"
 
   const { data: updatedPayout, error: payoutUpdateError } = await supabaseAdmin
     .from("payouts")
@@ -287,10 +297,10 @@ export async function executePayoutTerminalTransition({
     })
     .eq("id", safePayoutId)
     .select("id, status, paid_at, failure_reason")
-    .single<PayoutRow>();
+    .single<PayoutRow>()
 
   if (payoutUpdateError || !updatedPayout) {
-    throw payoutUpdateError ?? new Error("FAILED_TO_MARK_PAYOUT_AS_FAILED");
+    throw payoutUpdateError ?? new Error("FAILED_TO_MARK_PAYOUT_AS_FAILED")
   }
 
   if (linkedRequestedEarningIds.length > 0) {
@@ -305,43 +315,46 @@ export async function executePayoutTerminalTransition({
       .in("id", linkedRequestedEarningIds)
       .eq("status", "requested")
       .select("id")
-      .returns<Array<{ id: string }>>();
+      .returns<Array<{ id: string }>>()
 
-      if (releaseError) {
-        await supabaseAdmin
-          .from("payouts")
-          .update({
-            status: payout.status,
-            paid_at: payout.paid_at,
-            failure_reason: payout.failure_reason,
-          })
-          .eq("id", safePayoutId);
+    if (releaseError) {
+      await supabaseAdmin
+        .from("payouts")
+        .update({
+          status: payout.status,
+          paid_at: payout.paid_at,
+          failure_reason: payout.failure_reason,
+        })
+        .eq("id", safePayoutId)
 
-        throw releaseError;
-      }
+      throw releaseError
+    }
 
-      if (!releasedEarnings || releasedEarnings.length !== linkedRequestedEarningIds.length) {
-        await supabaseAdmin
-          .from("payouts")
-          .update({
-            status: payout.status,
-            paid_at: payout.paid_at,
-            failure_reason: payout.failure_reason,
-          })
-          .eq("id", safePayoutId);
+    if (
+      !releasedEarnings ||
+      releasedEarnings.length !== linkedRequestedEarningIds.length
+    ) {
+      await supabaseAdmin
+        .from("payouts")
+        .update({
+          status: payout.status,
+          paid_at: payout.paid_at,
+          failure_reason: payout.failure_reason,
+        })
+        .eq("id", safePayoutId)
 
-        throw new Error("FAILED_TO_RELEASE_ALL_LINKED_EARNINGS");
-      }
+      throw new Error("FAILED_TO_RELEASE_ALL_LINKED_EARNINGS")
+    }
   }
 
   await verifyFailedPostcondition({
     payoutId: safePayoutId,
     releasedEarningIds: linkedRequestedEarningIds,
-  });
+  })
 
   return {
     payoutId: safePayoutId,
     targetState,
     linkedEarningIds: linkedRequestedEarningIds,
-  };
+  }
 }

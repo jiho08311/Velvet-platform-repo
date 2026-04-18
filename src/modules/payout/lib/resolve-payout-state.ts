@@ -4,7 +4,13 @@ export type ResolvedPayoutExecutionLifecycleState = {
   state: PayoutExecutionLifecycleState
   isTerminal: boolean
 }
+export type PayoutStatus = "pending" | "processing" | "paid" | "failed"
 
+export type PayoutRequestLifecycleState =
+  | "pending_request"
+  | "approved"
+  | "rejected"
+  | "inactive"
 /**
  * Canonical execution projection source of truth.
  *
@@ -63,4 +69,39 @@ export function isPayoutExecutionTerminal(
   state: PayoutExecutionLifecycleState | null | undefined
 ): boolean {
   return state === "paid" || state === "failed"
+}
+
+export function resolvePayoutRequestLifecycleState(input: {
+  payoutRequestStatus?: string | null
+}): {
+  state: PayoutRequestLifecycleState
+  isTerminal: boolean
+} {
+  const payoutRequestStatus = input.payoutRequestStatus ?? null
+
+  if (payoutRequestStatus === "rejected") {
+    return {
+      state: "rejected",
+      isTerminal: true,
+    }
+  }
+
+  if (payoutRequestStatus === "approved") {
+    return {
+      state: "approved",
+      isTerminal: true,
+    }
+  }
+
+  if (payoutRequestStatus === "pending") {
+    return {
+      state: "pending_request",
+      isTerminal: false,
+    }
+  }
+
+  return {
+    state: "inactive",
+    isTerminal: true,
+  }
 }
