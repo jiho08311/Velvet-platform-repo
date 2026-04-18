@@ -2,12 +2,14 @@ import { EmptyState } from "@/shared/ui/EmptyState"
 import { StatusBadge } from "@/shared/ui/StatusBadge"
 
 type PayoutStatus = "pending" | "processing" | "paid" | "failed"
+type PayoutLifecycleState = "processing" | "paid" | "failed"
 
 type PayoutListItem = {
   id: string
   amount: number
   currency?: string | null
   status: PayoutStatus
+  lifecycleState: PayoutLifecycleState
   createdAt: string
   paidAt?: string | null
   failureReason?: string | null
@@ -63,13 +65,13 @@ export function PayoutList({
                 생성됨 {formatDate(payout.createdAt)}
               </p>
 
-              {payout.status === "paid" && payout.paidAt ? (
+              {payout.lifecycleState === "paid" && payout.paidAt ? (
                 <p className="mt-1 text-xs text-zinc-500">
                   지급됨 {formatDate(payout.paidAt)}
                 </p>
               ) : null}
 
-              {payout.status === "failed" && payout.failureReason ? (
+              {payout.lifecycleState === "failed" && payout.failureReason ? (
                 <p className="mt-1 text-xs text-red-600">
                   {payout.failureReason}
                 </p>
@@ -90,7 +92,7 @@ export function PayoutList({
                 상태
               </p>
               <div className="mt-1 sm:mt-0">
-                <StatusBadge label={payout.status} />
+                <StatusBadge label={payout.lifecycleState} />
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { requireUser } from "@/modules/auth/server/require-user"
-import { resolvePayoutLifecycleState } from "@/modules/payout/lib/resolve-payout-state"
+import { resolvePayoutExecutionLifecycleState } from "@/modules/payout/lib/resolve-payout-state"
 
 type CreatorPayoutHistoryRow = {
   id: string
@@ -52,25 +52,16 @@ export async function getCreatorPayoutHistory(): Promise<
     throw payoutsError
   }
 
-  return (payouts ?? []).map((row) => {
-    const lifecycle = resolvePayoutLifecycleState({
+  return (payouts ?? []).map((row) => ({
+    id: row.id,
+    amount: row.amount ?? 0,
+    currency: row.currency ?? "KRW",
+    status: row.status,
+    lifecycleState: resolvePayoutExecutionLifecycleState({
       payoutStatus: row.status,
-    })
-
-    return {
-      id: row.id,
-      amount: row.amount ?? 0,
-      currency: row.currency ?? "KRW",
-      status: row.status,
-      lifecycleState:
-        lifecycle.state === "paid"
-          ? "paid"
-          : lifecycle.state === "failed"
-            ? "failed"
-            : "processing",
-      paidAt: row.paid_at,
-      failureReason: row.failure_reason,
-      createdAt: row.created_at,
-    }
-  })
+    }),
+    paidAt: row.paid_at,
+    failureReason: row.failure_reason,
+    createdAt: row.created_at,
+  }))
 }

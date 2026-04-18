@@ -21,14 +21,8 @@ function formatPrice(amount: number, currency = "KRW") {
   }).format(amount)
 }
 
-async function requestPayoutAction(formData: FormData) {
+async function requestPayoutAction() {
   "use server"
-
-  const amount = Number(formData.get("amount"))
-
-  if (!Number.isFinite(amount) || amount <= 0) {
-    throw new Error("Invalid amount")
-  }
 
   const user = await requireActiveUser()
   const creator = await getCreatorByUserId(user.id)
@@ -39,7 +33,7 @@ async function requestPayoutAction(formData: FormData) {
 
   await createPayoutRequest({
     creatorId: creator.id,
-    amount,
+    amount: 0,
     currency: "KRW",
   })
 
@@ -88,20 +82,20 @@ export default async function PayoutsPage() {
     redirect("/become-creator")
   }
 
-if (creator.status !== "active") {
-  return (
-    <main className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
-      <div className="max-w-md text-center">
-        <h1 className="text-2xl font-semibold text-white">
-          승인 대기중입니다
-        </h1>
-        <p className="mt-3 text-sm text-zinc-500">
-          현재 크리에이터 신청이 검토 중입니다. 승인 후 기능을 이용할 수 있습니다.
-        </p>
-      </div>
-    </main>
-  )
-}
+  if (creator.status !== "active") {
+    return (
+      <main className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
+        <div className="max-w-md text-center">
+          <h1 className="text-2xl font-semibold text-white">
+            승인 대기중입니다
+          </h1>
+          <p className="mt-3 text-sm text-zinc-500">
+            현재 크리에이터 신청이 검토 중입니다. 승인 후 기능을 이용할 수 있습니다.
+          </p>
+        </div>
+      </main>
+    )
+  }
 
   const summary = await getPayoutSummary(creator.id)
   const payouts = await listCreatorPayouts({ creatorId: creator.id })
@@ -173,25 +167,17 @@ if (creator.status !== "active") {
             <p className="mt-2 text-2xl font-semibold text-white">
               {formatPrice(available)}
             </p>
+            <p className="mt-2 text-sm text-zinc-500">
+              현재 출금 가능한 전액 기준으로 요청됩니다.
+            </p>
 
-            <form action={requestPayoutAction} className="mt-4 space-y-2">
-              <input
-                name="amount"
-                type="number"
-                min={1}
-                max={available}
-                step={1}
-                placeholder="출금 금액 입력"
-                className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-[#C2185B]"
-                required
-              />
-
+            <form action={requestPayoutAction} className="mt-4">
               <button
                 type="submit"
                 disabled={available === 0}
                 className="w-full rounded-2xl bg-[#C2185B] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#D81B60] active:bg-[#AD1457] disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500"
               >
-                출금 요청
+                전액 출금 요청
               </button>
             </form>
           </Card>
@@ -205,22 +191,24 @@ if (creator.status !== "active") {
             </p>
           </Card>
         </div>
-<div className="grid gap-4 md:grid-cols-1">
-  <Card>
-    <Link
-      href="/dashboard/subscribers"
-      className="block rounded-2xl p-4 transition hover:bg-zinc-900"
-    >
-      <p className="text-sm text-zinc-500">구독자 관리</p>
-      <p className="mt-2 text-2xl font-semibold text-white">
-        Subscribers
-      </p>
-      <p className="mt-1 text-sm text-zinc-500">
-        구독자 목록 확인 및 메시지 보내기
-      </p>
-    </Link>
-  </Card>
-</div>
+
+        <div className="grid gap-4 md:grid-cols-1">
+          <Card>
+            <Link
+              href="/dashboard/subscribers"
+              className="block rounded-2xl p-4 transition hover:bg-zinc-900"
+            >
+              <p className="text-sm text-zinc-500">구독자 관리</p>
+              <p className="mt-2 text-2xl font-semibold text-white">
+                Subscribers
+              </p>
+              <p className="mt-1 text-sm text-zinc-500">
+                구독자 목록 확인 및 메시지 보내기
+              </p>
+            </Link>
+          </Card>
+        </div>
+
         <Card>
           <div className="mb-4">
             <p className="text-lg font-semibold text-white">출금 내역</p>
@@ -229,21 +217,21 @@ if (creator.status !== "active") {
             </p>
           </div>
 
-         {payouts.length === 0 ? (
-  <PayoutEmptyState />
-) : (
-  <PayoutList
-    payouts={payouts.map((p) => ({
-      id: p.id,
-      amount: p.amount,
-      currency: p.currency,
-      status: p.status,
-      createdAt: p.createdAt,
-      paidAt: p.paidAt,
-      failureReason: p.failureReason,
-    }))}
-  />
-)}
+          {payouts.length === 0 ? (
+            <PayoutEmptyState />
+          ) : (
+            <PayoutList
+              payouts={payouts.map((p) => ({
+                id: p.id,
+                amount: p.amount,
+                currency: p.currency,
+                status: p.status,
+                createdAt: p.createdAt,
+                paidAt: p.paidAt,
+                failureReason: p.failureReason,
+              }))}
+            />
+          )}
         </Card>
       </div>
     </main>

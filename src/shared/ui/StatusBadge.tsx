@@ -17,8 +17,13 @@ function getToneFromLabel(label: string): Tone {
   const value = label.toLowerCase()
 
   if (value === "pending") return "warning"
+  if (value === "pending_request") return "warning"
+  if (value === "approved") return "info"
+  if (value === "processing") return "info"
+  if (value === "rejected") return "danger"
   if (value === "paid" || value === "success") return "success"
   if (value === "failed" || value === "error") return "danger"
+  if (value === "inactive") return "default"
   if (value === "unread") return "info"
   if (value === "read") return "default"
 
@@ -29,8 +34,13 @@ function translateLabel(label: string) {
   const value = label.toLowerCase()
 
   if (value === "pending") return "대기중"
-  if (value === "paid") return "완료"
+  if (value === "pending_request") return "요청 대기중"
+  if (value === "approved") return "승인됨"
+  if (value === "processing") return "처리중"
+  if (value === "rejected") return "거절됨"
+  if (value === "paid") return "지급 완료"
   if (value === "failed") return "실패"
+  if (value === "inactive") return "비활성"
   if (value === "success") return "완료"
   if (value === "unread") return "읽지 않음"
   if (value === "read") return "읽음"

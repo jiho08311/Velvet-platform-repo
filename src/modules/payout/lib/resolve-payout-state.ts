@@ -186,3 +186,23 @@ export function resolvePayoutLifecycleState(
     isTerminal: false,
   }
 }
+
+export type PayoutExecutionLifecycleState = "processing" | "paid" | "failed"
+
+export function resolvePayoutExecutionLifecycleState(input: {
+  payoutStatus?: PayoutStatus | null
+}): PayoutExecutionLifecycleState {
+  const lifecycle = resolvePayoutLifecycleState({
+    payoutStatus: input.payoutStatus,
+  })
+
+  if (lifecycle.state === "paid") {
+    return "paid"
+  }
+
+  if (lifecycle.state === "failed") {
+    return "failed"
+  }
+
+  return "processing"
+}

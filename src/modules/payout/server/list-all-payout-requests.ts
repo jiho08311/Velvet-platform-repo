@@ -45,21 +45,17 @@ export async function listAllPayoutRequests(): Promise<PayoutRequest[]> {
     throw error
   }
 
-  return (data ?? []).map((row: PayoutRequestRow) => {
-    const lifecycle = resolvePayoutLifecycleState({
+  return (data ?? []).map((row: PayoutRequestRow) => ({
+    id: row.id,
+    creatorId: row.creator_id,
+    amount: row.amount,
+    currency: row.currency,
+    status: row.status,
+    lifecycleState: resolvePayoutLifecycleState({
       payoutRequestStatus: row.status,
-    })
-
-    return {
-      id: row.id,
-      creatorId: row.creator_id,
-      amount: row.amount,
-      currency: row.currency,
-      status: row.status,
-      lifecycleState: lifecycle.state,
-      createdAt: row.created_at,
-      approvedAt: row.approved_at,
-      rejectedAt: row.rejected_at,
-    }
-  })
+    }).state,
+    createdAt: row.created_at,
+    approvedAt: row.approved_at,
+    rejectedAt: row.rejected_at,
+  }))
 }

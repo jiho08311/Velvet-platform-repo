@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 
 import type { CreatorEarningsBalance, EarningStatus } from "../types"
+import { resolvePayoutBalanceTotals } from "@/modules/payout/lib/payout-balance-policy"
 
 type GetCreatorEarningsBalanceInput = {
   creatorId: string
@@ -10,10 +11,13 @@ type EarningAmountRow = {
   net_amount: number | null
   status: EarningStatus | "requested"
   currency: string
+  payout_id: string | null
+  payout_request_id: string | null
 }
 
 export type CreatorResolvedEarningsBalance = CreatorEarningsBalance & {
   requestedamount: number
+  requestableamount: number
 }
 
 export async function getCreatorEarningsBalance({
@@ -29,7 +33,7 @@ export async function getCreatorEarningsBalance({
 
   const { data, error } = await supabase
     .from("earnings")
-    .select("net_amount, status, currency")
+    .select("net_amount, status, currency, payout_id, payout_request_id")
     .eq("creator_id", id)
     .returns<EarningAmountRow[]>()
 
@@ -38,48 +42,16 @@ export async function getCreatorEarningsBalance({
   }
 
   const rows = data ?? []
-
-  let pendingamount = 0
-  let availableamount = 0
-  let requestedamount = 0
-  let paidOutamount = 0
-  let reversedamount = 0
-
-  for (const row of rows) {
-    const amount = row.net_amount ?? 0
-
-    if (row.status === "pending") {
-      pendingamount += amount
-      continue
-    }
-
-    if (row.status === "available") {
-      availableamount += amount
-      continue
-    }
-
-    if (row.status === "requested") {
-      requestedamount += amount
-      continue
-    }
-
-    if (row.status === "paid_out") {
-      paidOutamount += amount
-      continue
-    }
-
-    if (row.status === "reversed") {
-      reversedamount += amount
-    }
-  }
+  const totals = resolvePayoutBalanceTotals(rows)
 
   return {
     creatorId: id,
     currency: rows[0]?.currency ?? "KRW",
-    pendingamount,
-    availableamount,
-    requestedamount,
-    paidOutamount,
-    reversedamount,
+    pendingamount: totals.pendingAmount,
+    availableamount: totals.availableAmount,
+    requestedamount: totals.requestedAmount,
+    requestableamount: totals.requestableAmount,
+    paidOutamount: totals.paidOutAmount,
+    reversedamount: totals.reversedAmount,
   }
 }

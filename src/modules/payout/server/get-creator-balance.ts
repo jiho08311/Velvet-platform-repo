@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { resolvePayoutBalanceTotals } from "@/modules/payout/lib/payout-balance-policy"
 
 type GetCreatorBalanceParams = {
   creatorId: string
@@ -12,6 +13,8 @@ type EarningRow = {
     | "requested"
     | "paid_out"
     | "reversed"
+  payout_id: string | null
+  payout_request_id: string | null
 }
 
 export type CreatorBalance = {
@@ -26,7 +29,7 @@ export async function getCreatorBalance({
 }: GetCreatorBalanceParams): Promise<CreatorBalance> {
   const { data: earnings, error: earningsError } = await supabaseAdmin
     .from("earnings")
-    .select("net_amount, status")
+    .select("net_amount, status, payout_id, payout_request_id")
     .eq("creator_id", creatorId)
     .returns<EarningRow[]>()
 
@@ -35,6 +38,7 @@ export async function getCreatorBalance({
   }
 
   const rows = earnings ?? []
+  const totals = resolvePayoutBalanceTotals(rows)
 
   const totalEarnings = rows.reduce((sum, earning) => {
     if (earning.status === "reversed") {
@@ -44,26 +48,12 @@ export async function getCreatorBalance({
     return sum + (earning.net_amount ?? 0)
   }, 0)
 
-  const totalPayouts = rows.reduce((sum, earning) => {
-    if (earning.status !== "paid_out") {
-      return sum
-    }
-
-    return sum + (earning.net_amount ?? 0)
-  }, 0)
-
-  const availableBalance = rows.reduce((sum, earning) => {
-    if (earning.status !== "available") {
-      return sum
-    }
-
-    return sum + (earning.net_amount ?? 0)
-  }, 0)
+  const totalPayouts = totals.paidOutAmount
 
   return {
     creatorId,
     totalEarnings,
     totalPayouts,
-    availableBalance,
+    availableBalance: totals.requestableAmount,
   }
 }

@@ -54,17 +54,15 @@ export async function getPayoutRequest({
     return null
   }
 
-  const lifecycle = resolvePayoutLifecycleState({
-    payoutRequestStatus: data.status,
-  })
-
   return {
     id: data.id,
     creatorId: data.creator_id,
     amount: data.amount,
     currency: data.currency,
     status: data.status,
-    lifecycleState: lifecycle.state,
+    lifecycleState: resolvePayoutLifecycleState({
+      payoutRequestStatus: data.status,
+    }).state,
     createdAt: data.created_at,
     approvedAt: data.approved_at,
   }
