@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { getPayoutAccountReadiness } from "./get-payout-account-readiness"
-import { resolvePayoutRequestEligibility } from "@/modules/payout/lib/resolve-payout-state"
+
 import {
   isRequestableEarning,
   sumRequestableEarnings,
@@ -18,6 +18,38 @@ type RequestableEarningRow = {
   status: "pending" | "available" | "requested" | "paid_out" | "reversed"
   payout_request_id: string | null
   payout_id: string | null
+}
+
+function resolvePayoutRequestEligibility(input: {
+  accountReadinessState: string
+  requestedAmount: number
+  availableBalance: number
+}) {
+  if (input.requestedAmount <= 0) {
+    return {
+      isEligible: false,
+      state: "invalid_amount" as const,
+    }
+  }
+
+  if (input.accountReadinessState !== "ready") {
+    return {
+      isEligible: false,
+      state: "account_required" as const,
+    }
+  }
+
+  if (input.requestedAmount > input.availableBalance) {
+    return {
+      isEligible: false,
+      state: "insufficient_balance" as const,
+    }
+  }
+
+  return {
+    isEligible: true,
+    state: "eligible" as const,
+  }
 }
 
 export async function createPayoutRequest(input: CreatePayoutRequestInput) {
