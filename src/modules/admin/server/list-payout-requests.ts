@@ -6,11 +6,10 @@ import {
   type PayoutRequestLifecycleState,
 } from "@/modules/payout/lib/resolve-payout-state";
 
-export type AdminPayoutAction =
-  | "approve"
-  | "reject"
-  | "mark_as_paid"
-  | "mark_as_failed";
+import {
+  resolveAdminPayoutRequestRow,
+  type AdminPayoutAction,
+} from "@/modules/admin/lib/payout-request-admin-policy";
 
 export type AdminPayoutBadgeTone =
   | "pending"
@@ -24,13 +23,6 @@ export type AdminPayoutStatusBadge = {
   key: "request" | "payout";
   label: string;
   tone: AdminPayoutBadgeTone;
-};
-
-export type AdminPayoutActionAvailability = {
-  approve: boolean;
-  reject: boolean;
-  markAsPaid: boolean;
-  markAsFailed: boolean;
 };
 
 export type AdminPayoutRequestListItem = {
@@ -52,19 +44,24 @@ export type AdminPayoutRequestListItem = {
   request_lifecycle_state: PayoutRequestLifecycleState;
   payout_execution_state: PayoutExecutionLifecycleState | null;
   status_badges: AdminPayoutStatusBadge[];
-  available_actions: AdminPayoutActionAvailability;
   available_action_order: AdminPayoutAction[];
   failure_message: string | null;
 };
 
-type CreatorProfileRow = {
+type CreatorProfileJoinRow = {
   username: string | null;
   display_name: string | null;
 };
 
-type CreatorRow = {
+type CreatorJoinRow = {
   username: string | null;
   display_name: string | null;
+  profiles?: CreatorProfileJoinRow[] | CreatorProfileJoinRow | null;
+};
+
+type ResolvedCreatorPresentation = {
+  username: string | null;
+  displayName: string | null;
 };
 
 type PayoutRow = {
@@ -84,38 +81,26 @@ type PayoutRequestRow = {
   approved_at: string | null;
   rejected_at: string | null;
   payouts?: PayoutRow[] | PayoutRow | null;
-  creators?:
-    | {
-        username: string | null;
-        display_name?: string | null;
-        profiles?: CreatorProfileRow[] | CreatorProfileRow | null;
-      }
-    | Array<{
-        username: string | null;
-        display_name?: string | null;
-        profiles?: CreatorProfileRow[] | CreatorProfileRow | null;
-      }>
-    | null;
+  creators?: CreatorJoinRow[] | CreatorJoinRow | null;
 };
 
-function toCreatorRow(
-  value:
-    | PayoutRequestRow["creators"]
-    | undefined
-): CreatorRow | null {
-  const creator = Array.isArray(value) ? value[0] ?? null : value ?? null;
+function takeFirst<T>(value: T[] | T | null | undefined): T | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
 
-  if (!creator) {
-    return null;
-  }
-
-  const profile = Array.isArray(creator.profiles)
-    ? creator.profiles[0] ?? null
-    : creator.profiles ?? null;
+function normalizeCreatorPresentation(
+  value: PayoutRequestRow["creators"]
+): ResolvedCreatorPresentation {
+  const creator = takeFirst(value);
+  const profile = takeFirst(creator?.profiles);
 
   return {
-    username: creator.username ?? profile?.username ?? null,
-    display_name: creator.display_name ?? profile?.display_name ?? null,
+    username: creator?.username?.trim() || profile?.username?.trim() || null,
+    displayName:
+      creator?.display_name?.trim() ||
+      profile?.display_name?.trim() ||
+      null,
   };
 }
 
@@ -124,163 +109,17 @@ function resolveCreatorLabel(input: {
   creatorUsername: string | null;
   creatorDisplayName: string | null;
 }): string {
-  const username = input.creatorUsername?.trim() || null;
-  const displayName = input.creatorDisplayName?.trim() || null;
-
-  if (displayName && username) {
-    return `${displayName} (@${username})`;
+  if (input.creatorDisplayName && input.creatorUsername) {
+    return `${input.creatorDisplayName} (@${input.creatorUsername})`;
   }
-
-  if (displayName) {
-    return displayName;
-  }
-
-  if (username) {
-    return `@${username}`;
-  }
-
+  if (input.creatorDisplayName) return input.creatorDisplayName;
+  if (input.creatorUsername) return `@${input.creatorUsername}`;
   return input.creatorId;
 }
 
-function resolveRequestBadge(
-  requestLifecycleState: PayoutRequestLifecycleState
-): AdminPayoutStatusBadge {
-  if (requestLifecycleState === "pending_request") {
-    return {
-      key: "request",
-      label: "request: Pending",
-      tone: "pending",
-    };
-  }
-
-  if (requestLifecycleState === "approved") {
-    return {
-      key: "request",
-      label: "request: Approved",
-      tone: "approved",
-    };
-  }
-
-  if (requestLifecycleState === "rejected") {
-    return {
-      key: "request",
-      label: "request: Rejected",
-      tone: "rejected",
-    };
-  }
-
-  return {
-    key: "request",
-    label: "request: Inactive",
-    tone: "pending",
-  };
-}
-
-function resolvePayoutBadge(
-  payoutExecutionState: PayoutExecutionLifecycleState | null
-): AdminPayoutStatusBadge | null {
-  if (!payoutExecutionState) {
-    return null;
-  }
-
-  if (payoutExecutionState === "paid") {
-    return {
-      key: "payout",
-      label: "payout: Paid",
-      tone: "paid",
-    };
-  }
-
-  if (payoutExecutionState === "failed") {
-    return {
-      key: "payout",
-      label: "payout: Failed",
-      tone: "failed",
-    };
-  }
-
-  return {
-    key: "payout",
-    label: "payout: Processing",
-    tone: "processing",
-  };
-}
-
-function resolveAvailableActions(input: {
-  requestLifecycleState: PayoutRequestLifecycleState;
-  payoutExecutionState: PayoutExecutionLifecycleState | null;
-}): AdminPayoutActionAvailability {
-  const { requestLifecycleState, payoutExecutionState } = input;
-
-  if (requestLifecycleState === "pending_request") {
-    return {
-      approve: true,
-      reject: true,
-      markAsPaid: false,
-      markAsFailed: false,
-    };
-  }
-
-  if (requestLifecycleState === "rejected") {
-    return {
-      approve: false,
-      reject: false,
-      markAsPaid: false,
-      markAsFailed: false,
-    };
-  }
-
-  if (requestLifecycleState === "approved") {
-    if (!payoutExecutionState || payoutExecutionState === "processing") {
-      return {
-        approve: false,
-        reject: false,
-        markAsPaid: true,
-        markAsFailed: true,
-      };
-    }
-
-    return {
-      approve: false,
-      reject: false,
-      markAsPaid: false,
-      markAsFailed: false,
-    };
-  }
-
-  return {
-    approve: false,
-    reject: false,
-    markAsPaid: false,
-    markAsFailed: false,
-  };
-}
-
-function toAvailableActionOrder(
-  actions: AdminPayoutActionAvailability
-): AdminPayoutAction[] {
-  const ordered: AdminPayoutAction[] = [];
-
-  if (actions.approve) {
-    ordered.push("approve");
-  }
-
-  if (actions.reject) {
-    ordered.push("reject");
-  }
-
-  if (actions.markAsPaid) {
-    ordered.push("mark_as_paid");
-  }
-
-  if (actions.markAsFailed) {
-    ordered.push("mark_as_failed");
-  }
-
-  return ordered;
-}
-
-export async function listPayoutRequests(): Promise<AdminPayoutRequestListItem[]> {
+export async function listPayoutRequests(): Promise<
+  AdminPayoutRequestListItem[]
+> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -302,6 +141,7 @@ export async function listPayoutRequests(): Promise<AdminPayoutRequestListItem[]
       ),
       creators (
         username,
+        display_name,
         profiles (
           username,
           display_name
@@ -316,13 +156,8 @@ export async function listPayoutRequests(): Promise<AdminPayoutRequestListItem[]
 
   const items: AdminPayoutRequestListItem[] = (data ?? []).map(
     (item: PayoutRequestRow) => {
-      const payout = Array.isArray(item.payouts)
-        ? item.payouts[0] ?? null
-        : item.payouts ?? null;
-
-      const creator = toCreatorRow(item.creators);
-      const creatorUsername = creator?.username ?? null;
-      const creatorDisplayName = creator?.display_name ?? null;
+      const payout = takeFirst(item.payouts);
+      const creatorPresentation = normalizeCreatorPresentation(item.creators);
 
       const requestLifecycleState = resolvePayoutRequestLifecycleState({
         payoutRequestStatus: item.status,
@@ -334,23 +169,30 @@ export async function listPayoutRequests(): Promise<AdminPayoutRequestListItem[]
           })
         : null;
 
-      const requestBadge = resolveRequestBadge(requestLifecycleState);
-      const payoutBadge = resolvePayoutBadge(payoutExecutionState);
-      const availableActions = resolveAvailableActions({
+      // 🔥 핵심 변경
+      const policy = resolveAdminPayoutRequestRow({
         requestLifecycleState,
         payoutExecutionState,
+        hasPayout: Boolean(payout),
+      });
+
+      const failureMessage =
+        payoutExecutionState === "failed"
+          ? payout?.failure_reason ?? "Payout failed"
+          : null;
+
+      const creatorLabel = resolveCreatorLabel({
+        creatorId: item.creator_id,
+        creatorUsername: creatorPresentation.username,
+        creatorDisplayName: creatorPresentation.displayName,
       });
 
       return {
         id: item.id,
         creator_id: item.creator_id,
-        creator_username: creatorUsername,
-        creator_display_name: creatorDisplayName,
-        creator_label: resolveCreatorLabel({
-          creatorId: item.creator_id,
-          creatorUsername,
-          creatorDisplayName,
-        }),
+        creator_username: creatorPresentation.username,
+        creator_display_name: creatorPresentation.displayName,
+        creator_label: creatorLabel,
         amount: Number(item.amount ?? 0),
         currency: item.currency ?? "KRW",
         status: item.status,
@@ -363,13 +205,9 @@ export async function listPayoutRequests(): Promise<AdminPayoutRequestListItem[]
         payout_failure_reason: payout?.failure_reason ?? null,
         request_lifecycle_state: requestLifecycleState,
         payout_execution_state: payoutExecutionState,
-        status_badges: payoutBadge ? [requestBadge, payoutBadge] : [requestBadge],
-        available_actions: availableActions,
-        available_action_order: toAvailableActionOrder(availableActions),
-        failure_message:
-          payoutExecutionState === "failed"
-            ? payout?.failure_reason ?? "Payout failed"
-            : null,
+        status_badges: policy.badges,
+        available_action_order: policy.actions,
+        failure_message: failureMessage,
       };
     }
   );
@@ -378,10 +216,11 @@ export async function listPayoutRequests(): Promise<AdminPayoutRequestListItem[]
     const aPending = a.request_lifecycle_state === "pending_request" ? 0 : 1;
     const bPending = b.request_lifecycle_state === "pending_request" ? 0 : 1;
 
-    if (aPending !== bPending) {
-      return aPending - bPending;
-    }
+    if (aPending !== bPending) return aPending - bPending;
 
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    return (
+      new Date(b.created_at).getTime() -
+      new Date(a.created_at).getTime()
+    );
   });
 }

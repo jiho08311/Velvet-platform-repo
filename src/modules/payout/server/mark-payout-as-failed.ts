@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin";
+import { executePayoutTerminalTransition } from "./execute-payout-terminal-transition";
 
 type MarkPayoutAsFailedParams = {
   payoutId: string;
@@ -15,31 +15,11 @@ export async function markPayoutAsFailed({
     throw new Error("invalid payoutId");
   }
 
-  const { data: payout, error: payoutError } = await supabaseAdmin
-    .from("payouts")
-    .select("id, status")
-    .eq("id", safePayoutId)
-    .single();
-
-  if (payoutError || !payout) {
-    throw new Error("payout not found");
-  }
-
-  if (payout.status === "paid") {
-    throw new Error("paid payout cannot be marked as failed");
-  }
-
-  const { error: updateError } = await supabaseAdmin
-    .from("payouts")
-    .update({
-      status: "failed",
-      failure_reason: failureReason ?? "Marked as failed by admin",
-    })
-    .eq("id", safePayoutId);
-
-  if (updateError) {
-    throw new Error(updateError.message);
-  }
+  await executePayoutTerminalTransition({
+    payoutId: safePayoutId,
+    targetState: "failed",
+    failureReason,
+  });
 
   return {
     payoutId: safePayoutId,

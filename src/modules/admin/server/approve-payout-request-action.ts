@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "./require-admin";
-import { approvePayoutRequest } from "@/modules/payout/server/approve-payout-request";
+import { approvePayoutRequest as approveCanonicalPayoutRequest } from "@/modules/payout/server/approve-payout-request";
 
 export type ApprovePayoutRequestActionState = {
   error: string | null;
@@ -21,7 +21,7 @@ export async function approvePayoutRequestAction(
   try {
     await requireAdmin();
 
-    await approvePayoutRequest({
+    await approveCanonicalPayoutRequest({
       payoutRequestId,
     });
 

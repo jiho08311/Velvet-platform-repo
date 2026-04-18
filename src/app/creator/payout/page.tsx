@@ -2,18 +2,18 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/modules/auth/server/require-user";
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id";
 import { getPayoutSummary } from "@/modules/payout/server/get-payout-summary";
-import { listPayouts } from "@/modules/payout/server/list-payouts";
+import { listCreatorPayouts } from "@/modules/payout/server/list-creator-payouts";
 
 type PayoutSummaryView = {
-  availableamount?: number | string;
-  pendingamount?: number | string;
+  availableBalance?: number | string;
+  pendingAmount?: number | string;
   currency?: string;
 } | null;
 
 type PayoutView = {
   id: string;
   amount?: number | string;
-  currency?: string;
+  currency?: string | null;
   status: string;
   createdAt: string;
 };
@@ -28,7 +28,7 @@ export default async function CreatorPayoutPage() {
 
   const [summaryResult, payoutsResult] = await Promise.all([
     getPayoutSummary(creator.id),
-    listPayouts({ creatorId: creator.id }),
+    listCreatorPayouts({ creatorId: creator.id }),
   ]);
 
   const rawSummary = summaryResult as PayoutSummaryView;
@@ -36,8 +36,8 @@ export default async function CreatorPayoutPage() {
 
   const summary = rawSummary
     ? {
-        availableamount: Number(rawSummary.availableamount ?? 0),
-        pendingamount: Number(rawSummary.pendingamount ?? 0),
+        availableBalance: Number(rawSummary.availableBalance ?? 0),
+        pendingAmount: Number(rawSummary.pendingAmount ?? 0),
         currency: rawSummary.currency ?? "KRW",
       }
     : null;
@@ -45,11 +45,12 @@ export default async function CreatorPayoutPage() {
   const payouts = (rawPayouts ?? []).map((payout) => ({
     ...payout,
     amount: Number(payout.amount ?? 0),
+    currency: payout.currency ?? "KRW",
   }));
 
   const currency = summary?.currency?.toUpperCase() ?? "KRW";
-  const availableamount = summary?.availableamount ?? 0;
-  const pendingamount = summary?.pendingamount ?? 0;
+  const availableBalance = summary?.availableBalance ?? 0;
+  const pendingAmount = summary?.pendingAmount ?? 0;
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
@@ -64,14 +65,14 @@ export default async function CreatorPayoutPage() {
         <div className="rounded-2xl border border-white/10 bg-neutral-950 p-5 text-white">
           <p className="text-sm text-white/50">Available balance</p>
           <p className="mt-2 text-2xl font-semibold">
-            {availableamount.toLocaleString()} {currency}
+            {availableBalance.toLocaleString()} {currency}
           </p>
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-neutral-950 p-5 text-white">
-          <p className="text-sm text-white/50">Pending payout</p>
+          <p className="text-sm text-white/50">Pending requests</p>
           <p className="mt-2 text-2xl font-semibold">
-            {pendingamount.toLocaleString()} {currency}
+            {pendingAmount.toLocaleString()} {currency}
           </p>
         </div>
 
@@ -92,7 +93,7 @@ export default async function CreatorPayoutPage() {
         <div className="border-b border-white/10 px-5 py-4 text-white">
           <h2 className="text-lg font-semibold">Payout history</h2>
           <p className="mt-1 text-sm text-white/50">
-            Review your recent payout requests and statuses.
+            Review your recent payout statuses.
           </p>
         </div>
 
@@ -100,7 +101,7 @@ export default async function CreatorPayoutPage() {
           <div className="px-6 py-12 text-center">
             <p className="text-base font-medium text-white">No payouts yet</p>
             <p className="mt-2 text-sm text-white/60">
-              Your payout requests will appear here.
+              Your payout history will appear here.
             </p>
           </div>
         ) : (

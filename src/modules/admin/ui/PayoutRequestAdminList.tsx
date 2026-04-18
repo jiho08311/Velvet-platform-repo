@@ -1,4 +1,8 @@
-import { AdminPayoutRequestListItem } from "../server/list-payout-requests";
+import type { AdminPayoutAction } from "@/modules/admin/lib/payout-request-admin-policy"
+import type { AdminPayoutRequestListItem } from "@/modules/admin/server/list-payout-requests"
+
+
+
 import { AdminBadge } from "./AdminBadge";
 import { PayoutMarkAsFailedButton } from "./PayoutMarkAsFailedButton";
 import { PayoutMarkAsPaidButton } from "./PayoutMarkAsPaidButton";
@@ -24,15 +28,53 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-function renderActions(item: AdminPayoutRequestListItem) {
-  const { available_actions: actions } = item;
+function renderActionButton(
+  action: AdminPayoutAction,
+  payoutRequestId: string
+) {
+  if (action === "approve") {
+    return (
+      <PayoutRequestApproveButton
+        key={`${payoutRequestId}-approve`}
+        payoutRequestId={payoutRequestId}
+        disabled={false}
+      />
+    );
+  }
 
-  if (
-    !actions.approve &&
-    !actions.reject &&
-    !actions.markAsPaid &&
-    !actions.markAsFailed
-  ) {
+  if (action === "reject") {
+    return (
+      <PayoutRequestRejectButton
+        key={`${payoutRequestId}-reject`}
+        payoutRequestId={payoutRequestId}
+        disabled={false}
+      />
+    );
+  }
+
+  if (action === "mark_as_paid") {
+    return (
+      <PayoutMarkAsPaidButton
+        key={`${payoutRequestId}-mark-as-paid`}
+        payoutRequestId={payoutRequestId}
+        disabled={false}
+      />
+    );
+  }
+
+  return (
+    <PayoutMarkAsFailedButton
+      key={`${payoutRequestId}-mark-as-failed`}
+      payoutRequestId={payoutRequestId}
+      disabled={false}
+    />
+  );
+}
+
+function renderActions(item: AdminPayoutRequestListItem) {
+  const orderedActions = item.available_action_order;
+
+  if (orderedActions.length === 0) {
     return (
       <span className="inline-flex rounded-xl border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-400">
         No actions
@@ -42,21 +84,9 @@ function renderActions(item: AdminPayoutRequestListItem) {
 
   return (
     <div className="flex flex-wrap gap-2">
-      {actions.approve ? (
-        <PayoutRequestApproveButton payoutRequestId={item.id} disabled={false} />
-      ) : null}
-
-      {actions.reject ? (
-        <PayoutRequestRejectButton payoutRequestId={item.id} disabled={false} />
-      ) : null}
-
-      {actions.markAsPaid ? (
-        <PayoutMarkAsPaidButton payoutRequestId={item.id} disabled={false} />
-      ) : null}
-
-      {actions.markAsFailed ? (
-        <PayoutMarkAsFailedButton payoutRequestId={item.id} disabled={false} />
-      ) : null}
+      {orderedActions.map((action) =>
+        renderActionButton(action, item.id)
+      )}
     </div>
   );
 }
@@ -90,7 +120,9 @@ export function PayoutRequestAdminList({
           >
             <div className="min-w-0">
               <p className="truncate font-medium">{item.creator_label}</p>
-              <p className="mt-1 truncate text-xs text-zinc-400">{item.id}</p>
+              <p className="mt-1 truncate text-xs text-zinc-400">
+                {item.id}
+              </p>
             </div>
 
             <div className="font-medium">
@@ -109,11 +141,15 @@ export function PayoutRequestAdminList({
               </div>
 
               {item.failure_message ? (
-                <p className="mt-2 text-xs text-red-400">{item.failure_message}</p>
+                <p className="mt-2 text-xs text-red-400">
+                  {item.failure_message}
+                </p>
               ) : null}
             </div>
 
-            <div className="text-zinc-300">{formatDate(item.created_at)}</div>
+            <div className="text-zinc-300">
+              {formatDate(item.created_at)}
+            </div>
 
             <div>{renderActions(item)}</div>
           </div>

@@ -1,5 +1,7 @@
 type NullableString = string | null | undefined
 
+export const FAILED_PAYOUT_POLICY = "terminal" as const
+
 export type PayoutAccountReadinessState = "missing" | "incomplete" | "ready"
 
 export type ResolvedPayoutAccountReadiness = {
@@ -159,18 +161,44 @@ export function resolvePayoutRequestLifecycleState(input: {
 
 export type PayoutExecutionLifecycleState = "processing" | "paid" | "failed"
 
-export function resolvePayoutExecutionLifecycleState(input: {
+export type ResolvedPayoutExecutionLifecycleState = {
+  state: PayoutExecutionLifecycleState
+  isTerminal: boolean
+}
+
+export function resolvePayoutExecutionLifecycle(input: {
   payoutStatus?: PayoutStatus | null
-}): PayoutExecutionLifecycleState {
+}): ResolvedPayoutExecutionLifecycleState {
   const payoutStatus = input.payoutStatus ?? null
 
   if (payoutStatus === "paid") {
-    return "paid"
+    return {
+      state: "paid",
+      isTerminal: true,
+    }
   }
 
   if (payoutStatus === "failed") {
-    return "failed"
+    return {
+      state: "failed",
+      isTerminal: true,
+    }
   }
 
-  return "processing"
+  return {
+    state: "processing",
+    isTerminal: false,
+  }
+}
+
+export function resolvePayoutExecutionLifecycleState(input: {
+  payoutStatus?: PayoutStatus | null
+}): PayoutExecutionLifecycleState {
+  return resolvePayoutExecutionLifecycle(input).state
+}
+
+export function isPayoutExecutionTerminal(
+  state: PayoutExecutionLifecycleState | null | undefined
+): boolean {
+  return state === "paid" || state === "failed"
 }
