@@ -1,7 +1,23 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin";
 import { sendPayout } from "@/modules/payout/server/send-payout";
 
-export async function markPayoutAsPaid(payoutRequestId: string) {
+/**
+ * Admin paid adapter only.
+ *
+ * Responsibility boundary:
+ * - accepts admin request-scoped payoutRequestId
+ * - resolves payoutRequestId -> payoutId
+ * - delegates to canonical payout-domain paid entry
+ *
+ * This file must never own:
+ * - payout execution policy
+ * - payout terminal writes
+ * - linked earnings paid_out writes
+ * - rollback / postcondition logic
+ */
+async function resolvePayoutIdFromRequestId(
+  payoutRequestId: string
+): Promise<string> {
   const safePayoutRequestId = payoutRequestId.trim();
 
   if (!safePayoutRequestId) {
@@ -18,12 +34,16 @@ export async function markPayoutAsPaid(payoutRequestId: string) {
     throw new Error("payout not found");
   }
 
-  await sendPayout({
-    payoutId: payout.id,
-  });
+  return payout.id;
+}
+
+export async function markPayoutAsPaid(payoutRequestId: string) {
+  const payoutId = await resolvePayoutIdFromRequestId(payoutRequestId);
+
+  await sendPayout({ payoutId });
 
   return {
-    payoutId: payout.id,
-    payoutRequestId: safePayoutRequestId,
+    payoutId,
+    payoutRequestId: payoutRequestId.trim(),
   };
 }

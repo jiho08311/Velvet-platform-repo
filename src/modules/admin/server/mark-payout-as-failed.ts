@@ -1,7 +1,23 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin";
 import { markPayoutAsFailed as markCanonicalPayoutAsFailed } from "@/modules/payout/server/mark-payout-as-failed";
 
-export async function markPayoutAsFailed(payoutRequestId: string) {
+/**
+ * Admin failed adapter only.
+ *
+ * Responsibility boundary:
+ * - accepts admin request-scoped payoutRequestId
+ * - resolves payoutRequestId -> payoutId
+ * - delegates to canonical payout-domain failed entry
+ *
+ * This file must never own:
+ * - payout execution policy
+ * - payout terminal writes
+ * - linked earnings failed/release writes
+ * - rollback / postcondition logic
+ */
+async function resolvePayoutIdFromRequestId(
+  payoutRequestId: string
+): Promise<string> {
   const safePayoutRequestId = payoutRequestId.trim();
 
   if (!safePayoutRequestId) {
@@ -18,13 +34,20 @@ export async function markPayoutAsFailed(payoutRequestId: string) {
     throw new Error("payout not found");
   }
 
+  return payout.id;
+}
+
+export async function markPayoutAsFailed(payoutRequestId: string) {
+  const safePayoutRequestId = payoutRequestId.trim();
+  const payoutId = await resolvePayoutIdFromRequestId(safePayoutRequestId);
+
   await markCanonicalPayoutAsFailed({
-    payoutId: payout.id,
+    payoutId,
     failureReason: "Marked as failed by admin",
   });
 
   return {
-    payoutId: payout.id,
+    payoutId,
     payoutRequestId: safePayoutRequestId,
   };
 }

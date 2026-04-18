@@ -4,6 +4,8 @@ import {
   type PayoutRequestLifecycleState,
 } from "@/modules/payout/lib/resolve-payout-state"
 import { resolvePayoutExecutionPolicy } from "@/modules/payout/lib/payout-execution-policy"
+import { getPayoutExecutionLabel } from "@/modules/payout/lib/get-payout-execution-label"
+
 export type AdminPayoutAction =
   | "approve"
   | "reject"
@@ -15,6 +17,7 @@ type ResolveAdminRowInput = {
   payoutExecutionState?: PayoutExecutionLifecycleState | null
   hasPayout: boolean
 }
+
 type AdminPayoutBadgeTone =
   | "pending"
   | "approved"
@@ -22,6 +25,7 @@ type AdminPayoutBadgeTone =
   | "processing"
   | "paid"
   | "failed"
+
 type AdminPayoutStatusBadge = {
   key: "request" | "payout"
   label: string
@@ -33,20 +37,16 @@ export function resolveAdminPayoutRequestRow({
   payoutExecutionState,
   hasPayout,
 }: ResolveAdminRowInput) {
-  const actions = resolveActions({
-    requestLifecycleState,
-    payoutExecutionState,
-    hasPayout,
-  })
-
-  const badges = resolveBadges({
-    requestLifecycleState,
-    payoutExecutionState,
-  })
-
   return {
-    actions,
-    badges,
+    actions: resolveActions({
+      requestLifecycleState,
+      payoutExecutionState,
+      hasPayout,
+    }),
+    badges: resolveBadges({
+      requestLifecycleState,
+      payoutExecutionState,
+    }),
   }
 }
 
@@ -75,23 +75,21 @@ function resolveActions({
     return []
   }
 
- const policy = resolvePayoutExecutionPolicy({
-  status: payoutExecutionState,
-})
+  const executionPolicy = resolvePayoutExecutionPolicy({
+    status: payoutExecutionState,
+  })
 
-const actions: AdminPayoutAction[] = []
+  const actions: AdminPayoutAction[] = []
 
-if (policy.canSend) {
-  actions.push("mark_as_paid")
-}
+  if (executionPolicy.canSend) {
+    actions.push("mark_as_paid")
+  }
 
-if (policy.canMarkAsFailed) {
-  actions.push("mark_as_failed")
-}
+  if (executionPolicy.canMarkAsFailed) {
+    actions.push("mark_as_failed")
+  }
 
-return actions
-
-  return []
+  return actions
 }
 
 function resolveBadges({
@@ -101,55 +99,83 @@ function resolveBadges({
   requestLifecycleState: PayoutRequestLifecycleState
   payoutExecutionState?: PayoutExecutionLifecycleState | null
 }): AdminPayoutStatusBadge[] {
-  const badges: AdminPayoutStatusBadge[] = []
+  const badges: AdminPayoutStatusBadge[] = [
+    resolveRequestBadge(requestLifecycleState),
+  ]
 
-  if (requestLifecycleState === "pending_request") {
-    badges.push({
-      key: "request",
-      label: "request: Pending",
-      tone: "pending",
-    })
-  } else if (requestLifecycleState === "approved") {
-    badges.push({
-      key: "request",
-      label: "request: Approved",
-      tone: "approved",
-    })
-  } else if (requestLifecycleState === "rejected") {
-    badges.push({
-      key: "request",
-      label: "request: Rejected",
-      tone: "rejected",
-    })
-  } else {
-    badges.push({
-      key: "request",
-      label: "request: Inactive",
-      tone: "pending",
-    })
+  if (requestLifecycleState !== "approved" || !payoutExecutionState) {
+    return badges
   }
 
-  if (requestLifecycleState === "approved") {
-    if (payoutExecutionState === "paid") {
-      badges.push({
-        key: "payout",
-        label: "payout: Paid",
-        tone: "paid",
-      })
-    } else if (payoutExecutionState === "failed") {
-      badges.push({
-        key: "payout",
-        label: "payout: Failed",
-        tone: "failed",
-      })
-    } else if (payoutExecutionState === "processing") {
-      badges.push({
-        key: "payout",
-        label: "payout: Processing",
-        tone: "processing",
-      })
-    }
+  const payoutBadge = resolvePayoutBadge(payoutExecutionState)
+
+  if (payoutBadge) {
+    badges.push(payoutBadge)
   }
 
   return badges
+}
+
+function resolveRequestBadge(
+  requestLifecycleState: PayoutRequestLifecycleState
+): AdminPayoutStatusBadge {
+  if (requestLifecycleState === "pending_request") {
+    return {
+      key: "request",
+      label: "request: Pending",
+      tone: "pending",
+    }
+  }
+
+  if (requestLifecycleState === "approved") {
+    return {
+      key: "request",
+      label: "request: Approved",
+      tone: "approved",
+    }
+  }
+
+  if (requestLifecycleState === "rejected") {
+    return {
+      key: "request",
+      label: "request: Rejected",
+      tone: "rejected",
+    }
+  }
+
+  return {
+    key: "request",
+    label: "request: Inactive",
+    tone: "pending",
+  }
+}
+
+function resolvePayoutBadge(
+  payoutExecutionState: PayoutExecutionLifecycleState
+): AdminPayoutStatusBadge | null {
+  if (payoutExecutionState === "paid") {
+    return {
+      key: "payout",
+      label: getPayoutExecutionLabel(payoutExecutionState),
+      tone: "paid",
+    }
+  }
+
+  if (payoutExecutionState === "failed") {
+    return {
+      key: "payout",
+      label: getPayoutExecutionLabel(payoutExecutionState),
+      tone: "failed",
+    }
+  }
+
+  if (payoutExecutionState === "processing") {
+    return {
+      key: "payout",
+      label: getPayoutExecutionLabel(payoutExecutionState),
+      tone: "processing",
+    }
+  }
+
+  return null
 }

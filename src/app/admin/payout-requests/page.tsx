@@ -1,7 +1,10 @@
-import { PayoutRequestAdminList } from "@/modules/admin/ui/PayoutRequestAdminList";
 import { listPayoutRequests } from "@/modules/admin/server/list-payout-requests";
+import { requireAdmin } from "@/modules/admin/server/require-admin";
+import { PayoutRequestAdminList } from "@/modules/admin/ui/PayoutRequestAdminList";
 
 export default async function AdminPayoutRequestsPage() {
+  await requireAdmin();
+
   const items = await listPayoutRequests();
 
   return (

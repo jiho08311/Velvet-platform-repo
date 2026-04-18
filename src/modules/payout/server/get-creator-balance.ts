@@ -24,6 +24,24 @@ export type CreatorBalance = {
   availableBalance: number
 }
 
+/**
+ * Compact creator payout balance reader.
+ *
+ * Responsibility:
+ * - return creator-level compact totals for simple balance surfaces
+ * - keep creator-facing "availableBalance" aligned with requestable earnings only
+ *
+ * Source-of-truth rule:
+ * - availableBalance here means requestable balance, not raw status="available" sum
+ * - canonical requestable rule lives in payout-balance-policy.ts
+ *
+ * This file must not become the source of truth for:
+ * - pending/requested payout request amounts
+ * - payout request lifecycle summaries
+ * - payout execution history
+ *
+ * For full creator-facing earnings breakdowns, use get-creator-earnings-balance.ts
+ */
 export async function getCreatorBalance({
   creatorId,
 }: GetCreatorBalanceParams): Promise<CreatorBalance> {

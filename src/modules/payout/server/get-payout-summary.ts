@@ -1,19 +1,37 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
-import { getCreatorBalance } from "./get-creator-balance"
-import {
-  resolvePayoutExecutionLifecycleState,
-  type PayoutExecutionLifecycleState,
-} from "@/modules/payout/lib/resolve-payout-state"
+import { getCreatorEarningsBalance } from "./get-creator-earnings-balance"
+import { resolvePayoutExecutionProjection } from "@/modules/payout/lib/resolve-payout-execution-projection"
+import type { PayoutExecutionLifecycleState } from "@/modules/payout/lib/resolve-payout-state"
 
+/**
+ * Canonical payout overview reader.
+ *
+ * Use this file for payout dashboard / summary surfaces that need:
+ * - available balance
+ * - pending request amount
+ * - recent payout snapshots
+ *
+ * This file is a summary read-model only.
+ * It must not:
+ * - interpret payout request rejection vs execution failure wording
+ * - infer retryability from failed payouts
+ * - define terminal payout policy
+ *
+ * Source-of-truth boundaries:
+ * - execution lifecycle meaning comes from resolve-payout-state.ts
+ * - creator-facing balance totals come from payout-balance-policy.ts via getCreatorEarningsBalance()
+ * - failed terminal behavior comes from execute-payout-terminal-transition.ts
+ *
+ * This file is not the source of truth for:
+ * - authenticated creator payout history
+ * - generic full payout list queries
+ * - request-phase admin list views
+ */
 type PayoutRow = {
   id: string
   amount: number | null
   status: "pending" | "processing" | "paid" | "failed"
   created_at: string
-}
-
-type PendingPayoutRequestRow = {
-  amount: number | null
 }
 
 export type PayoutSummary = {
@@ -30,23 +48,42 @@ export type PayoutSummary = {
   }>
 }
 
+function toRecentPayout(row: PayoutRow): PayoutSummary["recentPayouts"][number] {
+  const projection = resolvePayoutExecutionProjection({
+    id: row.id,
+    amount: row.amount,
+    currency: "KRW",
+    status: row.status,
+    createdAt: row.created_at,
+  })
+
+  return {
+    id: projection.id,
+    amount: projection.amount,
+    status: projection.status,
+    lifecycleState: projection.lifecycleState,
+    createdAt: projection.createdAt,
+  }
+}
+
 export async function getPayoutSummary(
   creatorId: string
 ): Promise<PayoutSummary | null> {
   const supabase = await createSupabaseServerClient()
+  const safeCreatorId = creatorId.trim()
 
-  const id = creatorId.trim()
-
-  if (!id) {
+  if (!safeCreatorId) {
     return null
   }
 
-  const balance = await getCreatorBalance({ creatorId: id })
+  const earningsBalance = await getCreatorEarningsBalance({
+    creatorId: safeCreatorId,
+  })
 
   const { data: payouts, error: payoutsError } = await supabase
     .from("payouts")
     .select("id, amount, status, created_at")
-    .eq("creator_id", id)
+    .eq("creator_id", safeCreatorId)
     .order("created_at", { ascending: false })
     .returns<PayoutRow[]>()
 
@@ -54,36 +91,11 @@ export async function getPayoutSummary(
     throw payoutsError
   }
 
-  const { data: pendingRequests, error: pendingRequestsError } = await supabase
-    .from("payout_requests")
-    .select("amount")
-    .eq("creator_id", id)
-    .eq("status", "pending")
-    .returns<PendingPayoutRequestRow[]>()
-
-  if (pendingRequestsError) {
-    throw pendingRequestsError
-  }
-
-  const pendingAmount =
-    pendingRequests?.reduce((sum, row) => sum + (row.amount ?? 0), 0) ?? 0
-
-  const requestableAvailableBalance = balance.availableBalance
-
   return {
-    creatorId: id,
-    currency: "KRW",
-    availableBalance: requestableAvailableBalance,
-    pendingAmount,
-    recentPayouts:
-      payouts?.slice(0, 5).map((payout) => ({
-        id: payout.id,
-        amount: payout.amount ?? 0,
-        status: payout.status,
-        lifecycleState: resolvePayoutExecutionLifecycleState({
-          payoutStatus: payout.status,
-        }),
-        createdAt: payout.created_at,
-      })) ?? [],
+    creatorId: safeCreatorId,
+    currency: earningsBalance?.currency ?? "KRW",
+    availableBalance: earningsBalance?.requestableamount ?? 0,
+    pendingAmount: earningsBalance?.requestedamount ?? 0,
+    recentPayouts: (payouts ?? []).slice(0, 5).map(toRecentPayout),
   }
 }

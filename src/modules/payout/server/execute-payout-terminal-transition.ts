@@ -1,6 +1,27 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin";
 import { resolvePayoutExecutionPolicy } from "@/modules/payout/lib/payout-execution-policy";
 
+/**
+ * Canonical terminal execution authority for payout paid/failed transitions.
+ *
+ * Source-of-truth rules for this section:
+ * - All payout terminal state writes must go through this file.
+ * - All linked earnings terminal writes for payout execution must go through this file.
+ * - Public payout-domain entry points (send / mark-as-failed) are thin intent adapters only.
+ * - Admin server wrappers must never re-implement terminal execution business logic.
+ *
+ * This file owns:
+ * - payout terminal precondition checks
+ * - payout terminal writes
+ * - linked earnings terminal writes
+ * - rollback on partial failure
+ * - terminal postcondition verification
+ *
+ * Non-goals for this file:
+ * - payout request approve/reject flow
+ * - request-phase earnings release helpers
+ * - read-side summaries / list shaping
+ */
 type ExecutePayoutTerminalTransitionTarget = "paid" | "failed";
 
 type ExecutePayoutTerminalTransitionParams = {
@@ -65,6 +86,13 @@ async function getLinkedRequestedEarnings(
   return data ?? [];
 }
 
+/**
+ * Canonical paid postcondition verification.
+ * Paid terminal success is not complete unless:
+ * - payout is paid
+ * - every linked requested earning is paid_out
+ * - every linked requested earning has paid_out_at
+ */
 async function verifyPaidPostcondition(params: {
   payoutId: string;
   earningIds: string[];
@@ -108,6 +136,13 @@ async function verifyPaidPostcondition(params: {
   }
 }
 
+/**
+ * Canonical failed postcondition verification.
+ * Failed terminal success is not complete unless:
+ * - payout is failed
+ * - every linked requested earning is released back to available
+ * - released earnings no longer point at payout / payout_request
+ */
 async function verifyFailedPostcondition(params: {
   payoutId: string;
   releasedEarningIds: string[];
@@ -272,31 +307,31 @@ export async function executePayoutTerminalTransition({
       .select("id")
       .returns<Array<{ id: string }>>();
 
-    if (releaseError) {
-      await supabaseAdmin
-        .from("payouts")
-        .update({
-          status: payout.status,
-          paid_at: payout.paid_at,
-          failure_reason: payout.failure_reason,
-        })
-        .eq("id", safePayoutId);
+      if (releaseError) {
+        await supabaseAdmin
+          .from("payouts")
+          .update({
+            status: payout.status,
+            paid_at: payout.paid_at,
+            failure_reason: payout.failure_reason,
+          })
+          .eq("id", safePayoutId);
 
-      throw releaseError;
-    }
+        throw releaseError;
+      }
 
-    if (!releasedEarnings || releasedEarnings.length !== linkedRequestedEarningIds.length) {
-      await supabaseAdmin
-        .from("payouts")
-        .update({
-          status: payout.status,
-          paid_at: payout.paid_at,
-          failure_reason: payout.failure_reason,
-        })
-        .eq("id", safePayoutId);
+      if (!releasedEarnings || releasedEarnings.length !== linkedRequestedEarningIds.length) {
+        await supabaseAdmin
+          .from("payouts")
+          .update({
+            status: payout.status,
+            paid_at: payout.paid_at,
+            failure_reason: payout.failure_reason,
+          })
+          .eq("id", safePayoutId);
 
-      throw new Error("FAILED_TO_RELEASE_ALL_LINKED_EARNINGS");
-    }
+        throw new Error("FAILED_TO_RELEASE_ALL_LINKED_EARNINGS");
+      }
   }
 
   await verifyFailedPostcondition({

@@ -1,14 +1,15 @@
 import {
   resolvePayoutExecutionLifecycleState,
   type PayoutExecutionLifecycleState,
-  type PayoutStatus,
 } from "@/modules/payout/lib/resolve-payout-state"
+
+type PayoutProjectionStatus = "pending" | "processing" | "paid" | "failed"
 
 type PayoutExecutionProjectionInput = {
   id: string
   amount?: number | null
   currency?: string | null
-  status?: PayoutStatus | null
+  status?: PayoutProjectionStatus | null
   createdAt: string
   paidAt?: string | null
   failureReason?: string | null
@@ -28,11 +29,7 @@ export type PayoutExecutionProjection = {
 export function resolvePayoutExecutionProjection(
   input: PayoutExecutionProjectionInput
 ): PayoutExecutionProjection {
-  const status = (input.status ?? "pending") as
-    | "pending"
-    | "processing"
-    | "paid"
-    | "failed"
+  const status: PayoutProjectionStatus = input.status ?? "pending"
 
   return {
     id: input.id,

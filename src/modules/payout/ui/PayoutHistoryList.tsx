@@ -2,7 +2,7 @@ import { EmptyState } from "@/shared/ui/EmptyState"
 import { StatusBadge } from "@/shared/ui/StatusBadge"
 import type { PayoutExecutionLifecycleState } from "@/modules/payout/lib/resolve-payout-state"
 
-type PayoutListItem = {
+type PayoutHistoryListItem = {
   id: string
   amount: number
   currency?: string | null
@@ -12,8 +12,8 @@ type PayoutListItem = {
   failureReason?: string | null
 }
 
-type PayoutListProps = {
-  payouts: PayoutListItem[]
+type PayoutHistoryListProps = {
+  payouts: PayoutHistoryListItem[]
   emptyTitle?: string
   emptyDescription?: string
 }
@@ -30,11 +30,47 @@ function formatDate(value: string) {
   return new Date(value).toLocaleString()
 }
 
-export function PayoutList({
+function getPayoutExecutionLabel(
+  lifecycleState: PayoutExecutionLifecycleState
+): string {
+  if (lifecycleState === "paid") {
+    return "지급 완료"
+  }
+
+  if (lifecycleState === "failed") {
+    return "지급 실패"
+  }
+
+  return "처리 중"
+}
+
+function renderPayoutMeta(payout: PayoutHistoryListItem) {
+  return (
+    <>
+      <p className="text-sm font-medium text-zinc-900">
+        생성됨 {formatDate(payout.createdAt)}
+      </p>
+
+      {payout.lifecycleState === "paid" && payout.paidAt ? (
+        <p className="mt-1 text-xs text-zinc-500">
+          지급됨 {formatDate(payout.paidAt)}
+        </p>
+      ) : null}
+
+      {payout.lifecycleState === "failed" && payout.failureReason ? (
+        <p className="mt-1 text-xs text-red-600">
+          {payout.failureReason}
+        </p>
+      ) : null}
+    </>
+  )
+}
+
+export function PayoutHistoryList({
   payouts,
   emptyTitle = "출금 내역이 없습니다",
-  emptyDescription = "출금 내역은 생성되면 여기에 표시됩니다.",
-}: PayoutListProps) {
+  emptyDescription = "출금 실행 내역은 생성되면 여기에 표시됩니다.",
+}: PayoutHistoryListProps) {
   if (payouts.length === 0) {
     return (
       <div className="rounded-3xl border border-zinc-200 bg-white p-6">
@@ -57,23 +93,7 @@ export function PayoutList({
             key={payout.id}
             className="grid gap-4 px-5 py-4 transition-all duration-200 ease-out hover:bg-zinc-50 sm:grid-cols-[1fr_auto_auto] sm:items-center"
           >
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-zinc-900">
-                생성됨 {formatDate(payout.createdAt)}
-              </p>
-
-              {payout.lifecycleState === "paid" && payout.paidAt ? (
-                <p className="mt-1 text-xs text-zinc-500">
-                  지급됨 {formatDate(payout.paidAt)}
-                </p>
-              ) : null}
-
-              {payout.lifecycleState === "failed" && payout.failureReason ? (
-                <p className="mt-1 text-xs text-red-600">
-                  {payout.failureReason}
-                </p>
-              ) : null}
-            </div>
+            <div className="min-w-0">{renderPayoutMeta(payout)}</div>
 
             <div className="sm:text-right">
               <p className="text-xs uppercase tracking-[0.16em] text-zinc-500 sm:hidden">
@@ -89,7 +109,7 @@ export function PayoutList({
                 상태
               </p>
               <div className="mt-1 sm:mt-0">
-                <StatusBadge label={payout.lifecycleState} />
+                <StatusBadge label={getPayoutExecutionLabel(payout.lifecycleState)} />
               </div>
             </div>
           </div>
@@ -98,3 +118,9 @@ export function PayoutList({
     </div>
   )
 }
+
+/**
+ * Backward-compatible alias.
+ * Keep this export until all existing imports have been verified.
+ */
+export const PayoutList = PayoutHistoryList

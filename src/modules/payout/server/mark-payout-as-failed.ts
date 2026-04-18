@@ -1,5 +1,18 @@
 import { executePayoutTerminalTransition } from "./execute-payout-terminal-transition";
 
+/**
+ * Canonical public failed-entry for payout execution.
+ *
+ * This file is intentionally thin:
+ * - accepts payout intent = failed
+ * - delegates all terminal execution business logic to executePayoutTerminalTransition
+ *
+ * It must never own:
+ * - payout status validation policy
+ * - linked earnings failure/release policy
+ * - rollback logic
+ * - postcondition verification
+ */
 type MarkPayoutAsFailedParams = {
   payoutId: string;
   failureReason?: string;

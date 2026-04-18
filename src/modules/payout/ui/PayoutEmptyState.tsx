@@ -5,7 +5,7 @@ type PayoutEmptyStateProps = {
 
 export function PayoutEmptyState({
   title = "출금 내역이 없습니다",
-  description = "출금 요청이 생성되면 여기에 표시됩니다.",
+  description = "출금 실행 내역이 생성되면 여기에 표시됩니다.",
 }: PayoutEmptyStateProps) {
   return (
     <div className="overflow-hidden rounded-[28px] border border-zinc-200 bg-white">
