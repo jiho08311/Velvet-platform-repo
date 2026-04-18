@@ -48,27 +48,18 @@ export type AdminPayoutRequestListItem = {
   failure_message: string | null;
 };
 
-type CreatorProfileJoinRow = {
-  username: string | null;
-  display_name: string | null;
-};
-
-type CreatorJoinRow = {
-  username: string | null;
-  display_name: string | null;
-  profiles?: CreatorProfileJoinRow[] | CreatorProfileJoinRow | null;
-};
-
-type ResolvedCreatorPresentation = {
-  username: string | null;
-  displayName: string | null;
-};
-
 type PayoutRow = {
   id: string;
+  payout_request_id: string | null;
   status: "pending" | "processing" | "paid" | "failed";
   paid_at: string | null;
   failure_reason: string | null;
+};
+
+type CreatorRow = {
+  id: string;
+  username: string | null;
+  display_name: string | null;
 };
 
 type PayoutRequestRow = {
@@ -80,29 +71,7 @@ type PayoutRequestRow = {
   created_at: string;
   approved_at: string | null;
   rejected_at: string | null;
-  payouts?: PayoutRow[] | PayoutRow | null;
-  creators?: CreatorJoinRow[] | CreatorJoinRow | null;
 };
-
-function takeFirst<T>(value: T[] | T | null | undefined): T | null {
-  if (Array.isArray(value)) return value[0] ?? null;
-  return value ?? null;
-}
-
-function normalizeCreatorPresentation(
-  value: PayoutRequestRow["creators"]
-): ResolvedCreatorPresentation {
-  const creator = takeFirst(value);
-  const profile = takeFirst(creator?.profiles);
-
-  return {
-    username: creator?.username?.trim() || profile?.username?.trim() || null,
-    displayName:
-      creator?.display_name?.trim() ||
-      profile?.display_name?.trim() ||
-      null,
-  };
-}
 
 function resolveCreatorLabel(input: {
   creatorId: string;
@@ -132,21 +101,7 @@ export async function listPayoutRequests(): Promise<
       status,
       created_at,
       approved_at,
-      rejected_at,
-      payouts (
-        id,
-        status,
-        paid_at,
-        failure_reason
-      ),
-      creators (
-        username,
-        display_name,
-        profiles (
-          username,
-          display_name
-        )
-      )
+      rejected_at
     `)
     .order("created_at", { ascending: false });
 
@@ -154,63 +109,105 @@ export async function listPayoutRequests(): Promise<
     throw new Error(error.message);
   }
 
-  const items: AdminPayoutRequestListItem[] = (data ?? []).map(
-    (item: PayoutRequestRow) => {
-      const payout = takeFirst(item.payouts);
-      const creatorPresentation = normalizeCreatorPresentation(item.creators);
+  const requestRows = (data ?? []) as PayoutRequestRow[];
+  const requestIds = requestRows.map((row) => row.id);
+  const creatorIds = [...new Set(requestRows.map((row) => row.creator_id))];
 
-      const requestLifecycleState = resolvePayoutRequestLifecycleState({
-        payoutRequestStatus: item.status,
-      }).state;
+  let payoutRows: PayoutRow[] = [];
+  if (requestIds.length > 0) {
+    const { data: payoutsData, error: payoutsError } = await supabase
+      .from("payouts")
+      .select("id, payout_request_id, status, paid_at, failure_reason")
+      .in("payout_request_id", requestIds)
+      .returns<PayoutRow[]>();
 
-      const payoutExecutionState = payout
-        ? resolvePayoutExecutionLifecycleState({
-            payoutStatus: payout.status,
-          })
+    if (payoutsError) {
+      throw new Error(payoutsError.message);
+    }
+
+    payoutRows = payoutsData ?? [];
+  }
+
+  let creatorRows: CreatorRow[] = [];
+  if (creatorIds.length > 0) {
+    const { data: creatorsData, error: creatorsError } = await supabase
+      .from("creators")
+      .select("id, username, display_name")
+      .in("id", creatorIds)
+      .returns<CreatorRow[]>();
+
+    if (creatorsError) {
+      throw new Error(creatorsError.message);
+    }
+
+    creatorRows = creatorsData ?? [];
+  }
+
+  const payoutMap = new Map(
+    payoutRows.map((payout) => [payout.payout_request_id, payout])
+  );
+
+  const creatorMap = new Map(
+    creatorRows.map((creator) => [creator.id, creator])
+  );
+
+  const items: AdminPayoutRequestListItem[] = requestRows.map((item) => {
+    const payout = payoutMap.get(item.id) ?? null;
+    const creator = creatorMap.get(item.creator_id) ?? null;
+
+    const requestLifecycleState = resolvePayoutRequestLifecycleState({
+      payoutRequestStatus: item.status,
+    }).state;
+
+    const payoutExecutionState = payout
+      ? resolvePayoutExecutionLifecycleState({
+          payoutStatus: payout.status,
+        })
+      : null;
+
+    const policy = resolveAdminPayoutRequestRow({
+      requestLifecycleState,
+      payoutExecutionState,
+      hasPayout: Boolean(payout),
+    });
+
+    const failureMessage =
+      payoutExecutionState === "failed"
+        ? payout?.failure_reason ?? "Payout failed"
         : null;
 
-      // 🔥 핵심 변경
-      const policy = resolveAdminPayoutRequestRow({
-        requestLifecycleState,
-        payoutExecutionState,
-        hasPayout: Boolean(payout),
-      });
+    const creatorUsername = creator?.username?.trim() || null;
+    const creatorDisplayName = creator?.display_name?.trim() || null;
 
-      const failureMessage =
-        payoutExecutionState === "failed"
-          ? payout?.failure_reason ?? "Payout failed"
-          : null;
+    const creatorLabel = resolveCreatorLabel({
+      creatorId: item.creator_id,
+      creatorUsername,
+      creatorDisplayName,
+    });
 
-      const creatorLabel = resolveCreatorLabel({
-        creatorId: item.creator_id,
-        creatorUsername: creatorPresentation.username,
-        creatorDisplayName: creatorPresentation.displayName,
-      });
-
-      return {
-        id: item.id,
-        creator_id: item.creator_id,
-        creator_username: creatorPresentation.username,
-        creator_display_name: creatorPresentation.displayName,
-        creator_label: creatorLabel,
-        amount: Number(item.amount ?? 0),
-        currency: item.currency ?? "KRW",
-        status: item.status,
-        created_at: item.created_at,
-        approved_at: item.approved_at ?? null,
-        rejected_at: item.rejected_at ?? null,
-        payout_id: payout?.id ?? null,
-        payout_status: payout?.status ?? null,
-        payout_paid_at: payout?.paid_at ?? null,
-        payout_failure_reason: payout?.failure_reason ?? null,
-        request_lifecycle_state: requestLifecycleState,
-        payout_execution_state: payoutExecutionState,
-        status_badges: policy.badges,
-        available_action_order: policy.actions,
-        failure_message: failureMessage,
-      };
-    }
-  );
+    return {
+      id: item.id,
+      creator_id: item.creator_id,
+      creator_username: creatorUsername,
+      creator_display_name: creatorDisplayName,
+      creator_label: creatorLabel,
+      amount: Number(item.amount ?? 0),
+      currency: item.currency ?? "KRW",
+      status: item.status,
+      created_at: item.created_at,
+      approved_at: item.approved_at ?? null,
+      rejected_at: item.rejected_at ?? null,
+      payout_id: payout?.id ?? null,
+      payout_status: payout?.status ?? null,
+      payout_paid_at: payout?.paid_at ?? null,
+      payout_failure_reason: payout?.failure_reason ?? null,
+      request_lifecycle_state: requestLifecycleState,
+      payout_execution_state: payoutExecutionState,
+      status_badges: policy.badges,
+      available_action_order: policy.actions,
+      failure_message: failureMessage,
+    };
+  });
 
   return items.sort((a, b) => {
     const aPending = a.request_lifecycle_state === "pending_request" ? 0 : 1;
