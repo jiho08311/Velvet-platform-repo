@@ -220,17 +220,18 @@ export default async function PayoutsPage() {
           {payouts.length === 0 ? (
             <PayoutEmptyState />
           ) : (
-            <PayoutList
-              payouts={payouts.map((p) => ({
-                id: p.id,
-                amount: p.amount,
-                currency: p.currency,
-                status: p.status,
-                createdAt: p.createdAt,
-                paidAt: p.paidAt,
-                failureReason: p.failureReason,
-              }))}
-            />
+         <PayoutList
+  payouts={payouts.map((p) => ({
+    id: p.id,
+    amount: p.amount,
+    currency: p.currency,
+    status: p.status,
+    lifecycleState: p.lifecycleState,
+    createdAt: p.createdAt,
+    paidAt: p.paidAt,
+    failureReason: p.failureReason,
+  }))}
+/>
           )}
         </Card>
       </div>
