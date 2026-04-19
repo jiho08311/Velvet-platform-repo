@@ -200,7 +200,7 @@ export async function getCreatorFeed({
       }
 
       const isLocked = lockReason !== "none"
-      const shouldHideContent = isLocked || publicState === "upcoming"
+      const shouldHideContent = isLocked || (publicState === "upcoming" && !isOwner)
 
       return {
         ...post,
@@ -365,10 +365,10 @@ export async function getCreatorFeed({
         content: post.content,
         created_at: post.created_at,
         media,
-        blocks:
-          post.isLocked || post.publicState === "upcoming"
-            ? []
-            : blocksMap.get(post.id) ?? [],
+      blocks:
+  post.isLocked || (post.publicState === "upcoming" && !isOwner)
+    ? []
+    : blocksMap.get(post.id) ?? [],
         price: post.price,
         isLocked: post.isLocked,
         likesCount: likeCountMap.get(post.id) ?? 0,
