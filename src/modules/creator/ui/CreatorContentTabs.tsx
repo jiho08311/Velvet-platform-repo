@@ -164,11 +164,12 @@ export function CreatorContentTabs({
             const isUpcoming = post.status === "scheduled"
             const isLocked = !isOwner && Boolean(post.isLocked)
 
-            const previewText = isUpcoming
-              ? "Upcoming post"
-              : isLocked
-                ? "Subscribe to read this update."
-                : post.content?.trim() || "No content"
+           const previewText =
+  isUpcoming && !isOwner
+    ? "Upcoming post"
+    : isLocked
+      ? "Subscribe to read this update."
+      : post.content?.trim() || "No content"
 
             const dateLabel = isUpcoming
               ? formatDate(post.publishedAt ?? post.published_at)

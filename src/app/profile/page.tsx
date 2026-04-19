@@ -1,14 +1,14 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import type { MyPostListItem } from "@/modules/post/server/get-my-posts"
+
 import { getSession } from "@/modules/auth/server/get-session"
 import { getProfileByUserId } from "@/modules/profile/server/get-profile-by-user-id"
 import { getUserById } from "@/modules/user/server/get-user-by-id"
-import { getMyPosts } from "@/modules/post/server/get-my-posts"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
-import { ReportButton } from "@/modules/report/ui/ReportButton"
 import { ProfileContentTabs } from "@/modules/profile/ui/ProfileContentTabs"
 import { getCreatorDashboardSummary } from "@/modules/analytics/server/get-creator-dashboard-summary"
+import { getCreatorFeed } from "@/modules/post/server/get-creator-feed"
+
 type ProfileData = {
   id: string
   displayName: string
@@ -105,7 +105,7 @@ function normalizeProfileData(
       (user &&
         getStringValue(user, ["createdAt", "created_at", "joinedAt"])) ||
       new Date().toISOString(),
-    isCreator: true,
+    isCreator: getIsCreator(profile),
   }
 }
 
@@ -119,31 +119,51 @@ export default async function ProfilePage() {
   const creator = await getCreatorByUserId(userId)
   const creatorId = creator?.id
 
-  const [profileData, userData, postResult, summary] = await Promise.all([
-  getProfileByUserId(userId),
-  getUserById(userId),
-  creatorId
-    ? getMyPosts({ creatorId })
-    : Promise.resolve({ items: [] }),
-  creatorId
-    ? getCreatorDashboardSummary(creatorId)
-    : Promise.resolve(null),
-])
+  const [profileData, userData, creatorFeedPosts, summary] = await Promise.all([
+    getProfileByUserId(userId),
+    getUserById(userId),
+    creatorId && creator
+      ? getCreatorFeed({
+          creatorId,
+          creatorUserId: creator.userId,
+          userId,
+        })
+      : Promise.resolve([]),
+    creatorId
+      ? getCreatorDashboardSummary(creatorId)
+      : Promise.resolve(null),
+  ])
 
-const posts = postResult.items
-const profile = normalizeProfileData(profileData, userData)
+const posts = creatorFeedPosts.map((post) => {
+  const resolvedStatus: "draft" | "scheduled" | "published" | "archived" =
+    post.status === "scheduled" ? "scheduled" : "published"
 
-const updatePosts = posts.filter(
-  (post) =>
-    (post.media?.length ?? 0) === 0 ||
-    post.status !== "published"
-)
+  return {
+    id: post.id,
+    creatorId: creatorId ?? "",
+    text: post.content ?? "",
+    status: resolvedStatus,
+    visibility: post.visibility,
+    isLocked: post.isLocked,
+    createdAt: post.created_at,
+    publishedAt: post.published_at ?? null,
+    media:
+      post.media?.map((item) => ({
+        url: item.url,
+        type: item.type,
+      })) ?? [],
+  }
+})
 
-const mediaPosts = posts.filter(
-  (post) =>
-    (post.media?.length ?? 0) > 0 &&
-    post.status === "published"
-)
+  const profile = normalizeProfileData(profileData, userData)
+
+  const updatePosts = posts.filter(
+    (post) => (post.media?.length ?? 0) === 0 || post.status !== "published"
+  )
+
+  const mediaPosts = posts.filter(
+    (post) => (post.media?.length ?? 0) > 0 && post.status === "published"
+  )
 
   if (!profile) {
     return (
@@ -158,94 +178,91 @@ const mediaPosts = posts.filter(
   }
 
   return (
-<main className="min-h-screen bg-zinc-950 px-4 py-6 text-zinc-100 md:px-6 md:py-8">
-  <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-  
-<section className="flex flex-col gap-6">
-  <div className="flex items-start gap-4 md:gap-8">
-    <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full border border-zinc-800 bg-zinc-900 md:h-32 md:w-32">
-      {profile.avatarUrl ? (
-        <img
-          src={profile.avatarUrl}
-          alt={profile.displayName}
-          className="h-full w-full object-cover"
-        />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center text-3xl font-semibold text-white md:text-4xl">
-          {profile.displayName.slice(0, 1).toUpperCase()}
-        </div>
-      )}
-    </div>
+    <main className="min-h-screen bg-zinc-950 px-4 py-6 text-zinc-100 md:px-6 md:py-8">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+        <section className="flex flex-col gap-6">
+          <div className="flex items-start gap-4 md:gap-8">
+            <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full border border-zinc-800 bg-zinc-900 md:h-32 md:w-32">
+              {profile.avatarUrl ? (
+                <img
+                  src={profile.avatarUrl}
+                  alt={profile.displayName}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-3xl font-semibold text-white md:text-4xl">
+                  {profile.displayName.slice(0, 1).toUpperCase()}
+                </div>
+              )}
+            </div>
 
-    <div className="min-w-0 flex-1">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1 md:flex-row md:items-center md:gap-3">
-          <h1 className="truncate text-xl font-semibold tracking-tight text-white md:text-2xl">
-            {profile.displayName}
-          </h1>
-          <p className="truncate text-sm text-zinc-500 md:text-base">
-            @{profile.username}
-          </p>
-        </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1 md:flex-row md:items-center md:gap-3">
+                  <h1 className="truncate text-xl font-semibold tracking-tight text-white md:text-2xl">
+                    {profile.displayName}
+                  </h1>
+                  <p className="truncate text-sm text-zinc-500 md:text-base">
+                    @{profile.username}
+                  </p>
+                </div>
 
-        <div className="grid grid-cols-3 gap-4 md:max-w-md">
-          <div>
-            <p className="text-lg font-semibold text-white md:text-xl">
-              {mediaPosts.length}
+                <div className="grid grid-cols-3 gap-4 md:max-w-md">
+                  <div>
+                    <p className="text-lg font-semibold text-white md:text-xl">
+                      {mediaPosts.length}
+                    </p>
+                    <p className="text-sm text-zinc-500">Posts</p>
+                  </div>
+
+                  <div>
+                    <p className="text-lg font-semibold text-white md:text-xl">
+                      {updatePosts.length}
+                    </p>
+                    <p className="text-sm text-zinc-500">Updates</p>
+                  </div>
+
+                  <div>
+                    <p className="text-lg font-semibold text-white md:text-xl">
+                      {summary?.subscriberCount ?? 0}
+                    </p>
+                    <p className="text-sm text-zinc-500">Subscribers</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="max-w-2xl">
+            <p className="text-sm font-medium text-white">{profile.displayName}</p>
+            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-300 md:text-[15px]">
+              {profile.bio || "No bio yet"}
             </p>
-            <p className="text-sm text-zinc-500">Posts</p>
           </div>
 
-          <div>
-            <p className="text-lg font-semibold text-white md:text-xl">
-              {updatePosts.length}
-            </p>
-            <p className="text-sm text-zinc-500">Updates</p>
+          <div className="grid grid-cols-2 gap-3 md:max-w-md">
+            <Link
+              href="/profile/edit"
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm font-semibold text-white transition hover:border-zinc-600 hover:bg-zinc-800"
+            >
+              Edit profile
+            </Link>
+
+            <Link
+              href={`/creator/${profile.username}`}
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm font-semibold text-white transition hover:border-zinc-600 hover:bg-zinc-800"
+            >
+              View creator page
+            </Link>
           </div>
+        </section>
 
-          <div>
-     <p className="text-lg font-semibold text-white md:text-xl">
-  {summary?.subscriberCount ?? 0}
-</p>
-            <p className="text-sm text-zinc-500">Subscribers</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div className="max-w-2xl">
-    <p className="text-sm font-medium text-white">{profile.displayName}</p>
-    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-300 md:text-[15px]">
-      {profile.bio || "No bio yet"}
-    </p>
-  </div>
-
-  <div className="grid grid-cols-2 gap-3 md:max-w-md">
-    <Link
-      href="/profile/edit"
-      className="inline-flex h-11 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm font-semibold text-white transition hover:border-zinc-600 hover:bg-zinc-800"
-    >
-      Edit profile
-    </Link>
-
-    <Link
-      href={`/creator/${profile.username}`}
-      className="inline-flex h-11 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm font-semibold text-white transition hover:border-zinc-600 hover:bg-zinc-800"
-    >
-      View creator page
-    </Link>
-  </div>
-</section>
-
-
-{profile.isCreator && (
-  <ProfileContentTabs
-    mediaPosts={mediaPosts}
-    updatePosts={updatePosts}
-  />
-)}
-
+        {profile.isCreator && (
+          <ProfileContentTabs
+            mediaPosts={mediaPosts}
+            updatePosts={updatePosts}
+          />
+        )}
       </div>
     </main>
   )
