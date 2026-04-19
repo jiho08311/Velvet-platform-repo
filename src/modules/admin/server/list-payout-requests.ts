@@ -1,4 +1,4 @@
-import { createClient } from "@/infrastructure/supabase/server"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import {
   resolvePayoutExecutionLifecycleState,
   type PayoutExecutionLifecycleState,
@@ -246,9 +246,7 @@ function toAdminPayoutRequestListItem(input: {
 export async function listPayoutRequests(): Promise<
   AdminPayoutRequestListItem[]
 > {
-  const supabase = await createClient()
-
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("payout_requests")
     .select(`
       id,
@@ -274,7 +272,7 @@ export async function listPayoutRequests(): Promise<
   let payoutRows: PayoutRow[] = []
 
   if (requestIds.length > 0) {
-    const { data: payoutsData, error: payoutsError } = await supabase
+    const { data: payoutsData, error: payoutsError } = await supabaseAdmin
       .from("payouts")
       .select("id, payout_request_id, status, paid_at, failure_reason")
       .in("payout_request_id", requestIds)
@@ -290,7 +288,7 @@ export async function listPayoutRequests(): Promise<
   let creatorRows: CreatorRow[] = []
 
   if (creatorIds.length > 0) {
-    const { data: creatorsData, error: creatorsError } = await supabase
+    const { data: creatorsData, error: creatorsError } = await supabaseAdmin
       .from("creators")
       .select("id, username, display_name")
       .in("id", creatorIds)
