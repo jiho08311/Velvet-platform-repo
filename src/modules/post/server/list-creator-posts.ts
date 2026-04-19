@@ -106,7 +106,6 @@ export async function listCreatorPosts({
   const isOwner = !!safeUserId && safeUserId === creator.user_id
 
   if (
-    !isOwner &&
     !isPublicCreatorProfileVisible({
       creator: {
         status: creator.status,
@@ -144,24 +143,22 @@ export async function listCreatorPosts({
     throw error
   }
 
-  const posts = isOwner
-    ? (data ?? []).slice(0, safeLimit)
-    : (data ?? [])
-        .map((post) => ({
-          post,
-          publicState: getPostPublicState({
-            status: post.status,
-            visibility: post.visibility,
-            visibilityStatus: post.visibility_status,
-            moderationStatus: post.moderation_status,
-            publishedAt: post.published_at,
-            deletedAt: post.deleted_at,
-            now,
-          }),
-        }))
-        .filter(({ publicState }) => publicState === "published")
-        .map(({ post }) => post)
-        .slice(0, safeLimit)
+  const posts = (data ?? [])
+    .map((post) => ({
+      post,
+      publicState: getPostPublicState({
+        status: post.status,
+        visibility: post.visibility,
+        visibilityStatus: post.visibility_status,
+        moderationStatus: post.moderation_status,
+        publishedAt: post.published_at,
+        deletedAt: post.deleted_at,
+        now,
+      }),
+    }))
+    .filter(({ publicState }) => publicState === "published")
+    .map(({ post }) => post)
+    .slice(0, safeLimit)
 
   if (posts.length === 0) {
     return []
