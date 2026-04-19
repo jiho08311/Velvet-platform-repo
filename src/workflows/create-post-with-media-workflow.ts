@@ -146,29 +146,6 @@ async function sleep(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-async function updatePostApproved(
-  postId: string,
-  status: "scheduled" | "published" = "published"
-) {
-  const now = new Date().toISOString()
-
-  const { error } = await supabaseAdmin
-    .from("posts")
-  .update({
-  status,
-  visibility_status: status === "scheduled" ? "draft" : "published",
-  moderation_status: "approved",
-  moderation_completed_at: now,
-  updated_at: now,
-  ...(status === "published" ? { published_at: now } : {}),
-})
-    .eq("id", postId)
-
-  if (error) {
-    throw error
-  }
-}
-
 export async function checkTextSafety(text?: string | null) {
   const resolvedText = text?.trim() ?? ""
 
@@ -257,18 +234,18 @@ async function checkPostSafety({
   }
 }
 
-async function moderatePostAsync({
+async function moderatePostAndApplyTransition({
   postId,
   content,
   files,
-  shouldApproveOnSuccess,
-  approvedStatus = "published",
+  publishIntent,
+  publishedAt = null,
 }: {
   postId: string
   content?: string | null
   files: Array<File | UploadedFileInput>
-  shouldApproveOnSuccess: boolean
-  approvedStatus?: "scheduled" | "published"
+  publishIntent: "published" | "scheduled"
+  publishedAt?: string | null
 }) {
   try {
     await checkPostSafety({
@@ -276,26 +253,29 @@ async function moderatePostAsync({
       files,
     })
 
-    if (shouldApproveOnSuccess) {
-      await updatePostApproved(postId, approvedStatus)
-    }
+    await updatePostStatus({
+      postId,
+      outcome: "approved",
+      publishIntent,
+      publishedAt,
+      clearRejectionReason: true,
+    })
   } catch (error) {
     console.error("[moderation] blocked:", error)
 
     await updatePostStatus({
       postId,
-      status: "archived",
+      outcome: "rejected",
     })
-
-    await supabaseAdmin
-      .from("posts")
-      .update({
-        visibility_status: "rejected",
-        moderation_status: "rejected",
-        moderation_completed_at: new Date().toISOString(),
-      })
-      .eq("id", postId)
   }
+}
+
+async function applyInitialVideoModerationTransition(postId: string) {
+  await updatePostStatus({
+    postId,
+    outcome: "pending",
+    clearRejectionReason: true,
+  })
 }
 
 export async function createPostWithMediaWorkflow({
@@ -309,7 +289,7 @@ export async function createPostWithMediaWorkflow({
   files,
   blocks = [],
 }: CreatePostWithMediaWorkflowInput) {
-  const resolvedprice = visibility === "paid" ? price : 0
+  const resolvedPrice = visibility === "paid" ? price : 0
 
   const { data: creatorRow, error: creatorRowError } = await supabaseAdmin
     .from("creators")
@@ -347,18 +327,12 @@ export async function createPostWithMediaWorkflow({
     content,
     status: hasVideo ? "draft" : status,
     visibility,
-    price: resolvedprice,
+    price: resolvedPrice,
     publishedAt,
   })
 
-  if (hasVideo) {
-    await supabaseAdmin
-      .from("posts")
-      .update({
-        visibility_status: "processing",
-        moderation_status: "pending",
-      })
-      .eq("id", post.id)
+   if (hasVideo) {
+    await applyInitialVideoModerationTransition(post.id)
   }
 
   const media: CreatedMedia[] = []
@@ -403,26 +377,15 @@ export async function createPostWithMediaWorkflow({
         path: file.path,
       })
 
-      const mediaRow = await createMedia({
-        postId: post.id,
-        ownerUserId: creatorRow.user_id,
-        type,
-        storagePath: file.path,
-        mimeType: file.mimeType || undefined,
-        sortOrder: block.sortOrder,
-        status: type === "video" ? "processing" : "ready",
-      })
-
-      if (type === "video") {
-        await supabaseAdmin
-          .from("media")
-          .update({
-            processing_status: "processing",
-            moderation_status: "pending",
-            moderation_summary: null,
-          })
-          .eq("id", mediaRow.id)
-      }
+    const mediaRow = await createMedia({
+  postId: post.id,
+  ownerUserId: creatorRow.user_id,
+  type,
+  storagePath: file.path,
+  mimeType: file.mimeType || undefined,
+  sortOrder: block.sortOrder,
+  useInitialModerationState: true,
+})
 
       media.push({
         id: mediaRow.id,
@@ -448,26 +411,15 @@ export async function createPostWithMediaWorkflow({
         path: file.path,
       })
 
-      const mediaRow = await createMedia({
-        postId: post.id,
-        ownerUserId: creatorRow.user_id,
-        type,
-        storagePath: file.path,
-        mimeType: file.mimeType || undefined,
-        sortOrder: index,
-        status: type === "video" ? "processing" : "ready",
-      })
-
-      if (type === "video") {
-        await supabaseAdmin
-          .from("media")
-          .update({
-            processing_status: "processing",
-            moderation_status: "pending",
-            moderation_summary: null,
-          })
-          .eq("id", mediaRow.id)
-      }
+   const mediaRow = await createMedia({
+  postId: post.id,
+  ownerUserId: creatorRow.user_id,
+  type,
+  storagePath: file.path,
+  mimeType: file.mimeType || undefined,
+  sortOrder: index,
+  useInitialModerationState: true,
+})
 
       media.push({
         id: mediaRow.id,
@@ -498,22 +450,25 @@ export async function createPostWithMediaWorkflow({
   await createPostBlocks(post.id, blocksToInsert)
 
   if (hasVideo) {
-    console.log("🔥 CALL processVideoModeration", {
-      postId: post.id,
-      media,
-    })
-
-    await enqueueVideoModeration({
-      postId: post.id,
-      media,
-    })
+console.log("🔥 CALL processVideoModeration", {
+  postId: post.id,
+  publishIntent: status === "scheduled" ? "scheduled" : "published",
+  publishedAt,
+  media,
+})
+await enqueueVideoModeration({
+  postId: post.id,
+  publishIntent: status === "scheduled" ? "scheduled" : "published",
+  publishedAt,
+  media,
+})
   } else {
-      await moderatePostAsync({
+    await moderatePostAndApplyTransition({
       postId: post.id,
       content,
       files,
-      shouldApproveOnSuccess: true,
-      approvedStatus: status === "scheduled" ? "scheduled" : "published",
+      publishIntent: status === "scheduled" ? "scheduled" : "published",
+      publishedAt,
     })
   }
 

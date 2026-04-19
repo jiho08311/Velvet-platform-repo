@@ -1,5 +1,6 @@
 import { Worker } from "bullmq"
 import IORedis from "ioredis"
+import type { VideoModerationJob } from "./video-moderation-job"
 
 const connection = new IORedis(
   process.env.REDIS_URL || "redis://127.0.0.1:6379",
@@ -15,10 +16,12 @@ const VIDEO_MODERATION_CONCURRENCY = Number(
 new Worker(
   "video-moderation",
   async (job) => {
+    const payload = job.data as VideoModerationJob
+
     console.log("🔥 WORKER START", {
       jobId: job.id,
       attemptsMade: job.attemptsMade,
-      postId: job.data?.postId,
+      postId: payload?.postId,
       concurrency: VIDEO_MODERATION_CONCURRENCY,
     })
 
@@ -26,7 +29,7 @@ new Worker(
       "../../../workflows/process-video-moderation"
     )
 
-    await processVideoModeration(job.data)
+    await processVideoModeration(payload)
   },
   {
     connection,

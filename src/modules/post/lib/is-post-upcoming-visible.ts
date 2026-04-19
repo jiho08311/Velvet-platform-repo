@@ -7,6 +7,12 @@ type PostUpcomingVisibilityInput = {
   now: string
 }
 
+function isSupportedPublicVisibility(
+  visibility: string | null | undefined
+): boolean {
+  return visibility === "public" || visibility === "subscribers"
+}
+
 export function isPostUpcomingVisible(
   input: PostUpcomingVisibilityInput
 ): boolean {
@@ -14,13 +20,13 @@ export function isPostUpcomingVisible(
     return false
   }
 
-  if (input.status !== "scheduled") {
+  if (!isSupportedPublicVisibility(input.visibility)) {
     return false
   }
 
-if (input.visibility !== "public" && input.visibility !== "subscribers") {
-  return false
-}
+  if (input.status !== "scheduled") {
+    return false
+  }
 
   if (input.moderationStatus !== "approved") {
     return false

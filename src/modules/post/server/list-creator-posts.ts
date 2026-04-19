@@ -17,7 +17,7 @@ type PostRow = {
   created_at: string
   updated_at: string
   visibility_status: "draft" | "published" | "processing" | "rejected" | null
-  moderation_status: "pending" | "approved" | "rejected" | null
+  moderation_status: "pending" | "approved" | "rejected" | "needs_review" | null
   deleted_at: string | null
 }
 
@@ -147,19 +147,20 @@ export async function listCreatorPosts({
   const posts = isOwner
     ? (data ?? []).slice(0, safeLimit)
     : (data ?? [])
-        .filter((post) => {
-          return (
-            getPostPublicState({
-              status: post.status,
-              visibility: post.visibility,
-              visibilityStatus: post.visibility_status,
-              moderationStatus: post.moderation_status,
-              publishedAt: post.published_at,
-              deletedAt: post.deleted_at,
-              now,
-            }) === "published"
-          )
-        })
+        .map((post) => ({
+          post,
+          publicState: getPostPublicState({
+            status: post.status,
+            visibility: post.visibility,
+            visibilityStatus: post.visibility_status,
+            moderationStatus: post.moderation_status,
+            publishedAt: post.published_at,
+            deletedAt: post.deleted_at,
+            now,
+          }),
+        }))
+        .filter(({ publicState }) => publicState === "published")
+        .map(({ post }) => post)
         .slice(0, safeLimit)
 
   if (posts.length === 0) {

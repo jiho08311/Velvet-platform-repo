@@ -16,28 +16,28 @@ export type PostPublicState = "hidden" | "upcoming" | "published"
 export function getPostPublicState(
   input: GetPostPublicStateInput
 ): PostPublicState {
-  if (
-    isPostPublishedVisible({
-      status: input.status,
-      visibility: input.visibility,
-      visibilityStatus: input.visibilityStatus,
-      moderationStatus: input.moderationStatus,
-      deletedAt: input.deletedAt,
-    })
-  ) {
+  const isPublished = isPostPublishedVisible({
+    status: input.status,
+    visibility: input.visibility,
+    visibilityStatus: input.visibilityStatus,
+    moderationStatus: input.moderationStatus,
+    deletedAt: input.deletedAt,
+  })
+
+  if (isPublished) {
     return "published"
   }
 
-  if (
-    isPostUpcomingVisible({
-      status: input.status,
-      visibility: input.visibility,
-      moderationStatus: input.moderationStatus,
-      publishedAt: input.publishedAt,
-      deletedAt: input.deletedAt,
-      now: input.now,
-    })
-  ) {
+  const isUpcoming = isPostUpcomingVisible({
+    status: input.status,
+    visibility: input.visibility,
+    moderationStatus: input.moderationStatus,
+    publishedAt: input.publishedAt,
+    deletedAt: input.deletedAt,
+    now: input.now,
+  })
+
+  if (isUpcoming) {
     return "upcoming"
   }
 

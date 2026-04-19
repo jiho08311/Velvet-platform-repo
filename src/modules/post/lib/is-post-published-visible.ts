@@ -6,6 +6,12 @@ type PostPublishedVisibilityInput = {
   deletedAt: string | null | undefined
 }
 
+function isSupportedPublicVisibility(
+  visibility: string | null | undefined
+): boolean {
+  return visibility === "public" || visibility === "subscribers"
+}
+
 export function isPostPublishedVisible(
   input: PostPublishedVisibilityInput
 ): boolean {
@@ -13,13 +19,13 @@ export function isPostPublishedVisible(
     return false
   }
 
-  if (input.status !== "published") {
+  if (!isSupportedPublicVisibility(input.visibility)) {
     return false
   }
 
-if (input.visibility !== "public" && input.visibility !== "subscribers") {
-  return false
-}
+  if (input.status !== "published") {
+    return false
+  }
 
   if (input.visibilityStatus !== "published") {
     return false

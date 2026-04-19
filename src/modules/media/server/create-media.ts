@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-
 import type { Media, MediaStatus, MediaType } from "../types"
+import { buildInitialMediaMutationModerationState } from "./media-mutation-moderation-policy"
 
 type CreateMediaInput = {
   postId?: string | null
@@ -11,6 +11,7 @@ type CreateMediaInput = {
   mimeType?: string
   sortOrder?: number
   status?: MediaStatus
+  useInitialModerationState?: boolean
 }
 
 type MediaRow = {
@@ -35,6 +36,7 @@ export async function createMedia({
   mimeType,
   sortOrder = 0,
   status = "processing",
+  useInitialModerationState = false,
 }: CreateMediaInput): Promise<Media> {
   const resolvedPostId = postId?.trim() || null
   const resolvedMessageId = messageId?.trim() || null
@@ -45,18 +47,36 @@ export async function createMedia({
     throw new Error("storagePath is required")
   }
 
+  const initialModerationState = useInitialModerationState
+    ? buildInitialMediaMutationModerationState({ type })
+    : null
+
+  const insertPayload: Record<string, unknown> = {
+    post_id: resolvedPostId,
+    message_id: resolvedMessageId,
+    owner_user_id: resolvedOwnerUserId,
+    type,
+    storage_path: resolvedStoragePath,
+    mime_type: mimeType ?? null,
+    sort_order: sortOrder,
+    status: initialModerationState?.status ?? status,
+  }
+
+  if (initialModerationState?.processingStatus) {
+    insertPayload.processing_status = initialModerationState.processingStatus
+  }
+
+  if (initialModerationState?.moderationStatus) {
+    insertPayload.moderation_status = initialModerationState.moderationStatus
+  }
+
+  if ("moderationSummary" in (initialModerationState ?? {})) {
+    insertPayload.moderation_summary = initialModerationState?.moderationSummary ?? null
+  }
+
   const { data, error } = await supabaseAdmin
     .from("media")
-    .insert({
-      post_id: resolvedPostId,
-      message_id: resolvedMessageId,
-      owner_user_id: resolvedOwnerUserId,
-      type,
-      storage_path: resolvedStoragePath,
-      mime_type: mimeType ?? null,
-      sort_order: sortOrder,
-      status,
-    })
+    .insert(insertPayload)
     .select(
       "id, post_id, message_id, owner_user_id, type, storage_path, mime_type, sort_order, status, created_at"
     )

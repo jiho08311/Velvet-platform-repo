@@ -1,13 +1,7 @@
 import { videoModerationQueue } from "./video-moderation-queue"
+import type { VideoModerationJob } from "./video-moderation-job"
 
-export async function enqueueVideoModeration(input: {
-  postId: string
-  media: Array<{
-    id: string
-    type: string
-    storagePath: string
-  }>
-}) {
+export async function enqueueVideoModeration(input: VideoModerationJob) {
   await videoModerationQueue.add("process-video", input, {
     attempts: 3,
     backoff: {

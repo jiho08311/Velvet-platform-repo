@@ -1,5 +1,9 @@
 "use server"
 
+import {
+  buildPostEditBlockFingerprint,
+  shouldReenterPostModerationOnEdit,
+} from "@/modules/post/server/post-edit-moderation-reentry-policy"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import type { PostBlockEditorState } from "../types"
@@ -8,8 +12,12 @@ import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { createMedia } from "@/modules/media/server/create-media"
 import { uploadMedia } from "@/modules/media/server/upload-media"
+import { enqueueVideoModeration } from "@/modules/moderation/server/enqueue-video-moderation"
+import { applyVideoModerationOutcome } from "@/modules/moderation/server/apply-video-moderation-outcome"
 import { getCreatorStudioPost } from "@/modules/post/server/get-creator-studio-post"
+import { resolvePostMutationModerationOutcome } from "@/modules/post/server/resolve-post-mutation-moderation-outcome"
 import { updatePost } from "@/modules/post/server/update-post"
+import { updatePostStatus } from "@/modules/post/server/update-post-status"
 
 type UpdatePostActionInput = {
   postId: string
@@ -18,18 +26,28 @@ type UpdatePostActionInput = {
   price?: number
   files?: File[]
   removedMediaIds?: string[]
-blocks?: {
-  type: "text" | "image" | "video" | "audio" | "file"
-  content?: string | null
-  sortOrder: number
-  mediaId?: string | null
-  editorState?: PostBlockEditorState
-}[]
+  blocks?: {
+    type: "text" | "image" | "video" | "audio" | "file"
+    content?: string | null
+    sortOrder: number
+    mediaId?: string | null
+    editorState?: PostBlockEditorState
+  }[]
 }
 
 type MediaRow = {
   id: string
   storage_path: string
+}
+
+type EnqueuedVideoMedia = {
+  id: string
+  type: "image" | "video" | "audio" | "file"
+  storagePath: string
+}
+
+type MediaModerationStatusRow = {
+  moderation_status: string | null
 }
 
 function resolveMediaType(file: File): "image" | "video" | "audio" | "file" {
@@ -72,6 +90,8 @@ export async function updatePostAction({
     throw new Error("Post not found")
   }
 
+  const nextContent = text.trim() || null
+
   if (currentPost.visibility === "paid" && price <= 0) {
     throw new Error("Paid post price must be greater than 0")
   }
@@ -79,7 +99,7 @@ export async function updatePostAction({
   await updatePost({
     postId,
     creatorId: creator.id,
-    content: text.trim() || null,
+    content: nextContent,
     visibility: currentPost.visibility,
     price: currentPost.visibility === "paid" ? price : 0,
   })
@@ -88,7 +108,9 @@ export async function updatePostAction({
     .map((id) => id.trim())
     .filter((id) => id.length > 0)
 
-  if (validRemovedMediaIds.length > 0) {
+  const hasRemovedMedia = validRemovedMediaIds.length > 0
+
+  if (hasRemovedMedia) {
     const { data: mediaToDelete, error: mediaToDeleteError } = await supabaseAdmin
       .from("media")
       .select("id, storage_path")
@@ -128,8 +150,48 @@ export async function updatePostAction({
   }
 
   const validFiles = files.filter((file) => file instanceof File && file.size > 0)
+  const hasNewMedia = validFiles.length > 0
 
-  if (validFiles.length > 0) {
+  const currentBlockFingerprint = buildPostEditBlockFingerprint(
+    currentPost.blocks.map((block) => ({
+      type: block.type,
+      content: block.content ?? null,
+      sortOrder: block.sortOrder,
+      mediaId: block.mediaId ?? null,
+    }))
+  )
+
+  const nextBlockFingerprint = buildPostEditBlockFingerprint(
+    blocks.map((block) => ({
+      type: block.type,
+      content: block.content ?? null,
+      sortOrder: block.sortOrder,
+      mediaId: block.mediaId ?? null,
+    }))
+  )
+
+  const isContentUnchanged = currentPost.content === nextContent
+  const areBlocksUnchanged =
+    currentBlockFingerprint === nextBlockFingerprint
+
+  const shouldReenterModeration = shouldReenterPostModerationOnEdit({
+    currentContent: currentPost.content,
+    nextContent,
+    currentBlockFingerprint,
+    nextBlockFingerprint,
+    hasNewMedia,
+    hasRemovedMedia,
+  })
+
+const isRemoveOnlyEdit =
+  hasRemovedMedia &&
+  !hasNewMedia &&
+  isContentUnchanged &&
+  areBlocksUnchanged
+
+  const createdMediaForModeration: EnqueuedVideoMedia[] = []
+
+  if (hasNewMedia) {
     const { count, error: countError } = await supabaseAdmin
       .from("media")
       .select("id", { count: "exact", head: true })
@@ -148,16 +210,74 @@ export async function updatePostAction({
         purpose: "post",
       })
 
-      await createMedia({
+      const createdMedia = await createMedia({
         postId,
         ownerUserId: user.id,
         type: resolveMediaType(file),
         storagePath,
         mimeType: file.type || undefined,
         sortOrder: startSortOrder + index,
-        status: "ready",
+        useInitialModerationState: true,
       })
+
+      if (createdMedia.type === "video") {
+        createdMediaForModeration.push({
+          id: createdMedia.id,
+          type: createdMedia.type,
+          storagePath: createdMedia.storagePath,
+        })
+      }
     }
+  }
+
+  if (shouldReenterModeration) {
+    await updatePostStatus({
+      postId,
+      outcome: "pending",
+      clearRejectionReason: true,
+    })
+  }
+
+  const hasVideoToModerate = createdMediaForModeration.length > 0
+
+  if (hasNewMedia && hasVideoToModerate) {
+    await enqueueVideoModeration({
+      postId,
+      publishIntent: currentPost.status === "scheduled" ? "scheduled" : "published",
+      media: createdMediaForModeration,
+    })
+  }
+
+  // remove-only edit는 remaining media moderation 상태로만 후속 정렬한다.
+ if (isRemoveOnlyEdit) {
+    const { data: remainingMediaStatuses, error: remainingMediaStatusesError } =
+      await supabaseAdmin
+        .from("media")
+        .select("moderation_status")
+        .eq("post_id", postId)
+        .returns<MediaModerationStatusRow[]>()
+
+    if (remainingMediaStatusesError) {
+      throw remainingMediaStatusesError
+    }
+
+    const outcome = resolvePostMutationModerationOutcome({
+      statuses: (remainingMediaStatuses ?? []).map(
+        (item) => item.moderation_status
+      ),
+    })
+
+    await applyVideoModerationOutcome({
+      postId,
+      outcome,
+      ...(outcome === "approved"
+        ? {
+            publishIntent:
+              currentPost.status === "scheduled" ? "scheduled" : "published",
+          }
+        : {}),
+      clearRejectionReason: outcome !== "rejected",
+    })
   }
 
   await supabaseAdmin
@@ -166,14 +286,14 @@ export async function updatePostAction({
     .eq("post_id", postId)
 
   if (blocks.length > 0) {
-   const insertData = blocks.map((block) => ({
-  post_id: postId,
-  type: block.type,
-  content: block.content ?? null,
-  media_id: block.mediaId ?? null,
-  sort_order: block.sortOrder,
-  editor_state: block.editorState ?? null,
-}))
+    const insertData = blocks.map((block) => ({
+      post_id: postId,
+      type: block.type,
+      content: block.content ?? null,
+      media_id: block.mediaId ?? null,
+      sort_order: block.sortOrder,
+      editor_state: block.editorState ?? null,
+    }))
 
     const { error: insertBlocksError } = await supabaseAdmin
       .from("post_blocks")

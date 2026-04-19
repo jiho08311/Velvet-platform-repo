@@ -5,17 +5,11 @@ import path from "path"
 import { execFile } from "child_process"
 import { promisify } from "util"
 import { supabaseAdmin } from "../infrastructure/supabase/admin"
+import type { VideoModerationJob } from "@/modules/moderation/server/video-moderation-job"
+import { resolveVideoModerationOutcome } from "@/modules/moderation/server/resolve-video-moderation-outcome"
+import { finalizeVideoModerationPost } from "@/modules/moderation/server/finalize-video-moderation-post"
 
-type MediaType = "image" | "video" | "audio" | "file"
 
-type ProcessVideoModerationInput = {
-  postId: string
-  media: Array<{
-    id: string
-    type: MediaType
-    storagePath: string
-  }>
-}
 
 type ModerationResultShape = {
   flagged: boolean
@@ -311,19 +305,7 @@ async function moderateText(text: string): Promise<ModerationResultShape> {
   }
 }
 
-async function getCurrentPostStatus(postId: string): Promise<string | null> {
-  const { data, error } = await supabaseAdmin
-    .from("posts")
-    .select("status")
-    .eq("id", postId)
-    .maybeSingle<{ status: string }>()
 
-  if (error) {
-    throw error
-  }
-
-  return data?.status ?? null
-}
 
 async function markMediaApproved(mediaId: string, summary: Record<string, unknown>) {
   const now = new Date().toISOString()
@@ -391,74 +373,8 @@ async function markMediaNeedsReview(
   }
 }
 
-async function updatePostApproved(postId: string) {
-  const currentStatus = await getCurrentPostStatus(postId)
 
-  if (currentStatus === "archived") {
-    return
-  }
 
-  const now = new Date().toISOString()
-
-  console.log("[video-moderation] update post approved", { postId })
-
-  const { error } = await supabaseAdmin
-    .from("posts")
-    .update({
-      status: "published",
-      visibility_status: "published",
-      moderation_status: "approved",
-      moderation_completed_at: now,
-      updated_at: now,
-    })
-    .eq("id", postId)
-
-  if (error) {
-    throw error
-  }
-}
-
-async function updatePostRejected(postId: string) {
-  const now = new Date().toISOString()
-
-  console.log("[video-moderation] update post rejected", { postId })
-
-  const { error } = await supabaseAdmin
-    .from("posts")
-    .update({
-      status: "archived",
-      visibility_status: "rejected",
-      moderation_status: "rejected",
-      moderation_completed_at: now,
-      updated_at: now,
-    })
-    .eq("id", postId)
-
-  if (error) {
-    throw error
-  }
-}
-
-async function updatePostNeedsReview(postId: string) {
-  const now = new Date().toISOString()
-
-  console.log("[video-moderation] update post needs_review", { postId })
-
-  const { error } = await supabaseAdmin
-    .from("posts")
-    .update({
-      status: "draft",
-      visibility_status: "processing",
-      moderation_status: "needs_review",
-      moderation_completed_at: now,
-      updated_at: now,
-    })
-    .eq("id", postId)
-
-  if (error) {
-    throw error
-  }
-}
 
 async function processSingleVideo({
   postId,
@@ -513,7 +429,7 @@ async function processSingleVideo({
         category_scores: result.category_scores,
       })
 
-      if (shouldRejectFromImageResult(result) || result.flagged) {
+        if (shouldRejectFromImageResult(result) || result.flagged) {
         const summary = {
           provider: "openai",
           stage: "video_frame_moderation",
@@ -525,7 +441,6 @@ async function processSingleVideo({
         }
 
         await markMediaRejected(mediaId, summary)
-        await updatePostRejected(postId)
         return
       }
     }
@@ -539,7 +454,7 @@ async function processSingleVideo({
       transcriptText = await transcribeAudio(audioPath)
       transcriptModeration = await moderateText(transcriptText)
 
-      if (transcriptModeration.flagged) {
+         if (transcriptModeration.flagged) {
         const summary = {
           provider: "openai",
           stage: "video_transcript_moderation",
@@ -553,7 +468,6 @@ async function processSingleVideo({
         }
 
         await markMediaRejected(mediaId, summary)
-        await updatePostRejected(postId)
         return
       }
     }
@@ -577,8 +491,10 @@ async function processSingleVideo({
 
 export async function processVideoModeration({
   postId,
+  publishIntent,
+  publishedAt = null,
   media,
-}: ProcessVideoModerationInput) {
+}: VideoModerationJob) {
   console.log("[video-moderation] start", { postId, media })
 
   const videoMedia = media.filter(
@@ -590,10 +506,16 @@ export async function processVideoModeration({
     videoMedia,
   })
 
-  if (videoMedia.length === 0) {
-    await updatePostApproved(postId)
-    return
-  }
+
+if (videoMedia.length === 0) {
+  await finalizeVideoModerationPost({
+    postId,
+    outcome: "approved",
+    publishIntent,
+    publishedAt,
+  })
+  return
+}
 
   try {
     for (const item of videoMedia) {
@@ -614,21 +536,19 @@ export async function processVideoModeration({
       throw error
     }
 
-    const statuses = (data ?? []).map((item) => item.moderation_status)
+const statuses = (data ?? []).map((item) => item.moderation_status)
 
-    console.log("[video-moderation] final statuses", { statuses })
+console.log("[video-moderation] final statuses", { statuses })
 
-    if (statuses.some((status) => status === "rejected")) {
-      await updatePostRejected(postId)
-      return
-    }
+const outcome = resolveVideoModerationOutcome({ statuses })
 
-    if (statuses.some((status) => status === "needs_review")) {
-      await updatePostNeedsReview(postId)
-      return
-    }
+await finalizeVideoModerationPost({
+  postId,
+  outcome,
+  publishIntent,
+  publishedAt,
+})
 
-    await updatePostApproved(postId)
   } catch (error) {
     console.error("[video-moderation] failed", error)
 
@@ -642,6 +562,26 @@ export async function processVideoModeration({
       })
     }
 
-    await updatePostNeedsReview(postId)
+    const { data, error: statusReadError } = await supabaseAdmin
+      .from("media")
+      .select("moderation_status")
+      .eq("post_id", postId)
+      .returns<Array<{ moderation_status: string | null }>>()
+
+    if (statusReadError) {
+      throw statusReadError
+    }
+
+const statuses = (data ?? []).map((item) => item.moderation_status)
+
+const outcome = resolveVideoModerationOutcome({ statuses })
+
+await finalizeVideoModerationPost({
+  postId,
+  outcome,
+  publishIntent,
+  publishedAt,
+  fallbackOutcome: "needs_review",
+})
   }
 }

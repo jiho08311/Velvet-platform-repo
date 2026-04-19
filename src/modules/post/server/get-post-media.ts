@@ -3,6 +3,7 @@ import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 import { checkSubscription } from "@/modules/subscription/server/check-subscription"
+import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
 
 export type PostMediaItem = {
   id: string
@@ -28,6 +29,11 @@ type PostAccessRow = {
   creator_id: string
   visibility: "public" | "subscribers" | "paid"
   price: number
+  status: "draft" | "scheduled" | "published" | "archived"
+  visibility_status: "draft" | "published" | "processing" | "rejected" | null
+  moderation_status: "pending" | "approved" | "rejected" | "needs_review" | null
+  published_at: string | null
+  deleted_at: string | null
 }
 
 type CreatorRow = {
@@ -44,10 +50,13 @@ export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
 
   const user = await getCurrentUser()
   const viewerUserId = user?.id ?? null
+  const now = new Date().toISOString()
 
   const { data: post, error: postError } = await supabaseAdmin
     .from("posts")
-    .select("id, creator_id, visibility, price")
+    .select(
+      "id, creator_id, visibility, price, status, visibility_status, moderation_status, published_at, deleted_at"
+    )
     .eq("id", resolvedPostId)
     .maybeSingle<PostAccessRow>()
 
@@ -70,6 +79,26 @@ export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
   }
 
   const creatorUserId = creator?.user_id ?? null
+  const isOwner =
+    viewerUserId !== null &&
+    creatorUserId !== null &&
+    viewerUserId === creatorUserId
+
+  if (!isOwner) {
+    const publicState = getPostPublicState({
+      status: post.status,
+      visibility: post.visibility,
+      visibilityStatus: post.visibility_status,
+      moderationStatus: post.moderation_status,
+      publishedAt: post.published_at,
+      deletedAt: post.deleted_at,
+      now,
+    })
+
+    if (publicState !== "published") {
+      return []
+    }
+  }
 
   const isSubscribed =
     viewerUserId && creatorUserId
@@ -91,7 +120,7 @@ export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
     .from("media")
     .select("id, post_id, type, storage_path, mime_type, sort_order, status")
     .eq("post_id", resolvedPostId)
-  .in("status", ["processing", "ready"])
+    .in("status", ["processing", "ready"])
     .order("sort_order", { ascending: true })
     .returns<MediaRow[]>()
 

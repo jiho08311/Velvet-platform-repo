@@ -16,7 +16,7 @@ type PostRow = {
   price: number | null
   status: "draft" | "scheduled" | "published" | "archived"
   visibility_status: "draft" | "published" | "processing" | "rejected" | null
-  moderation_status: "pending" | "approved" | "rejected" | null
+  moderation_status: "pending" | "approved" | "rejected" | "needs_review" | null
   created_at: string
   published_at: string | null
   deleted_at?: string | null
@@ -133,6 +133,16 @@ export async function getPostById(
     resolvedViewerUserId !== null &&
     creator.user_id === resolvedViewerUserId
 
+  const publicState = getPostPublicState({
+    status: post.status,
+    visibility: post.visibility,
+    visibilityStatus: post.visibility_status,
+    moderationStatus: post.moderation_status,
+    publishedAt: post.published_at,
+    deletedAt: post.deleted_at ?? null,
+    now: new Date().toISOString(),
+  })
+
   if (!isOwner) {
     const isVisibleCreator = isPublicCreatorProfileVisible({
       creator: {
@@ -151,16 +161,6 @@ export async function getPostById(
     if (!isVisibleCreator) {
       return null
     }
-
-    const publicState = getPostPublicState({
-      status: post.status,
-      visibility: post.visibility,
-      visibilityStatus: post.visibility_status,
-      moderationStatus: post.moderation_status,
-      publishedAt: post.published_at,
-      deletedAt: post.deleted_at ?? null,
-      now: new Date().toISOString(),
-    })
 
     if (publicState !== "published") {
       return null

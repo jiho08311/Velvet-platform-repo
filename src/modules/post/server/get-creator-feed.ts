@@ -139,9 +139,6 @@ export async function getCreatorFeed({
       "id, creator_id, content, visibility, price, status, created_at, published_at, visibility_status, moderation_status, deleted_at"
     )
     .eq("creator_id", creatorId)
-    .or(
-      `and(status.eq.published,visibility_status.eq.published,moderation_status.eq.approved),and(status.eq.scheduled,visibility.eq.public,moderation_status.eq.approved,published_at.gt.${now})`
-    )
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .returns<PostRow[]>()
@@ -151,6 +148,10 @@ export async function getCreatorFeed({
   }
 
   const visiblePosts = (posts ?? []).filter((post) => {
+    if (isOwner) {
+      return true
+    }
+
     const publicState = getPostPublicState({
       status: post.status,
       visibility: post.visibility,
@@ -161,33 +162,11 @@ export async function getCreatorFeed({
       now,
     })
 
-    return publicState !== "hidden"
+    return publicState === "published"
   })
 
   const resolvedPosts = await Promise.all(
     visiblePosts.map(async (post) => {
-      const publicState = getPostPublicState({
-        status: post.status,
-        visibility: post.visibility,
-        visibilityStatus: post.visibility_status ?? null,
-        moderationStatus: post.moderation_status ?? null,
-        publishedAt: post.published_at ?? null,
-        deletedAt: post.deleted_at ?? null,
-        now,
-      })
-
-      if (publicState === "upcoming") {
-        return {
-          ...post,
-          price: post.price,
-          hasPurchased: false,
-          isLocked: false,
-          lockReason: "none" as PostLockReason,
-          content: post.content,
-          publicState,
-        }
-      }
-
       const isSubscribersOnly = post.visibility === "subscribers"
       const isPaidPost = post.visibility === "paid" && post.price > 0
 
@@ -219,7 +198,6 @@ export async function getCreatorFeed({
         isLocked,
         lockReason,
         content: isLocked ? null : post.content,
-        publicState,
       }
     })
   )
@@ -340,24 +318,6 @@ export async function getCreatorFeed({
 
   return Promise.all(
     resolvedPosts.map(async (post) => {
-      if (post.publicState === "upcoming") {
-        return {
-          id: post.id,
-          content: post.content,
-          created_at: post.created_at,
-          media: [],
-          blocks: [],
-          price: post.price,
-          isLocked: false,
-          likesCount: likeCountMap.get(post.id) ?? 0,
-          isLiked: myLikeSet.has(post.id),
-          visibility: post.visibility,
-          commentsCount: commentCountMap.get(post.id) ?? 0,
-          status: post.status,
-          published_at: post.published_at ?? null,
-        }
-      }
-
       const allMediaRows = mediaMap.get(post.id) ?? []
 
       const selectedMediaRows = post.isLocked
