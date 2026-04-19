@@ -26,10 +26,10 @@ type CreatorFeedPost = {
   }[]
   price: number
   isLocked: boolean
-  likesCount: number
   isLiked: boolean
-  visibility: "public" | "subscribers" | "paid"
+  likesCount: number
   commentsCount: number
+  visibility: "public" | "subscribers" | "paid"
   status?: string
   published_at?: string | null
 }
@@ -148,10 +148,6 @@ export async function getCreatorFeed({
   }
 
   const visiblePosts = (posts ?? []).filter((post) => {
-    if (isOwner) {
-      return true
-    }
-
     const publicState = getPostPublicState({
       status: post.status,
       visibility: post.visibility,
@@ -162,11 +158,25 @@ export async function getCreatorFeed({
       now,
     })
 
-    return publicState === "published"
+    if (isOwner) {
+      return publicState === "published" || publicState === "upcoming"
+    }
+
+    return publicState === "published" || publicState === "upcoming"
   })
 
   const resolvedPosts = await Promise.all(
     visiblePosts.map(async (post) => {
+      const publicState = getPostPublicState({
+        status: post.status,
+        visibility: post.visibility,
+        visibilityStatus: post.visibility_status ?? null,
+        moderationStatus: post.moderation_status ?? null,
+        publishedAt: post.published_at ?? null,
+        deletedAt: post.deleted_at ?? null,
+        now,
+      })
+
       const isSubscribersOnly = post.visibility === "subscribers"
       const isPaidPost = post.visibility === "paid" && post.price > 0
 
@@ -190,14 +200,16 @@ export async function getCreatorFeed({
       }
 
       const isLocked = lockReason !== "none"
+      const shouldHideContent = isLocked || publicState === "upcoming"
 
       return {
         ...post,
+        publicState,
         price: post.price,
         hasPurchased: isOwner ? true : hasPurchased,
         isLocked,
         lockReason,
-        content: isLocked ? null : post.content,
+        content: shouldHideContent ? null : post.content,
       }
     })
   )
@@ -268,7 +280,9 @@ export async function getCreatorFeed({
 
   const { data: blockRows, error: blockRowsError } = await supabaseAdmin
     .from("post_blocks")
-    .select("id, post_id, type, content, media_id, sort_order, created_at, editor_state")
+    .select(
+      "id, post_id, type, content, media_id, sort_order, created_at, editor_state"
+    )
     .in("post_id", postIds)
     .order("sort_order", { ascending: true })
     .returns<PostBlockRow[]>()
@@ -322,7 +336,9 @@ export async function getCreatorFeed({
 
       const selectedMediaRows = post.isLocked
         ? allMediaRows.slice(0, 1)
-        : allMediaRows
+        : post.publicState === "upcoming"
+          ? []
+          : allMediaRows
 
       const media = await Promise.all(
         selectedMediaRows.map(async (item) => {
@@ -349,7 +365,10 @@ export async function getCreatorFeed({
         content: post.content,
         created_at: post.created_at,
         media,
-        blocks: post.isLocked ? [] : blocksMap.get(post.id) ?? [],
+        blocks:
+          post.isLocked || post.publicState === "upcoming"
+            ? []
+            : blocksMap.get(post.id) ?? [],
         price: post.price,
         isLocked: post.isLocked,
         likesCount: likeCountMap.get(post.id) ?? 0,
