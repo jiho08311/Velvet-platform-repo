@@ -6,7 +6,7 @@ import {
   sumRequestableEarnings,
 } from "@/modules/payout/lib/payout-balance-policy"
 
-type CreatePayoutRequestInput = {
+type CreatePayoutRequestInput = { 
   creatorId: string
   amount?: number
   currency?: string
