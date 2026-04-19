@@ -126,13 +126,13 @@ export function CreatorContentTabs({
                     </div>
                   ) : null}
 
-       {isLocked ? (
-  <div className="absolute inset-0 flex items-center justify-center bg-black/20 px-4 text-center">
-    <div className="rounded-full border border-white/15 bg-black/50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-white backdrop-blur">
-      Locked
-    </div>
-  </div>
-) : null}
+                  {isLocked ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 px-4 text-center">
+                      <div className="rounded-full border border-white/15 bg-black/50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-white backdrop-blur">
+                        Locked
+                      </div>
+                    </div>
+                  ) : null}
                 </a>
               )
             })}
@@ -161,13 +161,18 @@ export function CreatorContentTabs({
                   ? "Draft"
                   : "Update"
 
-            const previewText = post.content?.trim() || "No content"
-            const dateLabel =
-              post.status === "scheduled"
-                ? formatDate(post.publishedAt ?? post.published_at)
-                : formatDate(post.created_at)
-
+            const isUpcoming = post.status === "scheduled"
             const isLocked = !isOwner && Boolean(post.isLocked)
+
+            const previewText = isUpcoming
+              ? "Upcoming post"
+              : isLocked
+                ? "Subscribe to read this update."
+                : post.content?.trim() || "No content"
+
+            const dateLabel = isUpcoming
+              ? formatDate(post.publishedAt ?? post.published_at)
+              : formatDate(post.created_at)
 
             return (
               <a
@@ -196,16 +201,16 @@ export function CreatorContentTabs({
                     </span>
                   </div>
 
-                <span className="text-xs font-medium text-zinc-600 transition group-hover:text-zinc-400">
-  View post →
-</span>
+                  <span className="text-xs font-medium text-zinc-600 transition group-hover:text-zinc-400">
+                    View post →
+                  </span>
                 </div>
 
-             <div className="mt-4 min-h-[84px]">
-  <p className="line-clamp-4 whitespace-pre-wrap text-[15px] leading-6 text-zinc-100">
-    {isLocked ? "Subscribe to read this update." : previewText}
-  </p>
-</div>
+                <div className="mt-4 min-h-[84px]">
+                  <p className="line-clamp-4 whitespace-pre-wrap text-[15px] leading-6 text-zinc-100">
+                    {previewText}
+                  </p>
+                </div>
 
                 <div className="mt-4 flex items-center justify-between border-t border-zinc-800 pt-3">
                   <p className="text-xs text-zinc-500">
@@ -214,10 +219,10 @@ export function CreatorContentTabs({
                       : `Posted · ${dateLabel || "-"}`}
                   </p>
 
-               <div className="flex items-center gap-1 text-xs text-zinc-500">
-  <span className="h-1.5 w-1.5 rounded-full bg-zinc-600" />
-  Update
-</div>
+                  <div className="flex items-center gap-1 text-xs text-zinc-500">
+                    <span className="h-1.5 w-1.5 rounded-full bg-zinc-600" />
+                    Update
+                  </div>
                 </div>
               </a>
             )
