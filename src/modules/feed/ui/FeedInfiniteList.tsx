@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { FeedList } from "./FeedList"
 import { FeedListSkeleton } from "./FeedListSkeleton"
+import type { PostBlockEditorState } from "@/modules/post/types"
 
 type FeedInfiniteListPost = {
   id: string
@@ -14,9 +15,9 @@ type FeedInfiniteListPost = {
   text: string
   createdAt: string
   media?: Array<{
-    id?: string
+    id: string
     url: string
-    type?: "image" | "video" | "audio" | "file"
+    type: "image" | "video" | "audio" | "file"
   }>
   blocks?: Array<{
     id: string
@@ -26,6 +27,7 @@ type FeedInfiniteListPost = {
     mediaId: string | null
     sortOrder: number
     createdAt: string
+    editorState: PostBlockEditorState
   }>
   isLocked?: boolean
   lockReason?: "none" | "subscription" | "purchase"
@@ -72,6 +74,7 @@ type FeedApiItem = {
     mediaId: string | null
     sortOrder: number
     createdAt: string
+    editorState: PostBlockEditorState
   }>
   likesCount: number
   isLiked: boolean

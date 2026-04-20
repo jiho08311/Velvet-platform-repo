@@ -1,6 +1,7 @@
 import { FeedEmptyState } from "./FeedEmptyState"
 import { UpcomingCard } from "@/modules/feed/ui/UpcomingCard"
 import { PostCard } from "@/modules/post/ui/PostCard"
+import type { PostBlockEditorState } from "@/modules/post/types"
 
 type FeedListPost = {
   id: string
@@ -12,8 +13,9 @@ type FeedListPost = {
   text: string
   createdAt: string
   media?: Array<{
+    id?: string
     url: string
-    type?: "image" | "video" | "audio" | "file"
+    type: "image" | "video" | "audio" | "file"
   }>
   blocks?: Array<{
     id: string
@@ -23,6 +25,7 @@ type FeedListPost = {
     mediaId: string | null
     sortOrder: number
     createdAt: string
+    editorState: PostBlockEditorState
   }>
   isLocked?: boolean
   likesCount?: number
