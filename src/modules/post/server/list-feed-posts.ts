@@ -305,7 +305,7 @@ export async function listFeedPosts({
         id: post.id,
         creatorId: post.creator_id,
         title: post.title ?? undefined,
-        content: renderInput.content ?? undefined,
+        content: renderInput.blockText || undefined,
         status: post.status,
         visibility: post.visibility,
         price: post.price,

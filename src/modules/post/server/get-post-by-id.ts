@@ -257,7 +257,7 @@ export async function getPostById(
       displayName: creator.display_name,
     },
     title: post.title,
-    content: access.canView ? renderInput.content : null,
+        content: access.canView ? (renderInput.blockText || null) : null,
     visibility: post.visibility,
     price: post.price,
     status: post.status,
@@ -268,6 +268,6 @@ export async function getPostById(
     likesCount: likesCount ?? 0,
     commentsCount: commentsCount ?? 0,
     media,
-    blocks: access.canView ? renderInput.blocks : [],
+    blocks: access.canView ? rawBlocks : [],
   }
 }
