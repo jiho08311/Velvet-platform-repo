@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-
+import { resolveCreatorStoryReadState } from "../lib/story-read-policy"
 import type { Story } from "../types"
 import { EditStoryModal } from "./EditStoryModal"
 import { StoryViewer } from "./StoryViewer"
+import { resolveStorySeenUpdate } from "../lib/story-read-policy"
+
 
 type StoryGroup = {
   creatorId: string
@@ -163,13 +165,14 @@ export function StoryList({
               </button>
             ) : null}
 
-            {otherGroups.map((group) => {
-              const latestStory =
-                group.stories[group.stories.length - 1] ?? null
-              const lastSeenStoryId =
-                localReadStateMap[group.creatorId] ?? null
-              const hasUnseenStory =
-                !!latestStory && latestStory.id !== lastSeenStoryId
+                     {otherGroups.map((group) => {
+              const readState = resolveCreatorStoryReadState({
+                creatorId: group.creatorId,
+                stories: group.stories,
+                lastSeenStoryId: localReadStateMap[group.creatorId] ?? null,
+              })
+
+              const hasUnseenStory = readState.hasUnseenStory
 
               return (
                 <button

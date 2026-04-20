@@ -2,6 +2,16 @@ export type StoryVisibility = "public" | "subscribers"
 export type StoryLockReason = "none" | "subscription"
 export type StoryMediaType = "image" | "video"
 
+
+/**
+ * StoryReadStateMap
+ * - Key: creatorId
+ * - Value: lastSeenStoryId
+ *
+ * This shape MUST stay aligned with persisted contract.
+ */
+
+
 export type StoryTextOverlay = {
   id: string
   text: string
@@ -113,4 +123,67 @@ export type StoryMusicSearchItem = {
   previewUrl?: string | null
   duration?: number | null
   source: "external"
+}
+
+export type StoryPublicState = "visible" | "not_visible"
+
+export type StoryPublicStateInput = {
+  now: string
+  story: {
+    isDeleted: boolean
+    expiresAt: string | null
+  }
+  creator: {
+    status: string | null | undefined
+  } | null
+  profile: {
+    isDeactivated: boolean | null | undefined
+    isDeletePending: boolean | null | undefined
+    deletedAt: string | null | undefined
+    isBanned: boolean | null | undefined
+  } | null
+}
+
+export type StoryAccessState =
+  | "not_visible"
+  | "visible_locked"
+  | "visible_unlocked"
+
+export type StoryAccessStateInput = {
+  visibility: StoryVisibility
+  isOwner: boolean
+  hasSubscriptionAccess: boolean
+}
+export type StorySurfaceItemInput = {
+  id: string
+  creatorId: string
+  mediaUrl: string
+  mediaType: StoryMediaType
+  text: string | null
+  visibility: StoryVisibility
+  editorState: StoryEditorState | null
+  createdAt: string
+  expiresAt: string
+  isDeleted: boolean
+  accessState: StoryAccessState
+  creator: StoryCreator | null
+}
+export type StoryReadStateMap = Record<string, string>
+
+export type StoryReadResolution = {
+  creatorId: string
+  latestStoryId: string | null
+  lastSeenStoryId: string | null
+  hasUnseenStory: boolean
+  isRead: boolean
+}
+
+export type StorySeenUpdateInput = {
+  creatorId: string
+  storyId: string
+  lastMarkedStoryId: string | null
+}
+
+export type StorySeenUpdateResolution = {
+  shouldMarkSeen: boolean
 }

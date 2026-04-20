@@ -1,5 +1,22 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
+/**
+ * Story Read-State Contract (SOURCE OF TRUTH)
+ *
+ * - Scope: creator-level (NOT per-story)
+ * - Key: viewer_user_id + creator_id
+ * - Value: last_seen_story_id
+ *
+ * Interpretation:
+ * - last_seen_story_id === latest visible story → creator is fully read
+ * - last_seen_story_id !== latest → creator has unread stories
+ *
+ * Important:
+ * - This file ONLY handles persistence (read/write)
+ * - UI interpretation MUST go through story-read-policy
+ */
+
+
 export async function getStoryReadStateMap(viewerUserId: string) {
   const { data, error } = await supabaseAdmin
     .from("story_read_states")

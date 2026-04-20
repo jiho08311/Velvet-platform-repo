@@ -1,8 +1,10 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-
+import { resolveStorySeenUpdate } from "../lib/story-read-policy"
 import type { Story } from "../types"
+import { getStoryPlaybackPolicy } from "../lib/story-playback-policy"
+import { resolveNextStoryIndex } from "../lib/story-navigation-policy"
 
 type StoryViewerProps = {
   stories: Story[]
@@ -15,7 +17,7 @@ type StoryViewerProps = {
   }) => Promise<void> | void
 }
 
-const IMAGE_STORY_DURATION_MS = 10000
+
 
 function formatStoryDate(value: string) {
   const date = new Date(value)
@@ -85,6 +87,8 @@ export function StoryViewer({
     const timerRef = useRef<number | null>(null)
   const timerStartedAtRef = useRef<number | null>(null)
 
+const hasAdvancedRef = useRef(false)
+
   useEffect(() => {
     if (open) {
       setCurrentIndex(initialIndex)
@@ -97,14 +101,28 @@ export function StoryViewer({
 
   const story = stories[currentIndex] ?? null
 
-  const isFirst = currentIndex === 0
-  const isLast = currentIndex === stories.length - 1
-  const shouldUseFixedTimer =
-    !!story && (story.mediaType === "image" || story.isLocked)
+  const playbackPolicy = story
+  ? getStoryPlaybackPolicy(story)
+  : null
+
+const shouldUseFixedTimer = playbackPolicy?.mode === "fixed"
+const fixedDurationMs = playbackPolicy?.durationMs ?? 10000
+
+
+ 
 
   const markSeen = useCallback(async () => {
     if (!story) return
-    if (lastMarkedStoryIdRef.current === story.id) return
+
+    const resolution = resolveStorySeenUpdate({
+      creatorId: story.creatorId,
+      storyId: story.id,
+      lastMarkedStoryId: lastMarkedStoryIdRef.current,
+    })
+
+    if (!resolution.shouldMarkSeen) {
+      return
+    }
 
     lastMarkedStoryIdRef.current = story.id
 
@@ -114,37 +132,43 @@ export function StoryViewer({
     })
   }, [onSeenStories, story])
 
-  function handlePrev() {
-    if (isFirst) return
+function handlePrev() {
+  if (currentIndex === 0) return
 
-    if (timerRef.current) {
-      window.clearInterval(timerRef.current)
-      timerRef.current = null
-    }
-
-    timerStartedAtRef.current = null
-    setCurrentIndex((prev) => prev - 1)
-    setProgress(0)
+  if (timerRef.current) {
+    window.clearInterval(timerRef.current)
+    timerRef.current = null
   }
 
-  async function handleNext() {
-    if (timerRef.current) {
-      window.clearInterval(timerRef.current)
-      timerRef.current = null
-    }
+  timerStartedAtRef.current = null
 
-    timerStartedAtRef.current = null
+  setCurrentIndex((prev) => prev - 1)
+  setProgress(0)
+}
 
-    await markSeen()
+async function handleNext() {
+  if (hasAdvancedRef.current) return
+  hasAdvancedRef.current = true
 
-    if (isLast) {
-      onClose()
-      return
-    }
-
-    setCurrentIndex((prev) => prev + 1)
-    setProgress(0)
+  if (timerRef.current) {
+    window.clearInterval(timerRef.current)
+    timerRef.current = null
   }
+
+  timerStartedAtRef.current = null
+
+  await markSeen()
+
+  const resolution = resolveNextStoryIndex(stories, currentIndex)
+
+  if (resolution.shouldClose) {
+    onClose()
+    return
+  }
+
+  setCurrentIndex(resolution.nextIndex!)
+  setProgress(0)
+}
 
   function handleTouchStart(event: React.TouchEvent<HTMLDivElement>) {
     touchStartXRef.current = event.touches[0]?.clientX ?? null
@@ -193,6 +217,8 @@ export function StoryViewer({
   useEffect(() => {
     if (!open || !story) return
 
+    hasAdvancedRef.current = false
+
     if (timerRef.current) {
       window.clearInterval(timerRef.current)
       timerRef.current = null
@@ -225,8 +251,8 @@ export function StoryViewer({
     }
 
     if (timerStartedAtRef.current === null) {
-      timerStartedAtRef.current =
-        Date.now() - (progress / 100) * IMAGE_STORY_DURATION_MS
+ timerStartedAtRef.current =
+  Date.now() - (progress / 100) * fixedDurationMs
     }
 
     timerRef.current = window.setInterval(() => {
@@ -235,7 +261,7 @@ export function StoryViewer({
       const elapsed = Date.now() - timerStartedAtRef.current
       const nextProgress = Math.min(
         100,
-        (elapsed / IMAGE_STORY_DURATION_MS) * 100
+   (elapsed / fixedDurationMs) * 100
       )
 
       setProgress(nextProgress)
@@ -595,7 +621,7 @@ const storyMusicStyle = storyMusic?.style ?? "default"
               </>
             )}
 
-            {!isFirst ? (
+      {currentIndex > 0 ? (
               <button
                 type="button"
                 onClick={(event) => {
@@ -609,7 +635,7 @@ const storyMusicStyle = storyMusic?.style ?? "default"
               </button>
             ) : null}
 
-            {!isLast ? (
+        {currentIndex < stories.length - 1 ? (
               <button
                 type="button"
                 onClick={(event) => {
