@@ -3,19 +3,13 @@
 import { useEffect, useRef, useState, useTransition } from "react"
 import { createFeedPostAction } from "@/modules/post/server/create-feed-post-action"
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/client"
-
+import type { CreatePostUploadedMediaInput } from "@/modules/post/types"
 type FeedComposerProps = {
   placeholder?: string
   userId: string
 }
 
-type UploadedFileInput = {
-  path: string
-  type: string
-  mimeType: string
-  size: number
-  originalName: string
-}
+
 
 type ComposerFileItem = {
   id: string
@@ -48,13 +42,13 @@ function createFileItem(file: File): ComposerFileItem {
   }
 }
 
-async function uploadFilesDirect(files: File[]): Promise<UploadedFileInput[]> {
+async function uploadFilesDirect(files: File[]): Promise<CreatePostUploadedMediaInput[]> {
   if (files.length === 0) {
     return []
   }
 
   const supabase = createSupabaseBrowserClient()
-  const uploaded: UploadedFileInput[] = []
+const uploaded: CreatePostUploadedMediaInput[] = []
 
   for (const file of files) {
     const path = buildClientUploadPath(file)
