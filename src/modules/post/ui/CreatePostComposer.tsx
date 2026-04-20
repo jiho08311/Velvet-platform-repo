@@ -5,16 +5,12 @@ import { localDateTimeToUtcIso } from "@/shared/lib/date-time"
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/client"
 
 import { createPostAction } from "../server/create-post-action"
-import type { CreatePostBlockInput } from "../types"
+import type {
+  CreatePostBlockInput,
+  CreatePostUploadedMediaInput,
+} from "../types"
 import { CreatePostForm } from "./CreatePostForm"
 
-type UploadedFileInput = {
-  path: string
-  type: string
-  mimeType: string
-  size: number
-  originalName: string
-}
 
 
 type CreatePostComposerProps = {
@@ -39,13 +35,13 @@ function buildClientUploadPath(file: File) {
   return `creator/${now}-${random}${safeExtension}`
 }
 
-async function uploadFilesDirect(files: File[]): Promise<UploadedFileInput[]> {
+async function uploadFilesDirect(files: File[]): Promise<CreatePostUploadedMediaInput[]> {
   if (files.length === 0) {
     return []
   }
 
   const supabase = createSupabaseBrowserClient()
-  const uploaded: UploadedFileInput[] = []
+  const uploaded: CreatePostUploadedMediaInput[] = []
 
   for (const file of files) {
     const path = buildClientUploadPath(file)
@@ -82,7 +78,7 @@ async function uploadFilesDirect(files: File[]): Promise<UploadedFileInput[]> {
 
 function normalizeBlocksAfterUpload(params: {
   blocks: CreatePostBlockInput[]
-  uploadedFiles: UploadedFileInput[]
+  uploadedFiles: CreatePostUploadedMediaInput[]
 }) {
   const sortedBlocks = [...params.blocks].sort((a, b) => a.sortOrder - b.sortOrder)
   const mediaBlocks = sortedBlocks.filter((block) => block.type !== "text")
@@ -145,7 +141,7 @@ export function CreatePostComposer({
                   status: publishMode === "scheduled" ? "scheduled" : "draft",
                   publishedAt: resolvedPublishedAt,
                   visibility,
-                  files: normalized.files as never,
+                  files: normalized.files,
                   blocks: normalized.blocks,
                 })
 
