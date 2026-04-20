@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+import { getConversationVisibility } from "@/modules/message/server/get-conversation-visibility"
 
 type ListMessagesParams = {
   conversationId: string
@@ -52,20 +53,12 @@ export async function listMessages({
 }: ListMessagesParams): Promise<Message[]> {
   const supabase = await createSupabaseServerClient()
 
-  const { data: participants, error: participantError } = await supabase
-    .from("conversation_participants")
-    .select("user_id")
-    .eq("conversation_id", conversationId)
+  const visibility = await getConversationVisibility({
+    conversationId,
+    userId,
+  })
 
-  if (participantError) {
-    throw participantError
-  }
-
-  const isParticipant = (participants ?? []).some(
-    (p) => p.user_id === userId
-  )
-
-  if (!isParticipant) {
+  if (!visibility.isVisible) {
     throw new Error("Unauthorized")
   }
 

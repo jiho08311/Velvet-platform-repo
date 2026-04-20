@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
+import { getConversationVisibility } from "@/modules/message/server/get-conversation-visibility"
 
 type GetConversationIdByMessageParams = {
   messageId: string
@@ -8,10 +9,6 @@ type GetConversationIdByMessageParams = {
 type MessageRow = {
   id: string
   conversation_id: string
-}
-
-type ParticipantRow = {
-  user_id: string
 }
 
 export async function getConversationIdByMessage({
@@ -34,20 +31,12 @@ export async function getConversationIdByMessage({
     return null
   }
 
-  const { data: participants, error: participantError } = await supabase
-    .from("conversation_participants")
-    .select("user_id")
-    .eq("conversation_id", message.conversation_id)
+  const visibility = await getConversationVisibility({
+    conversationId: message.conversation_id,
+    userId,
+  })
 
-  if (participantError) {
-    throw participantError
-  }
-
-  const isParticipant = ((participants ?? []) as ParticipantRow[]).some(
-    (participant) => participant.user_id === userId
-  )
-
-  if (!isParticipant) {
+  if (!visibility.isVisible) {
     return null
   }
 

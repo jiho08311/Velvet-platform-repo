@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+import { getConversationVisibility } from "@/modules/message/server/get-conversation-visibility"
 
 type MediaRow = {
   id: string
@@ -29,16 +30,14 @@ export async function getSecureMessageMedia({
 
   if (!message) return []
 
-  const { data: participants } = await supabase
-    .from("conversation_participants")
-    .select("user_id")
-    .eq("conversation_id", message.conversation_id)
+  const visibility = await getConversationVisibility({
+    conversationId: message.conversation_id,
+    userId,
+  })
 
-  const isParticipant = (participants ?? []).some(
-    (p) => p.user_id === userId
-  )
-
-  if (!isParticipant) throw new Error("Unauthorized")
+  if (!visibility.isVisible) {
+    throw new Error("Unauthorized")
+  }
 
   const { data: mediaRows } = await supabase
     .from("media")

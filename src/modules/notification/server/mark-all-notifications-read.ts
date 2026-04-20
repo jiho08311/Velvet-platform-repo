@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 
-import { getNotificationOwnerIds } from "./get-notification-owner-ids"
+import { getNotificationVisibilityScope } from "./notification-visibility-policy"
+import { createNotificationReadUpdate } from "./notification-read-state-policy"
 
 type MarkAllNotificationsReadParams = {
   userId: string
@@ -14,16 +15,16 @@ export async function markAllNotificationsRead({
   userId,
 }: MarkAllNotificationsReadParams): Promise<number> {
   const supabase = await createSupabaseServerClient()
-  const ownerIds = await getNotificationOwnerIds(userId)
+  const scope = await getNotificationVisibilityScope(userId)
 
-  if (ownerIds.length === 0) {
+  if (!scope.hasAccessScope) {
     return 0
   }
 
   const { data, error } = await supabase
     .from("notifications")
     .select("id")
-    .in("user_id", ownerIds)
+    .in("user_id", scope.ownerIds)
     .is("read_at", null)
 
   if (error) {
@@ -40,11 +41,8 @@ export async function markAllNotificationsRead({
 
   const { error: updateError } = await supabase
     .from("notifications")
-    .update({
-      status: "read",
-      read_at: readAt,
-    })
-    .in("user_id", ownerIds)
+    .update(createNotificationReadUpdate(readAt))
+    .in("user_id", scope.ownerIds)
     .is("read_at", null)
 
   if (updateError) {

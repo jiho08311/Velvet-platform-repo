@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
+import { getConversationVisibility } from "@/modules/message/server/get-conversation-visibility"
 
 type ConversationRow = {
   id: string
@@ -72,10 +73,27 @@ export async function listConversations({
     return []
   }
 
+  const visibleConversationIds: string[] = []
+
+  for (const conversationId of conversationIds) {
+    const visibility = await getConversationVisibility({
+      conversationId,
+      userId,
+    })
+
+    if (visibility.isVisible) {
+      visibleConversationIds.push(conversationId)
+    }
+  }
+
+  if (visibleConversationIds.length === 0) {
+    return []
+  }
+
   const { data: conversations, error: conversationsError } = await supabase
     .from("conversations")
     .select("id, created_at, updated_at, last_message_at")
-    .in("id", conversationIds)
+    .in("id", visibleConversationIds)
     .order("last_message_at", { ascending: false })
 
   if (conversationsError) {
@@ -86,7 +104,7 @@ export async function listConversations({
     await supabase
       .from("conversation_participants")
       .select("conversation_id, user_id")
-      .in("conversation_id", conversationIds)
+      .in("conversation_id", visibleConversationIds)
 
   if (allParticipantsError) {
     throw allParticipantsError
@@ -109,7 +127,6 @@ export async function listConversations({
     .from("profiles")
     .select("id, username, display_name, avatar_url")
     .in("id", participantIds)
-    .eq("is_deactivated", false)
 
   if (profilesError) {
     throw profilesError
@@ -122,7 +139,7 @@ export async function listConversations({
   const { data: messages, error: messagesError } = await supabase
     .from("messages")
     .select("id, conversation_id, sender_id, content, created_at, type")
-    .in("conversation_id", conversationIds)
+    .in("conversation_id", visibleConversationIds)
     .order("created_at", { ascending: false })
 
   if (messagesError) {

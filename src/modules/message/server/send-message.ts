@@ -1,11 +1,9 @@
 import OpenAI from "openai"
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"
 import { checkTextSafety } from "@/workflows/create-post-with-media-workflow"
-
-// 🔥 추가
 import { createNotification } from "@/modules/notification/server/create-notification"
+import { assertMessageAttachmentEligibility } from "@/modules/message/server/assert-message-attachment-eligibility"
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -23,16 +21,6 @@ type SendMessageInput = {
   mediaIds?: string[]
 }
 
-type ParticipantRow = {
-  conversation_id: string
-  user_id: string
-}
-
-type CreatorRow = {
-  id: string
-  user_id: string
-}
-
 type MessageRow = {
   id: string
   conversation_id: string
@@ -41,13 +29,6 @@ type MessageRow = {
   created_at: string
   type: string | null
   price: number | null
-}
-
-type ExistingMediaRow = {
-  id: string
-  owner_user_id: string | null
-  post_id: string | null
-  message_id: string | null
 }
 
 type ModerationMediaRow = {
@@ -125,60 +106,12 @@ export async function sendMessage(input: SendMessageInput) {
   await checkTextSafety(trimmedContent)
   await checkMessageImageSafety(mediaIds)
 
-  const { data: participants, error: participantsError } = await supabase
-    .from("conversation_participants")
-    .select("conversation_id, user_id")
-    .eq("conversation_id", input.conversationId)
-
-  if (participantsError) {
-    throw participantsError
-  }
-
-  const participantRows = (participants ?? []) as ParticipantRow[]
-  const participantUserIds = participantRows.map((row) => row.user_id)
-
-  const otherUserId =
-    participantUserIds.find((userId) => userId !== input.senderId) ?? null
-
-  const { data: senderCreator } = await supabase
-    .from("creators")
-    .select("id, user_id")
-    .eq("user_id", input.senderId)
-    .maybeSingle<CreatorRow>()
-
-  const { data: otherCreator } = await supabase
-    .from("creators")
-    .select("id, user_id")
-    .eq("user_id", otherUserId)
-    .maybeSingle<CreatorRow>()
-
-  const senderIsCreator = Boolean(senderCreator)
-
-  if (!senderIsCreator && otherCreator) {
-    const subscription = await getActiveSubscription({
-      userId: input.senderId,
-      creatorId: otherCreator.id,
+  const { otherUserId, mediaIds: validatedMediaIds } =
+    await assertMessageAttachmentEligibility({
+      conversationId: input.conversationId,
+      senderId: input.senderId,
+      mediaIds,
     })
-
-    if (!subscription) {
-      throw new Error("Subscription required")
-    }
-  }
-
-  if (mediaIds.length > 0) {
-    const { data: existingMedia, error: mediaFetchError } = await supabaseAdmin
-      .from("media")
-      .select("id, owner_user_id, post_id, message_id")
-      .in("id", mediaIds)
-
-    if (mediaFetchError) {
-      throw mediaFetchError
-    }
-
-    if (((existingMedia ?? []) as ExistingMediaRow[]).length !== mediaIds.length) {
-      throw new Error("Some media files were not found")
-    }
-  }
 
   const { data: message, error: messageError } = await supabase
     .from("messages")
@@ -196,7 +129,6 @@ export async function sendMessage(input: SendMessageInput) {
     throw messageError
   }
 
-  // 🔥🔥🔥 여기 핵심 추가 (알림)
   if (otherUserId) {
     await createNotification({
       userId: otherUserId,
@@ -210,13 +142,13 @@ export async function sendMessage(input: SendMessageInput) {
     })
   }
 
-  if (mediaIds.length > 0) {
+  if (validatedMediaIds.length > 0) {
     const { data: updatedMedia, error: mediaUpdateError } = await supabaseAdmin
       .from("media")
       .update({
         message_id: message.id,
       })
-      .in("id", mediaIds)
+      .in("id", validatedMediaIds)
       .select("id, message_id")
 
     if (mediaUpdateError) {
@@ -225,7 +157,7 @@ export async function sendMessage(input: SendMessageInput) {
 
     const updatedMediaList = Array.isArray(updatedMedia) ? updatedMedia : []
 
-    if (updatedMediaList.length !== mediaIds.length) {
+    if (updatedMediaList.length !== validatedMediaIds.length) {
       throw new Error("Failed to attach media to message")
     }
   }

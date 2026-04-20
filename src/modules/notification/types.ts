@@ -1,3 +1,5 @@
+import { resolveNotificationReadState } from "./server/notification-read-state-policy"
+
 export const NOTIFICATION_TYPES = [
   "subscription_started",
   "subscription_canceled",
@@ -92,19 +94,18 @@ export function isNotificationStatus(
 }
 
 export function mapNotificationRow(row: NotificationRow): Notification {
-  const status =
-    row.read_at !== null ? "read" : row.status
+  const resolvedReadState = resolveNotificationReadState(row)
 
   return {
     id: row.id,
     userId: row.user_id,
     type: row.type,
-    status,
+    status: resolvedReadState.status,
     title: row.title,
     body: row.body,
     data: row.data ?? {},
     createdAt: row.created_at,
-    readAt: row.read_at,
-    isRead: row.read_at !== null || status === "read",
+    readAt: resolvedReadState.readAt,
+    isRead: resolvedReadState.isRead,
   }
 }

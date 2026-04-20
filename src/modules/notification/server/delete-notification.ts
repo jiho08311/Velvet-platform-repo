@@ -1,6 +1,6 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 
-import { getNotificationOwnerIds } from "./get-notification-owner-ids"
+import { getNotificationVisibilityScope } from "./notification-visibility-policy"
 
 type DeleteNotificationParams = {
   notificationId: string
@@ -16,9 +16,9 @@ export async function deleteNotification({
   userId,
 }: DeleteNotificationParams): Promise<boolean> {
   const supabase = await createSupabaseServerClient()
-  const ownerIds = await getNotificationOwnerIds(userId)
+  const scope = await getNotificationVisibilityScope(userId)
 
-  if (ownerIds.length === 0) {
+  if (!scope.hasAccessScope) {
     return false
   }
 
@@ -26,7 +26,7 @@ export async function deleteNotification({
     .from("notifications")
     .select("id")
     .eq("id", notificationId)
-    .in("user_id", ownerIds)
+    .in("user_id", scope.ownerIds)
     .maybeSingle<NotificationRow>()
 
   if (error) {
@@ -41,7 +41,7 @@ export async function deleteNotification({
     .from("notifications")
     .delete()
     .eq("id", notificationId)
-    .in("user_id", ownerIds)
+    .in("user_id", scope.ownerIds)
 
   if (deleteError) {
     throw deleteError

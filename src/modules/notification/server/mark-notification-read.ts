@@ -4,24 +4,28 @@ import type {
   MarkNotificationReadResult,
   NotificationRow,
 } from "../types"
-import { getNotificationOwnerIds } from "./get-notification-owner-ids"
+import { getNotificationVisibilityScope } from "./notification-visibility-policy"
+import {
+  createMarkNotificationReadResult,
+  createNotificationReadUpdate,
+} from "./notification-read-state-policy"
 
 export async function markNotificationRead(
   notificationId: string,
   userId: string,
 ): Promise<MarkNotificationReadResult | null> {
   const supabase = await createSupabaseServerClient()
-  const ownerIds = await getNotificationOwnerIds(userId)
+  const scope = await getNotificationVisibilityScope(userId)
 
-  if (ownerIds.length === 0) {
+  if (!scope.hasAccessScope) {
     return null
   }
 
   const { data, error } = await supabase
     .from("notifications")
-    .select("id, user_id, read_at")
+    .select("id, user_id, status, read_at")
     .eq("id", notificationId)
-    .in("user_id", ownerIds)
+    .in("user_id", scope.ownerIds)
     .maybeSingle<NotificationRow>()
 
   if (error) {
@@ -33,33 +37,24 @@ export async function markNotificationRead(
   }
 
   if (data.read_at) {
-    return {
-      id: data.id,
-      userId: data.user_id,
-      status: "read",
-      readAt: data.read_at,
-    }
+    return createMarkNotificationReadResult(data)
   }
 
   const readAt = new Date().toISOString()
 
   const { error: updateError } = await supabase
     .from("notifications")
-    .update({
-      read_at: readAt,
-      status: "read",
-    })
+    .update(createNotificationReadUpdate(readAt))
     .eq("id", notificationId)
-    .in("user_id", ownerIds)
+    .in("user_id", scope.ownerIds)
 
   if (updateError) {
     throw updateError
   }
 
-  return {
-    id: data.id,
-    userId: data.user_id,
+  return createMarkNotificationReadResult({
+    ...data,
     status: "read",
-    readAt,
-  }
+    read_at: readAt,
+  })
 }

@@ -2,7 +2,7 @@ import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 
 import type { Notification, NotificationRow } from "../types"
 import { mapNotificationRow } from "../types"
-import { getNotificationOwnerIds } from "./get-notification-owner-ids"
+import { getNotificationVisibilityScope } from "./notification-visibility-policy"
 
 type ListNotificationsParams = {
   userId: string
@@ -12,9 +12,9 @@ export async function listNotifications({
   userId,
 }: ListNotificationsParams): Promise<Notification[]> {
   const supabase = await createSupabaseServerClient()
-  const ownerIds = await getNotificationOwnerIds(userId)
+  const scope = await getNotificationVisibilityScope(userId)
 
-  if (ownerIds.length === 0) {
+  if (!scope.hasAccessScope) {
     return []
   }
 
@@ -31,7 +31,7 @@ export async function listNotifications({
       created_at,
       read_at
     `)
-    .in("user_id", ownerIds)
+    .in("user_id", scope.ownerIds)
     .order("created_at", { ascending: false })
 
   if (error) {

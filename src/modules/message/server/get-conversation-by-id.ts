@@ -1,5 +1,7 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { resolveConversationParticipants } from "@/modules/message/server/resolve-conversation-participants"
+import { getConversationVisibility } from "@/modules/message/server/get-conversation-visibility"
 
 type GetConversationByIdInput = {
   conversationId: string
@@ -13,17 +15,11 @@ type ConversationRow = {
   last_message_at: string | null
 }
 
-type ParticipantRow = {
-  conversation_id: string
-  user_id: string
-}
-
 type ProfileRow = {
   id: string
   username: string
   display_name: string | null
   avatar_url: string | null
-  is_deactivated: boolean | null
 }
 
 type CreatorRow = {
@@ -51,40 +47,32 @@ export async function getConversationById({
     return null
   }
 
-  const { data: participants, error: participantsError } = await supabase
-    .from("conversation_participants")
-    .select("conversation_id, user_id")
-    .eq("conversation_id", conversationId)
+  const visibility = await getConversationVisibility({
+    conversationId,
+    userId,
+  })
 
-  if (participantsError) {
-    throw participantsError
-  }
-
-  const participantRows = (participants ?? []) as ParticipantRow[]
-  const isParticipant = participantRows.some((row) => row.user_id === userId)
-
-  if (!isParticipant) {
+  if (!visibility.isVisible) {
     return null
   }
 
-  const otherUserId =
-    participantRows.find((row) => row.user_id !== userId)?.user_id ?? null
+  const { otherUserId } = await resolveConversationParticipants({
+    conversationId,
+    userId,
+  })
 
   let participant = null
 
   if (otherUserId) {
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
-      .select("id, username, display_name, avatar_url, is_deactivated")
+      .select("id, username, display_name, avatar_url")
       .eq("id", otherUserId)
       .maybeSingle<ProfileRow>()
 
     if (profileError) {
       throw profileError
     }
-    if (!profile || profile.is_deactivated) {
-  return null // ✅ invalid user 처리
-}
 
     if (profile) {
       participant = {

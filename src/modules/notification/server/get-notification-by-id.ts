@@ -2,7 +2,7 @@ import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 
 import type { Notification, NotificationRow } from "../types"
 import { mapNotificationRow } from "../types"
-import { getNotificationOwnerIds } from "./get-notification-owner-ids"
+import { getNotificationVisibilityScope } from "./notification-visibility-policy"
 
 type GetNotificationByIdParams = {
   notificationId: string
@@ -14,9 +14,9 @@ export async function getNotificationById({
   userId,
 }: GetNotificationByIdParams): Promise<Notification | null> {
   const supabase = await createSupabaseServerClient()
-  const ownerIds = await getNotificationOwnerIds(userId)
+  const scope = await getNotificationVisibilityScope(userId)
 
-  if (ownerIds.length === 0) {
+  if (!scope.hasAccessScope) {
     return null
   }
 
@@ -34,7 +34,7 @@ export async function getNotificationById({
       read_at
     `)
     .eq("id", notificationId)
-    .in("user_id", ownerIds)
+    .in("user_id", scope.ownerIds)
     .maybeSingle<NotificationRow>()
 
   if (error) {
