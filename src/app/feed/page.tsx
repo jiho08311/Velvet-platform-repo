@@ -18,9 +18,9 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { getStoryReadStateMap } from "@/modules/story/server/story-read-state"
 
 type FeedMediaItem = {
-  id?: string
+  id: string
   url: string
-  type?: "image" | "video" | "audio" | "file"
+  type: "image" | "video" | "audio" | "file"
 }
 
 type ProfileRow = {
@@ -33,24 +33,42 @@ function normalizeMedia(item: unknown): FeedMediaItem[] {
   }
 
   const maybeItem = item as {
+    id?: string
     media?: Array<{
       id?: string
-      url: string
+      url?: string
       type?: "image" | "video" | "audio" | "file"
     }>
     mediaThumbnailUrls?: string[]
   }
 
   if (Array.isArray(maybeItem.media)) {
-    return maybeItem.media.map((m) => ({
-      id: m.id,
-      url: m.url ?? "",
-      type: m.type,
-    }))
+    return maybeItem.media
+      .filter(
+        (m): m is {
+          id?: string
+          url: string
+          type: "image" | "video" | "audio" | "file"
+        } =>
+          !!m &&
+          typeof m.url === "string" &&
+          (
+            m.type === "image" ||
+            m.type === "video" ||
+            m.type === "audio" ||
+            m.type === "file"
+          )
+      )
+      .map((m, index) => ({
+        id: m.id ?? `${maybeItem.id ?? "post"}-media-${index}`,
+        url: m.url,
+        type: m.type,
+      }))
   }
 
   if (Array.isArray(maybeItem.mediaThumbnailUrls)) {
-    return maybeItem.mediaThumbnailUrls.map((url) => ({
+    return maybeItem.mediaThumbnailUrls.map((url, index) => ({
+      id: `${maybeItem.id ?? "post"}-thumb-${index}`,
       url,
       type: "image" as const,
     }))
@@ -178,8 +196,19 @@ export default async function FeedPage() {
       status: item.status,
       publishedAt: item.publishedAt ?? null,
       media: normalizeMedia(item),
-      blocks:
-        "blocks" in item && Array.isArray(item.blocks) ? item.blocks : [],
+   blocks:
+  "blocks" in item && Array.isArray(item.blocks)
+    ? item.blocks.map((block) => ({
+        id: block.id,
+        postId: block.postId,
+        type: block.type,
+        content: block.content,
+        mediaId: block.mediaId,
+        sortOrder: block.sortOrder,
+        createdAt: block.createdAt,
+        editorState: "editorState" in block ? block.editorState ?? null : null,
+      }))
+    : [],
       isLocked: item.isLocked,
       lockReason: item.lockReason,
       price: normalizePrice(item),
