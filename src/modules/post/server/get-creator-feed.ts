@@ -374,10 +374,12 @@ export async function getCreatorFeed({
 
       return {
         id: post.id,
-        content: post.shouldHideContent ? null : renderInput.content,
+        content: post.shouldHideContent
+          ? null
+          : (renderInput.blockText || null),
         created_at: post.created_at,
         media,
-        blocks: post.shouldHideContent ? [] : renderInput.blocks,
+        blocks: post.shouldHideContent ? [] : (blocksMap.get(post.id) ?? []),
         price: post.price,
         isLocked: post.isLocked,
         likesCount: likeCountMap.get(post.id) ?? 0,
