@@ -2,7 +2,7 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
 import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
 import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
-import { buildPostRenderInput } from "./build-post-render-input"
+import { buildPostRenderInput } from "@/modules/post/ui/post-render-input"
 import type { PostBlockEditorState } from "../types"
 
 type SubscriptionRow = {
@@ -280,8 +280,8 @@ export async function listFeedPosts({
         })
       )
 
-      const renderInput = buildPostRenderInput({
-        content: post.content,
+          const renderInput = buildPostRenderInput({
+        text: post.content ?? "",
         blocks: (blocksMap.get(post.id) ?? []).map((block) => ({
           id: block.id,
           postId: block.post_id,
@@ -292,7 +292,7 @@ export async function listFeedPosts({
           createdAt: block.created_at,
           editorState: block.editor_state ?? null,
         })),
-        mediaItems: media.map((item) => ({
+        media: media.map((item) => ({
           id: item.id,
           url: item.url,
           type: item.type,

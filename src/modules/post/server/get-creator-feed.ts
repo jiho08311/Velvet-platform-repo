@@ -4,7 +4,7 @@ import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 import { checkSubscription } from "@/modules/subscription/server/check-subscription"
 import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
 import type { PostBlockEditorState } from "../types"
-import { buildPostRenderInput } from "./build-post-render-input"
+import { buildPostRenderInput } from "@/modules/post/ui/post-render-input"
 
 type CreatorFeedPost = {
   id: string
@@ -361,10 +361,10 @@ export async function getCreatorFeed({
         })
       )
 
-      const renderInput = buildPostRenderInput({
-        content: post.content,
+        const renderInput = buildPostRenderInput({
+        text: post.content ?? "",
         blocks: blocksMap.get(post.id) ?? [],
-        mediaItems: media.map((item, index) => ({
+        media: media.map((item, index) => ({
           id: item.id,
           url: item.url,
           type: item.type,

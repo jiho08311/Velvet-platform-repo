@@ -4,7 +4,7 @@ import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 import { checkSubscription } from "@/modules/subscription/server/check-subscription"
 import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
 import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
-import { buildPostRenderInput } from "./build-post-render-input"
+import { buildPostRenderInput } from "@/modules/post/ui/post-render-input"
 import type { PostBlockEditorState } from "../types"
 
 type PostRow = {
@@ -293,7 +293,7 @@ export async function listCreatorPosts({
       )
 
       const renderInput = buildPostRenderInput({
-        content: post.content,
+        text: post.content ?? "",
         blocks: (blocksMap.get(post.id) ?? []).map((block) => ({
           id: block.id,
           postId: block.post_id,
@@ -304,7 +304,7 @@ export async function listCreatorPosts({
           createdAt: block.created_at,
           editorState: block.editor_state ?? null,
         })),
-        mediaItems: media.map((item, index) => ({
+        media: media.map((item, index) => ({
           id: `${post.id}:${item.sort_order}:${index}`,
           url: mediaThumbnailUrls[index] ?? "",
           type: item.type,
@@ -316,7 +316,7 @@ export async function listCreatorPosts({
         id: post.id,
         creatorId: post.creator_id,
         title: post.title ?? undefined,
-        content: post.isLocked ? undefined : (renderInput.content ?? undefined),
+        content: post.isLocked ? undefined : (renderInput.blockText || undefined),
         status: post.status,
         visibility: post.visibility,
         price: post.price,

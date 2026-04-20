@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
-import { buildPostRenderInput } from "./build-post-render-input"
+import { buildPostRenderInput } from "@/modules/post/ui/post-render-input"
 
 export type MyPostListItem = {
   id: string
@@ -206,8 +206,8 @@ export async function getMyPosts(
         })
       )
 
-      const renderInput = buildPostRenderInput({
-        content: post.content,
+        const renderInput = buildPostRenderInput({
+        text: post.content ?? "",
         blocks: (blocksMap.get(post.id) ?? []).map((block) => ({
           id: block.id,
           postId: block.post_id,
@@ -216,9 +216,9 @@ export async function getMyPosts(
           mediaId: block.media_id,
           sortOrder: block.sort_order,
           createdAt: block.created_at,
-          editorState: block.editor_state as null,
+          editorState: block.editor_state ?? null,
         })),
-        mediaItems: media.map((item) => ({
+        media: media.map((item) => ({
           id: item.id,
           url: item.url,
           type: item.type,
@@ -230,7 +230,7 @@ export async function getMyPosts(
       return {
         id: post.id,
         creatorId: post.creator_id,
-        text: renderInput.content ?? "",
+           text: renderInput.blockText ?? "",
         status: post.status,
         visibility: post.visibility,
         isLocked: false,

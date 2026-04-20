@@ -6,7 +6,7 @@ import { getPostAccess } from "./get-post-access"
 import { getPostMedia } from "./get-post-media"
 import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
 import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
-import { buildPostRenderInput } from "./build-post-render-input"
+import { buildPostRenderInput } from "@/modules/post/ui/post-render-input"
 
 type PostRow = {
   id: string
@@ -229,9 +229,9 @@ export async function getPostById(
     : [[], []]
 
   const renderInput = buildPostRenderInput({
-    content: access.canView ? post.content : null,
+    text: access.canView ? (post.content ?? "") : "",
     blocks: access.canView ? rawBlocks : [],
-    mediaItems: media.map((item) => ({
+    media: media.map((item) => ({
       id: item.id,
       url: item.url,
       type: item.type,
