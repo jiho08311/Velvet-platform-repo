@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { getPostBlocks } from "@/modules/post/server/get-post-blocks"
+import { buildPostRenderInput } from "@/modules/post/server/build-post-render-input"
 
 export type CreatorStudioPostDetail = {
   id: string
@@ -112,13 +113,25 @@ export async function getCreatorStudioPost({
     })
   )
 
-  const blocks = await getPostBlocks(post.id)
+  const rawBlocks = await getPostBlocks(post.id)
+
+  const renderInput = buildPostRenderInput({
+    content: post.content,
+    blocks: rawBlocks,
+    mediaItems: (mediaRows ?? []).map((item, index) => ({
+      id: item.id,
+      url: media[index]?.url ?? "",
+      type: item.type,
+      mimeType: item.mime_type,
+      sortOrder: item.sort_order,
+    })),
+  })
 
   return {
     id: post.id,
     creatorId: post.creator_id,
     title: post.title,
-    content: post.content,
+    content: renderInput.content,
     status: post.status,
     visibility: post.visibility,
     price: post.price ?? 0,
@@ -126,6 +139,14 @@ export async function getCreatorStudioPost({
     updatedAt: post.updated_at,
     deletedAt: post.deleted_at,
     media,
-    blocks,
+    blocks: renderInput.blocks.map((block) => ({
+      id: block.id,
+      postId: block.postId,
+      type: block.type,
+      content: block.content,
+      mediaId: block.mediaId,
+      sortOrder: block.sortOrder,
+      createdAt: block.createdAt,
+    })),
   }
 }

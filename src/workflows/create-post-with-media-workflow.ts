@@ -5,15 +5,16 @@ import { createMedia } from "@/modules/media/server/create-media"
 import { updatePostStatus } from "@/modules/post/server/update-post-status"
 import { enqueueVideoModeration } from "@/modules/moderation/server/enqueue-video-moderation"
 import { createPostBlocks } from "@/modules/post/server/create-post-blocks"
-import type { CreatePostBlockInput } from "@/modules/post/types"
+import {
+  projectCreatePostDraft,
+} from "@/modules/post/server/create-post-draft-policy"
+import type {
+  CreatePostBlockInput,
+  CreatePostDraftBlock,
+  CreatePostUploadedMediaInput,
+} from "@/modules/post/types"
 
-type UploadedFileInput = {
-  path: string
-  type: string
-  mimeType: string
-  size: number
-  originalName: string
-}
+type UploadedFileInput = CreatePostUploadedMediaInput
 
 type CreatePostWithMediaWorkflowInput = {
   creatorId: string
@@ -249,7 +250,6 @@ async function checkPostSafety({
   }
 }
 
-
 async function moderatePostAndApplyTransition({
   postId,
   content,
@@ -294,6 +294,70 @@ async function applyInitialVideoModerationTransition(postId: string) {
   })
 }
 
+function buildCreateDraftBlocksFromLegacyInput(params: {
+  blocks: NonNullable<CreatePostWithMediaWorkflowInput["blocks"]>
+  files: UploadedFileInput[]
+}): CreatePostDraftBlock[] {
+  const uploadedMediaBySortOrder = new Map<number, UploadedFileInput>()
+
+  for (const file of params.files) {
+    // legacy path safety fallback: keep original relative order
+    // later surfaces will stop relying on this
+    const nextIndex = uploadedMediaBySortOrder.size
+    uploadedMediaBySortOrder.set(nextIndex, file)
+  }
+
+  let uploadedMediaIndex = 0
+
+  return params.blocks.map((block) => {
+    if (block.type === "text") {
+      return {
+        type: "text" as const,
+        content: block.content ?? "",
+        sortOrder: block.sortOrder,
+        editorState: block.editorState ?? null,
+      }
+    }
+
+    if (block.mediaId?.trim()) {
+      return {
+        type: block.type,
+        sortOrder: block.sortOrder,
+        media: {
+          kind: "existing" as const,
+          mediaId: block.mediaId.trim(),
+        },
+        editorState: block.editorState ?? null,
+      }
+    }
+
+    const uploaded = uploadedMediaBySortOrder.get(uploadedMediaIndex)
+    uploadedMediaIndex += 1
+
+    if (!uploaded) {
+      return {
+        type: block.type,
+        sortOrder: block.sortOrder,
+        media: {
+          kind: "existing" as const,
+          mediaId: "",
+        },
+        editorState: block.editorState ?? null,
+      }
+    }
+
+    return {
+      type: block.type,
+      sortOrder: block.sortOrder,
+      media: {
+        kind: "uploaded" as const,
+        uploaded,
+      },
+      editorState: block.editorState ?? null,
+    }
+  })
+}
+
 export async function createPostWithMediaWorkflow({
   creatorId,
   title,
@@ -321,9 +385,28 @@ export async function createPostWithMediaWorkflow({
     throw new Error("Creator user not found")
   }
 
+  const hasIncomingBlocks = blocks.length > 0
+
+  const projectedDraft = hasIncomingBlocks
+    ? projectCreatePostDraft({
+        blocks: buildCreateDraftBlocksFromLegacyInput({
+          blocks,
+          files,
+        }),
+      })
+    : null
+
+  const resolvedContent = hasIncomingBlocks
+    ? projectedDraft?.content ?? null
+    : content?.trim() ?? null
+
+  const moderationFiles = hasIncomingBlocks
+    ? projectedDraft?.media.map((item) => item.uploaded) ?? []
+    : files
+
   console.log(
     "[createPostWithMediaWorkflow] files",
-    files.map((file) => ({
+    moderationFiles.map((file) => ({
       name: file.originalName,
       type: file.type,
       size: file.size,
@@ -331,7 +414,7 @@ export async function createPostWithMediaWorkflow({
     }))
   )
 
-  const hasVideo = files.some(
+  const hasVideo = moderationFiles.some(
     (file) => resolveUploadedMediaType(file.type) === "video"
   )
 
@@ -340,82 +423,72 @@ export async function createPostWithMediaWorkflow({
   const post = await createPost({
     creatorId,
     title,
-    content,
+    content: resolvedContent,
     status: hasVideo ? "draft" : status,
     visibility,
     price: resolvedPrice,
     publishedAt,
   })
 
-   if (hasVideo) {
+  if (hasVideo) {
     await applyInitialVideoModerationTransition(post.id)
   }
 
   const media: CreatedMedia[] = []
   const blocksToInsert: CreatePostBlockInput[] = []
-  const hasIncomingBlocks = blocks.length > 0
 
-  if (hasIncomingBlocks) {
-    let mediaFileIndex = 0
-
-    for (const block of blocks) {
-      if (block.type === "text") {
-        const trimmedContent = block.content?.trim() ?? ""
-
-        if (!trimmedContent) {
-          continue
-        }
-
-        blocksToInsert.push({
-          type: "text",
-          content: trimmedContent,
-          sortOrder: block.sortOrder,
-          editorState: block.editorState ?? null,
-        })
-
-        continue
-      }
-
-      const file = files[mediaFileIndex]
-
-      if (!file) {
-        continue
-      }
-
-      mediaFileIndex += 1
-
-      const type = resolveUploadedMediaType(file.type)
+  if (hasIncomingBlocks && projectedDraft) {
+    for (const mediaItem of projectedDraft.media) {
+      const type = resolveUploadedMediaType(mediaItem.uploaded.type)
 
       console.log("[createPostWithMediaWorkflow] detected media type", {
-        name: file.originalName,
-        fileType: file.mimeType,
+        name: mediaItem.uploaded.originalName,
+        fileType: mediaItem.uploaded.mimeType,
         detectedType: type,
-        path: file.path,
+        path: mediaItem.uploaded.path,
       })
 
-    const mediaRow = await createMedia({
-  postId: post.id,
-  ownerUserId: creatorRow.user_id,
-  type,
-  storagePath: file.path,
-  mimeType: file.mimeType || undefined,
-  sortOrder: block.sortOrder,
-  useInitialModerationState: true,
-})
+      const mediaRow = await createMedia({
+        postId: post.id,
+        ownerUserId: creatorRow.user_id,
+        type,
+        storagePath: mediaItem.uploaded.path,
+        mimeType: mediaItem.uploaded.mimeType || undefined,
+        sortOrder: mediaItem.sortOrder,
+        useInitialModerationState: true,
+      })
 
       media.push({
         id: mediaRow.id,
         type: mediaRow.type,
         storagePath: mediaRow.storagePath,
       })
-
-      blocksToInsert.push({
-        type,
-        mediaId: mediaRow.id,
-        sortOrder: block.sortOrder,
-        editorState: block.editorState ?? null,
-      })
     }
+
+    const mediaIdBySortOrder = new Map<number, string>(
+      media.map((item, index) => [projectedDraft.media[index].sortOrder, item.id])
+    )
+
+    blocksToInsert.push(
+      ...projectedDraft.blocks
+        .map((block) => {
+          if (block.type === "text") {
+            return block
+          }
+
+          return {
+            ...block,
+            mediaId: block.mediaId ?? mediaIdBySortOrder.get(block.sortOrder) ?? null,
+          }
+        })
+        .filter((block) => {
+          if (block.type === "text") {
+            return (block.content?.trim() ?? "").length > 0
+          }
+
+          return Boolean(block.mediaId)
+        })
+    )
   } else {
     for (const [index, file] of files.entries()) {
       const type = resolveUploadedMediaType(file.type)
@@ -427,15 +500,15 @@ export async function createPostWithMediaWorkflow({
         path: file.path,
       })
 
-   const mediaRow = await createMedia({
-  postId: post.id,
-  ownerUserId: creatorRow.user_id,
-  type,
-  storagePath: file.path,
-  mimeType: file.mimeType || undefined,
-  sortOrder: index,
-  useInitialModerationState: true,
-})
+      const mediaRow = await createMedia({
+        postId: post.id,
+        ownerUserId: creatorRow.user_id,
+        type,
+        storagePath: file.path,
+        mimeType: file.mimeType || undefined,
+        sortOrder: index,
+        useInitialModerationState: true,
+      })
 
       media.push({
         id: mediaRow.id,
@@ -444,7 +517,7 @@ export async function createPostWithMediaWorkflow({
       })
     }
 
-    const trimmedContent = content?.trim() ?? ""
+    const trimmedContent = resolvedContent?.trim() ?? ""
 
     if (trimmedContent) {
       blocksToInsert.push({
@@ -466,23 +539,24 @@ export async function createPostWithMediaWorkflow({
   await createPostBlocks(post.id, blocksToInsert)
 
   if (hasVideo) {
-console.log("🔥 CALL processVideoModeration", {
-  postId: post.id,
-  publishIntent: status === "scheduled" ? "scheduled" : "published",
-  publishedAt,
-  media,
-})
-await enqueueVideoModeration({
-  postId: post.id,
-  publishIntent: status === "scheduled" ? "scheduled" : "published",
-  publishedAt,
-  media,
-})
+    console.log("🔥 CALL processVideoModeration", {
+      postId: post.id,
+      publishIntent: status === "scheduled" ? "scheduled" : "published",
+      publishedAt,
+      media,
+    })
+
+    await enqueueVideoModeration({
+      postId: post.id,
+      publishIntent: status === "scheduled" ? "scheduled" : "published",
+      publishedAt,
+      media,
+    })
   } else {
     await moderatePostAndApplyTransition({
       postId: post.id,
-      content,
-      files,
+      content: resolvedContent,
+      files: moderationFiles,
       publishIntent: status === "scheduled" ? "scheduled" : "published",
       publishedAt,
     })

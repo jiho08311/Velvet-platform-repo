@@ -2,17 +2,13 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react"
 import { StoryVideoTrimField } from "@/modules/media/ui/StoryVideoTrimField"
-import type { PostBlockEditorState } from "@/modules/post/types"
+import type {
+  CreatePostBlockInput,
+  PostBlockEditorState,
+} from "@/modules/post/types"
 
 type PostVisibility = "public" | "subscribers"
 type PublishMode = "now" | "scheduled"
-type CreatePostBlockInput = {
-  type: "text" | "image" | "video" | "audio" | "file"
-  content?: string | null
-  sortOrder: number
-  mediaId?: string | null
-  editorState?: PostBlockEditorState
-}
 
 type SubmitPostInput = {
   visibility: PostVisibility
@@ -738,43 +734,93 @@ setDropTargetBlockId(null)
     }
   }
 
+
+type SerializedEditorSubmitBlock = CreatePostBlockInput & {
+  sourceBlockId: string
+  file?: File
+}
+
+function serializeEditorBlocksForSubmit(
+  blocks: EditorBlock[]
+): SerializedEditorSubmitBlock[] {
+  return blocks
+    .flatMap((block, index): SerializedEditorSubmitBlock[] => {
+      if (block.type === "text") {
+        const content = block.content?.trim() ?? ""
+
+        if (!content) {
+          return []
+        }
+
+        return [
+          {
+            sourceBlockId: block.id,
+            type: "text",
+            content,
+            sortOrder: index,
+            mediaId: null,
+            editorState: block.editorState ?? null,
+          },
+        ]
+      }
+
+      const hasExistingMediaId = (block.mediaId?.trim() ?? "").length > 0
+      const hasNewFile = Boolean(block.file && block.file.size > 0)
+
+      if (!hasExistingMediaId && !hasNewFile) {
+        return []
+      }
+
+      return [
+        {
+          sourceBlockId: block.id,
+          type: block.type,
+          content: null,
+          sortOrder: index,
+          mediaId: hasExistingMediaId ? block.mediaId ?? null : null,
+          editorState: block.editorState ?? null,
+          file: hasNewFile ? block.file : undefined,
+        },
+      ]
+    })
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+}
+
+
+
+
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    const submitBlocks: CreatePostBlockInput[] = blocks
-      .filter((block) => {
-        if (block.type === "text") {
-          return (block.content ?? "").trim().length > 0
-        }
+    const serializedBlocks = serializeEditorBlocksForSubmit(blocks)
 
-        return Boolean(block.file || block.mediaId)
-      })
-      .map((block, index) => ({
-        type: block.type,
-        content: block.type === "text" ? block.content?.trim() ?? "" : null,
-        sortOrder: index,
-        mediaId: block.type !== "text" ? block.mediaId ?? null : null,
-        editorState: block.editorState ?? null,
-      }))
+    const submitBlocks: CreatePostBlockInput[] = serializedBlocks.map(
+      ({ sourceBlockId: _sourceBlockId, file: _file, ...block }) => block
+    )
 
-    const files = blocks
+    const files = serializedBlocks
       .filter((block) => block.type !== "text" && block.file)
       .map((block) => block.file!)
       .filter((file) => file.size > 0)
 
-onSubmitPost({
-  visibility,
-  publishMode,
-  publishedAt: publishMode === "scheduled" ? publishedAt : null,
-  files,
-  blocks: submitBlocks,
-})
+    onSubmitPost({
+      visibility,
+      publishMode,
+      publishedAt: publishMode === "scheduled" ? publishedAt : null,
+      files,
+      blocks: submitBlocks,
+    })
 
- setBlocks([{ id: createBlockId(), type: "text", content: "" }])
-setVisibility("subscribers")
-setPublishMode("now")
-setPublishedAt("")
-setDraggingBlockId(null)
+    setBlocks([{ id: createBlockId(), type: "text", content: "" }])
+    setVisibility("subscribers")
+    setPublishMode("now")
+    setPublishedAt("")
+    setDraggingBlockId(null)
+    setDropTargetBlockId(null)
+    setActiveMediaToolByBlock({})
+    setShowFilterIndicator(false)
+    setFilterSwipeOffsetX(0)
 
     if (fileInputRef.current) {
       fileInputRef.current.value = ""

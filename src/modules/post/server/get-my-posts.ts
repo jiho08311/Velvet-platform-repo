@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+import { buildPostRenderInput } from "./build-post-render-input"
 
 export type MyPostListItem = {
   id: string
@@ -50,6 +51,17 @@ type MediaRow = {
   mime_type: string | null
   sort_order: number
   status: "processing" | "ready" | "failed"
+}
+
+type PostBlockRow = {
+  id: string
+  post_id: string
+  type: "text" | "image" | "video" | "audio" | "file"
+  content: string | null
+  media_id: string | null
+  sort_order: number
+  created_at: string
+  editor_state: unknown | null
 }
 
 function resolveMediaType(row: MediaRow): "image" | "video" | "audio" | "file" {
@@ -142,12 +154,31 @@ export async function getMyPosts(
     throw mediaError
   }
 
+  const { data: blockRows, error: blockRowsError } = await supabaseAdmin
+    .from("post_blocks")
+    .select("id, post_id, type, content, media_id, sort_order, created_at, editor_state")
+    .in("post_id", postIds)
+    .order("sort_order", { ascending: true })
+    .returns<PostBlockRow[]>()
+
+  if (blockRowsError) {
+    throw blockRowsError
+  }
+
   const mediaMap = new Map<string, MediaRow[]>()
 
   for (const media of mediaRows ?? []) {
     const current = mediaMap.get(media.post_id) ?? []
     current.push(media)
     mediaMap.set(media.post_id, current)
+  }
+
+  const blocksMap = new Map<string, PostBlockRow[]>()
+
+  for (const block of blockRows ?? []) {
+    const current = blocksMap.get(block.post_id) ?? []
+    current.push(block)
+    blocksMap.set(block.post_id, current)
   }
 
   const items = await Promise.all(
@@ -166,22 +197,49 @@ export async function getMyPosts(
           })
 
           return {
+            id: `${post.id}:${item.sort_order}:${item.storage_path}`,
             url,
             type: resolveMediaType(item),
+            mimeType: item.mime_type,
+            sortOrder: item.sort_order,
           }
         })
       )
 
+      const renderInput = buildPostRenderInput({
+        content: post.content,
+        blocks: (blocksMap.get(post.id) ?? []).map((block) => ({
+          id: block.id,
+          postId: block.post_id,
+          type: block.type,
+          content: block.content,
+          mediaId: block.media_id,
+          sortOrder: block.sort_order,
+          createdAt: block.created_at,
+          editorState: block.editor_state as null,
+        })),
+        mediaItems: media.map((item) => ({
+          id: item.id,
+          url: item.url,
+          type: item.type,
+          mimeType: item.mimeType,
+          sortOrder: item.sortOrder,
+        })),
+      })
+
       return {
         id: post.id,
         creatorId: post.creator_id,
-        text: post.content ?? "",
+        text: renderInput.content ?? "",
         status: post.status,
         visibility: post.visibility,
         isLocked: false,
         createdAt: post.created_at,
         publishedAt: post.published_at,
-        media,
+        media: media.map((item) => ({
+          url: item.url,
+          type: item.type,
+        })),
       }
     })
   )

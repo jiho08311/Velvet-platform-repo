@@ -1,11 +1,12 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import type { PostBlock } from "../types"
-import { getPostBlocks } from "./get-post-blocks"
+import { getPostBlocks } from "@/modules/post/server/get-post-blocks"
 import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 import { getPostAccess } from "./get-post-access"
 import { getPostMedia } from "./get-post-media"
 import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
 import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
+import { buildPostRenderInput } from "./build-post-render-input"
 
 type PostRow = {
   id: string
@@ -223,9 +224,21 @@ export async function getPostById(
     hasPurchasedResult,
   })
 
-  const [media, blocks] = access.canView
+  const [media, rawBlocks] = access.canView
     ? await Promise.all([getPostMedia(post.id), getPostBlocks(post.id)])
     : [[], []]
+
+  const renderInput = buildPostRenderInput({
+    content: access.canView ? post.content : null,
+    blocks: access.canView ? rawBlocks : [],
+    mediaItems: media.map((item) => ({
+      id: item.id,
+      url: item.url,
+      type: item.type,
+      mimeType: item.mimeType,
+      sortOrder: item.sortOrder,
+    })),
+  })
 
   const lockReason: "none" | "subscription" | "purchase" = access.canView
     ? "none"
@@ -244,7 +257,7 @@ export async function getPostById(
       displayName: creator.display_name,
     },
     title: post.title,
-    content: access.canView ? post.content : null,
+    content: access.canView ? renderInput.content : null,
     visibility: post.visibility,
     price: post.price,
     status: post.status,
@@ -255,6 +268,6 @@ export async function getPostById(
     likesCount: likesCount ?? 0,
     commentsCount: commentsCount ?? 0,
     media,
-    blocks,
+    blocks: access.canView ? renderInput.blocks : [],
   }
 }

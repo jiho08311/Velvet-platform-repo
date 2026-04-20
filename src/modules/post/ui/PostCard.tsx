@@ -1,6 +1,10 @@
 "use client"
 
-import type { PostBlockEditorState } from "@/modules/post/types"
+import type {
+  PostBlock,
+  PostBlockEditorState,
+  PostRenderMediaItem,
+} from "@/modules/post/types"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 import {
@@ -8,7 +12,7 @@ import {
   ChatBubbleOvalLeftIcon,
 } from "@heroicons/react/24/outline"
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline"
-
+import { buildPostRenderInput } from "./post-render-input"
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid"
 import { formatInUserTimeZone } from "@/shared/lib/date-time"
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
@@ -17,11 +21,7 @@ import { ReportButton } from "@/modules/report/ui/ReportButton"
 import { LockedPostCard } from "./LockedPostCard"
 import { PostMoreMenu } from "./PostMoreMenu"
 
-type MediaItem = {
-  id?: string
-  url: string
-  type?: "image" | "video" | "audio" | "file"
-}
+
 
 type CommentItem = {
   id: string
@@ -45,20 +45,11 @@ type CommentItem = {
 type PostCardProps = {
   commentsCount?: number
   postId?: string
-  text: string
+  text?: string
   createdAt: string
-  mediaThumbnailUrls?: string[]
-  media?: MediaItem[]
-blocks?: {
-  id: string
-  postId: string
-  type: "text" | "image" | "video" | "audio" | "file"
-  content: string | null
-  mediaId: string | null
-  sortOrder: number
-  createdAt: string
-editorState?: PostBlockEditorState | null
-}[]
+
+  media?: PostRenderMediaItem[]
+  blocks?: PostBlock[]
   isLocked?: boolean
   lockReason?: "none" | "subscription"
   creatorId: string
@@ -96,7 +87,7 @@ export function PostCard({
   postId,
   text,
   createdAt,
-  mediaThumbnailUrls = [],
+ 
   media = [],
   blocks = [],
   isLocked = false,
@@ -130,98 +121,27 @@ export function PostCard({
   const [isVideoReady, setIsVideoReady] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
 
-  const resolvedMedia =
-    media.length > 0
-      ? media
-      : mediaThumbnailUrls.map((url, index) => ({
-          id: `fallback-${index}`,
-          url,
-          type: "image" as const,
-        }))
+  const {
+    hasBlocks,
+    blockText,
+    blockMedia,
+    groupedBlocks,
+    resolvedMediaEntries,
+    lockedPreviewText,
+    primaryLockedPreviewMedia,
+  } = buildPostRenderInput({
+   text: text ?? "",
+    media,
 
-  const hasBlocks = blocks.length > 0
+    blocks,
+  })
 
-  const blockText = hasBlocks
-    ? blocks
-        .filter((block) => block.type === "text" && block.content?.trim())
-        .map((block) => block.content?.trim() ?? "")
-        .join("\n\n")
-    : text
 
-  const blockMedia =
-    hasBlocks && resolvedMedia.length > 0
-      ? blocks
-          .filter(
-            (block) =>
-              block.type !== "text" &&
-              block.mediaId &&
-              resolvedMedia.some((item) => item.id === block.mediaId)
-          )
-          .map((block) => resolvedMedia.find((item) => item.id === block.mediaId))
-          .filter((item): item is MediaItem => Boolean(item))
-      : resolvedMedia
+  const hasNormalizedGroups = groupedBlocks.length > 0
+  const shouldRenderNormalizedGroups = hasBlocks && hasNormalizedGroups
+  const shouldRenderFallbackMedia = !shouldRenderNormalizedGroups && blockMedia.length > 0
+  const shouldRenderFallbackText = !shouldRenderNormalizedGroups && Boolean(blockText)
 
-  const creatorName = creator.displayName ?? creator.username
-  const creatorInitial = creatorName.slice(0, 1).toUpperCase()
-
-  
-  const visibleComments = expandedComments ? comments : comments.slice(0, 3)
-
-  type RenderGroup =
-    | {
-        type: "text"
-        block: NonNullable<PostCardProps["blocks"]>[number]
-      }
-    | {
-        type: "media"
-        blocks: NonNullable<PostCardProps["blocks"]>
-        mediaItems: MediaItem[]
-      }
-
-  const groupedBlocks: RenderGroup[] = []
-
-  if (hasBlocks) {
-    let currentMediaBlocks: NonNullable<PostCardProps["blocks"]> = []
-    let currentMediaItems: MediaItem[] = []
-
-    const pushMediaGroup = () => {
-      if (currentMediaBlocks.length === 0) return
-
-      groupedBlocks.push({
-        type: "media",
-        blocks: currentMediaBlocks,
-        mediaItems: currentMediaItems,
-      })
-
-      currentMediaBlocks = []
-      currentMediaItems = []
-    }
-
-    for (const block of blocks) {
-      if (block.type === "text") {
-        pushMediaGroup()
-
-        groupedBlocks.push({
-          type: "text",
-          block,
-        })
-
-        continue
-      }
-
-      const mediaItem = block.mediaId
-        ? blockMedia.find((item) => item.id === block.mediaId)
-        : undefined
-
-      currentMediaBlocks.push(block)
-
-      if (mediaItem) {
-        currentMediaItems.push(mediaItem)
-      }
-    }
-
-    pushMediaGroup()
-  }
 
   async function handleLike(event: React.MouseEvent<HTMLButtonElement>) {
     event.stopPropagation()
@@ -365,9 +285,9 @@ export function PostCard({
   }
 
  function renderSingleMedia(
-  item: MediaItem,
+  item: PostRenderMediaItem,
   alt: string,
-  block?: NonNullable<PostCardProps["blocks"]>[number]
+  block?: PostBlock
 ) {
     const mediaUrl = item.url?.trim() ?? ""
     if (!mediaUrl) return null
@@ -475,20 +395,36 @@ return (
     setCurrentIndex(index)
   }
 
-  function renderMedia(items: MediaItem[] = blockMedia) {
+  function renderMedia(
+    items: PostRenderMediaItem[] = blockMedia,
+    mediaEntries?: Array<{
+      media: PostRenderMediaItem
+      block?: PostBlock
+    }>
+  ) {
     if (items.length === 0) return null
+
+    const resolvedEntries =
+      mediaEntries && mediaEntries.length > 0
+        ? mediaEntries
+        : resolvedMediaEntries.filter((entry) =>
+            items.some((item) => item.id === entry.media.id)
+          )
 
     if (items.length === 1) {
       const item = items[0]
+      const matchedEntry = resolvedEntries.find(
+        (entry) => entry.media.id === item.id
+      )
 
       return (
         <div className="overflow-hidden">
           <div className="aspect-[91/100] w-full overflow-hidden">
-   {renderSingleMedia(
-  item,
-  "Post media",
-  blocks.find((block) => block.mediaId === item.id)
-)}
+            {renderSingleMedia(
+              item,
+              "Post media",
+              matchedEntry?.block
+            )}
           </div>
         </div>
       )
@@ -500,20 +436,26 @@ return (
           onScroll={handleScroll}
           className="flex snap-x snap-mandatory overflow-x-auto scrollbar-hide"
         >
-          {items.map((item, index) => (
-            <div
-              key={`${item.id ?? item.url}-${index}`}
-              className="min-w-full snap-center"
-            >
-              <div className="aspect-[91/100] w-full overflow-hidden">
-       {renderSingleMedia(
-  item,
-  `Post media ${index + 1}`,
-  blocks.find((block) => block.mediaId === item.id)
-)}
+          {items.map((item, index) => {
+            const matchedEntry = resolvedEntries.find(
+              (entry) => entry.media.id === item.id
+            )
+
+            return (
+              <div
+                key={`${item.id ?? item.url}-${index}`}
+                className="min-w-full snap-center"
+              >
+                <div className="aspect-[91/100] w-full overflow-hidden">
+                  {renderSingleMedia(
+                    item,
+                    `Post media ${index + 1}`,
+                    matchedEntry?.block
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1">
@@ -529,6 +471,8 @@ return (
       </div>
     )
   }
+
+
 
   function renderLockedAction() {
     if (lockReason === "subscription") {
@@ -547,6 +491,13 @@ return (
 
     return null
   }
+
+  const lockedPreviewThumbnailUrl = primaryLockedPreviewMedia?.url ?? null
+  const hasLockedPreviewText = Boolean(lockedPreviewText.trim())
+  const hasLockedPreviewThumbnail = Boolean(lockedPreviewThumbnailUrl)
+  const creatorName = creator.displayName ?? creator.username
+  const creatorInitial = creatorName.slice(0, 1).toUpperCase()
+  const visibleComments = expandedComments ? comments : comments.slice(0, 3)
 
   function getCommentUsername(comment: CommentItem) {
     if (Array.isArray(comment.profiles)) {
@@ -600,50 +551,54 @@ return (
         ) : null}
       </div>
 
-      {isLocked ? (
+        {isLocked ? (
         <div className="mt-2">
-          <LockedPostCard
-            previewText={blockText}
+            <LockedPostCard
+            previewText={hasLockedPreviewText ? lockedPreviewText : ""}
             createdAt={createdAt}
-            previewThumbnailUrl={blockMedia[0]?.url ?? null}
+            previewThumbnailUrl={
+              hasLockedPreviewThumbnail ? lockedPreviewThumbnailUrl : null
+            }
             action={renderLockedAction()}
           />
         </div>
       ) : (
         <>
-          {hasBlocks ? (
-<>
-  {groupedBlocks.map((group, index) => {
-    if (group.type === "text") {
-      return (
-        <div key={group.block.id} className="px-3 pt-3">
-          <p className="whitespace-pre-wrap text-[15px] leading-7 text-white font-medium">
-            {group.block.content}
-          </p>
-        </div>
-      )
-    }
+          {shouldRenderNormalizedGroups ? (
+            <>
+              {groupedBlocks.map((group, index) => {
+                if (group.type === "text") {
+                  return (
+                    <div key={group.block.id} className="px-3 pt-3">
+                      <p className="whitespace-pre-wrap text-[15px] leading-7 text-white font-medium">
+                        {group.block.content}
+                      </p>
+                    </div>
+                  )
+                }
 
-    return (
-      <div key={`media-group-${index}`} className="mt-2 overflow-hidden">
-        {group.mediaItems.length > 0 ? (
-          renderMedia(group.mediaItems)
-        ) : (
-          <div className="flex min-h-[220px] items-center justify-center bg-zinc-900 text-sm text-zinc-500">
-            {group.blocks.some((block) => block.type === "video")
-              ? "Video is processing..."
-              : "Media not available"}
-          </div>
-        )}
-      </div>
-    )
-  })}
-</>
+                return (
+                  <div key={`media-group-${index}`} className="mt-2 overflow-hidden">
+                    {group.mediaItems.length > 0 ? (
+                      renderMedia(group.mediaItems, group.mediaEntries)
+                    ) : (
+                      <div className="flex min-h-[220px] items-center justify-center bg-zinc-900 text-sm text-zinc-500">
+                        {group.blocks.some((block) => block.type === "video")
+                          ? "Video is processing..."
+                          : "Media not available"}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </>
           ) : (
             <>
-              {blockMedia.length > 0 ? <div className="mt-2">{renderMedia()}</div> : null}
+              {shouldRenderFallbackMedia ? (
+                <div className="mt-2">{renderMedia()}</div>
+              ) : null}
 
-              {blockText ? (
+              {shouldRenderFallbackText ? (
                 <div className="px-0 pt-3">
                   <p className="whitespace-pre-wrap text-[16px] leading-7 text-white font-medium">
                     {blockText}
@@ -651,7 +606,7 @@ return (
                 </div>
               ) : null}
             </>
-          )}
+          )}   
 
    <div className="flex items-center gap-4 px-0 pt-3">
 

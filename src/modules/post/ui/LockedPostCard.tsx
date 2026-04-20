@@ -69,8 +69,8 @@ export function LockedPostCard({
       </div>
 
       <div className="p-5">
-        <p className="line-clamp-3 whitespace-pre-wrap text-sm leading-6 text-zinc-300">
-          {previewText}
+             <p className="line-clamp-3 whitespace-pre-wrap text-sm leading-6 text-zinc-300">
+          {previewText.trim() || "프리미엄 콘텐츠"}
         </p>
 
         <p className="mt-4 text-xs text-zinc-500">{createdAt}</p>

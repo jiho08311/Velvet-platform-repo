@@ -4,6 +4,8 @@ import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 import { checkSubscription } from "@/modules/subscription/server/check-subscription"
 import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
 import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
+import { buildPostRenderInput } from "./build-post-render-input"
+import type { PostBlockEditorState } from "../types"
 
 type PostRow = {
   id: string
@@ -40,6 +42,17 @@ type MediaRow = {
   type: "image" | "video" | "audio" | "file"
   status: "processing" | "ready" | "failed"
   sort_order: number
+}
+
+type PostBlockRow = {
+  id: string
+  post_id: string
+  type: "text" | "image" | "video" | "audio" | "file"
+  content: string | null
+  media_id: string | null
+  sort_order: number
+  created_at: string
+  editor_state: PostBlockEditorState | null
 }
 
 type ListCreatorPostsInput = {
@@ -216,7 +229,6 @@ export async function listCreatorPosts({
       isLocked,
       isSubscribed,
       hasPurchased,
-      content: isLocked ? null : post.content,
     })
   }
 
@@ -234,12 +246,31 @@ export async function listCreatorPosts({
     throw mediaError
   }
 
+  const { data: blockRows, error: blockRowsError } = await supabaseAdmin
+    .from("post_blocks")
+    .select("id, post_id, type, content, media_id, sort_order, created_at, editor_state")
+    .in("post_id", postIds)
+    .order("sort_order", { ascending: true })
+    .returns<PostBlockRow[]>()
+
+  if (blockRowsError) {
+    throw blockRowsError
+  }
+
   const mediaMap = new Map<string, MediaRow[]>()
 
   for (const media of mediaRows ?? []) {
     const current = mediaMap.get(media.post_id) ?? []
     current.push(media)
     mediaMap.set(media.post_id, current)
+  }
+
+  const blocksMap = new Map<string, PostBlockRow[]>()
+
+  for (const block of blockRows ?? []) {
+    const current = blocksMap.get(block.post_id) ?? []
+    current.push(block)
+    blocksMap.set(block.post_id, current)
   }
 
   return Promise.all(
@@ -261,11 +292,31 @@ export async function listCreatorPosts({
         )
       )
 
+      const renderInput = buildPostRenderInput({
+        content: post.content,
+        blocks: (blocksMap.get(post.id) ?? []).map((block) => ({
+          id: block.id,
+          postId: block.post_id,
+          type: block.type,
+          content: block.content,
+          mediaId: block.media_id,
+          sortOrder: block.sort_order,
+          createdAt: block.created_at,
+          editorState: block.editor_state ?? null,
+        })),
+        mediaItems: media.map((item, index) => ({
+          id: `${post.id}:${item.sort_order}:${index}`,
+          url: mediaThumbnailUrls[index] ?? "",
+          type: item.type,
+          sortOrder: item.sort_order,
+        })),
+      })
+
       return {
         id: post.id,
         creatorId: post.creator_id,
         title: post.title ?? undefined,
-        content: post.content ?? undefined,
+        content: post.isLocked ? undefined : (renderInput.content ?? undefined),
         status: post.status,
         visibility: post.visibility,
         price: post.price,

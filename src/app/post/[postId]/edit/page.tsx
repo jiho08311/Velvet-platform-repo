@@ -45,17 +45,17 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
       type: "text" | "image" | "video" | "audio" | "file"
       content?: string | null
       sortOrder: number
+      mediaId?: string | null
+      editorState?: import("@/modules/post/types").PostBlockEditorState
     }[]
   }) {
     "use server"
 
     await updatePostAction({
       postId,
-      text: "",
       visibility: fixedVisibility,
       files: input.files,
-      removedMediaIds: [],
-  blocks: input.blocks,
+      blocks: input.blocks,
     })
   }
 
@@ -73,40 +73,38 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
           <h1 className="text-xl font-semibold text-white">Edit post</h1>
 
           <div className="mt-5 space-y-5">
-
-<CreatePostForm
-  isSubmitting={false}
-  initialBlocks={post.blocks
-.filter(
-  (
-    b
-  ): b is {
-    id: string
-    postId: string
-    type: "text" | "image" | "video"
-    content: string | null
-    mediaId: string | null
-    sortOrder: number
-    createdAt: string
-    editorState: import("@/modules/post/types").PostBlockEditorState
-  } => b.type === "text" || b.type === "image" || b.type === "video"
-)
-    .map((b) => ({
-      type: b.type,
-      content: b.content,
-      mediaId: b.mediaId,
-      url:
-        b.type !== "text"
-          ? post.media.find((m) => m.id === b.mediaId)?.url ?? null
-          : null,
-          editorState: b.editorState ?? null,
-    }))}
-  initialVisibility={
-    fixedVisibility === "public" ? "public" : "subscribers"
-  }
-  onSubmitPost={submitAction}
-/>
-
+            <CreatePostForm
+              isSubmitting={false}
+              initialBlocks={post.blocks
+                .filter(
+                  (
+                    b
+                  ): b is {
+                    id: string
+                    postId: string
+                    type: "text" | "image" | "video"
+                    content: string | null
+                    mediaId: string | null
+                    sortOrder: number
+                    createdAt: string
+                    editorState: import("@/modules/post/types").PostBlockEditorState
+                  } => b.type === "text" || b.type === "image" || b.type === "video"
+                )
+                .map((b) => ({
+                  type: b.type,
+                  content: b.content,
+                  mediaId: b.mediaId,
+                  url:
+                    b.type !== "text"
+                      ? post.media.find((m) => m.id === b.mediaId)?.url ?? null
+                      : null,
+                  editorState: b.editorState ?? null,
+                }))}
+              initialVisibility={
+                fixedVisibility === "public" ? "public" : "subscribers"
+              }
+              onSubmitPost={submitAction}
+            />
 
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link

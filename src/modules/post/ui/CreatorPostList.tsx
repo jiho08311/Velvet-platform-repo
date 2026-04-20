@@ -7,7 +7,6 @@ type CreatorPostListItem = {
   isLocked: boolean
   previewText?: string
   mediaThumbnailUrls?: string[]
-  previewThumbnailUrl?: string | null
   creatorId?: string
   creatorUserId?: string
   currentUserId?: string
@@ -41,26 +40,31 @@ export function CreatorPostList({
 
   return (
     <section className="grid gap-4">
-      {posts.map((post) => (
-        <PostCard
-          key={post.id}
-          postId={post.id}
-          text={post.previewText ?? post.text}
-          createdAt={post.createdAt}
-          mediaThumbnailUrls={post.mediaThumbnailUrls}
-          isLocked={post.isLocked && !isSubscribed}
-          creatorId={post.creatorId ?? ""}
-          creatorUserId={post.creatorUserId}
-          currentUserId={post.currentUserId}
-          creator={
-            post.creator ?? {
-              username: "creator",
-              displayName: null,
-              avatarUrl: null,
-            }
+      {posts.map((post) => {
+        const resolvedText = post.previewText ?? post.text
+        const resolvedIsLocked = post.isLocked && !isSubscribed
+        const resolvedCreator =
+          post.creator ?? {
+            username: "creator",
+            displayName: null,
+            avatarUrl: null,
           }
-        />
-      ))}
+
+        return (
+          <PostCard
+            key={post.id}
+            postId={post.id}
+            text={resolvedText}
+            createdAt={post.createdAt}
+        
+            isLocked={resolvedIsLocked}
+            creatorId={post.creatorId ?? ""}
+            creatorUserId={post.creatorUserId}
+            currentUserId={post.currentUserId}
+            creator={resolvedCreator}
+          />
+        )
+      })}
     </section>
   )
 }

@@ -1,9 +1,17 @@
 "use server"
 
 import {
-  buildPostEditBlockFingerprint,
   shouldReenterPostModerationOnEdit,
 } from "@/modules/post/server/post-edit-moderation-reentry-policy"
+import {
+  buildInitialEditPostDraft,
+  buildSubmittedEditPostDraft,
+  buildEditPostModerationComparisonInput,
+  deriveEditPostContentFromDraft,
+  extractRemovedExistingMediaIdsFromEditDraft,
+  extractUploadedMediaFromEditDraft,
+  isRemoveOnlyEditDraftMutation,
+} from "@/modules/post/server/edit-post-draft-policy"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import type { PostBlockEditorState } from "../types"
@@ -19,13 +27,12 @@ import { resolvePostMutationModerationOutcome } from "@/modules/post/server/reso
 import { updatePost } from "@/modules/post/server/update-post"
 import { updatePostStatus } from "@/modules/post/server/update-post-status"
 import OpenAI from "openai"
+
 type UpdatePostActionInput = {
   postId: string
-  text: string
   visibility: "public" | "subscribers" | "paid"
   price?: number
   files?: File[]
-  removedMediaIds?: string[]
   blocks?: {
     type: "text" | "image" | "video" | "audio" | "file"
     content?: string | null
@@ -59,8 +66,6 @@ function resolveMediaType(file: File): "image" | "video" | "audio" | "file" {
 
   return "file"
 }
-
-
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -117,11 +122,9 @@ async function checkUploadedImageSafety(file: File) {
 
 export async function updatePostAction({
   postId,
-  text,
   visibility: _visibility,
   price = 0,
   files = [],
-  removedMediaIds = [],
   blocks = [],
 }: UpdatePostActionInput) {
   const user = await getCurrentUser()
@@ -145,7 +148,32 @@ export async function updatePostAction({
     throw new Error("Post not found")
   }
 
-  const nextContent = text.trim() || null
+  const currentDraft = buildInitialEditPostDraft({
+    blocks: currentPost.blocks.map((block) => ({
+      type: block.type,
+      content: block.content ?? null,
+      sortOrder: block.sortOrder,
+      mediaId: block.mediaId ?? null,
+      editorState: null,
+    })),
+  })
+
+  const uploadedFilesForDraft = files
+    .filter((file) => file instanceof File && file.size > 0)
+    .map((file) => ({
+      path: `__edit-upload__/${file.name}-${file.size}-${file.lastModified}`,
+      type: resolveMediaType(file),
+      mimeType: file.type || "",
+      size: file.size,
+      originalName: file.name,
+    }))
+
+  const submittedDraft = buildSubmittedEditPostDraft({
+    blocks,
+    uploadedFiles: uploadedFilesForDraft,
+  })
+
+  const nextContent = deriveEditPostContentFromDraft(submittedDraft)
 
   if (currentPost.visibility === "paid" && price <= 0) {
     throw new Error("Paid post price must be greater than 0")
@@ -159,18 +187,19 @@ export async function updatePostAction({
     price: currentPost.visibility === "paid" ? price : 0,
   })
 
-  const validRemovedMediaIds = removedMediaIds
-    .map((id) => id.trim())
-    .filter((id) => id.length > 0)
+  const removedExistingMediaIds = extractRemovedExistingMediaIdsFromEditDraft({
+    current: currentDraft,
+    next: submittedDraft,
+  })
 
-  const hasRemovedMedia = validRemovedMediaIds.length > 0
+  const hasRemovedMedia = removedExistingMediaIds.length > 0
 
   if (hasRemovedMedia) {
     const { data: mediaToDelete, error: mediaToDeleteError } = await supabaseAdmin
       .from("media")
       .select("id, storage_path")
       .eq("post_id", postId)
-      .in("id", validRemovedMediaIds)
+      .in("id", removedExistingMediaIds)
       .returns<MediaRow[]>()
 
     if (mediaToDeleteError) {
@@ -197,7 +226,7 @@ export async function updatePostAction({
       .from("media")
       .delete()
       .eq("post_id", postId)
-      .in("id", validRemovedMediaIds)
+      .in("id", removedExistingMediaIds)
 
     if (deleteMediaRowsError) {
       throw deleteMediaRowsError
@@ -205,8 +234,11 @@ export async function updatePostAction({
   }
 
   const validFiles = files.filter((file) => file instanceof File && file.size > 0)
-  const hasNewMedia = validFiles.length > 0
+  const uploadedDraftMedia = extractUploadedMediaFromEditDraft(submittedDraft)
 
+  if (uploadedDraftMedia.length !== validFiles.length) {
+    throw new Error("Uploaded media does not match submitted blocks")
+  }
 
   for (const file of validFiles) {
     if (resolveMediaType(file) === "image") {
@@ -214,47 +246,23 @@ export async function updatePostAction({
     }
   }
 
-
-  const currentBlockFingerprint = buildPostEditBlockFingerprint(
-    currentPost.blocks.map((block) => ({
-      type: block.type,
-      content: block.content ?? null,
-      sortOrder: block.sortOrder,
-      mediaId: block.mediaId ?? null,
-    }))
-  )
-
-  const nextBlockFingerprint = buildPostEditBlockFingerprint(
-    blocks.map((block) => ({
-      type: block.type,
-      content: block.content ?? null,
-      sortOrder: block.sortOrder,
-      mediaId: block.mediaId ?? null,
-    }))
-  )
-
-  const isContentUnchanged = currentPost.content === nextContent
-  const areBlocksUnchanged =
-    currentBlockFingerprint === nextBlockFingerprint
-
-  const shouldReenterModeration = shouldReenterPostModerationOnEdit({
-    currentContent: currentPost.content,
-    nextContent,
-    currentBlockFingerprint,
-    nextBlockFingerprint,
-    hasNewMedia,
-    hasRemovedMedia,
+  const moderationComparison = buildEditPostModerationComparisonInput({
+    current: currentDraft,
+    next: submittedDraft,
   })
 
-const isRemoveOnlyEdit =
-  hasRemovedMedia &&
-  !hasNewMedia &&
-  isContentUnchanged &&
-  areBlocksUnchanged
+  const shouldReenterModeration = shouldReenterPostModerationOnEdit(
+    moderationComparison
+  )
+
+  const isRemoveOnlyEdit = isRemoveOnlyEditDraftMutation({
+    current: currentDraft,
+    next: submittedDraft,
+  })
 
   const createdMediaForModeration: EnqueuedVideoMedia[] = []
 
-  if (hasNewMedia) {
+  if (moderationComparison.hasNewMedia) {
     const { count, error: countError } = await supabaseAdmin
       .from("media")
       .select("id", { count: "exact", head: true })
@@ -303,7 +311,7 @@ const isRemoveOnlyEdit =
 
   const hasVideoToModerate = createdMediaForModeration.length > 0
 
-  if (hasNewMedia && hasVideoToModerate) {
+  if (moderationComparison.hasNewMedia && hasVideoToModerate) {
     await enqueueVideoModeration({
       postId,
       publishIntent: currentPost.status === "scheduled" ? "scheduled" : "published",
@@ -311,8 +319,7 @@ const isRemoveOnlyEdit =
     })
   }
 
-  // remove-only edit는 remaining media moderation 상태로만 후속 정렬한다.
- if (isRemoveOnlyEdit) {
+  if (isRemoveOnlyEdit) {
     const { data: remainingMediaStatuses, error: remainingMediaStatusesError } =
       await supabaseAdmin
         .from("media")

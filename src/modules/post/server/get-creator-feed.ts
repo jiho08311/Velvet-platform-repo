@@ -4,6 +4,7 @@ import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 import { checkSubscription } from "@/modules/subscription/server/check-subscription"
 import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
 import type { PostBlockEditorState } from "../types"
+import { buildPostRenderInput } from "./build-post-render-input"
 
 type CreatorFeedPost = {
   id: string
@@ -209,7 +210,7 @@ export async function getCreatorFeed({
         hasPurchased: isOwner ? true : hasPurchased,
         isLocked,
         lockReason,
-        content: shouldHideContent ? null : post.content,
+        shouldHideContent,
       }
     })
   )
@@ -263,7 +264,7 @@ export async function getCreatorFeed({
   if (postIds.length === 0) {
     return resolvedPosts.map((post) => ({
       id: post.id,
-      content: post.content,
+      content: null,
       created_at: post.created_at,
       media: [],
       blocks: [],
@@ -360,15 +361,23 @@ export async function getCreatorFeed({
         })
       )
 
+      const renderInput = buildPostRenderInput({
+        content: post.content,
+        blocks: blocksMap.get(post.id) ?? [],
+        mediaItems: media.map((item, index) => ({
+          id: item.id,
+          url: item.url,
+          type: item.type,
+          sortOrder: index,
+        })),
+      })
+
       return {
         id: post.id,
-        content: post.content,
+        content: post.shouldHideContent ? null : renderInput.content,
         created_at: post.created_at,
         media,
-      blocks:
-  post.isLocked || (post.publicState === "upcoming" && !isOwner)
-    ? []
-    : blocksMap.get(post.id) ?? [],
+        blocks: post.shouldHideContent ? [] : renderInput.blocks,
         price: post.price,
         isLocked: post.isLocked,
         likesCount: likeCountMap.get(post.id) ?? 0,

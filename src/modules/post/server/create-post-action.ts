@@ -1,11 +1,13 @@
 "use server"
-
+import type {
+  CreatePostUploadedMediaInput,
+  PostBlockEditorState,
+} from "../types"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import type { PostBlockEditorState } from "../types"
+
 import { createPostWithMediaWorkflow } from "@/workflows/create-post-with-media-workflow"
 import { localDateTimeToUtcIso } from "@/shared/lib/date-time"
-
 
 type UploadedFileInput = {
   path: string
@@ -32,7 +34,6 @@ type CreatePostActionInput = {
   }[]
 }
 
-
 export async function createPostAction({
   creatorId,
   text = "",
@@ -43,21 +44,11 @@ export async function createPostAction({
   files = [],
   blocks = [],
 }: CreatePostActionInput): Promise<void> {
-  const firstTextBlock = blocks.find(
-    (block) =>
-      block.type === "text" &&
-      (block.content?.trim() ?? "").length > 0
-  )
-
-  const content =
-    text?.trim() ||
-    firstTextBlock?.content?.trim() ||
-    ""
-
+  const normalizedText = text.trim()
   const hasMedia = files.length > 0
   const hasBlocks = blocks.length > 0
 
-  if (!content && !hasMedia && !hasBlocks) {
+  if (!normalizedText && !hasMedia && !hasBlocks) {
     throw new Error("Post must have text or media")
   }
 
@@ -65,24 +56,41 @@ export async function createPostAction({
     throw new Error("Paid post price must be greater than 0")
   }
 
-const normalizedPublishedAt =
-  status === "scheduled" ? localDateTimeToUtcIso(publishedAt) : null
+  const normalizedPublishedAt =
+    status === "scheduled" ? localDateTimeToUtcIso(publishedAt) : null
 
   if (status === "scheduled" && !normalizedPublishedAt) {
     throw new Error("Scheduled post requires valid publishedAt")
   }
 
   try {
-    await createPostWithMediaWorkflow({
-      creatorId,
-      content: content || null,
-      visibility,
-      price: visibility === "paid" ? price : 0,
-      status,
-      publishedAt: normalizedPublishedAt,
-      files,
-      blocks,
-    })
+ const blocks =
+  normalizedText || files.length > 0
+    ? [
+        ...(normalizedText
+          ? [
+              {
+                type: "text" as const,
+                content: normalizedText,
+                sortOrder: 0,
+              },
+            ]
+          : []),
+        ...files.map((file, index) => ({
+          type: file.type as "image" | "video" | "audio" | "file",
+          sortOrder: normalizedText ? index + 1 : index,
+        })),
+      ]
+    : []
+
+await createPostWithMediaWorkflow({
+  creatorId,
+  content: null,
+  visibility,
+  price: visibility === "paid" ? price : 0,
+  files,
+  blocks,
+})
   } catch (error) {
     console.error("[createPostAction]", error)
 

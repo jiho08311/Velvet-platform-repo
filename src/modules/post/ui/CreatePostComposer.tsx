@@ -5,6 +5,7 @@ import { localDateTimeToUtcIso } from "@/shared/lib/date-time"
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/client"
 
 import { createPostAction } from "../server/create-post-action"
+import type { CreatePostBlockInput } from "../types"
 import { CreatePostForm } from "./CreatePostForm"
 
 type UploadedFileInput = {
@@ -15,12 +16,6 @@ type UploadedFileInput = {
   originalName: string
 }
 
-type CreatePostBlockInput = {
-  type: "text" | "image" | "video" | "audio" | "file"
-  content?: string | null
-  sortOrder: number
-  mediaId?: string | null
-}
 
 type CreatePostComposerProps = {
   creatorId: string
@@ -43,8 +38,6 @@ function buildClientUploadPath(file: File) {
 
   return `creator/${now}-${random}${safeExtension}`
 }
-
-
 
 async function uploadFilesDirect(files: File[]): Promise<UploadedFileInput[]> {
   if (files.length === 0) {
@@ -87,6 +80,20 @@ async function uploadFilesDirect(files: File[]): Promise<UploadedFileInput[]> {
   return uploaded
 }
 
+function normalizeBlocksAfterUpload(params: {
+  blocks: CreatePostBlockInput[]
+  uploadedFiles: UploadedFileInput[]
+}) {
+  const sortedBlocks = [...params.blocks].sort((a, b) => a.sortOrder - b.sortOrder)
+  const mediaBlocks = sortedBlocks.filter((block) => block.type !== "text")
+  const mediaCount = mediaBlocks.length
+
+  return {
+    blocks: sortedBlocks,
+    files: params.uploadedFiles.slice(0, mediaCount),
+  }
+}
+
 export function CreatePostComposer({
   creatorId,
   onCreated,
@@ -118,10 +125,15 @@ export function CreatePostComposer({
 
                 const uploadedFiles = await uploadFilesDirect(files)
 
-            const resolvedPublishedAt =
-  publishMode === "scheduled"
-    ? localDateTimeToUtcIso(publishedAt)
-    : null
+                const normalized = normalizeBlocksAfterUpload({
+                  blocks: blocks as CreatePostBlockInput[],
+                  uploadedFiles,
+                })
+
+                const resolvedPublishedAt =
+                  publishMode === "scheduled"
+                    ? localDateTimeToUtcIso(publishedAt)
+                    : null
 
                 if (publishMode === "scheduled" && !resolvedPublishedAt) {
                   setError("예약 발행 시간을 올바르게 입력해주세요.")
@@ -133,8 +145,8 @@ export function CreatePostComposer({
                   status: publishMode === "scheduled" ? "scheduled" : "draft",
                   publishedAt: resolvedPublishedAt,
                   visibility,
-                  files: uploadedFiles as never,
-                  blocks: blocks as CreatePostBlockInput[],
+                  files: normalized.files as never,
+                  blocks: normalized.blocks,
                 })
 
                 onCreated?.()

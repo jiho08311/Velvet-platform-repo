@@ -153,6 +153,28 @@ export default async function PostDetailPage({
   const isOwner = myCreator?.id === post.creatorId
   const shouldAutoReloadOnce = !isLocked && post.media.length === 0
 
+  const detailCardMedia = post.media.map((media) => ({
+    id: media.id,
+    url: media.url,
+    type: media.type,
+  }))
+
+  const detailCardBlocks = post.blocks ?? []
+
+  const detailCardText = post.content ?? ""
+
+  const detailCreator = {
+    username: post.creator.username,
+    displayName: post.creator.displayName,
+    avatarUrl: null,
+  }
+
+  const hasLockedMedia = post.media.length > 0
+
+
+
+
+
   return (
    <main className="min-h-screen bg-zinc-950 px-0 py-8  text-white sm:px-6 sm:py-10">
       {shouldAutoReloadOnce ? (
@@ -204,7 +226,9 @@ export default async function PostDetailPage({
          {isLocked ? (
   // 🔒 기존 locked UI 그대로 유지 (건드리지 마)
   <div className="relative">
-    {post.media.length > 0 ? (
+    {/* Step 6: locked detail은 아직 page-local UI를 유지한다. render source 해석은 늘리지 않고, page는 전달 값만 고정한다. */}
+
+    {hasLockedMedia ? (
       <div className="grid grid-cols-1 gap-px bg-zinc-950 sm:grid-cols-2">
         {post.media.map((media) => (
           <div
@@ -244,33 +268,27 @@ export default async function PostDetailPage({
       </div>
     </div>
   </div>
+
+
 ) : (
-  // ✅ 여기 핵심
   <PostCard
     postId={post.id}
-       
-    text={post.content ?? ""}
+    text={detailCardText}
     createdAt={post.publishedAt ?? post.createdAt}
-  media={post.media.map((m) => ({
-  id: m.id,
-  url: m.url,
-  type: m.type,
-}))}
-     blocks={post.blocks ?? []}
+    media={detailCardMedia}
+    blocks={detailCardBlocks}
     isLocked={false}
-  creator={{
-  username: post.creator.username,
-  displayName: post.creator.displayName,
-  avatarUrl: null,
-}}
+    creator={detailCreator}
     creatorId={post.creatorId}
     creatorUserId={post.creatorUserId}
     currentUserId={user.id}
     likesCount={post.likesCount}
     isLiked={false}
-    
   />
-)}
+)
+
+
+}
         </article>
       </div>
     </main>
