@@ -9,13 +9,6 @@ import { redirect } from "next/navigation"
 import { createPostWithMediaWorkflow } from "@/workflows/create-post-with-media-workflow"
 import { localDateTimeToUtcIso } from "@/shared/lib/date-time"
 
-type UploadedFileInput = {
-  path: string
-  type: string
-  mimeType: string
-  size: number
-  originalName: string
-}
 
 type CreatePostActionInput = {
   creatorId: string
@@ -24,7 +17,7 @@ type CreatePostActionInput = {
   publishedAt?: string | null
   visibility: "public" | "subscribers" | "paid"
   price?: number
-  files?: UploadedFileInput[]
+  files?: CreatePostUploadedMediaInput[]
   blocks?: {
     type: "text" | "image" | "video" | "audio" | "file"
     content?: string | null
