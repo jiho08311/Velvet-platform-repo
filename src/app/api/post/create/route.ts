@@ -4,6 +4,7 @@ import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user
 import { getProfileByUserId } from "@/modules/profile/server/get-profile-by-user-id"
 import { createPostWithMediaWorkflow } from "@/workflows/create-post-with-media-workflow"
 import { assertValidPpvPrice } from "@/modules/post/lib/ppv-price"
+import type { CreatePostUploadedMediaInput } from "@/modules/post/types"
 
 type PostStatus = "draft" | "published" | "archived"
 type PostVisibility = "public" | "subscribers" | "paid"
@@ -14,6 +15,17 @@ function isPostStatus(value: string): value is PostStatus {
 
 function isPostVisibility(value: string): value is PostVisibility {
   return value === "public" || value === "subscribers" || value === "paid"
+}
+
+function isUploadedMediaType(
+  value: string
+): value is CreatePostUploadedMediaInput["type"] {
+  return (
+    value === "image" ||
+    value === "video" ||
+    value === "audio" ||
+    value === "file"
+  )
 }
 
 export async function POST(request: Request) {
@@ -72,45 +84,40 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 })
     }
 
-const files = formData
-  .getAll("files")
-  .map((value) => {
-    if (typeof value === "string") {
-      try {
-        return JSON.parse(value)
-      } catch {
+    const files: CreatePostUploadedMediaInput[] = formData
+      .getAll("files")
+      .map((value) => {
+        if (typeof value === "string") {
+          try {
+            return JSON.parse(value)
+          } catch {
+            return null
+          }
+        }
+
         return null
-      }
-    }
+      })
+      .filter(
+        (
+          value
+        ): value is CreatePostUploadedMediaInput =>
+          !!value &&
+          typeof value.path === "string" &&
+          typeof value.type === "string" &&
+          isUploadedMediaType(value.type) &&
+          typeof value.mimeType === "string" &&
+          typeof value.size === "number" &&
+          typeof value.originalName === "string"
+      )
 
-    return null
-  })
-  .filter(
-    (
-      value
-    ): value is {
-      path: string
-      type: string
-      mimeType: string
-      size: number
-      originalName: string
-    } =>
-      !!value &&
-      typeof value.path === "string" &&
-      typeof value.type === "string" &&
-      typeof value.mimeType === "string" &&
-      typeof value.size === "number" &&
-      typeof value.originalName === "string"
-  )
-
-await createPostWithMediaWorkflow({
-  creatorId: creator.id,
-  content: text,
-  files,
-  status,
-  visibility,
-  price: finalPrice,
-})
+    await createPostWithMediaWorkflow({
+      creatorId: creator.id,
+      content: text,
+      files,
+      status,
+      visibility,
+      price: finalPrice,
+    })
 
     return NextResponse.json(
       {
