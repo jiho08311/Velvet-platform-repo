@@ -18,17 +18,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Creator not found" }, { status: 404 })
     }
 
-    const body = await request.json()
+  
+  const body = await request.json()
 
-    await createStory({
-      creatorId: creator.id,
-      storagePath: body.storagePath,
-      text: typeof body.text === "string" ? body.text : null,
-      visibility: body.visibility,
-      editorState: (body.editorState ?? null) as StoryEditorState | null,
-    })
+const isVideo =
+  typeof body.storagePath === "string" &&
+  (body.storagePath.endsWith(".mp4") ||
+    body.storagePath.endsWith(".mov") ||
+    body.storagePath.endsWith(".webm"))
 
-    return NextResponse.json({ success: true })
+if (isVideo) {
+  // 👉 video는 enqueue로 보내야 함
+  return NextResponse.json(
+    { error: "Use /api/story/video for video upload" },
+    { status: 400 }
+  )
+}
+
+await createStory({
+  creatorId: creator.id,
+  storagePath: body.storagePath,
+  text: typeof body.text === "string" ? body.text : null,
+  visibility: body.visibility,
+  editorState: body.editorState ?? null,
+})
+
+return NextResponse.json({ success: true })
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to create story"
