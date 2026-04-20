@@ -178,19 +178,36 @@ export async function checkTextSafety(text?: string | null) {
   throw new Error("Text moderation temporarily unavailable")
 }
 
-async function checkImageSafety(file: File) {
-  if (!(file instanceof File)) {
-    throw new Error("Image file is required")
-  }
+async function checkImageSafety(file: File | UploadedFileInput) {
+  const isBrowserFile = file instanceof File
+  const mimeType = isBrowserFile ? file.type : file.mimeType
 
-  if (!file.type.startsWith("image/")) return
+  if (!mimeType.startsWith("image/")) return
 
   for (const delay of [0, 800, 1600]) {
     if (delay > 0) await sleep(delay)
 
     try {
-      const buffer = await file.arrayBuffer()
-      const base64 = Buffer.from(buffer).toString("base64")
+      let base64: string
+
+      if (isBrowserFile) {
+        const buffer = await file.arrayBuffer()
+        base64 = Buffer.from(buffer).toString("base64")
+      } else {
+        const bucket =
+          process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "media"
+
+        const { data, error } = await supabaseAdmin.storage
+          .from(bucket)
+          .download(file.path)
+
+        if (error || !data) {
+          throw error ?? new Error("Failed to download image from storage")
+        }
+
+        const arrayBuffer = await data.arrayBuffer()
+        base64 = Buffer.from(arrayBuffer).toString("base64")
+      }
 
       const response = await openai.moderations.create({
         model: "omni-moderation-latest",
@@ -198,7 +215,7 @@ async function checkImageSafety(file: File) {
           {
             type: "image_url",
             image_url: {
-              url: `data:${file.type};base64,${base64}`,
+              url: `data:${mimeType};base64,${base64}`,
             },
           },
         ],
@@ -228,11 +245,10 @@ async function checkPostSafety({
   await checkTextSafety(text)
 
   for (const file of files) {
-    if (file instanceof File) {
-      await checkImageSafety(file)
-    }
+    await checkImageSafety(file)
   }
 }
+
 
 async function moderatePostAndApplyTransition({
   postId,

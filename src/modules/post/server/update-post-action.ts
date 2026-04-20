@@ -18,7 +18,7 @@ import { getCreatorStudioPost } from "@/modules/post/server/get-creator-studio-p
 import { resolvePostMutationModerationOutcome } from "@/modules/post/server/resolve-post-mutation-moderation-outcome"
 import { updatePost } from "@/modules/post/server/update-post"
 import { updatePostStatus } from "@/modules/post/server/update-post-status"
-
+import OpenAI from "openai"
 type UpdatePostActionInput = {
   postId: string
   text: string
@@ -58,6 +58,61 @@ function resolveMediaType(file: File): "image" | "video" | "audio" | "file" {
   if (mime.startsWith("audio/")) return "audio"
 
   return "file"
+}
+
+
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+})
+
+async function sleep(ms: number) {
+  await new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function checkUploadedImageSafety(file: File) {
+  if (!(file instanceof File)) {
+    throw new Error("Image file is required")
+  }
+
+  if (!file.type.startsWith("image/")) return
+
+  for (const delay of [0, 800, 1600]) {
+    if (delay > 0) await sleep(delay)
+
+    try {
+      const buffer = await file.arrayBuffer()
+      const base64 = Buffer.from(buffer).toString("base64")
+
+      const response = await openai.moderations.create({
+        model: "omni-moderation-latest",
+        input: [
+          {
+            type: "image_url",
+            image_url: {
+              url: `data:${file.type};base64,${base64}`,
+            },
+          },
+        ],
+      })
+
+      const result = response.results?.[0]
+
+      if (!result) {
+        throw new Error("Failed to moderate image")
+      }
+
+      if (result.flagged) {
+        throw new Error("IMAGE_BLOCKED")
+      }
+
+      return
+    } catch (error: any) {
+      if (error?.status !== 429) throw error
+    }
+  }
+
+  throw new Error("Image moderation temporarily unavailable")
 }
 
 export async function updatePostAction({
@@ -151,6 +206,14 @@ export async function updatePostAction({
 
   const validFiles = files.filter((file) => file instanceof File && file.size > 0)
   const hasNewMedia = validFiles.length > 0
+
+
+  for (const file of validFiles) {
+    if (resolveMediaType(file) === "image") {
+      await checkUploadedImageSafety(file)
+    }
+  }
+
 
   const currentBlockFingerprint = buildPostEditBlockFingerprint(
     currentPost.blocks.map((block) => ({
