@@ -567,9 +567,30 @@ export function PostCard({
             </>
           ) : (
             <>
-              {shouldRenderFallbackMedia ? (
-                <div className="mt-2">{renderMedia()}</div>
-              ) : null}
+          {shouldRenderFallbackMedia ? (
+  <>
+    {blockMedia.map((item, index) => {
+      const matchedEntry = resolvedMediaEntries.find(
+        (entry) => entry.media.id === item.id
+      )
+
+      return (
+        <div
+          key={`${item.id ?? item.url}-${index}`}
+          className="mt-2 overflow-hidden"
+        >
+          <div className="aspect-[91/100] w-full overflow-hidden">
+            {renderSingleMedia(
+              item,
+              `Post media ${index + 1}`,
+              matchedEntry?.block
+            )}
+          </div>
+        </div>
+      )
+    })}
+  </>
+) : null}
 
               {shouldRenderFallbackText ? (
                 <div className="px-0 pt-3">
