@@ -97,6 +97,7 @@ type PostRow = {
     media_id: string | null
     sort_order: number
     created_at: string
+    editor_state: PostBlockEditorState | null
   }>
 }
 
@@ -160,14 +161,15 @@ export async function getHomeFeed(
       visibility_status,
       moderation_status,
       deleted_at,
-      post_blocks (
+         post_blocks (
         id,
         post_id,
         type,
         content,
         media_id,
         sort_order,
-        created_at
+        created_at,
+        editor_state
       )
     `)
     .eq("visibility", "public")
@@ -454,7 +456,6 @@ export async function getHomeFeed(
           type: resolveMediaType(item),
         }))
       )
-
       const normalizedBlocks = [...(post.post_blocks ?? [])]
         .sort((a, b) => a.sort_order - b.sort_order)
         .map((block) => ({
@@ -465,9 +466,8 @@ export async function getHomeFeed(
           mediaId: block.media_id,
           sortOrder: block.sort_order,
           createdAt: block.created_at,
-          editorState: null as PostBlockEditorState | null,
+          editorState: block.editor_state ?? null,
         }))
-
       return {
         id: post.id,
         creatorId: post.creator_id,

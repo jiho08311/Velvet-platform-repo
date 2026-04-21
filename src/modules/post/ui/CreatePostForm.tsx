@@ -1130,6 +1130,11 @@ onSubmitPost({
               </span>
 
               <div className="flex items-center gap-2">
+
+
+
+
+
                 <button
                   type="button"
                   draggable
@@ -1208,41 +1213,88 @@ onSubmitPost({
                     No carousel items yet
                   </div>
                 ) : (
-                  <div className="flex gap-3 overflow-x-auto">
-                    {block.items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="relative w-40 shrink-0 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => removeCarouselItem(block.id, item.id)}
-                          className="absolute right-2 top-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur transition hover:bg-black/80"
-                        >
-                          ✕
-                        </button>
+             
 
-                        <div className="aspect-[4/5] w-full overflow-hidden bg-zinc-950">
-                          {item.type === "video" ? (
-                            <video
-                              src={item.previewUrl}
-                              autoPlay
-                              loop
-                              muted
-                              playsInline
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <img
-                              src={item.previewUrl}
-                              alt="Carousel item"
-                              className="h-full w-full object-cover"
-                            />
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+<div className="relative w-full overflow-hidden rounded-2xl">
+<div
+  ref={(el) => {
+    if (!el) return
+
+    el.onscroll = () => {
+      const scrollLeft = el.scrollLeft
+      const width = el.clientWidth
+      const index = Math.round(scrollLeft / width)
+
+      el.setAttribute("data-index", String(index))
+    }
+  }}
+  data-index="0"
+  className="flex snap-x snap-mandatory overflow-x-auto"
+>
+    {block.items.map((item) => (
+      <div key={item.id} className="w-full shrink-0 snap-center">
+        <div className="aspect-[4/5] w-full overflow-hidden bg-zinc-950">
+          {item.type === "video" ? (
+            <video
+              src={item.previewUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <img
+              src={item.previewUrl}
+              alt="Carousel item"
+              className="h-full w-full object-cover"
+            />
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+
+  {/* indicator */}
+  {block.items.length > 1 && (
+ <div
+  className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5"
+  ref={(container) => {
+    if (!container) return
+
+    const parent = container.parentElement
+    if (!parent) return
+
+    const scrollEl = parent.querySelector('[data-index]')
+    if (!scrollEl) return
+
+    const updateDots = () => {
+      const index = Number(scrollEl.getAttribute("data-index") ?? "0")
+
+      container.querySelectorAll("[data-dot-index]").forEach((dot, i) => {
+        dot.className =
+          "h-1.5 w-1.5 rounded-full " +
+          (i === index ? "bg-[#C2185B]" : "bg-white/30")
+      })
+    }
+
+    scrollEl.addEventListener("scroll", updateDots)
+    updateDots()
+  }}
+>
+  {block.items.map((_, index) => (
+  <span
+    key={index}
+    className="h-1.5 w-1.5 rounded-full bg-white/30"
+    data-dot-index={index}
+  />
+))}
+    </div>
+  )}
+</div>
+
+
+
                 )}
               </div>
             ) : (
@@ -1448,17 +1500,18 @@ onSubmitPost({
                           Filter
                         </button>
 
-
 <button
   type="button"
   onClick={() => {
     pendingCarouselBlockIdRef.current = block.id
     carouselFileInputRef.current?.click()
   }}
-  className="rounded-full px-3 py-1.5 text-xs font-medium transition bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+  className="rounded-full bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:bg-zinc-700"
 >
   +
 </button>
+
+
 
 
                       </div>
@@ -1532,6 +1585,17 @@ onSubmitPost({
                       >
                         Trim
                       </button>
+
+
+
+
+
+
+
+
+
+
+
 
 <button
   type="button"
@@ -1659,13 +1723,7 @@ onSubmitPost({
   Text
 </button>
 
-<button
-  type="button"
-  onClick={addCarouselBlock}
-  className="inline-flex h-12 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-white transition hover:bg-zinc-800"
->
-  Carousel
-</button>
+
 
 
           <button

@@ -113,7 +113,7 @@ export function PostCard({
 
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({})
   const [isVideoReady, setIsVideoReady] = useState(false)
-  const [, setCurrentIndex] = useState(0)
+  const [currentIndex, setCurrentIndex] = useState(0)
 
   const {
     hasBlocks,
@@ -137,20 +137,7 @@ export function PostCard({
     !shouldRenderNormalizedGroups && Boolean(blockText)
 
 
-  console.log("[PostCard:debug]", {
-    postId,
-    text,
-    blocks,
-    media,
-    hasBlocks,
-    blockText,
-    blockMedia,
-    groupedBlocks,
-    groupedTypes: groupedBlocks.map((group) => group.type),
-    shouldRenderNormalizedGroups,
-    shouldRenderFallbackMedia,
-    shouldRenderFallbackText,
-  })
+
 
 
   async function handleLike(event: React.MouseEvent<HTMLButtonElement>) {
@@ -424,45 +411,23 @@ export function PostCard({
             items.some((item) => item.id === entry.media.id)
           )
 
-    if (isCarousel) {
-      return (
-        <div
-          className="flex snap-x snap-mandatory overflow-x-auto"
-          onScroll={handleScroll}
-        >
-          {items.map((item, index) => {
-            const matchedEntry = resolvedEntries.find(
-              (entry) => entry.media.id === item.id
-            )
-
-            return (
-              <div
-                key={`${item.id ?? item.url}-${index}`}
-                className="min-w-full snap-center"
-              >
-                <div className="aspect-[91/100] w-full overflow-hidden">
-                  {renderSingleMedia(
-                    item,
-                    `Post media ${index + 1}`,
-                    matchedEntry?.block
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )
-    }
-
-    return (
-      <>
+if (isCarousel) {
+  return (
+    <div className="relative">
+      <div
+        className="flex snap-x snap-mandatory overflow-x-auto"
+        onScroll={handleScroll}
+      >
         {items.map((item, index) => {
           const matchedEntry = resolvedEntries.find(
             (entry) => entry.media.id === item.id
           )
 
           return (
-            <div key={`${item.id ?? item.url}-${index}`} className="mt-2 overflow-hidden">
+            <div
+              key={`${item.id ?? item.url}-${index}`}
+              className="min-w-full snap-center"
+            >
               <div className="aspect-[91/100] w-full overflow-hidden">
                 {renderSingleMedia(
                   item,
@@ -473,9 +438,50 @@ export function PostCard({
             </div>
           )
         })}
-      </>
-    )
-  }
+      </div>
+
+      {items.length > 1 ? (
+        <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
+          {items.map((_, index) => (
+            <span
+              key={index}
+              className={`h-1.5 w-1.5 rounded-full transition ${
+                index === currentIndex ? "bg-[#C2185B]" : "bg-white/30"
+              }`}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+  return (
+    <div className="mt-2">
+      {items.map((item, index) => {
+        const matchedEntry = resolvedEntries.find(
+          (entry) => entry.media.id === item.id
+        )
+
+        return (
+          <div
+            key={`${item.id ?? item.url}-${index}`}
+            className="aspect-[91/100] w-full overflow-hidden"
+          >
+            {renderSingleMedia(
+              item,
+              `Post media ${index + 1}`,
+              matchedEntry?.block
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+
+
 
   function renderLockedAction() {
     if (lockReason === "subscription") {
@@ -569,13 +575,7 @@ export function PostCard({
           {shouldRenderNormalizedGroups ? (
             <>
 
-       {console.log("[PostCard:normalized-render]", {
-  postId,
-  groupedTypes: groupedBlocks.map((group) => group.type),
-  groupedLengths: groupedBlocks.map((group) =>
-    "mediaItems" in group ? group.mediaItems.length : 0
-  ),
-})}
+       
 
               {groupedBlocks.map((group, index) => {
                 if (group.type === "text") {
@@ -610,11 +610,8 @@ export function PostCard({
           ) : (
             <>
 
-              {console.log("[PostCard:fallback-render]", {
-                postId,
-                blockMediaLength: blockMedia.length,
-                fallbackMediaIds: blockMedia.map((item) => item.id),
-              })}
+              
+              
 
               {shouldRenderFallbackMedia ? renderMedia() : null}
 
