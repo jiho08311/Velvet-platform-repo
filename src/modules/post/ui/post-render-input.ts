@@ -106,95 +106,88 @@ function buildGroupedBlocks(params: {
   })
 
   const groupedBlocks: PostRenderGroup[] = []
+  const visitedCarousel = new Set<string>()
 
-  
-const visitedCarousel = new Set<string>()
+  for (let i = 0; i < params.blocks.length; i++) {
+    const block = params.blocks[i]
 
-for (let i = 0; i < params.blocks.length; i++) {
-  const block = params.blocks[i]
-
-  // text
-  if (block.type === "text") {
-    groupedBlocks.push({
-      type: "text",
-      block,
-    })
-    continue
-  }
-
-  const carouselMeta = block.editorState?.carousel
-
-  // ✅ carousel (순서 유지)
-  if (carouselMeta?.groupId) {
-    const groupId = carouselMeta.groupId
-
-    if (visitedCarousel.has(groupId)) {
+    if (block.type === "text") {
+      groupedBlocks.push({
+        type: "text",
+        block,
+      })
       continue
     }
 
-    visitedCarousel.add(groupId)
+    const carouselMeta = block.editorState?.carousel
 
-    const blocks = params.blocks.filter(
-      (b) => b.editorState?.carousel?.groupId === groupId
-    )
+    if (carouselMeta?.groupId) {
+      const groupId = carouselMeta.groupId
 
-    blocks.sort((a, b) => {
-      const aIndex = a.editorState?.carousel?.index ?? 0
-      const bIndex = b.editorState?.carousel?.index ?? 0
-      return aIndex - bIndex
-    })
+      if (visitedCarousel.has(groupId)) {
+        continue
+      }
 
-    const mediaEntries: PostRenderMediaEntry[] = []
+      visitedCarousel.add(groupId)
 
-    for (const b of blocks) {
-      const mediaId = b.mediaId?.trim() ?? ""
-      if (!mediaId) continue
+      const blocks = params.blocks
+        .filter((candidate) => candidate.editorState?.carousel?.groupId === groupId)
+        .sort((a, b) => {
+          const aIndex = a.editorState?.carousel?.index ?? 0
+          const bIndex = b.editorState?.carousel?.index ?? 0
+          return aIndex - bIndex
+        })
 
-      const mediaItem = params.blockMedia.find(
-        (item) => item.id === mediaId
-      )
+      const mediaEntries: PostRenderMediaEntry[] = []
 
-      if (!mediaItem) continue
+      for (const groupedBlock of blocks) {
+        const mediaId = groupedBlock.mediaId?.trim() ?? ""
+        if (!mediaId) continue
 
-      mediaEntries.push({
-        media: mediaItem,
-        block: mediaEntryMap.get(mediaId),
+        const mediaItem = params.blockMedia.find((item) => item.id === mediaId)
+        if (!mediaItem) continue
+
+        mediaEntries.push({
+          media: mediaItem,
+          block: mediaEntryMap.get(mediaId),
+        })
+      }
+
+      if (mediaEntries.length === 0) {
+        continue
+      }
+
+      groupedBlocks.push({
+        type: "carousel",
+        blocks,
+        mediaItems: mediaEntries.map((entry) => entry.media),
+        mediaEntries,
       })
+
+      continue
     }
 
-    if (mediaEntries.length === 0) continue
+    const mediaId = block.mediaId?.trim() ?? ""
+    const mediaItem = mediaId
+      ? params.blockMedia.find((item) => item.id === mediaId)
+      : undefined
+
+    if (!mediaItem) {
+      continue
+    }
 
     groupedBlocks.push({
-      type: "carousel",
-      blocks,
-      mediaItems: mediaEntries.map((entry) => entry.media),
-      mediaEntries,
+      type: "media",
+      blocks: [block],
+      mediaItems: [mediaItem],
+      mediaEntries: [
+        {
+          media: mediaItem,
+          block: mediaEntryMap.get(mediaId),
+        },
+      ],
     })
-
-    continue
   }
-
-  // ✅ single media
-  const mediaId = block.mediaId?.trim() ?? ""
-  const mediaItem = mediaId
-    ? params.blockMedia.find((item) => item.id === mediaId)
-    : undefined
-
-  if (!mediaItem) continue
-
-  groupedBlocks.push({
-    type: "media",
-    blocks: [block],
-    mediaItems: [mediaItem],
-    mediaEntries: [
-      {
-        media: mediaItem,
-        block: mediaEntryMap.get(mediaId),
-      },
-    ],
-  })
-}
-
 
   return groupedBlocks
 }

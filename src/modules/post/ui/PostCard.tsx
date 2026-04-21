@@ -2,6 +2,7 @@
 
 import type {
   PostBlock,
+  PostBlockEditorState,
   PostRenderMediaItem,
 } from "@/modules/post/types"
 import { usePathname, useRouter } from "next/navigation"
@@ -129,7 +130,7 @@ export function PostCard({
   })
 
   const hasNormalizedGroups = groupedBlocks.length > 0
-  const shouldRenderNormalizedGroups = hasBlocks
+  const shouldRenderNormalizedGroups = hasBlocks && hasNormalizedGroups
   const shouldRenderFallbackMedia =
     !shouldRenderNormalizedGroups && blockMedia.length > 0
   const shouldRenderFallbackText =
@@ -147,7 +148,9 @@ export function PostCard({
         method: liked ? "DELETE" : "POST",
       })
 
-      if (!response.ok) return
+      if (!response.ok) {
+        return
+      }
 
       setLiked((prev) => !prev)
       setCount((prev) => (liked ? Math.max(0, prev - 1) : prev + 1))
@@ -168,7 +171,9 @@ export function PostCard({
         method: "GET",
       })
 
-      if (!response.ok) return
+      if (!response.ok) {
+        return
+      }
 
       const data = await response.json()
       setComments(data.items ?? [])
@@ -230,7 +235,9 @@ export function PostCard({
         method: "DELETE",
       })
 
-      if (!response.ok) return
+      if (!response.ok) {
+        return
+      }
 
       await loadComments()
     } finally {
@@ -249,7 +256,9 @@ export function PostCard({
       method: likedByMe ? "DELETE" : "POST",
     })
 
-    if (!response.ok) return
+    if (!response.ok) {
+      return
+    }
 
     await loadComments()
   }
@@ -303,6 +312,7 @@ export function PostCard({
           }}
           onTimeUpdate={(event) => {
             const video = event.currentTarget
+
             if (
               trimEnd !== null &&
               trimEnd > trimStart &&
@@ -428,26 +438,25 @@ export function PostCard({
     }
 
     return (
-      <div className="mt-2">
+      <>
         {items.map((item, index) => {
           const matchedEntry = resolvedEntries.find(
             (entry) => entry.media.id === item.id
           )
 
           return (
-            <div
-              key={`${item.id ?? item.url}-${index}`}
-              className="aspect-[91/100] w-full overflow-hidden"
-            >
-              {renderSingleMedia(
-                item,
-                `Post media ${index + 1}`,
-                matchedEntry?.block
-              )}
+            <div key={`${item.id ?? item.url}-${index}`} className="mt-2 overflow-hidden">
+              <div className="aspect-[91/100] w-full overflow-hidden">
+                {renderSingleMedia(
+                  item,
+                  `Post media ${index + 1}`,
+                  matchedEntry?.block
+                )}
+              </div>
             </div>
           )
         })}
-      </div>
+      </>
     )
   }
 
@@ -480,6 +489,7 @@ export function PostCard({
     if (Array.isArray(comment.profiles)) {
       return comment.profiles[0]?.username ?? "user"
     }
+
     return comment.profiles?.username ?? "user"
   }
 
@@ -553,44 +563,27 @@ export function PostCard({
                 }
 
                 return (
-                  <div key={`media-group-${index}`} className="mt-2 overflow-hidden">
-                    {group.mediaItems.length > 0
-                      ? renderMedia(
-                          group.mediaItems,
-                          group.mediaEntries,
-                          group.type === "carousel"
-                        )
-                      : null}
+                  <div key={`media-group-${index}`} className="overflow-hidden">
+                    {group.mediaItems.length > 0 ? (
+                      renderMedia(
+                        group.mediaItems,
+                        group.mediaEntries,
+                        group.type === "carousel"
+                      )
+                    ) : (
+                      <div className="mt-2 flex min-h-[220px] items-center justify-center bg-zinc-900 text-sm text-zinc-500">
+                        {group.blocks.some((block) => block.type === "video")
+                          ? "Video is processing..."
+                          : "Media not available"}
+                      </div>
+                    )}
                   </div>
                 )
               })}
             </>
           ) : (
             <>
-          {shouldRenderFallbackMedia ? (
-  <>
-    {blockMedia.map((item, index) => {
-      const matchedEntry = resolvedMediaEntries.find(
-        (entry) => entry.media.id === item.id
-      )
-
-      return (
-        <div
-          key={`${item.id ?? item.url}-${index}`}
-          className="mt-2 overflow-hidden"
-        >
-          <div className="aspect-[91/100] w-full overflow-hidden">
-            {renderSingleMedia(
-              item,
-              `Post media ${index + 1}`,
-              matchedEntry?.block
-            )}
-          </div>
-        </div>
-      )
-    })}
-  </>
-) : null}
+              {shouldRenderFallbackMedia ? renderMedia() : null}
 
               {shouldRenderFallbackText ? (
                 <div className="px-0 pt-3">
@@ -651,7 +644,9 @@ export function PostCard({
               <PaperAirplaneIcon className="h-6 w-6 stroke-[2.5]" />
             </button>
 
-            <p className="text-[13px] text-zinc-400">{formatPostDate(createdAt)}</p>
+            <p className="text-[13px] text-zinc-400">
+              {formatPostDate(createdAt)}
+            </p>
           </div>
 
           {showComments ? (
