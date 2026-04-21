@@ -1,7 +1,7 @@
 import OpenAI from "openai"
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { checkTextSafety } from "@/workflows/create-post-with-media-workflow"
+
 import { createNotification } from "@/modules/notification/server/create-notification"
 import { assertMessageAttachmentEligibility } from "@/modules/message/server/assert-message-attachment-eligibility"
 
@@ -36,6 +36,30 @@ type ModerationMediaRow = {
   storage_path: string
   mime_type: string | null
 }
+
+async function checkTextSafety(text: string) {
+  const trimmed = text.trim()
+
+  if (!trimmed) return
+
+  const response = await openai.moderations.create({
+    model: "omni-moderation-latest",
+    input: trimmed,
+  })
+
+  const result = response.results?.[0]
+
+  if (!result) {
+    throw new Error("Failed to moderate text")
+  }
+
+  if (result.flagged) {
+    throw new Error("TEXT_BLOCKED")
+  }
+}
+
+
+
 
 async function checkMessageImageSafety(mediaIds: string[]) {
   if (mediaIds.length === 0) return

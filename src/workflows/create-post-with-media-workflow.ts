@@ -38,6 +38,31 @@ async function sleep(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+async function checkTextSafety(text: string) {
+  const trimmed = text.trim()
+
+  if (!trimmed) {
+    return
+  }
+
+  const response = await openai.moderations.create({
+    model: "omni-moderation-latest",
+    input: trimmed,
+  })
+
+  const result = response.results?.[0]
+
+  if (!result) {
+    throw new Error("Failed to moderate text")
+  }
+
+  if (result.flagged) {
+    throw new Error("TEXT_BLOCKED")
+  }
+}
+
+
+
 async function checkPostSafety({
   text,
   files,
