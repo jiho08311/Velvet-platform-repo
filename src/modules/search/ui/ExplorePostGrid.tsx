@@ -73,9 +73,6 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
   const [isLikeLoading, setIsLikeLoading] = useState(false)
   const [isCommentsOpen, setIsCommentsOpen] = useState(false)
-const [sliderIndexes, setSliderIndexes] = useState<Record<string, number>>({})
-
-
 
   const selectedMediaMap = useMemo(() => {
     return new Map((selected?.media ?? []).map((item) => [item.id, item]))
@@ -115,9 +112,7 @@ const [sliderIndexes, setSliderIndexes] = useState<Record<string, number>>({})
   const viewerBlocks = useMemo<ViewerBlock[]>(() => {
     const next: ViewerBlock[] = []
 
-    for (let i = 0; i < selectedBlocks.length; i += 1) {
-      const block = selectedBlocks[i]
-
+    for (const block of selectedBlocks) {
       if (block.type === "text") {
         const content = block.content?.trim() ?? ""
 
@@ -128,52 +123,28 @@ const [sliderIndexes, setSliderIndexes] = useState<Record<string, number>>({})
             content,
           })
         }
+
         continue
       }
 
       if (block.type === "image" || block.type === "video") {
-        const items: Array<{
-          id: string
-          type: "image" | "video"
-          url: string
-        }> = []
+        const mediaItem = block.mediaId
+          ? selectedMediaMap.get(block.mediaId)
+          : null
 
-        let cursor = i
-
-        while (cursor < selectedBlocks.length) {
-          const current = selectedBlocks[cursor]
-
-          if (current.type !== "image" && current.type !== "video") {
-            break
-          }
-
-          const mediaItem = current.mediaId
-            ? selectedMediaMap.get(current.mediaId)
-            : null
-
-          if (
-            mediaItem?.url &&
-            (current.type === "image" || current.type === "video")
-          ) {
-            items.push({
-              id: current.id,
-              type: current.type,
-              url: mediaItem.url,
-            })
-          }
-
-          cursor += 1
-        }
-
-        if (items.length > 0) {
+        if (mediaItem?.url) {
           next.push({
             kind: "media",
             id: block.id,
-            items,
+            items: [
+              {
+                id: block.id,
+                type: block.type,
+                url: mediaItem.url,
+              },
+            ],
           })
         }
-
-        i = cursor - 1
       }
     }
 
@@ -311,10 +282,9 @@ const [sliderIndexes, setSliderIndexes] = useState<Record<string, number>>({})
             onClick={() => {
               setIsCommentsOpen(false)
               setIsViewerVisible(false)
-        setTimeout(() => {
-  setSelected(null)
-  setSliderIndexes({})
-}, 180)
+              setTimeout(() => {
+                setSelected(null)
+              }, 180)
             }}
             className={`absolute left-4 top-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur transition duration-200 ${
               isViewerVisible
@@ -346,94 +316,36 @@ const [sliderIndexes, setSliderIndexes] = useState<Record<string, number>>({})
                     )
                   }
 
-                  if (block.items.length === 1) {
-                    const item = block.items[0]
+                  const item = block.items[0]
 
-                    return (
-                      <div
-                        key={block.id}
-                        className="overflow-hidden rounded-2xl bg-zinc-950"
-                      >
-                        {item.type === "video" ? (
-                          <video
-                            src={item.url}
-                            controls
-                            playsInline
-                            className="w-full"
-                          />
-                        ) : (
-                          <img
-                            src={item.url}
-                            alt={
-                              selected.creatorDisplayName ??
-                              selected.creatorUsername
-                            }
-                            className="w-full object-cover"
-                          />
-                        )}
-                      </div>
-                    )
+                  if (!item) {
+                    return null
                   }
 
-           return (
-  <div key={block.id} className="relative">
-
- <div
-  className="flex snap-x snap-mandatory gap-2 overflow-x-auto rounded-2xl"
-  onScroll={(event) => {
-    const container = event.currentTarget
-    const slideWidth = container.clientWidth + 8
-    const nextIndex = Math.round(container.scrollLeft / slideWidth)
-
-    setSliderIndexes((prev) => ({
-      ...prev,
-      [block.id]: nextIndex,
-    }))
-  }}
->
-      {block.items.map((item) => (
-        <div
-          key={item.id}
-          className="w-full shrink-0 snap-center overflow-hidden rounded-2xl bg-zinc-950"
-        >
-          {item.type === "video" ? (
-            <video
-              src={item.url}
-              controls
-              playsInline
-              className="w-full"
-            />
-          ) : (
-            <img
-              src={item.url}
-              alt={
-                selected.creatorDisplayName ??
-                selected.creatorUsername
-              }
-              className="w-full object-cover"
-            />
-          )}
-        </div>
-      ))}
-    </div>
-
- <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/40 px-2 py-1">
-  {block.items.map((_, index) => {
-    const isActive = (sliderIndexes[block.id] ?? 0) === index
-
-    return (
-      <span
-        key={index}
-        className={`h-1.5 w-1.5 rounded-full ${
-          isActive ? "bg-white" : "bg-white/40"
-        }`}
-      />
-    )
-  })}
-</div>
-
-  </div>
-)
+                  return (
+                    <div
+                      key={block.id}
+                      className="overflow-hidden rounded-2xl bg-zinc-950"
+                    >
+                      {item.type === "video" ? (
+                        <video
+                          src={item.url}
+                          controls
+                          playsInline
+                          className="w-full"
+                        />
+                      ) : (
+                        <img
+                          src={item.url}
+                          alt={
+                            selected.creatorDisplayName ??
+                            selected.creatorUsername
+                          }
+                          className="w-full object-cover"
+                        />
+                      )}
+                    </div>
+                  )
                 })}
               </div>
 

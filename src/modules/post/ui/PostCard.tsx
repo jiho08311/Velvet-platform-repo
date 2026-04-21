@@ -395,83 +395,77 @@ return (
     setCurrentIndex(index)
   }
 
-  function renderMedia(
-    items: PostRenderMediaItem[] = blockMedia,
-    mediaEntries?: Array<{
-      media: PostRenderMediaItem
-      block?: PostBlock
-    }>
-  ) {
-    if (items.length === 0) return null
 
-    const resolvedEntries =
-      mediaEntries && mediaEntries.length > 0
-        ? mediaEntries
-        : resolvedMediaEntries.filter((entry) =>
-            items.some((item) => item.id === entry.media.id)
+function renderMedia(
+  items: PostRenderMediaItem[] = blockMedia,
+  mediaEntries?: Array<{
+    media: PostRenderMediaItem
+    block?: PostBlock
+  }>
+) {
+  if (items.length === 0) return null
+
+  const resolvedEntries =
+    mediaEntries && mediaEntries.length > 0
+      ? mediaEntries
+      : resolvedMediaEntries.filter((entry) =>
+          items.some((item) => item.id === entry.media.id)
+        )
+
+  // ✅ carousel 조건 (2개 이상일 때만)
+  if (items.length > 1) {
+    return (
+      <div
+        className="flex snap-x snap-mandatory overflow-x-auto"
+        onScroll={handleScroll}
+      >
+        {items.map((item, index) => {
+          const matchedEntry = resolvedEntries.find(
+            (entry) => entry.media.id === item.id
           )
 
-    if (items.length === 1) {
-      const item = items[0]
-      const matchedEntry = resolvedEntries.find(
-        (entry) => entry.media.id === item.id
-      )
-
-      return (
-        <div className="overflow-hidden">
-          <div className="aspect-[91/100] w-full overflow-hidden">
-            {renderSingleMedia(
-              item,
-              "Post media",
-              matchedEntry?.block
-            )}
-          </div>
-        </div>
-      )
-    }
-
-    return (
-      <div className="relative">
-        <div
-          onScroll={handleScroll}
-          className="flex snap-x snap-mandatory overflow-x-auto scrollbar-hide"
-        >
-          {items.map((item, index) => {
-            const matchedEntry = resolvedEntries.find(
-              (entry) => entry.media.id === item.id
-            )
-
-            return (
-              <div
-                key={`${item.id ?? item.url}-${index}`}
-                className="min-w-full snap-center"
-              >
-                <div className="aspect-[91/100] w-full overflow-hidden">
-                  {renderSingleMedia(
-                    item,
-                    `Post media ${index + 1}`,
-                    matchedEntry?.block
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1">
-          {items.map((_, index) => (
+          return (
             <div
-              key={index}
-              className={`h-1.5 w-1.5 rounded-full ${
-                index === currentIndex ? "bg-white" : "bg-white/40"
-              }`}
-            />
-          ))}
-        </div>
+              key={`${item.id ?? item.url}-${index}`}
+              className="min-w-full snap-center"
+            >
+              <div className="aspect-[91/100] w-full overflow-hidden">
+                {renderSingleMedia(
+                  item,
+                  `Post media ${index + 1}`,
+                  matchedEntry?.block
+                )}
+              </div>
+            </div>
+          )
+        })}
       </div>
     )
   }
 
+  // ✅ single media (기존 유지)
+  return (
+    <>
+      {items.map((item, index) => {
+        const matchedEntry = resolvedEntries.find(
+          (entry) => entry.media.id === item.id
+        )
+
+        return (
+          <div key={`${item.id ?? item.url}-${index}`} className="mt-2 overflow-hidden">
+            <div className="aspect-[91/100] w-full overflow-hidden">
+              {renderSingleMedia(
+                item,
+                `Post media ${index + 1}`,
+                matchedEntry?.block
+              )}
+            </div>
+          </div>
+        )
+      })}
+    </>
+  )
+}
 
 
   function renderLockedAction() {

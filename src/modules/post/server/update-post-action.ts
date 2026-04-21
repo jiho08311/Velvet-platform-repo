@@ -11,6 +11,7 @@ import {
   extractRemovedExistingMediaIdsFromEditDraft,
   extractUploadedMediaFromEditDraft,
   isRemoveOnlyEditDraftMutation,
+  projectPersistedEditBlocksFromDraft,
 } from "@/modules/post/server/edit-post-draft-policy"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
@@ -33,13 +34,7 @@ type UpdatePostActionInput = {
   visibility: "public" | "subscribers" | "paid"
   price?: number
   files?: File[]
-  blocks?: {
-    type: "text" | "image" | "video" | "audio" | "file"
-    content?: string | null
-    sortOrder: number
-    mediaId?: string | null
-    editorState?: PostBlockEditorState
-  }[]
+ blocks?: import("../types").CreatePostDraftBlock[]
 }
 
 type MediaRow = {
@@ -148,15 +143,9 @@ export async function updatePostAction({
     throw new Error("Post not found")
   }
 
-  const currentDraft = buildInitialEditPostDraft({
-    blocks: currentPost.blocks.map((block) => ({
-      type: block.type,
-      content: block.content ?? null,
-      sortOrder: block.sortOrder,
-      mediaId: block.mediaId ?? null,
-      editorState: null,
-    })),
-  })
+ const currentDraft = {
+  blocks: currentPost.blocks,
+}
 
   const uploadedFilesForDraft = files
     .filter((file) => file instanceof File && file.size > 0)
@@ -355,15 +344,17 @@ export async function updatePostAction({
     .delete()
     .eq("post_id", postId)
 
-  if (blocks.length > 0) {
-    const insertData = blocks.map((block) => ({
-      post_id: postId,
-      type: block.type,
-      content: block.content ?? null,
-      media_id: block.mediaId ?? null,
-      sort_order: block.sortOrder,
-      editor_state: block.editorState ?? null,
-    }))
+const persistedBlocks = projectPersistedEditBlocksFromDraft(submittedDraft)
+
+if (persistedBlocks.length > 0) {
+  const insertData = persistedBlocks.map((block) => ({
+    post_id: postId,
+    type: block.type,
+    content: block.content ?? null,
+    media_id: block.mediaId ?? null,
+    sort_order: block.sortOrder,
+    editor_state: block.editorState ?? null,
+  }))
 
     const { error: insertBlocksError } = await supabaseAdmin
       .from("post_blocks")

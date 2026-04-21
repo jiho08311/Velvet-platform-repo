@@ -2,6 +2,10 @@ import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { getPostBlocks } from "@/modules/post/server/get-post-blocks"
 import { buildPostRenderInput } from "@/modules/post/ui/post-render-input"
+import type {
+  EditPostDraftBlock,
+  EditPostDraftCarouselItem,
+} from "@/modules/post/server/edit-post-draft-policy"
 
 export type CreatorStudioPostDetail = {
   id: string
@@ -19,15 +23,7 @@ export type CreatorStudioPostDetail = {
     url: string
     type: "image" | "video" | "audio" | "file"
   }[]
-  blocks: {
-    id: string
-    postId: string
-    type: "text" | "image" | "video" | "audio" | "file"
-    content: string | null
-    mediaId: string | null
-    sortOrder: number
-    createdAt: string
-  }[]
+  blocks: EditPostDraftBlock[]
 }
 
 type GetCreatorStudioPostParams = {
@@ -57,6 +53,113 @@ type MediaRow = {
   status: "processing" | "ready" | "failed"
   sort_order: number
 }
+
+
+function isEditableRawBlockType(
+  value: string
+): value is "text" | "image" | "video" | "audio" | "file" {
+  return (
+    value === "text" ||
+    value === "image" ||
+    value === "video" ||
+    value === "audio" ||
+    value === "file"
+  )
+}
+
+function buildEditDraftBlocksFromRawBlocks(params: {
+  blocks: {
+    id: string
+    postId: string
+    type: string
+    content: string | null
+    mediaId: string | null
+    sortOrder: number
+    createdAt: string
+    editorState?: unknown | null
+  }[]
+}): EditPostDraftBlock[] {
+  const sortedBlocks = [...params.blocks].sort((a, b) => a.sortOrder - b.sortOrder)
+
+  const result: EditPostDraftBlock[] = []
+  const carouselGroups = new Map<string, typeof sortedBlocks>()
+
+  for (const block of sortedBlocks) {
+    if (!isEditableRawBlockType(block.type)) {
+      continue
+    }
+
+    if (block.type === "text") {
+      result.push({
+        type: "text",
+        content: block.content ?? "",
+        sortOrder: block.sortOrder,
+        editorState: (block.editorState as any) ?? null,
+      })
+      continue
+    }
+
+    const carouselMeta = (block.editorState as any)?.carousel
+
+    if (carouselMeta?.groupId) {
+      if (!carouselGroups.has(carouselMeta.groupId)) {
+        carouselGroups.set(carouselMeta.groupId, [])
+      }
+
+      carouselGroups.get(carouselMeta.groupId)!.push(block)
+      continue
+    }
+
+    if (block.mediaId) {
+      result.push({
+        type: block.type,
+        sortOrder: block.sortOrder,
+        media: {
+          kind: "existing",
+          mediaId: block.mediaId,
+        },
+        editorState: (block.editorState as any) ?? null,
+        content: null,
+      })
+    }
+  }
+
+  for (const [, blocks] of carouselGroups.entries()) {
+    const items: EditPostDraftCarouselItem[] = blocks
+      .filter(
+        (item): item is typeof item & {
+          type: "image" | "video" | "audio" | "file"
+          mediaId: string
+        } =>
+          item.type !== "text" &&
+          Boolean(item.mediaId)
+      )
+      .map((item) => ({
+        type: item.type,
+        media: {
+          kind: "existing",
+          mediaId: item.mediaId,
+        },
+        editorState: (item.editorState as any) ?? null,
+      }))
+
+    if (items.length === 0) {
+      continue
+    }
+
+    result.push({
+      type: "carousel",
+      sortOrder: blocks[0].sortOrder,
+      items,
+      editorState: null,
+      content: null,
+    })
+  }
+
+  return result.sort((a, b) => a.sortOrder - b.sortOrder)
+}
+
+  
 
 export async function getCreatorStudioPost({
   postId,
@@ -113,7 +216,7 @@ export async function getCreatorStudioPost({
     })
   )
 
-   const rawBlocks = await getPostBlocks(post.id)
+  const rawBlocks = await getPostBlocks(post.id)
 
   const renderInput = buildPostRenderInput({
     text: post.content ?? "",
@@ -139,14 +242,17 @@ export async function getCreatorStudioPost({
     updatedAt: post.updated_at,
     deletedAt: post.deleted_at,
     media,
-    blocks: rawBlocks.map((block) => ({
-      id: block.id,
-      postId: block.postId,
-      type: block.type,
-      content: block.content,
-      mediaId: block.mediaId,
-      sortOrder: block.sortOrder,
-      createdAt: block.createdAt,
-    })),
+    blocks: buildEditDraftBlocksFromRawBlocks({
+      blocks: rawBlocks.map((block) => ({
+        id: block.id,
+        postId: block.postId,
+        type: block.type,
+        content: block.content,
+        mediaId: block.mediaId,
+        sortOrder: block.sortOrder,
+        createdAt: block.createdAt,
+        editorState: block.editorState ?? null,
+      })),
+    }),
   }
 }

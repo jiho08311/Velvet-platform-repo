@@ -3,7 +3,8 @@
 import { FormEvent, useEffect, useRef, useState } from "react"
 import { StoryVideoTrimField } from "@/modules/media/ui/StoryVideoTrimField"
 import type {
-  CreatePostBlockInput,
+  CreatePostCarouselItem,
+  CreatePostDraftBlock,
   PostBlockEditorState,
 } from "@/modules/post/types"
 
@@ -14,8 +15,8 @@ type SubmitPostInput = {
   visibility: PostVisibility
   publishMode: PublishMode
   publishedAt: string | null
-  files: File[]
-  blocks: CreatePostBlockInput[]
+  blocks: CreatePostDraftBlock[]
+  uploadedFiles: Record<string, File>
 }
 
 type CreatePostFormProps = {
@@ -23,24 +24,41 @@ type CreatePostFormProps = {
   onSubmitPost: (input: SubmitPostInput) => void
   initialTextBlocks?: string[]
   initialVisibility?: PostVisibility
-  initialBlocks?: {
-    type: "text" | "image" | "video"
-    content?: string | null
-    url?: string | null
-    mediaId?: string | null
-    editorState?: PostBlockEditorState
-  }[]
+  initialBlocks?: CreatePostDraftBlock[]
 }
 
-type EditorBlock = {
+type CarouselEditorItem = {
   id: string
-  type: "text" | "image" | "video"
-  content?: string
+  type: CreatePostCarouselItem["type"]
   file?: File
   previewUrl?: string
   mediaId?: string
   editorState?: PostBlockEditorState
 }
+
+type EditorBlock =
+  | {
+      id: string
+      type: "text"
+      content?: string
+      editorState?: PostBlockEditorState
+    }
+  | {
+      id: string
+type: "image" | "video" | "audio" | "file"
+      file?: File
+      previewUrl?: string
+      mediaId?: string
+      editorState?: PostBlockEditorState
+      content?: string
+    }
+  | {
+      id: string
+      type: "carousel"
+      items: CarouselEditorItem[]
+      editorState?: null
+      content?: string
+    }
 
 const FILTER_PRESETS = ["none", "warm", "cool", "mono", "vivid"] as const
 type PostFilterPreset = (typeof FILTER_PRESETS)[number]
@@ -48,6 +66,15 @@ const FILTER_SWIPE_THRESHOLD = 40
 
 function createBlockId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
+
+function createCarouselBlock(items: CarouselEditorItem[] = []): EditorBlock {
+  return {
+    id: createBlockId(),
+    type: "carousel",
+    items,
+    editorState: null,
+  }
 }
 
 function clampPosition(value: number) {
@@ -108,30 +135,65 @@ export function CreatePostForm({
   initialVisibility,
   initialBlocks,
 }: CreatePostFormProps) {
-  const [blocks, setBlocks] = useState<EditorBlock[]>(() => {
-    if (initialBlocks && initialBlocks.length > 0) {
-      return initialBlocks.map((b) => ({
-        id: createBlockId(),
-        type: b.type,
-        content: b.type === "text" ? b.content ?? "" : undefined,
-        previewUrl: b.url ?? undefined,
-        mediaId: b.mediaId ?? undefined,
-        editorState:
-          b.editorState ??
-          (b.type === "image"
-            ? createDefaultImageEditorState()
-            : b.type === "video"
-              ? createDefaultVideoEditorState()
-              : undefined),
-      }))
-    }
 
-    return (initialTextBlocks ?? [""]).map((content) => ({
+
+const [blocks, setBlocks] = useState<EditorBlock[]>(() => {
+  if (initialBlocks && initialBlocks.length > 0) {
+    return initialBlocks.map((block): EditorBlock => {
+      if (block.type === "text") {
+        return {
+          id: createBlockId(),
+          type: "text",
+          content: block.content ?? "",
+          editorState: block.editorState ?? null,
+        }
+      }
+
+      if (block.type === "carousel") {
+        return {
+          id: createBlockId(),
+          type: "carousel",
+          items: block.items.map((item): CarouselEditorItem => ({
+            id: createBlockId(),
+            type: item.type,
+            previewUrl: undefined,
+            mediaId:
+              item.media.kind === "existing"
+                ? item.media.mediaId
+                : undefined,
+            file: undefined,
+            editorState: item.editorState ?? null,
+          })),
+          editorState: null,
+        }
+      }
+
+      return {
+        id: createBlockId(),
+        type: block.type,
+        previewUrl: undefined,
+        mediaId:
+          block.media.kind === "existing"
+            ? block.media.mediaId
+            : undefined,
+        file: undefined,
+        editorState: block.editorState ?? null,
+        content: undefined,
+      }
+    })
+  }
+
+  return (initialTextBlocks ?? [""]).map(
+    (content): EditorBlock => ({
       id: createBlockId(),
-      type: "text" as const,
+      type: "text",
       content,
-    }))
-  })
+      editorState: undefined,
+    })
+  )
+})
+
+
 
   const [visibility, setVisibility] = useState<PostVisibility>(
     initialVisibility ?? "subscribers"
@@ -146,7 +208,9 @@ const [activeMediaToolByBlock, setActiveMediaToolByBlock] = useState<
   Record<string, "text" | "filter" | "trim" | null>
 >({})
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
+const fileInputRef = useRef<HTMLInputElement | null>(null)
+const carouselFileInputRef = useRef<HTMLInputElement | null>(null)
+const pendingCarouselBlockIdRef = useRef<string | null>(null)
   const previewContainerRef = useRef<HTMLDivElement | null>(null)
   const overlayPinchStartDistanceRef = useRef<number | null>(null)
   const overlayPinchStartScaleRef = useRef<number | null>(null)
@@ -626,6 +690,55 @@ function setActiveMediaTool(
     ])
   }
 
+  function addCarouselBlock() {
+  setBlocks((prev) => [...prev, createCarouselBlock()])
+}
+
+function addCarouselItems(blockId: string, nextFiles: File[]) {
+  if (nextFiles.length === 0) {
+    if (carouselFileInputRef.current) {
+      carouselFileInputRef.current.value = ""
+    }
+    return
+  }
+
+  const nextItems: CarouselEditorItem[] = nextFiles.map((file) => {
+    const isVideo = file.type.startsWith("video/")
+
+    return {
+      id: createBlockId(),
+      type: isVideo ? "video" : "image",
+      file,
+      previewUrl: URL.createObjectURL(file),
+      mediaId: undefined,
+      editorState: isVideo
+        ? createDefaultVideoEditorState()
+        : createDefaultImageEditorState(),
+    }
+  })
+
+  setBlocks((prev) =>
+    prev.map((block) => {
+      if (block.type !== "carousel") {
+        return block
+      }
+
+      if (block.id !== blockId) {
+        return block
+      }
+
+      return {
+        ...block,
+        items: [...block.items, ...nextItems],
+      }
+    })
+  )
+
+  if (carouselFileInputRef.current) {
+    carouselFileInputRef.current.value = ""
+  }
+}
+
   function moveBlock(fromIndex: number, toIndex: number) {
     if (fromIndex === toIndex) return
 
@@ -710,6 +823,21 @@ setDropTargetBlockId(null)
     }
   }
 
+
+  function removeCarouselItem(blockId: string, itemId: string) {
+    setBlocks((prev) =>
+      prev.map((block) => {
+        if (block.type !== "carousel") return block
+        if (block.id !== blockId) return block
+
+        return {
+          ...block,
+          items: block.items.filter((item) => item.id !== itemId),
+        }
+      })
+    )
+  }
+
   function addMediaBlocks(nextFiles: File[]) {
     if (nextFiles.length === 0) return
 
@@ -734,17 +862,17 @@ setDropTargetBlockId(null)
     }
   }
 
-
-type SerializedEditorSubmitBlock = CreatePostBlockInput & {
-  sourceBlockId: string
-  file?: File
+type SerializedEditorSubmitResult = {
+  blocks: CreatePostDraftBlock[]
+  uploadedFiles: Record<string, File>
 }
-
 function serializeEditorBlocksForSubmit(
   blocks: EditorBlock[]
-): SerializedEditorSubmitBlock[] {
-  return blocks
-    .flatMap((block, index): SerializedEditorSubmitBlock[] => {
+): SerializedEditorSubmitResult {
+  const uploadedFiles: Record<string, File> = {}
+
+  const serializedBlocks = blocks
+    .flatMap((block, index): CreatePostDraftBlock[] => {
       if (block.type === "text") {
         const content = block.content?.trim() ?? ""
 
@@ -754,12 +882,68 @@ function serializeEditorBlocksForSubmit(
 
         return [
           {
-            sourceBlockId: block.id,
             type: "text",
             content,
             sortOrder: index,
-            mediaId: null,
             editorState: block.editorState ?? null,
+          },
+        ]
+      }
+
+      if (block.type === "carousel") {
+        const items = block.items.flatMap((item): CreatePostCarouselItem[] => {
+          const hasExistingMediaId = (item.mediaId?.trim() ?? "").length > 0
+          const hasNewFile = Boolean(item.file && item.file.size > 0)
+
+          if (!hasExistingMediaId && !hasNewFile) {
+            return []
+          }
+
+          if (hasExistingMediaId) {
+            return [
+              {
+                type: item.type,
+                media: {
+                  kind: "existing",
+                  mediaId: item.mediaId!.trim(),
+                },
+                editorState: item.editorState ?? null,
+              },
+            ]
+          }
+
+          const uploadedPath = `__create-upload__/${item.file!.name}-${item.file!.size}-${item.file!.lastModified}`
+
+          uploadedFiles[uploadedPath] = item.file!
+
+          return [
+            {
+              type: item.type,
+              media: {
+                kind: "uploaded",
+                uploaded: {
+                  path: uploadedPath,
+                  type: item.type,
+                  mimeType: item.file!.type || "",
+                  size: item.file!.size,
+                  originalName: item.file!.name,
+                },
+              },
+              editorState: item.editorState ?? null,
+            },
+          ]
+        })
+
+        if (items.length === 0) {
+          return []
+        }
+
+        return [
+          {
+            type: "carousel",
+            sortOrder: index,
+            items,
+            editorState: null,
           },
         ]
       }
@@ -771,19 +955,48 @@ function serializeEditorBlocksForSubmit(
         return []
       }
 
+      if (hasExistingMediaId) {
+        return [
+          {
+            type: block.type,
+            sortOrder: index,
+            media: {
+              kind: "existing",
+              mediaId: block.mediaId!.trim(),
+            },
+            editorState: block.editorState ?? null,
+          },
+        ]
+      }
+
+      const uploadedPath = `__create-upload__/${block.file!.name}-${block.file!.size}-${block.file!.lastModified}`
+
+      uploadedFiles[uploadedPath] = block.file!
+
       return [
         {
-          sourceBlockId: block.id,
           type: block.type,
-          content: null,
           sortOrder: index,
-          mediaId: hasExistingMediaId ? block.mediaId ?? null : null,
+          media: {
+            kind: "uploaded",
+            uploaded: {
+              path: uploadedPath,
+              type: block.type,
+              mimeType: block.file!.type || "",
+              size: block.file!.size,
+              originalName: block.file!.name,
+            },
+          },
           editorState: block.editorState ?? null,
-          file: hasNewFile ? block.file : undefined,
         },
       ]
     })
     .sort((a, b) => a.sortOrder - b.sortOrder)
+
+  return {
+    blocks: serializedBlocks,
+    uploadedFiles,
+  }
 }
 
 
@@ -793,24 +1006,15 @@ function serializeEditorBlocksForSubmit(
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    const serializedBlocks = serializeEditorBlocksForSubmit(blocks)
+const serialized = serializeEditorBlocksForSubmit(blocks)
 
-    const submitBlocks: CreatePostBlockInput[] = serializedBlocks.map(
-      ({ sourceBlockId: _sourceBlockId, file: _file, ...block }) => block
-    )
-
-    const files = serializedBlocks
-      .filter((block) => block.type !== "text" && block.file)
-      .map((block) => block.file!)
-      .filter((file) => file.size > 0)
-
-    onSubmitPost({
-      visibility,
-      publishMode,
-      publishedAt: publishMode === "scheduled" ? publishedAt : null,
-      files,
-      blocks: submitBlocks,
-    })
+onSubmitPost({
+  visibility,
+  publishMode,
+  publishedAt: publishMode === "scheduled" ? publishedAt : null,
+  blocks: serialized.blocks,
+  uploadedFiles: serialized.uploadedFiles,
+})
 
     setBlocks([{ id: createBlockId(), type: "text", content: "" }])
     setVisibility("subscribers")
@@ -901,6 +1105,7 @@ function serializeEditorBlocksForSubmit(
               </div>
             </div>
 
+   
             {block.type === "text" ? (
               <textarea
                 value={block.content ?? ""}
@@ -909,6 +1114,67 @@ function serializeEditorBlocksForSubmit(
                 className="min-h-[220px] w-full resize-none rounded-[24px] border border-pink-500/20 bg-white px-5 py-4 text-[17px] leading-8 text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-pink-500 focus:ring-4 focus:ring-pink-500/10"
                 autoFocus={index === 0 && block.type === "text"}
               />
+            ) : block.type === "carousel" ? (
+              <div className="space-y-3 rounded-[24px] border border-zinc-800 bg-zinc-900 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium text-white">
+                    Carousel items
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      pendingCarouselBlockIdRef.current = block.id
+                      carouselFileInputRef.current?.click()
+                    }}
+                    className="inline-flex h-10 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 px-4 text-sm font-medium text-white transition hover:bg-zinc-800"
+                  >
+                    Add media
+                  </button>
+                </div>
+
+                {block.items.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-zinc-700 bg-zinc-950/60 px-4 py-8 text-center text-sm text-zinc-400">
+                    No carousel items yet
+                  </div>
+                ) : (
+                  <div className="flex gap-3 overflow-x-auto">
+                    {block.items.map((item) => (
+                      <div
+                        key={item.id}
+                        className="relative w-40 shrink-0 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => removeCarouselItem(block.id, item.id)}
+                          className="absolute right-2 top-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur transition hover:bg-black/80"
+                        >
+                          ✕
+                        </button>
+
+                        <div className="aspect-[4/5] w-full overflow-hidden bg-zinc-950">
+                          {item.type === "video" ? (
+                            <video
+                              src={item.previewUrl}
+                              autoPlay
+                              loop
+                              muted
+                              playsInline
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <img
+                              src={item.previewUrl}
+                              alt="Carousel item"
+                              className="h-full w-full object-cover"
+                            />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="group relative overflow-hidden rounded-[24px] border border-zinc-800 bg-zinc-900">
                 <button
@@ -921,93 +1187,93 @@ function serializeEditorBlocksForSubmit(
 
                 <div
                   ref={block.type === "image" ? previewContainerRef : null}
-            onTouchStart={(event) => {
-  if (block.type !== "image") return
-  if (getActiveMediaTool(block.id) !== "filter") return
+                  onTouchStart={(event) => {
+                    if (block.type !== "image") return
+                    if (getActiveMediaTool(block.id) !== "filter") return
 
-  handleFilterSwipeStart(event.touches[0]?.clientX ?? 0)
-}}
-onTouchMove={(event) => {
-  if (block.type !== "image") return
-  if (getActiveMediaTool(block.id) !== "filter") return
+                    handleFilterSwipeStart(event.touches[0]?.clientX ?? 0)
+                  }}
+                  onTouchMove={(event) => {
+                    if (block.type !== "image") return
+                    if (getActiveMediaTool(block.id) !== "filter") return
 
-  handleFilterSwipeMove(
-    event.touches[0]?.clientX ?? 0,
-    block.id,
-    (block.editorState?.image?.filter ?? "none") as PostFilterPreset
-  )
-}}
-onTouchEnd={() => {
-  if (block.type !== "image") return
-  if (getActiveMediaTool(block.id) !== "filter") return
+                    handleFilterSwipeMove(
+                      event.touches[0]?.clientX ?? 0,
+                      block.id,
+                      (block.editorState?.image?.filter ?? "none") as PostFilterPreset
+                    )
+                  }}
+                  onTouchEnd={() => {
+                    if (block.type !== "image") return
+                    if (getActiveMediaTool(block.id) !== "filter") return
 
-  resetFilterSwipe()
-}}
-onTouchCancel={() => {
-  if (block.type !== "image") return
-  if (getActiveMediaTool(block.id) !== "filter") return
+                    resetFilterSwipe()
+                  }}
+                  onTouchCancel={() => {
+                    if (block.type !== "image") return
+                    if (getActiveMediaTool(block.id) !== "filter") return
 
-  resetFilterSwipe()
-}}
-onMouseDown={(event) => {
-  if (block.type !== "image") return
-  if (getActiveMediaTool(block.id) !== "filter") return
+                    resetFilterSwipe()
+                  }}
+                  onMouseDown={(event) => {
+                    if (block.type !== "image") return
+                    if (getActiveMediaTool(block.id) !== "filter") return
 
-  handleFilterSwipeStart(event.clientX)
-}}
-onMouseMove={(event) => {
-  if (block.type !== "image") return
-  if (getActiveMediaTool(block.id) !== "filter") return
-  if ((event.buttons & 1) !== 1) return
+                    handleFilterSwipeStart(event.clientX)
+                  }}
+                  onMouseMove={(event) => {
+                    if (block.type !== "image") return
+                    if (getActiveMediaTool(block.id) !== "filter") return
+                    if ((event.buttons & 1) !== 1) return
 
-  handleFilterSwipeMove(
-    event.clientX,
-    block.id,
-    (block.editorState?.image?.filter ?? "none") as PostFilterPreset
-  )
-}}
-onMouseUp={() => {
-  if (block.type !== "image") return
-  if (getActiveMediaTool(block.id) !== "filter") return
+                    handleFilterSwipeMove(
+                      event.clientX,
+                      block.id,
+                      (block.editorState?.image?.filter ?? "none") as PostFilterPreset
+                    )
+                  }}
+                  onMouseUp={() => {
+                    if (block.type !== "image") return
+                    if (getActiveMediaTool(block.id) !== "filter") return
 
-  resetFilterSwipe()
-}}
+                    resetFilterSwipe()
+                  }}
                   className="relative aspect-[4/5] w-full overflow-hidden bg-zinc-950"
                 >
                   {block.type === "video" ? (
-           <video
-  src={block.previewUrl}
-  autoPlay
-  loop
-  playsInline
-  muted={block.editorState?.video?.muted ?? true}
-  preload="metadata"
-  onLoadedMetadata={(event) => {
-    const trimStart = block.editorState?.video?.trimStart ?? 0
-    if (trimStart > 0) {
-      event.currentTarget.currentTime = trimStart
-    }
-  }}
-  onTimeUpdate={(event) => {
-    const video = event.currentTarget
-    const trimStart = block.editorState?.video?.trimStart ?? 0
-    const trimEnd = block.editorState?.video?.trimEnd ?? null
+                    <video
+                      src={block.previewUrl}
+                      autoPlay
+                      loop
+                      playsInline
+                      muted={block.editorState?.video?.muted ?? true}
+                      preload="metadata"
+                      onLoadedMetadata={(event) => {
+                        const trimStart = block.editorState?.video?.trimStart ?? 0
+                        if (trimStart > 0) {
+                          event.currentTarget.currentTime = trimStart
+                        }
+                      }}
+                      onTimeUpdate={(event) => {
+                        const video = event.currentTarget
+                        const trimStart = block.editorState?.video?.trimStart ?? 0
+                        const trimEnd = block.editorState?.video?.trimEnd ?? null
 
-    if (trimStart > 0 && video.currentTime < trimStart) {
-      video.currentTime = trimStart
-    }
+                        if (trimStart > 0 && video.currentTime < trimStart) {
+                          video.currentTime = trimStart
+                        }
 
-    if (
-      trimEnd !== null &&
-      trimEnd > trimStart &&
-      video.currentTime >= trimEnd
-    ) {
-      video.currentTime = trimStart
-      void video.play()
-    }
-  }}
-  className="h-full w-full object-cover"
-/>
+                        if (
+                          trimEnd !== null &&
+                          trimEnd > trimStart &&
+                          video.currentTime >= trimEnd
+                        ) {
+                          video.currentTime = trimStart
+                          void video.play()
+                        }
+                      }}
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <>
                       <div
@@ -1030,24 +1296,24 @@ onMouseUp={() => {
                       </div>
 
                       {block.editorState?.image?.overlayText?.text ? (
-<div
-  onMouseDown={(event) => {
-    if (getActiveMediaTool(block.id) !== "text") return
-    handleOverlayMouseDown(event, block.id)
-  }}
-  onWheel={(event) => {
-    if (getActiveMediaTool(block.id) !== "text") return
-    handleOverlayWheel(event, block.id)
-  }}
-  onTouchStart={(event) => {
-    if (getActiveMediaTool(block.id) !== "text") return
-    handleOverlayTouchStart(event, block.id)
-  }}
-  className={`absolute z-10 max-w-[80%] select-none text-center ${
-    getActiveMediaTool(block.id) === "text"
-      ? "cursor-grab active:cursor-grabbing"
-      : "pointer-events-none"
-  }`}
+                        <div
+                          onMouseDown={(event) => {
+                            if (getActiveMediaTool(block.id) !== "text") return
+                            handleOverlayMouseDown(event, block.id)
+                          }}
+                          onWheel={(event) => {
+                            if (getActiveMediaTool(block.id) !== "text") return
+                            handleOverlayWheel(event, block.id)
+                          }}
+                          onTouchStart={(event) => {
+                            if (getActiveMediaTool(block.id) !== "text") return
+                            handleOverlayTouchStart(event, block.id)
+                          }}
+                          className={`absolute z-10 max-w-[80%] select-none text-center ${
+                            getActiveMediaTool(block.id) === "text"
+                              ? "cursor-grab active:cursor-grabbing"
+                              : "pointer-events-none"
+                          }`}
                           style={{
                             left: `${block.editorState.image.overlayText.x * 100}%`,
                             top: `${block.editorState.image.overlayText.y * 100}%`,
@@ -1066,17 +1332,17 @@ onMouseUp={() => {
                         </div>
                       ) : null}
 
-               {getActiveMediaTool(block.id) === "filter" && showFilterIndicator ? (
-  <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full border border-zinc-200 bg-white/90 px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-black backdrop-blur-sm">
-    {block.editorState?.image?.filter ?? "none"}
-  </div>
-) : null}
+                      {getActiveMediaTool(block.id) === "filter" && showFilterIndicator ? (
+                        <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full border border-zinc-200 bg-white/90 px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-black backdrop-blur-sm">
+                          {block.editorState?.image?.filter ?? "none"}
+                        </div>
+                      ) : null}
 
-          {getActiveMediaTool(block.id) === "filter" && !showFilterIndicator ? (
-  <div className="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 text-[11px] text-zinc-400 opacity-80">
-    Swipe
-  </div>
-) : null}
+                      {getActiveMediaTool(block.id) === "filter" && !showFilterIndicator ? (
+                        <div className="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 text-[11px] text-zinc-400 opacity-80">
+                          Swipe
+                        </div>
+                      ) : null}
                     </>
                   )}
                 </div>
@@ -1084,141 +1350,138 @@ onMouseUp={() => {
                 {block.type === "image" ? (
                   <div className="border-t border-zinc-800 bg-zinc-950/80 p-3 pt-0">
                     <div className="mt-3 space-y-3">
-                    
-
                       <div className="flex flex-wrap gap-2">
-  <button
-    type="button"
-    onClick={() => {
-  enableImageOverlayText(block.id)
-  setActiveMediaTool(block.id, "text")
-}}
-    className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-      getActiveMediaTool(block.id) === "text"
-        ? "bg-white text-black"
-        : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-    }`}
-  >
-    Text
-  </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            enableImageOverlayText(block.id)
+                            setActiveMediaTool(block.id, "text")
+                          }}
+                          className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                            getActiveMediaTool(block.id) === "text"
+                              ? "bg-white text-black"
+                              : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                          }`}
+                        >
+                          Text
+                        </button>
 
-  <button
-    type="button"
-    onClick={() => setActiveMediaTool(block.id, "filter")}
-    className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-      getActiveMediaTool(block.id) === "filter"
-        ? "bg-white text-black"
-        : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-    }`}
-  >
-    Filter
-  </button>
-</div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveMediaTool(block.id, "filter")}
+                          className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                            getActiveMediaTool(block.id) === "filter"
+                              ? "bg-white text-black"
+                              : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                          }`}
+                        >
+                          Filter
+                        </button>
+                      </div>
 
-{block.editorState?.image?.overlayText &&
-getActiveMediaTool(block.id) === "text" ? (
-  <>
-    <input
-      type="text"
-      value={block.editorState.image.overlayText.text}
-      onChange={(event) =>
-        updateImageOverlayText(block.id, event.target.value)
-      }
-      placeholder="Write overlay text..."
-      className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-500"
-    />
+                      {block.editorState?.image?.overlayText &&
+                      getActiveMediaTool(block.id) === "text" ? (
+                        <>
+                          <input
+                            type="text"
+                            value={block.editorState.image.overlayText.text}
+                            onChange={(event) =>
+                              updateImageOverlayText(block.id, event.target.value)
+                            }
+                            placeholder="Write overlay text..."
+                            className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-500"
+                          />
 
-    <div className="flex flex-wrap gap-2">
-      {[
-        "#FFFFFF",
-        "#000000",
-        "#FF0000",
-        "#00FF00",
-        "#0000FF",
-        "#FFFF00",
-        "#FF00FF",
-        "#00FFFF",
-        "#FFA500",
-        "#800080",
-      ].map((color) => {
-        const isActive =
-          (block.editorState?.image?.overlayText?.color ?? "#ffffff") === color
+                          <div className="flex flex-wrap gap-2">
+                            {[
+                              "#FFFFFF",
+                              "#000000",
+                              "#FF0000",
+                              "#00FF00",
+                              "#0000FF",
+                              "#FFFF00",
+                              "#FF00FF",
+                              "#00FFFF",
+                              "#FFA500",
+                              "#800080",
+                            ].map((color) => {
+                              const isActive =
+                                (block.editorState?.image?.overlayText?.color ?? "#ffffff") === color
 
-        return (
-          <button
-            key={color}
-            type="button"
-            onClick={() => updateImageOverlayColor(block.id, color)}
-            className={`h-8 w-8 rounded-full border transition ${
-              isActive
-                ? "border-white scale-110"
-                : "border-zinc-600 hover:scale-105"
-            }`}
-            style={{ backgroundColor: color }}
-            aria-label={`Select color ${color}`}
-          />
-        )
-      })}
-    </div>
+                              return (
+                                <button
+                                  key={color}
+                                  type="button"
+                                  onClick={() => updateImageOverlayColor(block.id, color)}
+                                  className={`h-8 w-8 rounded-full border transition ${
+                                    isActive
+                                      ? "border-white scale-110"
+                                      : "border-zinc-600 hover:scale-105"
+                                  }`}
+                                  style={{ backgroundColor: color }}
+                                  aria-label={`Select color ${color}`}
+                                />
+                              )
+                            })}
+                          </div>
 
-    <p className="text-xs text-zinc-500">
-      Drag text to move. Pinch or wheel to resize.
-    </p>
-  </>
-) : null}
+                          <p className="text-xs text-zinc-500">
+                            Drag text to move. Pinch or wheel to resize.
+                          </p>
+                        </>
+                      ) : null}
                     </div>
                   </div>
                 ) : null}
 
                 {block.type === "video" ? (
+                  <div className="space-y-3 border-t border-zinc-800 bg-zinc-950/80 p-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setActiveMediaTool(block.id, "trim")}
+                        className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                          getActiveMediaTool(block.id) === "trim"
+                            ? "bg-white text-black"
+                            : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                        }`}
+                      >
+                        Trim
+                      </button>
 
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateVideoMuted(
+                            block.id,
+                            !(block.editorState?.video?.muted ?? true)
+                          )
+                        }
+                        className="rounded-full bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:bg-zinc-700"
+                      >
+                        {(block.editorState?.video?.muted ?? true)
+                          ? "Sound On"
+                          : "Muted"}
+                      </button>
+                    </div>
 
-<div className="space-y-3 border-t border-zinc-800 bg-zinc-950/80 p-3">
-  <div className="flex flex-wrap items-center gap-2">
-    <button
-      type="button"
-      onClick={() => setActiveMediaTool(block.id, "trim")}
-      className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-        getActiveMediaTool(block.id) === "trim"
-          ? "bg-white text-black"
-          : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-      }`}
-    >
-      Trim
-    </button>
-
-    <button
-      type="button"
-      onClick={() =>
-        updateVideoMuted(
-          block.id,
-          !(block.editorState?.video?.muted ?? true)
-        )
-      }
-      className="rounded-full bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:bg-zinc-700"
-    >
-      {(block.editorState?.video?.muted ?? true)
-        ? "Sound On"
-        : "Muted"}
-    </button>
-  </div>
-
-  {getActiveMediaTool(block.id) === "trim" ? (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-3">
-      <StoryVideoTrimField
-        file={block.file ?? null}
-        onChange={(nextTrim) =>
-          handleVideoTrimChange(block.id, nextTrim)
-        }
-      />
-    </div>
-  ) : null}
-</div>
-
-
+                    {getActiveMediaTool(block.id) === "trim" ? (
+                      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-3">
+                        <StoryVideoTrimField
+                          file={block.file ?? null}
+                          onChange={(nextTrim) =>
+                            handleVideoTrimChange(block.id, nextTrim)
+                          }
+                        />
+                      </div>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
             )}
+
+
+
           </div>
         ))}
       </div>
@@ -1268,12 +1531,43 @@ getActiveMediaTool(block.id) === "text" ? (
             className="hidden"
           />
 
+<input
+  ref={carouselFileInputRef}
+  type="file"
+  multiple
+  accept="image/*,video/*"
+  onChange={(e) => {
+    const blockId = pendingCarouselBlockIdRef.current
+    const nextFiles = Array.from(e.target.files ?? []).filter(
+      (file) =>
+        file.type.startsWith("image/") || file.type.startsWith("video/")
+    )
+
+    if (blockId) {
+      addCarouselItems(blockId, nextFiles)
+    }
+
+    pendingCarouselBlockIdRef.current = null
+  }}
+  className="hidden"
+/>
+
+
+
 <button
   type="button"
   onClick={addTextBlock}
   className="inline-flex h-12 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-white transition hover:bg-zinc-800"
 >
   Text
+</button>
+
+<button
+  type="button"
+  onClick={addCarouselBlock}
+  className="inline-flex h-12 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-white transition hover:bg-zinc-800"
+>
+  Carousel
 </button>
 
 

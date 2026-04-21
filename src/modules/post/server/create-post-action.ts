@@ -1,8 +1,5 @@
 "use server"
-import type {
-  CreatePostUploadedMediaInput,
-  PostBlockEditorState,
-} from "../types"
+import type { CreatePostDraftBlock } from "../types"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
@@ -12,36 +9,25 @@ import { localDateTimeToUtcIso } from "@/shared/lib/date-time"
 
 type CreatePostActionInput = {
   creatorId: string
-  text?: string
   status?: "draft" | "scheduled" | "published"
   publishedAt?: string | null
   visibility: "public" | "subscribers" | "paid"
   price?: number
-  files?: CreatePostUploadedMediaInput[]
-  blocks?: {
-    type: "text" | "image" | "video" | "audio" | "file"
-    content?: string | null
-    sortOrder: number
-    mediaId?: string | null
-    editorState?: PostBlockEditorState
-  }[]
+  blocks?: CreatePostDraftBlock[]
 }
 
 export async function createPostAction({
   creatorId,
-  text = "",
   status = "published",
   publishedAt = null,
   visibility,
   price = 0,
-  files = [],
   blocks = [],
 }: CreatePostActionInput): Promise<void> {
-  const normalizedText = text.trim()
-  const hasMedia = files.length > 0
+const normalizedContent = null
   const hasBlocks = blocks.length > 0
 
-  if (!normalizedText && !hasMedia && !hasBlocks) {
+  if (!normalizedContent && !hasBlocks) {
     throw new Error("Post must have text or media")
   }
 
@@ -57,33 +43,15 @@ export async function createPostAction({
   }
 
   try {
- const blocks =
-  normalizedText || files.length > 0
-    ? [
-        ...(normalizedText
-          ? [
-              {
-                type: "text" as const,
-                content: normalizedText,
-                sortOrder: 0,
-              },
-            ]
-          : []),
-        ...files.map((file, index) => ({
-          type: file.type as "image" | "video" | "audio" | "file",
-          sortOrder: normalizedText ? index + 1 : index,
-        })),
-      ]
-    : []
-
-await createPostWithMediaWorkflow({
-  creatorId,
-  content: null,
-  visibility,
-  price: visibility === "paid" ? price : 0,
-  files,
-  blocks,
-})
+    await createPostWithMediaWorkflow({
+      creatorId,
+      content: normalizedContent,
+      visibility,
+      price: visibility === "paid" ? price : 0,
+      status,
+      publishedAt: normalizedPublishedAt,
+      blocks,
+    })
   } catch (error) {
     console.error("[createPostAction]", error)
 

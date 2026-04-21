@@ -10,15 +10,9 @@ type BuildPostRenderInputParams = {
   blocks?: PostBlock[]
 }
 
-
 type PostRenderMediaEntry = {
   media: PostRenderMediaItem
   block?: PostBlock
-}
-
-type PostRenderMediaGroupEntry = {
-  mediaItems: PostRenderMediaItem[]
-  mediaEntries: PostRenderMediaEntry[]
 }
 
 function buildMediaEntryMap(params: {
@@ -59,8 +53,6 @@ function buildResolvedMedia(params: {
 }): PostRenderMediaItem[] {
   return params.media ?? []
 }
-
-    
 
 function buildBlockText(params: {
   hasBlocks: boolean
@@ -115,53 +107,83 @@ function buildGroupedBlocks(params: {
 
   const groupedBlocks: PostRenderGroup[] = []
 
-  let currentMediaBlocks: PostBlock[] = []
-  let currentMediaEntries: PostRenderMediaEntry[] = []
-
-  const pushMediaGroup = () => {
-    if (currentMediaBlocks.length === 0) {
-      return
-    }
-
-    groupedBlocks.push({
-      type: "media",
-      blocks: currentMediaBlocks,
-      mediaItems: currentMediaEntries.map((entry) => entry.media),
-      mediaEntries: currentMediaEntries,
-    })
-
-    currentMediaBlocks = []
-    currentMediaEntries = []
-  }
+  const carouselGroups = new Map<string, PostBlock[]>()
 
   for (const block of params.blocks) {
+    // ✅ text 그대로
     if (block.type === "text") {
-      pushMediaGroup()
-
       groupedBlocks.push({
         type: "text",
         block,
       })
-
       continue
     }
 
+    const carouselMeta = block.editorState?.carousel
+
+    // ✅ carousel metadata 기반 grouping
+    if (carouselMeta?.groupId) {
+      if (!carouselGroups.has(carouselMeta.groupId)) {
+        carouselGroups.set(carouselMeta.groupId, [])
+      }
+
+      carouselGroups.get(carouselMeta.groupId)!.push(block)
+      continue
+    }
+
+    // ✅ 일반 media → single block
     const mediaId = block.mediaId?.trim() ?? ""
     const mediaItem = mediaId
       ? params.blockMedia.find((item) => item.id === mediaId)
       : undefined
 
-    currentMediaBlocks.push(block)
-
-    if (mediaItem) {
-      currentMediaEntries.push({
-        media: mediaItem,
-        block: mediaEntryMap.get(mediaId),
-      })
+    if (!mediaItem) {
+      continue
     }
+
+    groupedBlocks.push({
+      type: "media",
+      blocks: [block],
+      mediaItems: [mediaItem],
+      mediaEntries: [
+        {
+          media: mediaItem,
+          block: mediaEntryMap.get(mediaId),
+        },
+      ],
+    })
   }
 
-  pushMediaGroup()
+  // ✅ carousel group push
+for (const [, blocks] of carouselGroups.entries()) {
+  const mediaEntries: PostRenderMediaEntry[] = []
+
+  for (const block of blocks) {
+    const mediaId = block.mediaId?.trim() ?? ""
+
+    if (!mediaId) {
+      continue
+    }
+
+    const mediaItem = params.blockMedia.find((item) => item.id === mediaId)
+
+    if (!mediaItem) {
+      continue
+    }
+
+    mediaEntries.push({
+      media: mediaItem,
+      block: mediaEntryMap.get(mediaId),
+    })
+  }
+
+  groupedBlocks.push({
+    type: "media",
+    blocks,
+    mediaItems: mediaEntries.map((entry) => entry.media),
+    mediaEntries,
+  })
+}
 
   return groupedBlocks
 }
@@ -170,9 +192,9 @@ export function buildPostRenderInput(params: BuildPostRenderInputParams) {
   const blocks = params.blocks ?? []
   const hasBlocks = blocks.length > 0
 
-const resolvedMedia = buildResolvedMedia({
-  media: params.media,
-})
+  const resolvedMedia = buildResolvedMedia({
+    media: params.media,
+  })
 
   const blockText = buildBlockText({
     hasBlocks,
@@ -197,8 +219,6 @@ const resolvedMedia = buildResolvedMedia({
   const primaryLockedPreviewMedia =
     blockMedia.length > 0 ? blockMedia[0] : null
 
-
-
   const mediaBlockMap = buildMediaEntryMap({
     blocks,
     resolvedMedia: blockMedia,
@@ -209,7 +229,7 @@ const resolvedMedia = buildResolvedMedia({
     block: item.id ? mediaBlockMap.get(item.id) : undefined,
   }))
 
-   return {
+  return {
     hasBlocks,
     resolvedMedia,
     blockText,

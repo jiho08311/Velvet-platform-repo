@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { PostCard } from "@/modules/post/ui/PostCard"
-
+import { LockedPostCard } from "@/modules/post/ui/LockedPostCard"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
@@ -23,100 +23,6 @@ function formatDate(value: string) {
   }).format(new Date(value))
 }
 
-function renderUnlockedMedia(media: {
-  id: string
-  url: string
-  type: "image" | "video" | "audio" | "file"
-}) {
-  const mediaUrl = media.url?.trim() ?? ""
-
-  if (!mediaUrl) {
-    return null
-  }
-
-  if (media.type === "video") {
-    return (
-      <video
-        src={mediaUrl}
-        controls
-        playsInline
-        className="w-full"
-      />
-    )
-  }
-
-  if (media.type === "audio") {
-    return (
-      <div className="flex min-h-[180px] items-center justify-center bg-zinc-900 p-6">
-        <audio controls className="w-full">
-          <source src={mediaUrl} />
-        </audio>
-      </div>
-    )
-  }
-
-  if (media.type === "file") {
-    return (
-      <div className="flex min-h-[180px] items-center justify-center bg-zinc-900 p-6">
-        <a
-          href={mediaUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="rounded-full border border-zinc-700 px-4 py-2 text-sm text-white transition hover:bg-zinc-800"
-        >
-          Open file
-        </a>
-      </div>
-    )
-  }
-
-  return (
-    <img
-      src={mediaUrl}
-      alt="Post media"
-      className="w-full object-cover"
-    />
-  )
-}
-
-function renderLockedMedia(media: {
-  id: string
-  url: string
-  type: "image" | "video" | "audio" | "file"
-}) {
-  const mediaUrl = media.url?.trim() ?? ""
-
-  if (!mediaUrl) {
-    return null
-  }
-
-  if (media.type === "video") {
-    return (
-      <video
-        src={mediaUrl}
-        muted
-        playsInline
-        className="h-full w-full object-cover opacity-40 blur-md"
-      />
-    )
-  }
-
-  if (media.type === "audio" || media.type === "file") {
-    return (
-      <div className="flex h-full w-full items-center justify-center bg-zinc-900 text-sm text-zinc-500">
-        Locked content
-      </div>
-    )
-  }
-
-  return (
-    <img
-      src={mediaUrl}
-      alt="Locked post media"
-      className="h-full w-full object-cover opacity-40 blur-md"
-    />
-  )
-}
 
 export default async function PostDetailPage({
   params,
@@ -169,7 +75,12 @@ export default async function PostDetailPage({
     avatarUrl: null,
   }
 
-  const hasLockedMedia = post.media.length > 0
+const lockedPreviewMedia = post.media[0] ?? null
+const hasLockedMedia = Boolean(lockedPreviewMedia)
+const lockedPreviewThumbnailUrl = hasLockedMedia
+  ? lockedPreviewMedia?.url ?? null
+  : null
+const lockedPreviewText = post.content ?? ""
 
 
 
@@ -223,53 +134,29 @@ export default async function PostDetailPage({
         <article className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/70">
         
 
-         {isLocked ? (
-  // 🔒 기존 locked UI 그대로 유지 (건드리지 마)
-  <div className="relative">
-    {/* Step 6: locked detail은 아직 page-local UI를 유지한다. render source 해석은 늘리지 않고, page는 전달 값만 고정한다. */}
-
-    {hasLockedMedia ? (
-      <div className="grid grid-cols-1 gap-px bg-zinc-950 sm:grid-cols-2">
-        {post.media.map((media) => (
-          <div
-            key={media.id}
-            className="relative overflow-hidden bg-zinc-900"
-          >
-            {renderLockedMedia(media)}
-            <div className="absolute inset-0 bg-black/40" />
-          </div>
-        ))}
-      </div>
-    ) : (
-      <div className="flex h-[360px] items-center justify-center bg-zinc-900 text-sm text-zinc-500">
-        Locked content
-      </div>
-    )}
-
-    <div className="absolute inset-0 flex items-center justify-center px-6">
-      <div className="flex flex-col items-center gap-3 text-center">
-        <div className="rounded-full bg-black/70 px-3 py-1 text-xs font-medium text-white backdrop-blur">
-          🔒 Locked
-        </div>
-
-        <p className="text-sm font-medium text-white">
-          This content is locked
-        </p>
-
-        {lockReason === "subscription" ? (
-          <SubscribeButton
-            creatorId={post.creatorId}
-            creatorUserId={post.creatorUserId}
-            currentUserId={user.id}
-          />
-        ) : (
-          <PostPurchaseButton postId={post.id} />
-        )}
-      </div>
-    </div>
-  </div>
-
-
+       {isLocked ? (
+  <LockedPostCard
+    previewText={lockedPreviewText}
+    createdAt={formatDate(post.publishedAt ?? post.createdAt)}
+    previewThumbnailUrl={lockedPreviewThumbnailUrl}
+    price={post.price ?? undefined}
+    lockReason={
+      lockReason === "subscription" || lockReason === "purchase"
+        ? lockReason
+        : undefined
+    }
+    action={
+      lockReason === "subscription" ? (
+        <SubscribeButton
+          creatorId={post.creatorId}
+          creatorUserId={post.creatorUserId}
+          currentUserId={user.id}
+        />
+      ) : (
+        <PostPurchaseButton postId={post.id} />
+      )
+    }
+  />
 ) : (
   <PostCard
     postId={post.id}
@@ -285,10 +172,9 @@ export default async function PostDetailPage({
     likesCount={post.likesCount}
     isLiked={false}
   />
-)
+)}
 
 
-}
         </article>
       </div>
     </main>

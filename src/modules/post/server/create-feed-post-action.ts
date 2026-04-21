@@ -5,7 +5,7 @@ import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user
 
 import { createPostWithMediaWorkflow } from "@/workflows/create-post-with-media-workflow"
 import type {
-  CreatePostBlockInput,
+  CreatePostDraftBlock,
   CreatePostUploadedMediaInput,
 } from "@/modules/post/types"
 
@@ -19,9 +19,9 @@ type Input = {
 function buildQuickCreateBlocks(params: {
   text: string
   files: CreatePostUploadedMediaInput[]
-}): CreatePostBlockInput[] {
+}): CreatePostDraftBlock[] {
   const trimmedText = params.text.trim()
-  const blocks: CreatePostBlockInput[] = []
+  const blocks: CreatePostDraftBlock[] = []
 
   if (trimmedText) {
     blocks.push({
@@ -31,12 +31,17 @@ function buildQuickCreateBlocks(params: {
     })
   }
 
-  params.files.forEach((file, index) => {
-    blocks.push({
-      type: file.type as "image" | "video" | "audio" | "file",
-      sortOrder: trimmedText ? index + 1 : index,
-    })
+params.files.forEach((file, index) => {
+  blocks.push({
+    type: file.type as "image" | "video" | "audio" | "file",
+    sortOrder: trimmedText ? index + 1 : index,
+    media: {
+      kind: "uploaded",
+      uploaded: file,
+    },
+    content: null,
   })
+})
 
   return blocks
 }
@@ -65,15 +70,14 @@ export async function createFeedPostAction({
     files,
   })
 
-  await createPostWithMediaWorkflow({
-    creatorId: creator.id,
-    content: null,
-    visibility,
-    price: 0,
-    status: "published",
-    files,
-    blocks,
-  })
+await createPostWithMediaWorkflow({
+  creatorId: creator.id,
+  content: null,
+  visibility,
+  price: 0,
+  status: "published",
+  blocks,
+})
 
   revalidatePath("/feed")
 }

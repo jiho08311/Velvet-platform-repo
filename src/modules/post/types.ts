@@ -11,6 +11,7 @@ export type PostBlockType =
   | "video"
   | "audio"
   | "file"
+  | "carousel"
 
 export type PostBlockImageOverlayText = {
   text: string
@@ -35,6 +36,11 @@ export type PostVideoBlockEditorState = {
 export type PostBlockEditorState = {
   image?: PostImageBlockEditorState
   video?: PostVideoBlockEditorState
+  carousel?: {
+    groupId: string
+    index: number
+    size: number
+  }
 } | null
 
 export type PostBlock = {
@@ -66,10 +72,26 @@ export type CreatePostBlockInput = {
  */
 export type CreatePostUploadedMediaInput = {
   path: string
-  type: Exclude<PostBlockType, "text">
+  type: Exclude<PostBlockType, "text" | "carousel">
   mimeType: string
   size: number
   originalName: string
+}
+
+export type CreatePostCarouselMediaSource =
+  | {
+      kind: "uploaded"
+      uploaded: CreatePostUploadedMediaInput
+    }
+  | {
+      kind: "existing"
+      mediaId: string
+    }
+
+export type CreatePostCarouselItem = {
+  type: Exclude<PostBlockType, "text" | "carousel">
+  media: CreatePostCarouselMediaSource
+  editorState?: PostBlockEditorState
 }
 
 /**
@@ -99,10 +121,17 @@ export type CreatePostDraftBlock =
       editorState?: PostBlockEditorState
     }
   | {
-      type: Exclude<PostBlockType, "text">
+      type: Exclude<PostBlockType, "text" | "carousel">
       sortOrder: number
       media: CreatePostDraftMediaSource
       editorState?: PostBlockEditorState
+      content?: null
+    }
+  | {
+      type: "carousel"
+      sortOrder: number
+      items: CreatePostCarouselItem[]
+      editorState?: null
       content?: null
     }
 

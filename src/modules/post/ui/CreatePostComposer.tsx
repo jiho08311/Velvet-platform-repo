@@ -6,7 +6,7 @@ import { createSupabaseBrowserClient } from "@/infrastructure/supabase/client"
 
 import { createPostAction } from "../server/create-post-action"
 import type {
-  CreatePostBlockInput,
+  CreatePostDraftBlock,
   CreatePostUploadedMediaInput,
 } from "../types"
 import { CreatePostForm } from "./CreatePostForm"
@@ -76,19 +76,115 @@ async function uploadFilesDirect(files: File[]): Promise<CreatePostUploadedMedia
   return uploaded
 }
 
-function normalizeBlocksAfterUpload(params: {
-  blocks: CreatePostBlockInput[]
-  uploadedFiles: CreatePostUploadedMediaInput[]
-}) {
-  const sortedBlocks = [...params.blocks].sort((a, b) => a.sortOrder - b.sortOrder)
-  const mediaBlocks = sortedBlocks.filter((block) => block.type !== "text")
-  const mediaCount = mediaBlocks.length
 
-  return {
-    blocks: sortedBlocks,
-    files: params.uploadedFiles.slice(0, mediaCount),
+function collectUploadedFilesFromDraft(
+  blocks: CreatePostDraftBlock[],
+  uploadedFiles: Record<string, File>
+): File[] {
+  const files: File[] = []
+
+  for (const block of blocks) {
+    if (block.type === "text") {
+      continue
+    }
+
+    if (block.type === "carousel") {
+      for (const item of block.items) {
+        if (item.media.kind !== "uploaded") {
+          continue
+        }
+
+        const file = uploadedFiles[item.media.uploaded.path]
+        if (file) {
+          files.push(file)
+        }
+      }
+
+      continue
+    }
+
+    if (block.media.kind !== "uploaded") {
+      continue
+    }
+
+    const file = uploadedFiles[block.media.uploaded.path]
+    if (file) {
+      files.push(file)
+    }
   }
+
+  return files
 }
+
+function replaceUploadedDraftPaths(params: {
+  blocks: CreatePostDraftBlock[]
+  uploadedFiles: CreatePostUploadedMediaInput[]
+}): CreatePostDraftBlock[] {
+  let uploadedIndex = 0
+
+  return params.blocks.map((block, sortOrder) => {
+    if (block.type === "text") {
+      return {
+        ...block,
+        sortOrder,
+      }
+    }
+
+    if (block.type === "carousel") {
+      return {
+        ...block,
+        sortOrder,
+        items: block.items.map((item) => {
+          if (item.media.kind !== "uploaded") {
+            return item
+          }
+
+          const uploaded = params.uploadedFiles[uploadedIndex]
+
+          if (!uploaded) {
+            throw new Error("Uploaded carousel media mapping failed")
+          }
+
+          uploadedIndex += 1
+
+          return {
+            ...item,
+            media: {
+              kind: "uploaded" as const,
+              uploaded,
+            },
+          }
+        }),
+      }
+    }
+
+    if (block.media.kind !== "uploaded") {
+      return {
+        ...block,
+        sortOrder,
+      }
+    }
+
+    const uploaded = params.uploadedFiles[uploadedIndex]
+
+    if (!uploaded) {
+      throw new Error("Uploaded media mapping failed")
+    }
+
+    uploadedIndex += 1
+
+    return {
+      ...block,
+      sortOrder,
+      media: {
+        kind: "uploaded" as const,
+        uploaded,
+      },
+    }
+  })
+}
+
+
 
 export function CreatePostComposer({
   creatorId,
@@ -108,23 +204,28 @@ export function CreatePostComposer({
       <div className="border-b border-zinc-800 px-0 py-4">
         <CreatePostForm
           isSubmitting={isPending}
-          onSubmitPost={({
-            visibility,
-            publishMode,
-            publishedAt,
-            files,
-            blocks,
-          }) => {
+      onSubmitPost={({
+  visibility,
+  publishMode,
+  publishedAt,
+  blocks,
+  uploadedFiles,
+}) => {
             startTransition(async () => {
               try {
                 setError(null)
 
-                const uploadedFiles = await uploadFilesDirect(files)
+           const filesToUpload = collectUploadedFilesFromDraft(
+  blocks,
+  uploadedFiles
+)
 
-                const normalized = normalizeBlocksAfterUpload({
-                  blocks: blocks as CreatePostBlockInput[],
-                  uploadedFiles,
-                })
+const uploadedMedia = await uploadFilesDirect(filesToUpload)
+
+const normalizedBlocks = replaceUploadedDraftPaths({
+  blocks,
+  uploadedFiles: uploadedMedia,
+})
 
                 const resolvedPublishedAt =
                   publishMode === "scheduled"
@@ -136,14 +237,13 @@ export function CreatePostComposer({
                   return
                 }
 
-                await createPostAction({
-                  creatorId,
-                  status: publishMode === "scheduled" ? "scheduled" : "draft",
-                  publishedAt: resolvedPublishedAt,
-                  visibility,
-                  files: normalized.files,
-                  blocks: normalized.blocks,
-                })
+              await createPostAction({
+  creatorId,
+  status: publishMode === "scheduled" ? "scheduled" : "draft",
+  publishedAt: resolvedPublishedAt,
+  visibility,
+  blocks: normalizedBlocks,
+})
 
                 onCreated?.()
               } catch (submitError) {

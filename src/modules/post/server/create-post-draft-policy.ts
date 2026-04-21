@@ -18,18 +18,35 @@ function isNonEmptyTextBlock(
 
 function isUploadedMediaBlock(
   block: CreatePostDraftBlock
-): block is Extract<CreatePostDraftBlock, { type: "image" | "video" | "audio" | "file" }> & {
-  media: { kind: "uploaded"; uploaded: CreatePostPersistedMediaDraftItem["uploaded"] }
+): block is Extract<
+  CreatePostDraftBlock,
+  { type: "image" | "video" | "audio" | "file" }
+> & {
+  media: {
+    kind: "uploaded"
+    uploaded: CreatePostPersistedMediaDraftItem["uploaded"]
+  }
 } {
-  return block.type !== "text" && block.media.kind === "uploaded"
+  return (
+    block.type !== "text" &&
+    block.type !== "carousel" &&
+    block.media.kind === "uploaded"
+  )
 }
 
 function isExistingMediaBlock(
   block: CreatePostDraftBlock
-): block is Extract<CreatePostDraftBlock, { type: "image" | "video" | "audio" | "file" }> & {
+): block is Extract<
+  CreatePostDraftBlock,
+  { type: "image" | "video" | "audio" | "file" }
+> & {
   media: { kind: "existing"; mediaId: string }
 } {
-  return block.type !== "text" && block.media.kind === "existing"
+  return (
+    block.type !== "text" &&
+    block.type !== "carousel" &&
+    block.media.kind === "existing"
+  )
 }
 
 export function deriveCreatePostContentFromDraft(
@@ -48,13 +65,37 @@ export function extractUploadedMediaFromCreatePostDraft(
   draft: Pick<CreatePostDraftInput, "blocks">
 ): CreatePostPersistedMediaDraftItem[] {
   return draft.blocks
-    .filter(isUploadedMediaBlock)
-    .map((block) => ({
-      type: block.type,
-      sortOrder: block.sortOrder,
-      uploaded: block.media.uploaded,
-      editorState: block.editorState ?? null,
-    }))
+    .flatMap((block): CreatePostPersistedMediaDraftItem[] => {
+      if (block.type === "carousel") {
+        return block.items.flatMap((item, itemIndex) => {
+          if (item.media.kind !== "uploaded") {
+            return []
+          }
+
+          return [
+            {
+              type: item.type,
+              sortOrder: block.sortOrder * 1000 + itemIndex,
+              uploaded: item.media.uploaded,
+              editorState: item.editorState ?? null,
+            },
+          ]
+        })
+      }
+
+      if (isUploadedMediaBlock(block)) {
+        return [
+          {
+            type: block.type,
+            sortOrder: block.sortOrder,
+            uploaded: block.media.uploaded,
+            editorState: block.editorState ?? null,
+          },
+        ]
+      }
+
+      return []
+    })
     .sort((a, b) => a.sortOrder - b.sortOrder)
 }
 
@@ -78,6 +119,53 @@ export function projectCreatePostBlocksFromDraft(
             editorState: block.editorState ?? null,
           },
         ]
+      }
+
+      if (block.type === "carousel") {
+        const groupId = `carousel_${block.sortOrder}_${Date.now()}`
+
+        return block.items.flatMap((item, itemIndex): CreatePostBlockInput[] => {
+          const baseEditorState = item.editorState ?? null
+
+          const carouselMeta = {
+            carousel: {
+              groupId,
+              index: itemIndex,
+              size: block.items.length,
+            },
+          }
+
+          if (item.media.kind === "existing") {
+            const mediaId = item.media.mediaId.trim()
+
+            if (!mediaId) {
+              return []
+            }
+
+            return [
+              {
+                type: item.type,
+                mediaId,
+                sortOrder: block.sortOrder * 1000 + itemIndex,
+                editorState: {
+                  ...(baseEditorState ?? {}),
+                  ...carouselMeta,
+                },
+              },
+            ]
+          }
+
+          return [
+            {
+              type: item.type,
+              sortOrder: block.sortOrder * 1000 + itemIndex,
+              editorState: {
+                ...(baseEditorState ?? {}),
+                ...carouselMeta,
+              },
+            },
+          ]
+        })
       }
 
       if (isExistingMediaBlock(block)) {
