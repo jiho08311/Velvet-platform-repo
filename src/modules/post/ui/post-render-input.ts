@@ -107,92 +107,93 @@ function buildGroupedBlocks(params: {
 
   const groupedBlocks: PostRenderGroup[] = []
 
-  const carouselGroups = new Map<string, PostBlock[]>()
+  
+const visitedCarousel = new Set<string>()
 
-  for (const block of params.blocks) {
-    // ✅ text 그대로
-    if (block.type === "text") {
-      groupedBlocks.push({
-        type: "text",
-        block,
+for (let i = 0; i < params.blocks.length; i++) {
+  const block = params.blocks[i]
+
+  // text
+  if (block.type === "text") {
+    groupedBlocks.push({
+      type: "text",
+      block,
+    })
+    continue
+  }
+
+  const carouselMeta = block.editorState?.carousel
+
+  // ✅ carousel (순서 유지)
+  if (carouselMeta?.groupId) {
+    const groupId = carouselMeta.groupId
+
+    if (visitedCarousel.has(groupId)) {
+      continue
+    }
+
+    visitedCarousel.add(groupId)
+
+    const blocks = params.blocks.filter(
+      (b) => b.editorState?.carousel?.groupId === groupId
+    )
+
+    blocks.sort((a, b) => {
+      const aIndex = a.editorState?.carousel?.index ?? 0
+      const bIndex = b.editorState?.carousel?.index ?? 0
+      return aIndex - bIndex
+    })
+
+    const mediaEntries: PostRenderMediaEntry[] = []
+
+    for (const b of blocks) {
+      const mediaId = b.mediaId?.trim() ?? ""
+      if (!mediaId) continue
+
+      const mediaItem = params.blockMedia.find(
+        (item) => item.id === mediaId
+      )
+
+      if (!mediaItem) continue
+
+      mediaEntries.push({
+        media: mediaItem,
+        block: mediaEntryMap.get(mediaId),
       })
-      continue
     }
 
-    const carouselMeta = block.editorState?.carousel
-
-    // ✅ carousel metadata 기반 grouping
-    if (carouselMeta?.groupId) {
-      if (!carouselGroups.has(carouselMeta.groupId)) {
-        carouselGroups.set(carouselMeta.groupId, [])
-      }
-
-      carouselGroups.get(carouselMeta.groupId)!.push(block)
-      continue
-    }
-
-    // ✅ 일반 media → single block
-    const mediaId = block.mediaId?.trim() ?? ""
-    const mediaItem = mediaId
-      ? params.blockMedia.find((item) => item.id === mediaId)
-      : undefined
-
-    if (!mediaItem) {
-      continue
-    }
+    if (mediaEntries.length === 0) continue
 
     groupedBlocks.push({
-      type: "media",
-      blocks: [block],
-      mediaItems: [mediaItem],
-      mediaEntries: [
-        {
-          media: mediaItem,
-          block: mediaEntryMap.get(mediaId),
-        },
-      ],
+      type: "carousel",
+      blocks,
+      mediaItems: mediaEntries.map((entry) => entry.media),
+      mediaEntries,
     })
+
+    continue
   }
 
-  // ✅ carousel group push
+  // ✅ single media
+  const mediaId = block.mediaId?.trim() ?? ""
+  const mediaItem = mediaId
+    ? params.blockMedia.find((item) => item.id === mediaId)
+    : undefined
 
-for (const [, blocks] of carouselGroups.entries()) {
-
-blocks.sort((a, b) => {
-  const aIndex = a.editorState?.carousel?.index ?? 0
-  const bIndex = b.editorState?.carousel?.index ?? 0
-  return aIndex - bIndex
-})
-
-
-  if (blocks.length === 0) continue
-
-  const mediaEntries: PostRenderMediaEntry[] = []
-
-  for (const block of blocks) {
-    const mediaId = block.mediaId?.trim() ?? ""
-
-    if (!mediaId) continue
-
-    const mediaItem = params.blockMedia.find((item) => item.id === mediaId)
-    if (!mediaItem) continue
-
-    mediaEntries.push({
-      media: mediaItem,
-      block: mediaEntryMap.get(mediaId),
-    })
-  }
-
-  if (mediaEntries.length === 0) continue
+  if (!mediaItem) continue
 
   groupedBlocks.push({
-    type: "carousel",
-    blocks,
-    mediaItems: mediaEntries.map((entry) => entry.media),
-    mediaEntries,
+    type: "media",
+    blocks: [block],
+    mediaItems: [mediaItem],
+    mediaEntries: [
+      {
+        media: mediaItem,
+        block: mediaEntryMap.get(mediaId),
+      },
+    ],
   })
 }
-
 
 
   return groupedBlocks
