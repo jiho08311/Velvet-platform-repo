@@ -2,8 +2,7 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
 import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
 import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
-
-
+import type { PostBlockEditorState } from "@/modules/post/types"
 
 type MediaType = "image" | "video" | "audio" | "file"
 
@@ -34,6 +33,7 @@ export type HomeFeedItem = {
     mediaId: string | null
     sortOrder: number
     createdAt: string
+    editorState: PostBlockEditorState | null
   }>
   likesCount: number
   isLiked: boolean
@@ -455,6 +455,19 @@ export async function getHomeFeed(
         }))
       )
 
+      const normalizedBlocks = [...(post.post_blocks ?? [])]
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map((block) => ({
+          id: block.id,
+          postId: block.post_id,
+          type: block.type,
+          content: block.content,
+          mediaId: block.media_id,
+          sortOrder: block.sort_order,
+          createdAt: block.created_at,
+          editorState: null as PostBlockEditorState | null,
+        }))
+
       return {
         id: post.id,
         creatorId: post.creator_id,
@@ -468,17 +481,7 @@ export async function getHomeFeed(
         lockReason: "none",
         price: post.price ?? undefined,
         media,
-        blocks: [...(post.post_blocks ?? [])]
-          .sort((a, b) => a.sort_order - b.sort_order)
-          .map((block) => ({
-            id: block.id,
-            postId: block.post_id,
-            type: block.type,
-            content: block.content,
-            mediaId: block.media_id,
-            sortOrder: block.sort_order,
-            createdAt: block.created_at,
-          })),
+        blocks: normalizedBlocks,
         likesCount: likeCountMap.get(post.id) ?? 0,
         isLiked: myLikeSet.has(post.id),
         commentsCount: commentCountMap.get(post.id) ?? 0,
