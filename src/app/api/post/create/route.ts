@@ -113,7 +113,7 @@ export async function POST(request: Request) {
     await createPostWithMediaWorkflow({
       creatorId: creator.id,
       content: text,
-      files,
+  
       status,
       visibility,
       price: finalPrice,
