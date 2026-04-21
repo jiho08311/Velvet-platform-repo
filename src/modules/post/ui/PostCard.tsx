@@ -136,6 +136,23 @@ export function PostCard({
   const shouldRenderFallbackText =
     !shouldRenderNormalizedGroups && Boolean(blockText)
 
+
+  console.log("[PostCard:debug]", {
+    postId,
+    text,
+    blocks,
+    media,
+    hasBlocks,
+    blockText,
+    blockMedia,
+    groupedBlocks,
+    groupedTypes: groupedBlocks.map((group) => group.type),
+    shouldRenderNormalizedGroups,
+    shouldRenderFallbackMedia,
+    shouldRenderFallbackText,
+  })
+
+
   async function handleLike(event: React.MouseEvent<HTMLButtonElement>) {
     event.stopPropagation()
 
@@ -551,6 +568,15 @@ export function PostCard({
         <>
           {shouldRenderNormalizedGroups ? (
             <>
+
+       {console.log("[PostCard:normalized-render]", {
+  postId,
+  groupedTypes: groupedBlocks.map((group) => group.type),
+  groupedLengths: groupedBlocks.map((group) =>
+    "mediaItems" in group ? group.mediaItems.length : 0
+  ),
+})}
+
               {groupedBlocks.map((group, index) => {
                 if (group.type === "text") {
                   return (
@@ -583,6 +609,13 @@ export function PostCard({
             </>
           ) : (
             <>
+
+              {console.log("[PostCard:fallback-render]", {
+                postId,
+                blockMediaLength: blockMedia.length,
+                fallbackMediaIds: blockMedia.map((item) => item.id),
+              })}
+
               {shouldRenderFallbackMedia ? renderMedia() : null}
 
               {shouldRenderFallbackText ? (
