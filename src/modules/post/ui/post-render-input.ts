@@ -155,21 +155,27 @@ function buildGroupedBlocks(params: {
   }
 
   // ✅ carousel group push
+
 for (const [, blocks] of carouselGroups.entries()) {
+
+blocks.sort((a, b) => {
+  const aIndex = a.editorState?.carousel?.index ?? 0
+  const bIndex = b.editorState?.carousel?.index ?? 0
+  return aIndex - bIndex
+})
+
+
+  if (blocks.length === 0) continue
+
   const mediaEntries: PostRenderMediaEntry[] = []
 
   for (const block of blocks) {
     const mediaId = block.mediaId?.trim() ?? ""
 
-    if (!mediaId) {
-      continue
-    }
+    if (!mediaId) continue
 
     const mediaItem = params.blockMedia.find((item) => item.id === mediaId)
-
-    if (!mediaItem) {
-      continue
-    }
+    if (!mediaItem) continue
 
     mediaEntries.push({
       media: mediaItem,
@@ -177,13 +183,17 @@ for (const [, blocks] of carouselGroups.entries()) {
     })
   }
 
+  if (mediaEntries.length === 0) continue
+
   groupedBlocks.push({
-    type: "media",
+    type: "carousel",
     blocks,
     mediaItems: mediaEntries.map((entry) => entry.media),
     mediaEntries,
   })
 }
+
+
 
   return groupedBlocks
 }

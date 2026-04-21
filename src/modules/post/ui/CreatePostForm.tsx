@@ -719,18 +719,37 @@ function addCarouselItems(blockId: string, nextFiles: File[]) {
 
   setBlocks((prev) =>
     prev.map((block) => {
-      if (block.type !== "carousel") {
-        return block
-      }
-
       if (block.id !== blockId) {
         return block
       }
 
-      return {
-        ...block,
-        items: [...block.items, ...nextItems],
+      if (block.type === "carousel") {
+        return {
+          ...block,
+          items: [...block.items, ...nextItems],
+        }
       }
+
+      if (block.type === "image" || block.type === "video") {
+        const currentItem: CarouselEditorItem = {
+          id: createBlockId(),
+          type: block.type,
+          file: block.file,
+          previewUrl: block.previewUrl,
+          mediaId: block.mediaId,
+          editorState: block.editorState ?? null,
+        }
+
+        return {
+          id: block.id,
+          type: "carousel",
+          items: [currentItem, ...nextItems],
+          editorState: null,
+          content: undefined,
+        }
+      }
+
+      return block
     })
   )
 
@@ -738,90 +757,6 @@ function addCarouselItems(blockId: string, nextFiles: File[]) {
     carouselFileInputRef.current.value = ""
   }
 }
-
-  function moveBlock(fromIndex: number, toIndex: number) {
-    if (fromIndex === toIndex) return
-
-    setBlocks((prev) => {
-      const next = [...prev]
-      const [moved] = next.splice(fromIndex, 1)
-      next.splice(toIndex, 0, moved)
-      return next
-    })
-  }
-
-  function moveBlockUp(index: number) {
-    if (index === 0) return
-
-    setBlocks((prev) => {
-      const next = [...prev]
-      ;[next[index - 1], next[index]] = [next[index], next[index - 1]]
-      return next
-    })
-  }
-
-  function moveBlockDown(index: number) {
-    setBlocks((prev) => {
-      if (index === prev.length - 1) return prev
-
-      const next = [...prev]
-      ;[next[index], next[index + 1]] = [next[index + 1], next[index]]
-      return next
-    })
-  }
-
-  function handleDragStart(blockId: string) {
-    setDraggingBlockId(blockId)
-  }
-
-function handleDragEnd() {
-  setDraggingBlockId(null)
-  setDropTargetBlockId(null)
-}
-
-function handleDragOver(
-  event: React.DragEvent<HTMLDivElement>,
-  targetBlockId: string
-) {
-  event.preventDefault()
-
-  if (!draggingBlockId || draggingBlockId === targetBlockId) {
-    setDropTargetBlockId(null)
-    return
-  }
-
-  setDropTargetBlockId(targetBlockId)
-}
-  function handleDrop(targetBlockId: string) {
-    if (!draggingBlockId || draggingBlockId === targetBlockId) {
-      setDraggingBlockId(null)
-      return
-    }
-
-    const fromIndex = blocks.findIndex((block) => block.id === draggingBlockId)
-    const toIndex = blocks.findIndex((block) => block.id === targetBlockId)
-
-    if (fromIndex === -1 || toIndex === -1) {
-      setDraggingBlockId(null)
-      return
-    }
-moveBlock(fromIndex, toIndex)
-setDraggingBlockId(null)
-setDropTargetBlockId(null)
-  }
-
-  function removeBlock(blockId: string) {
-    setBlocks((prev) => {
-      const next = prev.filter((block) => block.id !== blockId)
-      return next.length > 0
-        ? next
-        : [{ id: createBlockId(), type: "text", content: "" }]
-    })
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
-  }
 
 
   function removeCarouselItem(blockId: string, itemId: string) {
@@ -862,6 +797,129 @@ setDropTargetBlockId(null)
     }
   }
 
+
+
+function handleDragStart(blockId: string) {
+  setDraggingBlockId(blockId)
+  setDropTargetBlockId(blockId)
+}
+
+function handleDragEnd() {
+  setDraggingBlockId(null)
+  setDropTargetBlockId(null)
+}
+
+function handleDragOver(
+  event: React.DragEvent<HTMLDivElement>,
+  blockId: string
+) {
+  event.preventDefault()
+
+  if (!draggingBlockId) return
+  if (draggingBlockId === blockId) return
+
+  if (dropTargetBlockId !== blockId) {
+    setDropTargetBlockId(blockId)
+  }
+}
+
+function handleDrop(targetBlockId: string) {
+  if (!draggingBlockId) {
+    setDropTargetBlockId(null)
+    return
+  }
+
+  if (draggingBlockId === targetBlockId) {
+    setDraggingBlockId(null)
+    setDropTargetBlockId(null)
+    return
+  }
+
+  setBlocks((prev) => {
+    const fromIndex = prev.findIndex((block) => block.id === draggingBlockId)
+    const toIndex = prev.findIndex((block) => block.id === targetBlockId)
+
+    if (fromIndex === -1 || toIndex === -1) {
+      return prev
+    }
+
+    const next = [...prev]
+    const [movedBlock] = next.splice(fromIndex, 1)
+
+    if (!movedBlock) {
+      return prev
+    }
+
+    next.splice(toIndex, 0, movedBlock)
+    return next
+  })
+
+  setDraggingBlockId(null)
+  setDropTargetBlockId(null)
+}
+
+function moveBlockUp(index: number) {
+  if (index <= 0) return
+
+  setBlocks((prev) => {
+    const next = [...prev]
+    const [movedBlock] = next.splice(index, 1)
+
+    if (!movedBlock) {
+      return prev
+    }
+
+    next.splice(index - 1, 0, movedBlock)
+    return next
+  })
+}
+
+function moveBlockDown(index: number) {
+  setBlocks((prev) => {
+    if (index < 0 || index >= prev.length - 1) {
+      return prev
+    }
+
+    const next = [...prev]
+    const [movedBlock] = next.splice(index, 1)
+
+    if (!movedBlock) {
+      return prev
+    }
+
+    next.splice(index + 1, 0, movedBlock)
+    return next
+  })
+}
+
+function removeBlock(blockId: string) {
+  setBlocks((prev) => prev.filter((block) => block.id !== blockId))
+
+  setActiveMediaToolByBlock((prev) => {
+    if (!(blockId in prev)) {
+      return prev
+    }
+
+    const next = { ...prev }
+    delete next[blockId]
+    return next
+  })
+
+  if (draggingBlockId === blockId) {
+    setDraggingBlockId(null)
+  }
+
+  if (dropTargetBlockId === blockId) {
+    setDropTargetBlockId(null)
+  }
+
+  if (pendingCarouselBlockIdRef.current === blockId) {
+    pendingCarouselBlockIdRef.current = null
+  }
+}
+
+
+
 type SerializedEditorSubmitResult = {
   blocks: CreatePostDraftBlock[]
   uploadedFiles: Record<string, File>
@@ -890,63 +948,75 @@ function serializeEditorBlocksForSubmit(
         ]
       }
 
-      if (block.type === "carousel") {
-        const items = block.items.flatMap((item): CreatePostCarouselItem[] => {
-          const hasExistingMediaId = (item.mediaId?.trim() ?? "").length > 0
-          const hasNewFile = Boolean(item.file && item.file.size > 0)
+if (block.type === "carousel") {
+  const carouselGroupId = block.id
 
-          if (!hasExistingMediaId && !hasNewFile) {
-            return []
-          }
+  const items = block.items.flatMap((item, itemIndex): CreatePostCarouselItem[] => {
+    const hasExistingMediaId = (item.mediaId?.trim() ?? "").length > 0
+    const hasNewFile = Boolean(item.file && item.file.size > 0)
 
-          if (hasExistingMediaId) {
-            return [
-              {
-                type: item.type,
-                media: {
-                  kind: "existing",
-                  mediaId: item.mediaId!.trim(),
-                },
-                editorState: item.editorState ?? null,
-              },
-            ]
-          }
+    if (!hasExistingMediaId && !hasNewFile) {
+      return []
+    }
 
-          const uploadedPath = `__create-upload__/${item.file!.name}-${item.file!.size}-${item.file!.lastModified}`
+    const nextEditorState = {
+      ...(item.editorState ?? null),
+      carousel: {
+        groupId: carouselGroupId,
+        index: itemIndex,
+        size: block.items.length,
+      },
+    }
 
-          uploadedFiles[uploadedPath] = item.file!
-
-          return [
-            {
-              type: item.type,
-              media: {
-                kind: "uploaded",
-                uploaded: {
-                  path: uploadedPath,
-                  type: item.type,
-                  mimeType: item.file!.type || "",
-                  size: item.file!.size,
-                  originalName: item.file!.name,
-                },
-              },
-              editorState: item.editorState ?? null,
-            },
-          ]
-        })
-
-        if (items.length === 0) {
-          return []
-        }
-
-        return [
-          {
-            type: "carousel",
-            sortOrder: index,
-            items,
-            editorState: null,
+    if (hasExistingMediaId) {
+      return [
+        {
+          type: item.type,
+          media: {
+            kind: "existing",
+            mediaId: item.mediaId!.trim(),
           },
-        ]
-      }
+          editorState: nextEditorState,
+        },
+      ]
+    }
+
+    const uploadedPath = `__create-upload__/${item.file!.name}-${item.file!.size}-${item.file!.lastModified}`
+
+    uploadedFiles[uploadedPath] = item.file!
+
+    return [
+      {
+        type: item.type,
+        media: {
+          kind: "uploaded",
+          uploaded: {
+            path: uploadedPath,
+            type: item.type,
+            mimeType: item.file!.type || "",
+            size: item.file!.size,
+            originalName: item.file!.name,
+          },
+        },
+        editorState: nextEditorState,
+      },
+    ]
+  })
+
+  if (items.length === 0) {
+    return []
+  }
+
+  return [
+    {
+      type: "carousel",
+      sortOrder: index,
+      items,
+      editorState: null,
+    },
+  ]
+}
+
 
       const hasExistingMediaId = (block.mediaId?.trim() ?? "").length > 0
       const hasNewFile = Boolean(block.file && block.file.size > 0)
@@ -1377,6 +1447,20 @@ onSubmitPost({
                         >
                           Filter
                         </button>
+
+
+<button
+  type="button"
+  onClick={() => {
+    pendingCarouselBlockIdRef.current = block.id
+    carouselFileInputRef.current?.click()
+  }}
+  className="rounded-full px-3 py-1.5 text-xs font-medium transition bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+>
+  +
+</button>
+
+
                       </div>
 
                       {block.editorState?.image?.overlayText &&
@@ -1448,6 +1532,19 @@ onSubmitPost({
                       >
                         Trim
                       </button>
+
+<button
+  type="button"
+  onClick={() => {
+    pendingCarouselBlockIdRef.current = block.id
+    carouselFileInputRef.current?.click()
+  }}
+  className="rounded-full px-3 py-1.5 text-xs font-medium transition bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+>
+  +
+</button>
+
+
 
                       <button
                         type="button"

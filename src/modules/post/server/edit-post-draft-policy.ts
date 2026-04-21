@@ -155,31 +155,15 @@ const validMediaBlocks = mediaBuffer.filter(
   } => isMediaType(block.type) && (block.mediaId?.trim() ?? "").length > 0
 )
 
-    if (validMediaBlocks.length === 1) {
-      const block = validMediaBlocks[0]
+    for (const block of validMediaBlocks) {
       result.push({
         type: block.type,
         sortOrder: block.sortOrder,
         media: {
           kind: "existing",
-          mediaId: block.mediaId!.trim(),
+          mediaId: block.mediaId.trim(),
         },
         editorState: block.editorState ?? null,
-        content: null,
-      })
-    } else if (validMediaBlocks.length > 1) {
-      result.push({
-        type: "carousel",
-        sortOrder: validMediaBlocks[0].sortOrder,
-        items: validMediaBlocks.map((block) => ({
-          type: block.type,
-          media: {
-            kind: "existing",
-            mediaId: block.mediaId!.trim(),
-          },
-          editorState: block.editorState ?? null,
-        })),
-        editorState: null,
         content: null,
       })
     }

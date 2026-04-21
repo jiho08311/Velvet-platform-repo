@@ -2,7 +2,6 @@
 
 import type {
   PostBlock,
-  PostBlockEditorState,
   PostRenderMediaItem,
 } from "@/modules/post/types"
 import { usePathname, useRouter } from "next/navigation"
@@ -17,11 +16,8 @@ import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid"
 import { formatInUserTimeZone } from "@/shared/lib/date-time"
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
-
 import { LockedPostCard } from "./LockedPostCard"
 import { PostMoreMenu } from "./PostMoreMenu"
-
-
 
 type CommentItem = {
   id: string
@@ -47,7 +43,6 @@ type PostCardProps = {
   postId?: string
   text?: string
   createdAt: string
-
   media?: PostRenderMediaItem[]
   blocks?: PostBlock[]
   isLocked?: boolean
@@ -87,7 +82,6 @@ export function PostCard({
   postId,
   text,
   createdAt,
- 
   media = [],
   blocks = [],
   isLocked = false,
@@ -117,9 +111,8 @@ export function PostCard({
   const [expandedComments, setExpandedComments] = useState(false)
 
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({})
-  const [isVideoVisible, setIsVideoVisible] = useState(false)
   const [isVideoReady, setIsVideoReady] = useState(false)
-  const [currentIndex, setCurrentIndex] = useState(0)
+  const [, setCurrentIndex] = useState(0)
 
   const {
     hasBlocks,
@@ -130,18 +123,17 @@ export function PostCard({
     lockedPreviewText,
     primaryLockedPreviewMedia,
   } = buildPostRenderInput({
-   text: text ?? "",
+    text: text ?? "",
     media,
-
     blocks,
   })
 
-
   const hasNormalizedGroups = groupedBlocks.length > 0
   const shouldRenderNormalizedGroups = hasBlocks && hasNormalizedGroups
-  const shouldRenderFallbackMedia = !shouldRenderNormalizedGroups && blockMedia.length > 0
-  const shouldRenderFallbackText = !shouldRenderNormalizedGroups && Boolean(blockText)
-
+  const shouldRenderFallbackMedia =
+    !shouldRenderNormalizedGroups && blockMedia.length > 0
+  const shouldRenderFallbackText =
+    !shouldRenderNormalizedGroups && Boolean(blockText)
 
   async function handleLike(event: React.MouseEvent<HTMLButtonElement>) {
     event.stopPropagation()
@@ -155,9 +147,7 @@ export function PostCard({
         method: liked ? "DELETE" : "POST",
       })
 
-      if (!response.ok) {
-        return
-      }
+      if (!response.ok) return
 
       setLiked((prev) => !prev)
       setCount((prev) => (liked ? Math.max(0, prev - 1) : prev + 1))
@@ -178,9 +168,7 @@ export function PostCard({
         method: "GET",
       })
 
-      if (!response.ok) {
-        return
-      }
+      if (!response.ok) return
 
       const data = await response.json()
       setComments(data.items ?? [])
@@ -242,9 +230,7 @@ export function PostCard({
         method: "DELETE",
       })
 
-      if (!response.ok) {
-        return
-      }
+      if (!response.ok) return
 
       await loadComments()
     } finally {
@@ -263,9 +249,7 @@ export function PostCard({
       method: likedByMe ? "DELETE" : "POST",
     })
 
-    if (!response.ok) {
-      return
-    }
+    if (!response.ok) return
 
     await loadComments()
   }
@@ -276,64 +260,63 @@ export function PostCard({
     }
   }, [showComments])
 
-
-
-
-
   function handleCardClick() {
     return
   }
 
- function renderSingleMedia(
-  item: PostRenderMediaItem,
-  alt: string,
-  block?: PostBlock
-) {
+  function renderSingleMedia(
+    item: PostRenderMediaItem,
+    alt: string,
+    block?: PostBlock
+  ) {
     const mediaUrl = item.url?.trim() ?? ""
     if (!mediaUrl) return null
 
-if (item.type === "video") {
-  const trimStart = block?.editorState?.video?.trimStart ?? 0
-  const trimEnd = block?.editorState?.video?.trimEnd ?? null
-  const muted = block?.editorState?.video?.muted ?? true
-  const videoKey = item.id ?? item.url
+    if (item.type === "video") {
+      const trimStart = block?.editorState?.video?.trimStart ?? 0
+      const trimEnd = block?.editorState?.video?.trimEnd ?? null
+      const muted = block?.editorState?.video?.muted ?? true
+      const videoKey = item.id ?? item.url
 
-  return (
-    <video
-      ref={(node) => {
-        videoRefs.current[videoKey] = node
-      }}
-      src={mediaUrl}
-      muted={muted}
-      loop={trimEnd === null}
-      playsInline
-      autoPlay
-      onClick={(event) => {
-        const video = event.currentTarget
-        if (video.paused) video.play()
-        else video.pause()
-      }}
-      preload="metadata"
-      onLoadedData={() => setIsVideoReady(true)}
-      onLoadedMetadata={(event) => {
-        const video = event.currentTarget
-        if (trimStart > 0) {
-          video.currentTime = trimStart
-        }
-      }}
-      onTimeUpdate={(event) => {
-        const video = event.currentTarget
-
-        if (trimEnd !== null && trimEnd > trimStart && video.currentTime >= trimEnd) {
-          video.pause()
-        }
-      }}
-className={`h-full w-full object-cover transition-opacity duration-300 ${
-  isVideoReady ? "opacity-100" : "opacity-0"
-}`}
-    />
-  )
-}
+      return (
+        <video
+          ref={(node) => {
+            videoRefs.current[videoKey] = node
+          }}
+          src={mediaUrl}
+          muted={muted}
+          loop={trimEnd === null}
+          playsInline
+          autoPlay
+          onClick={(event) => {
+            const video = event.currentTarget
+            if (video.paused) video.play()
+            else video.pause()
+          }}
+          preload="metadata"
+          onLoadedData={() => setIsVideoReady(true)}
+          onLoadedMetadata={(event) => {
+            const video = event.currentTarget
+            if (trimStart > 0) {
+              video.currentTime = trimStart
+            }
+          }}
+          onTimeUpdate={(event) => {
+            const video = event.currentTarget
+            if (
+              trimEnd !== null &&
+              trimEnd > trimStart &&
+              video.currentTime >= trimEnd
+            ) {
+              video.pause()
+            }
+          }}
+          className={`h-full w-full object-cover transition-opacity duration-300 ${
+            isVideoReady ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      )
+    }
 
     if (item.type === "audio") {
       return (
@@ -361,31 +344,33 @@ className={`h-full w-full object-cover transition-opacity duration-300 ${
       )
     }
 
-return (
-  <div className="relative h-full w-full">
-<img
-  src={mediaUrl}
-  alt={alt}
-  style={getFilterStyle(block?.editorState?.image?.filter)}
-  className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-/>
+    return (
+      <div className="relative h-full w-full">
+        <img
+          src={mediaUrl}
+          alt={alt}
+          style={getFilterStyle(block?.editorState?.image?.filter)}
+          className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+        />
 
-    {block?.editorState?.image?.overlayText?.text ? (
-      <div
-        className="pointer-events-none absolute left-1/2 top-[15%] -translate-x-1/2"
-        style={{
-  left: `${block.editorState.image.overlayText.x * 100}%`,
-  top: `${block.editorState.image.overlayText.y * 100}%`,
-  transform: `translate(-50%, -50%) scale(${block.editorState.image.overlayText.scale ?? 1})`,
-}}
-      >
-        <p className="whitespace-pre-wrap text-base font-semibold drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)]">
-          {block.editorState.image.overlayText.text}
-        </p>
+        {block?.editorState?.image?.overlayText?.text ? (
+          <div
+            className="pointer-events-none absolute left-1/2 top-[15%] -translate-x-1/2"
+            style={{
+              left: `${block.editorState.image.overlayText.x * 100}%`,
+              top: `${block.editorState.image.overlayText.y * 100}%`,
+              transform: `translate(-50%, -50%) scale(${
+                block.editorState.image.overlayText.scale ?? 1
+              })`,
+            }}
+          >
+            <p className="whitespace-pre-wrap text-base font-semibold drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)]">
+              {block.editorState.image.overlayText.text}
+            </p>
+          </div>
+        ) : null}
       </div>
-    ) : null}
-  </div>
-)
+    )
   }
 
   function handleScroll(event: React.UIEvent<HTMLDivElement>) {
@@ -395,30 +380,55 @@ return (
     setCurrentIndex(index)
   }
 
+  function renderMedia(
+    items: PostRenderMediaItem[] = blockMedia,
+    mediaEntries?: Array<{
+      media: PostRenderMediaItem
+      block?: PostBlock
+    }>,
+    isCarousel = false
+  ) {
+    if (items.length === 0) return null
 
-function renderMedia(
-  items: PostRenderMediaItem[] = blockMedia,
-  mediaEntries?: Array<{
-    media: PostRenderMediaItem
-    block?: PostBlock
-  }>
-) {
-  if (items.length === 0) return null
+    const resolvedEntries =
+      mediaEntries && mediaEntries.length > 0
+        ? mediaEntries
+        : resolvedMediaEntries.filter((entry) =>
+            items.some((item) => item.id === entry.media.id)
+          )
 
-  const resolvedEntries =
-    mediaEntries && mediaEntries.length > 0
-      ? mediaEntries
-      : resolvedMediaEntries.filter((entry) =>
-          items.some((item) => item.id === entry.media.id)
-        )
+    if (isCarousel) {
+      return (
+        <div
+          className="flex snap-x snap-mandatory overflow-x-auto"
+          onScroll={handleScroll}
+        >
+          {items.map((item, index) => {
+            const matchedEntry = resolvedEntries.find(
+              (entry) => entry.media.id === item.id
+            )
 
-  // ✅ carousel 조건 (2개 이상일 때만)
-  if (items.length > 1) {
+            return (
+              <div
+                key={`${item.id ?? item.url}-${index}`}
+                className="min-w-full snap-center"
+              >
+                <div className="aspect-[91/100] w-full overflow-hidden">
+                  {renderSingleMedia(
+                    item,
+                    `Post media ${index + 1}`,
+                    matchedEntry?.block
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )
+    }
+
     return (
-      <div
-        className="flex snap-x snap-mandatory overflow-x-auto"
-        onScroll={handleScroll}
-      >
+      <div className="mt-2">
         {items.map((item, index) => {
           const matchedEntry = resolvedEntries.find(
             (entry) => entry.media.id === item.id
@@ -427,46 +437,19 @@ function renderMedia(
           return (
             <div
               key={`${item.id ?? item.url}-${index}`}
-              className="min-w-full snap-center"
+              className="aspect-[91/100] w-full overflow-hidden"
             >
-              <div className="aspect-[91/100] w-full overflow-hidden">
-                {renderSingleMedia(
-                  item,
-                  `Post media ${index + 1}`,
-                  matchedEntry?.block
-                )}
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    )
-  }
-
-  // ✅ single media (기존 유지)
-  return (
-    <>
-      {items.map((item, index) => {
-        const matchedEntry = resolvedEntries.find(
-          (entry) => entry.media.id === item.id
-        )
-
-        return (
-          <div key={`${item.id ?? item.url}-${index}`} className="mt-2 overflow-hidden">
-            <div className="aspect-[91/100] w-full overflow-hidden">
               {renderSingleMedia(
                 item,
                 `Post media ${index + 1}`,
                 matchedEntry?.block
               )}
             </div>
-          </div>
-        )
-      })}
-    </>
-  )
-}
-
+          )
+        })}
+      </div>
+    )
+  }
 
   function renderLockedAction() {
     if (lockReason === "subscription") {
@@ -497,7 +480,6 @@ function renderMedia(
     if (Array.isArray(comment.profiles)) {
       return comment.profiles[0]?.username ?? "user"
     }
-
     return comment.profiles?.username ?? "user"
   }
 
@@ -505,7 +487,6 @@ function renderMedia(
     event.stopPropagation()
     router.push(`/creator/${creator.username}`)
   }
-
 
   return (
     <article onClick={handleCardClick} className="group w-full">
@@ -545,9 +526,9 @@ function renderMedia(
         ) : null}
       </div>
 
-        {isLocked ? (
+      {isLocked ? (
         <div className="mt-2">
-            <LockedPostCard
+          <LockedPostCard
             previewText={hasLockedPreviewText ? lockedPreviewText : ""}
             createdAt={createdAt}
             previewThumbnailUrl={
@@ -573,15 +554,13 @@ function renderMedia(
 
                 return (
                   <div key={`media-group-${index}`} className="mt-2 overflow-hidden">
-                    {group.mediaItems.length > 0 ? (
-                      renderMedia(group.mediaItems, group.mediaEntries)
-                    ) : (
-                      <div className="flex min-h-[220px] items-center justify-center bg-zinc-900 text-sm text-zinc-500">
-                        {group.blocks.some((block) => block.type === "video")
-                          ? "Video is processing..."
-                          : "Media not available"}
-                      </div>
-                    )}
+                    {group.mediaItems.length > 0
+                      ? renderMedia(
+                          group.mediaItems,
+                          group.mediaEntries,
+                          group.type === "carousel"
+                        )
+                      : null}
                   </div>
                 )
               })}
@@ -600,69 +579,59 @@ function renderMedia(
                 </div>
               ) : null}
             </>
-          )}   
+          )}
 
-   <div className="flex items-center gap-4 px-0 pt-3">
+          <div className="flex items-center gap-4 px-0 pt-3">
+            <button
+              type="button"
+              onClick={handleLike}
+              disabled={isLikeLoading}
+              className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
+            >
+              {liked ? (
+                <HeartSolid className="h-6 w-6 text-pink-500" />
+              ) : (
+                <HeartOutline className="h-6 w-6 stroke-[2.5]" />
+              )}
+              <span className="text-[14px] font-semibold">{count}</span>
+            </button>
 
-  {/* ❤️ 좋아요 */}
-  <button
-    type="button"
-    onClick={handleLike}
-    disabled={isLikeLoading}
-    className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
-  >
-    {liked ? (
-      <HeartSolid className="h-6 w-6 text-pink-500" />
-    ) : (
-      <HeartOutline className="h-6 w-6 stroke-[2.5]" />
-    )}
-    <span className="text-[14px] font-semibold">{count}</span>
-  </button>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation()
 
-  {/* 💬 댓글 */}
-  <button
-    type="button"
-    onClick={(event) => {
-      event.stopPropagation()
+                const nextShow = !showComments
+                setShowComments(nextShow)
 
-      const nextShow = !showComments
-      setShowComments(nextShow)
+                if (nextShow && comments.length === 0) {
+                  loadComments()
+                }
+              }}
+              className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
+            >
+              <ChatBubbleOvalLeftIcon className="h-6 w-6 stroke-[2.5]" />
+              <span className="text-[14px] font-semibold">
+                {commentsCount || comments.length}
+              </span>
+            </button>
 
-      if (nextShow && comments.length === 0) {
-        loadComments()
-      }
-    }}
-    className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
-  >
-    <ChatBubbleOvalLeftIcon className="h-6 w-6 stroke-[2.5]" />
-    <span className="text-[14px] font-semibold">
-      {commentsCount || comments.length}
-    </span>
-  </button>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation()
 
+                if (!creatorUserId) return
 
-{/* ✉️ 메시지 */}
-<button
-  type="button"
-  onClick={(event) => {
-    event.stopPropagation()
+                router.push(`/messages?creatorId=${creatorUserId}`)
+              }}
+              className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
+            >
+              <PaperAirplaneIcon className="h-6 w-6 stroke-[2.5]" />
+            </button>
 
-    if (!creatorUserId) return
-
-    router.push(`/messages?creatorId=${creatorUserId}`)
-  }}
-  className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
->
-  <PaperAirplaneIcon className="h-6 w-6 stroke-[2.5]" />
-</button>
-
-
-  {/* 📅 날짜 */}
-  <p className="text-[13px] text-zinc-400">
-    {formatPostDate(createdAt)}
-  </p>
-
-</div>
+            <p className="text-[13px] text-zinc-400">{formatPostDate(createdAt)}</p>
+          </div>
 
           {showComments ? (
             <div

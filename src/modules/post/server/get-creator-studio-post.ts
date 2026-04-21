@@ -2,10 +2,7 @@ import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { getPostBlocks } from "@/modules/post/server/get-post-blocks"
 import { buildPostRenderInput } from "@/modules/post/ui/post-render-input"
-import type {
-  EditPostDraftBlock,
-  EditPostDraftCarouselItem,
-} from "@/modules/post/server/edit-post-draft-policy"
+import type { EditPostDraftBlock } from "@/modules/post/server/edit-post-draft-policy"
 
 export type CreatorStudioPostDetail = {
   id: string
@@ -82,7 +79,6 @@ function buildEditDraftBlocksFromRawBlocks(params: {
   const sortedBlocks = [...params.blocks].sort((a, b) => a.sortOrder - b.sortOrder)
 
   const result: EditPostDraftBlock[] = []
-  const carouselGroups = new Map<string, typeof sortedBlocks>()
 
   for (const block of sortedBlocks) {
     if (!isEditableRawBlockType(block.type)) {
@@ -99,64 +95,23 @@ function buildEditDraftBlocksFromRawBlocks(params: {
       continue
     }
 
-    const carouselMeta = (block.editorState as any)?.carousel
-
-    if (carouselMeta?.groupId) {
-      if (!carouselGroups.has(carouselMeta.groupId)) {
-        carouselGroups.set(carouselMeta.groupId, [])
-      }
-
-      carouselGroups.get(carouselMeta.groupId)!.push(block)
-      continue
-    }
-
-    if (block.mediaId) {
-      result.push({
-        type: block.type,
-        sortOrder: block.sortOrder,
-        media: {
-          kind: "existing",
-          mediaId: block.mediaId,
-        },
-        editorState: (block.editorState as any) ?? null,
-        content: null,
-      })
-    }
-  }
-
-  for (const [, blocks] of carouselGroups.entries()) {
-    const items: EditPostDraftCarouselItem[] = blocks
-      .filter(
-        (item): item is typeof item & {
-          type: "image" | "video" | "audio" | "file"
-          mediaId: string
-        } =>
-          item.type !== "text" &&
-          Boolean(item.mediaId)
-      )
-      .map((item) => ({
-        type: item.type,
-        media: {
-          kind: "existing",
-          mediaId: item.mediaId,
-        },
-        editorState: (item.editorState as any) ?? null,
-      }))
-
-    if (items.length === 0) {
+    if (!block.mediaId) {
       continue
     }
 
     result.push({
-      type: "carousel",
-      sortOrder: blocks[0].sortOrder,
-      items,
-      editorState: null,
+      type: block.type,
+      sortOrder: block.sortOrder,
+      media: {
+        kind: "existing",
+        mediaId: block.mediaId,
+      },
+      editorState: (block.editorState as any) ?? null,
       content: null,
     })
   }
 
-  return result.sort((a, b) => a.sortOrder - b.sortOrder)
+  return result
 }
 
   

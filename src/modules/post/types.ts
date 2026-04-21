@@ -210,6 +210,14 @@ export type PostRenderMediaGroup = {
   mediaEntries: PostRenderMediaEntry[]
 }
 
+export type PostRenderCarouselGroup = {
+  type: "carousel"
+  blocks: PostBlock[]
+  mediaItems: PostRenderMediaItem[]
+  mediaEntries: PostRenderMediaEntry[]
+}
+
 export type PostRenderGroup =
   | PostRenderTextGroup
   | PostRenderMediaGroup
+  | PostRenderCarouselGroup
