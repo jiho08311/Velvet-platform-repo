@@ -129,7 +129,7 @@ export function PostCard({
   })
 
   const hasNormalizedGroups = groupedBlocks.length > 0
-  const shouldRenderNormalizedGroups = hasBlocks && hasNormalizedGroups
+  const shouldRenderNormalizedGroups = hasBlocks
   const shouldRenderFallbackMedia =
     !shouldRenderNormalizedGroups && blockMedia.length > 0
   const shouldRenderFallbackText =
