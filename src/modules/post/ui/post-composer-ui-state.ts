@@ -13,6 +13,12 @@ const COMPOSER_TOOL_CHIP_BASE_CLASS_NAME =
 const COMPOSER_MINOR_CTA_CLASS_NAME =
   "rounded-full bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:bg-zinc-700"
 
+const COMPOSER_CONTROL_CLASS_NAME =
+  "h-12 rounded-full border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-white outline-none transition hover:bg-zinc-800 focus:border-pink-500"
+
+const COMPOSER_CONTROL_BUTTON_CLASS_NAME =
+  "inline-flex h-12 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-white transition hover:bg-zinc-800"
+
 export function resolveCreatePostComposerErrorPresentation(
   message: string | null
 ) {
@@ -35,6 +41,14 @@ export function resolveComposerToolChipClassName(active: boolean) {
 
 export function getComposerMinorCTAClassName() {
   return COMPOSER_MINOR_CTA_CLASS_NAME
+}
+
+export function getComposerControlClassName() {
+  return COMPOSER_CONTROL_CLASS_NAME
+}
+
+export function getComposerControlButtonClassName() {
+  return COMPOSER_CONTROL_BUTTON_CLASS_NAME
 }
 
 export function resolvePostComposerSubmitCTA(

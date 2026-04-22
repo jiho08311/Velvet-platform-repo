@@ -9,6 +9,8 @@ import type {
   PostBlockEditorState,
 } from "@/modules/post/types"
 import {
+  getComposerControlButtonClassName,
+  getComposerControlClassName,
   getComposerMinorCTAClassName,
   resolveComposerToolChipClassName,
   resolveCreatePostSubmitCTA,
@@ -1654,7 +1656,7 @@ onSubmitPost({
           <select
             value={visibility}
             onChange={(e) => setVisibility(e.target.value as PostVisibility)}
-            className="h-12 rounded-full border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-white outline-none transition hover:bg-zinc-800 focus:border-pink-500"
+            className={getComposerControlClassName()}
           >
             <option value="public">Public</option>
             <option value="subscribers">Subscribers</option>
@@ -1663,7 +1665,7 @@ onSubmitPost({
  <select
   value={publishMode}
   onChange={(e) => setPublishMode(e.target.value as PublishMode)}
-  className="h-12 rounded-full border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-white outline-none transition hover:bg-zinc-800 focus:border-pink-500"
+  className={getComposerControlClassName()}
 >
   <option value="now">Publish now</option>
   <option value="scheduled">Schedule</option>
@@ -1674,7 +1676,7 @@ onSubmitPost({
     type="datetime-local"
     value={publishedAt}
     onChange={(e) => setPublishedAt(e.target.value)}
-    className="h-12 rounded-full border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-white outline-none transition hover:bg-zinc-800 focus:border-pink-500"
+    className={getComposerControlClassName()}
   />
 ) : null}
 
@@ -1720,7 +1722,7 @@ onSubmitPost({
 <button
   type="button"
   onClick={addTextBlock}
-  className="inline-flex h-12 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-white transition hover:bg-zinc-800"
+  className={getComposerControlButtonClassName()}
 >
   Text
 </button>
