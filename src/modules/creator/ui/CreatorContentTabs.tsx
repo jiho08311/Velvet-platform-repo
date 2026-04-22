@@ -1,6 +1,19 @@
 "use client"
 
 import { useState } from "react"
+import { StatusBadge } from "@/shared/ui/StatusBadge"
+import { EmptyState } from "@/shared/ui/EmptyState"
+import { RestrictedStateShell } from "@/shared/ui/RestrictedStateShell"
+import {
+  CREATOR_CONTENT_TAB_LABELS,
+  CREATOR_SURFACE_EMPTY_STATE,
+  getCreatorContentVisibilityLabel,
+  getCreatorRestrictedSurfaceState,
+  getCreatorUpdateHeaderBadge,
+  getCreatorUpdatePreviewText,
+} from "./creator-surface-policy"
+
+
 
 type CreatorContentTabPost = {
   id: string
@@ -24,6 +37,43 @@ type CreatorContentTabsProps = {
   isOwner: boolean
 }
 
+type UpdateSurfaceState = {
+  isLocked: boolean
+  isUpcoming: boolean
+  isDraft: boolean
+  visibilityLabel: string
+  statusLabel: string
+  statusTone: "info" | "neutral" | "subtle"
+  previewText: string
+  metaLabel: string
+  cardClassName: string
+  footerDotClassName: string
+}
+
+type UpdateRestrictedCallout = {
+  badgeLabel: string
+  badgeTone: "subtle" | "info"
+  title: string
+  description: string
+  className: string
+}
+
+
+function getUpdateRestrictedCallout(
+  type: "locked" | "upcoming"
+): UpdateRestrictedCallout {
+  const state = getCreatorRestrictedSurfaceState(type)
+
+  return {
+    badgeLabel: state.badgeLabel,
+    badgeTone: state.badgeTone,
+    title: state.title,
+    description: state.description,
+    className: state.className,
+  }
+}
+
+
 function formatDate(value?: string | null) {
   if (!value) return ""
 
@@ -34,6 +84,79 @@ function formatDate(value?: string | null) {
   }
 
   return date.toLocaleDateString()
+}
+
+function getUpdateSurfaceState(
+  post: CreatorContentTabPost,
+  isOwner: boolean
+): UpdateSurfaceState {
+  const isUpcoming = post.status === "scheduled"
+  const isDraft = post.status === "draft"
+  const isLocked = !isOwner && Boolean(post.isLocked)
+  const headerBadge = getCreatorUpdateHeaderBadge(post.status)
+  const previewText = getCreatorUpdatePreviewText({
+    status: post.status,
+    isLocked,
+    isOwner,
+    content: post.content,
+  })
+
+  const formattedDate = isUpcoming
+    ? formatDate(post.publishedAt ?? post.published_at)
+    : formatDate(post.created_at)
+
+  return {
+    isLocked,
+    isUpcoming,
+    isDraft,
+    visibilityLabel: getCreatorContentVisibilityLabel(post.visibility),
+    statusLabel: headerBadge.label,
+    statusTone: headerBadge.tone,
+    previewText,
+    metaLabel: isUpcoming
+      ? `Scheduled · ${formattedDate || "TBA"}`
+      : `Posted · ${formattedDate || "-"}`,
+    cardClassName: isLocked
+      ? "group rounded-3xl border border-zinc-700 bg-zinc-950/90 p-5 transition-all hover:border-zinc-600 hover:bg-zinc-900"
+      : isUpcoming
+        ? "group rounded-3xl border border-[#C2185B]/25 bg-zinc-950/85 p-5 transition-all hover:border-[#C2185B]/40 hover:bg-zinc-900/95"
+        : isDraft
+          ? "group rounded-3xl border border-zinc-700/80 bg-zinc-950/80 p-5 transition-all hover:border-zinc-600 hover:bg-zinc-900/90"
+          : "group rounded-3xl border border-zinc-800 bg-zinc-950/70 p-5 transition-all hover:border-zinc-700 hover:bg-zinc-900/90",
+    footerDotClassName: isLocked
+      ? "bg-zinc-500"
+      : isUpcoming
+        ? "bg-[#C2185B]"
+        : isDraft
+          ? "bg-zinc-500"
+          : "bg-zinc-600",
+  }
+}
+
+
+
+function getPostTileState(post: CreatorContentTabPost, isOwner: boolean) {
+  return {
+    isLocked: !isOwner && Boolean(post.isLocked),
+    isDraft: isOwner && post.status === "draft",
+    extraMediaCount: Math.max((post.media?.length ?? 0) - 1, 0),
+    media: post.media?.[0],
+  }
+}
+
+
+
+function renderUpdateRestrictedCallout(callout: UpdateRestrictedCallout) {
+  return (
+    <RestrictedStateShell
+      align="left"
+      badgeLabel={callout.badgeLabel}
+      badgeTone={callout.badgeTone}
+      title={callout.title}
+      description={callout.description}
+      className={callout.className}
+    />
+  )
 }
 
 export function CreatorContentTabs({
@@ -56,7 +179,9 @@ export function CreatorContentTabs({
                 : "border-transparent text-zinc-500"
             }`}
           >
-            <span className="text-sm font-semibold">Posts</span>
+            <span className="text-sm font-semibold">
+              {CREATOR_CONTENT_TAB_LABELS.posts}
+            </span>
           </button>
 
           <button
@@ -68,7 +193,9 @@ export function CreatorContentTabs({
                 : "border-transparent text-zinc-500"
             }`}
           >
-            <span className="text-sm font-semibold">Updates</span>
+            <span className="text-sm font-semibold">
+              {CREATOR_CONTENT_TAB_LABELS.updates}
+            </span>
           </button>
         </div>
       </div>
@@ -77,10 +204,11 @@ export function CreatorContentTabs({
         mediaPosts.length > 0 ? (
           <div className="mt-4 -mx-4 grid grid-cols-3 gap-[2px] lg:mx-0">
             {mediaPosts.map((post) => {
-              const media = post.media?.[0]
-              const mediaCount = post.media?.length ?? 0
-              const extraMediaCount = mediaCount > 1 ? mediaCount - 1 : 0
-              const isLocked = !isOwner && Boolean(post.isLocked)
+              const { isLocked, isDraft, extraMediaCount, media } =
+                getPostTileState(post, isOwner)
+              const lockedOverlayState = isLocked
+                ? getCreatorRestrictedSurfaceState("locked")
+                : null
 
               return (
                 <a
@@ -96,7 +224,9 @@ export function CreatorContentTabs({
                         playsInline
                         preload="metadata"
                         className={`h-full w-full object-cover transition duration-300 ${
-                          isLocked ? "scale-[1.02] opacity-75 blur-[2px]" : "group-hover:scale-[1.02]"
+                          isLocked
+                            ? "scale-[1.02] opacity-75 blur-[2px]"
+                            : "group-hover:scale-[1.02]"
                         }`}
                       />
                     ) : (
@@ -104,7 +234,9 @@ export function CreatorContentTabs({
                         src={media.url}
                         alt=""
                         className={`h-full w-full object-cover transition duration-300 ${
-                          isLocked ? "scale-[1.02] opacity-75 blur-[2px]" : "group-hover:scale-[1.02]"
+                          isLocked
+                            ? "scale-[1.02] opacity-75 blur-[2px]"
+                            : "group-hover:scale-[1.02]"
                         }`}
                       />
                     )
@@ -120,16 +252,26 @@ export function CreatorContentTabs({
                     </div>
                   ) : null}
 
-                  {isOwner && post.status === "draft" ? (
-                    <div className="absolute left-2 top-2 rounded-full bg-zinc-950/80 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
-                      Draft
-                    </div>
+                  {isDraft ? (
+                    <StatusBadge
+                      label="Draft"
+                      tone="neutral"
+                      className="absolute left-2 top-2 backdrop-blur"
+                    />
                   ) : null}
 
-                  {isLocked ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 px-4 text-center">
-                      <div className="rounded-full border border-white/15 bg-black/50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-white backdrop-blur">
-                        Locked
+                  {isLocked && lockedOverlayState ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/35 px-3 text-center">
+                      <div className="flex max-w-[140px] flex-col items-center">
+                        <StatusBadge
+                          label={lockedOverlayState.badgeLabel}
+                          tone={lockedOverlayState.badgeTone}
+                          className="border-white/15 bg-black/55 px-3 py-1.5 text-[10px] uppercase tracking-[0.24em] text-white backdrop-blur"
+                        />
+
+                        <p className="mt-2 text-[11px] font-medium leading-4 text-white/85">
+                          {lockedOverlayState.description}
+                        </p>
                       </div>
                     </div>
                   ) : null}
@@ -138,68 +280,40 @@ export function CreatorContentTabs({
             })}
           </div>
         ) : (
-          <div className="py-12 text-center text-sm text-zinc-500">
-            No posts yet
+          <div className="mt-4">
+            <EmptyState
+              title={CREATOR_SURFACE_EMPTY_STATE.postsTab.title}
+              description={CREATOR_SURFACE_EMPTY_STATE.postsTab.description}
+            />
           </div>
         )
       ) : updatePosts.length > 0 ? (
         <div className="mt-4 flex flex-col gap-3">
           {updatePosts.map((post) => {
-            const visibilityLabel =
-              post.visibility === "public"
-                ? "Public"
-                : post.visibility === "subscribers"
-                  ? "Subscribers"
-                  : post.visibility === "paid"
-                    ? "Paid"
-                    : "Post"
-
-            const statusLabel =
-              post.status === "scheduled"
-                ? "Upcoming"
-                : post.status === "draft"
-                  ? "Draft"
-                  : "Update"
-
-            const isUpcoming = post.status === "scheduled"
-            const isLocked = !isOwner && Boolean(post.isLocked)
-
-           const previewText =
-  isUpcoming && !isOwner
-    ? "Upcoming post"
-    : isLocked
-      ? "Subscribe to read this update."
-      : post.content?.trim() || "No content"
-
-            const dateLabel = isUpcoming
-              ? formatDate(post.publishedAt ?? post.published_at)
-              : formatDate(post.created_at)
+            const updateState = getUpdateSurfaceState(post, isOwner)
+            const lockedCallout = updateState.isLocked
+              ? getUpdateRestrictedCallout("locked")
+              : null
+            const upcomingCallout = updateState.isUpcoming
+              ? getUpdateRestrictedCallout("upcoming")
+              : null
 
             return (
               <a
                 key={post.id}
                 href={`/post/${post.id}`}
-                className="group rounded-3xl border border-zinc-800 bg-zinc-950/70 p-5 transition-all hover:border-zinc-700 hover:bg-zinc-900/90"
+                className={updateState.cardClassName}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    {post.status === "scheduled" ? (
-                      <span className="rounded-full bg-[#C2185B] px-2.5 py-1 text-[11px] font-semibold text-white">
-                        {statusLabel}
-                      </span>
-                    ) : post.status === "draft" ? (
-                      <span className="rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-[11px] font-semibold text-white">
-                        {statusLabel}
-                      </span>
-                    ) : (
-                      <span className="rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-[11px] font-semibold text-zinc-300">
-                        {statusLabel}
-                      </span>
-                    )}
-
-                    <span className="rounded-full border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-[11px] font-medium text-zinc-400">
-                      {visibilityLabel}
-                    </span>
+                    <StatusBadge
+                      label={updateState.statusLabel}
+                      tone={updateState.statusTone}
+                    />
+                    <StatusBadge
+                      label={updateState.visibilityLabel}
+                      tone="subtle"
+                    />
                   </div>
 
                   <span className="text-xs font-medium text-zinc-600 transition group-hover:text-zinc-400">
@@ -208,20 +322,24 @@ export function CreatorContentTabs({
                 </div>
 
                 <div className="mt-4 min-h-[84px]">
-                  <p className="line-clamp-4 whitespace-pre-wrap text-[15px] leading-6 text-zinc-100">
-                    {previewText}
-                  </p>
+                  {updateState.isLocked && lockedCallout
+                    ? renderUpdateRestrictedCallout(lockedCallout)
+                    : updateState.isUpcoming && upcomingCallout
+                      ? renderUpdateRestrictedCallout(upcomingCallout)
+                      : (
+                        <p className="line-clamp-4 whitespace-pre-wrap text-[15px] leading-6 text-zinc-100">
+                          {updateState.previewText}
+                        </p>
+                      )}
                 </div>
 
                 <div className="mt-4 flex items-center justify-between border-t border-zinc-800 pt-3">
-                  <p className="text-xs text-zinc-500">
-                    {post.status === "scheduled"
-                      ? `Scheduled · ${dateLabel || "TBA"}`
-                      : `Posted · ${dateLabel || "-"}`}
-                  </p>
+                  <p className="text-xs text-zinc-500">{updateState.metaLabel}</p>
 
                   <div className="flex items-center gap-1 text-xs text-zinc-500">
-                    <span className="h-1.5 w-1.5 rounded-full bg-zinc-600" />
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${updateState.footerDotClassName}`}
+                    />
                     Update
                   </div>
                 </div>
@@ -230,8 +348,11 @@ export function CreatorContentTabs({
           })}
         </div>
       ) : (
-        <div className="py-12 text-center text-sm text-zinc-500">
-          No updates yet
+        <div className="mt-4">
+          <EmptyState
+            title={CREATOR_SURFACE_EMPTY_STATE.updatesTab.title}
+            description={CREATOR_SURFACE_EMPTY_STATE.updatesTab.description}
+          />
         </div>
       )}
     </section>

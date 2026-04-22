@@ -7,11 +7,9 @@ import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user
 import { getHomeFeed } from "@/modules/feed/server/get-home-feed"
 import { getPublicUpcomingPosts } from "@/modules/feed/server/get-public-upcoming-posts"
 import { FeedComposer } from "@/modules/feed/ui/FeedComposer"
-import { FeedEmptyState } from "@/modules/feed/ui/FeedEmptyState"
 import { FeedInfiniteList } from "@/modules/feed/ui/FeedInfiniteList"
 import { getRecommendedCreators } from "@/modules/search/server/get-recommended-creators"
 import { getStories } from "@/modules/story/server/get-stories"
-
 import { StoryList } from "@/modules/story/ui/StoryList"
 import { Card } from "@/shared/ui/Card"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
@@ -109,26 +107,6 @@ export default async function FeedPage() {
   }
 
   let currentCreatorId: string | undefined
-
-  if (session) {
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .select("username")
-      .eq("id", session.userId)
-      .maybeSingle<ProfileRow>()
-
-    if (profileError) {
-      throw profileError
-    }
-
-    if (!profile?.username) {
-      redirect("/onboarding")
-    }
-
-    const creator = await getCreatorByUserId(session.userId)
-    currentCreatorId = creator?.id
-  }
-
   let feed
   let upcomingPosts
   let recommendedCreators
@@ -136,12 +114,22 @@ export default async function FeedPage() {
   let readStateMap: Record<string, string> = {}
 
   if (session?.userId) {
-    const map = await getStoryReadStateMap(session.userId)
-    readStateMap = Object.fromEntries(map)
-  }
-
-  if (session?.userId) {
-    ;[feed, upcomingPosts, recommendedCreators, stories] = await Promise.all([
+    const [
+      { data: profile, error: profileError },
+      creator,
+      storyReadStateMap,
+      resolvedFeed,
+      resolvedUpcomingPosts,
+      resolvedRecommendedCreators,
+      resolvedStories,
+    ] = await Promise.all([
+      supabaseAdmin
+        .from("profiles")
+        .select("username")
+        .eq("id", session.userId)
+        .maybeSingle<ProfileRow>(),
+      getCreatorByUserId(session.userId),
+      getStoryReadStateMap(session.userId),
       getHomeFeed({
         viewerUserId: session.userId,
         limit: 10,
@@ -153,6 +141,21 @@ export default async function FeedPage() {
       }),
       getStories(session.userId),
     ])
+
+    if (profileError) {
+      throw profileError
+    }
+
+    if (!profile?.username) {
+      redirect("/onboarding")
+    }
+
+    currentCreatorId = creator?.id
+    readStateMap = Object.fromEntries(storyReadStateMap)
+    feed = resolvedFeed
+    upcomingPosts = resolvedUpcomingPosts
+    recommendedCreators = resolvedRecommendedCreators
+    stories = resolvedStories
   } else {
     ;[feed, upcomingPosts, recommendedCreators, stories] = await Promise.all([
       getHomeFeed({
@@ -166,6 +169,45 @@ export default async function FeedPage() {
     ])
   }
 
+  const initialFeedPosts = feed.items.map((item) => ({
+    id: item.id,
+    postId: item.id,
+    creatorId: item.creatorId,
+    creatorUserId: item.creatorUserId,
+    currentUserId: session?.userId ?? undefined,
+    text: item.text,
+    createdAt: item.createdAt,
+    status: item.status,
+    publishedAt: item.publishedAt ?? null,
+    media: normalizeMedia(item),
+    blocks:
+      "blocks" in item && Array.isArray(item.blocks)
+        ? item.blocks.map((block) => ({
+            id: block.id,
+            postId: block.postId,
+            type: block.type,
+            content: block.content,
+            mediaId: block.mediaId,
+            sortOrder: block.sortOrder,
+            createdAt: block.createdAt,
+            editorState:
+              "editorState" in block ? block.editorState ?? null : null,
+          }))
+        : [],
+    isLocked: item.isLocked,
+    lockReason: item.lockReason,
+    price: normalizePrice(item),
+    commentsCount: item.commentsCount,
+    likesCount: item.likesCount,
+    isLiked: item.isLiked,
+    creator: item.creator,
+  }))
+
+  const feedEmptyState = {
+    title: "No posts yet",
+    message: "Posts from creators you follow will appear here.",
+  } as const
+
   return (
     <main className="min-h-screen">
       <div className="grid w-full grid-cols-1 gap-6 px-0 py-2 sm:px-0 lg:grid-cols-[600px_378px] lg:gap-8">
@@ -178,50 +220,13 @@ export default async function FeedPage() {
 
           {session ? <FeedComposer userId={session.userId} /> : null}
 
-          {feed.items.length === 0 ? (
-  <FeedEmptyState
-    title="No posts yet"
-    description="Posts from creators you follow will appear here."
-  />
-) : (
-  <FeedInfiniteList
-    initialPosts={feed.items.map((item) => ({
-      id: item.id,
-      postId: item.id,
-      creatorId: item.creatorId,
-      creatorUserId: item.creatorUserId,
-      currentUserId: session?.userId ?? undefined,
-      text: item.text,
-      createdAt: item.createdAt,
-      status: item.status,
-      publishedAt: item.publishedAt ?? null,
-      media: normalizeMedia(item),
-   blocks:
-  "blocks" in item && Array.isArray(item.blocks)
-    ? item.blocks.map((block) => ({
-        id: block.id,
-        postId: block.postId,
-        type: block.type,
-        content: block.content,
-        mediaId: block.mediaId,
-        sortOrder: block.sortOrder,
-        createdAt: block.createdAt,
-        editorState: "editorState" in block ? block.editorState ?? null : null,
-      }))
-    : [],
-      isLocked: item.isLocked,
-      lockReason: item.lockReason,
-      price: normalizePrice(item),
-      commentsCount: item.commentsCount,
-      likesCount: item.likesCount,
-      isLiked: item.isLiked,
-      creator: item.creator,
-    }))}
-    initialCursor={feed.nextCursor}
-    currentUserId={session?.userId ?? undefined}
-  />
-)}
-         
+          <FeedInfiniteList
+            initialPosts={initialFeedPosts}
+            initialCursor={feed.nextCursor}
+            currentUserId={session?.userId ?? undefined}
+            emptyTitle={feedEmptyState.title}
+            emptyMessage={feedEmptyState.message}
+          />
         </section>
 
         <aside className="hidden lg:block">

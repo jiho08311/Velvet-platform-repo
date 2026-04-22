@@ -16,6 +16,7 @@ import { buildPostRenderInput } from "./post-render-input"
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid"
 import { formatInUserTimeZone } from "@/shared/lib/date-time"
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
+import PostPurchaseButton from "./PostPurchaseButton"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
 import { LockedPostCard } from "./LockedPostCard"
 import { PostMoreMenu } from "./PostMoreMenu"
@@ -47,7 +48,8 @@ type PostCardProps = {
   media?: PostRenderMediaItem[]
   blocks?: PostBlock[]
   isLocked?: boolean
-  lockReason?: "none" | "subscription"
+  lockReason?: "none" | "subscription" | "purchase"
+  price?: number
   creatorId: string
   creatorUserId?: string
   currentUserId?: string
@@ -87,6 +89,7 @@ export function PostCard({
   blocks = [],
   isLocked = false,
   lockReason = "none",
+  price,
   creatorId,
   creatorUserId,
   currentUserId,
@@ -135,10 +138,6 @@ export function PostCard({
     !shouldRenderNormalizedGroups && blockMedia.length > 0
   const shouldRenderFallbackText =
     !shouldRenderNormalizedGroups && Boolean(blockText)
-
-
-
-
 
   async function handleLike(event: React.MouseEvent<HTMLButtonElement>) {
     event.stopPropagation()
@@ -411,13 +410,53 @@ export function PostCard({
             items.some((item) => item.id === entry.media.id)
           )
 
-if (isCarousel) {
-  return (
-    <div className="relative">
-      <div
-        className="flex snap-x snap-mandatory overflow-x-auto"
-        onScroll={handleScroll}
-      >
+    if (isCarousel) {
+      return (
+        <div className="relative">
+          <div
+            className="flex snap-x snap-mandatory overflow-x-auto"
+            onScroll={handleScroll}
+          >
+            {items.map((item, index) => {
+              const matchedEntry = resolvedEntries.find(
+                (entry) => entry.media.id === item.id
+              )
+
+              return (
+                <div
+                  key={`${item.id ?? item.url}-${index}`}
+                  className="min-w-full snap-center"
+                >
+                  <div className="aspect-[91/100] w-full overflow-hidden">
+                    {renderSingleMedia(
+                      item,
+                      `Post media ${index + 1}`,
+                      matchedEntry?.block
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {items.length > 1 ? (
+            <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
+              {items.map((_, index) => (
+                <span
+                  key={index}
+                  className={`h-1.5 w-1.5 rounded-full transition ${
+                    index === currentIndex ? "bg-[#C2185B]" : "bg-white/30"
+                  }`}
+                />
+              ))}
+            </div>
+          ) : null}
+        </div>
+      )
+    }
+
+    return (
+      <div className="mt-2">
         {items.map((item, index) => {
           const matchedEntry = resolvedEntries.find(
             (entry) => entry.media.id === item.id
@@ -426,62 +465,19 @@ if (isCarousel) {
           return (
             <div
               key={`${item.id ?? item.url}-${index}`}
-              className="min-w-full snap-center"
+              className="aspect-[91/100] w-full overflow-hidden"
             >
-              <div className="aspect-[91/100] w-full overflow-hidden">
-                {renderSingleMedia(
-                  item,
-                  `Post media ${index + 1}`,
-                  matchedEntry?.block
-                )}
-              </div>
+              {renderSingleMedia(
+                item,
+                `Post media ${index + 1}`,
+                matchedEntry?.block
+              )}
             </div>
           )
         })}
       </div>
-
-      {items.length > 1 ? (
-        <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
-          {items.map((_, index) => (
-            <span
-              key={index}
-              className={`h-1.5 w-1.5 rounded-full transition ${
-                index === currentIndex ? "bg-[#C2185B]" : "bg-white/30"
-              }`}
-            />
-          ))}
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
-  return (
-    <div className="mt-2">
-      {items.map((item, index) => {
-        const matchedEntry = resolvedEntries.find(
-          (entry) => entry.media.id === item.id
-        )
-
-        return (
-          <div
-            key={`${item.id ?? item.url}-${index}`}
-            className="aspect-[91/100] w-full overflow-hidden"
-          >
-            {renderSingleMedia(
-              item,
-              `Post media ${index + 1}`,
-              matchedEntry?.block
-            )}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-
-
+    )
+  }
 
   function renderLockedAction() {
     if (lockReason === "subscription") {
@@ -491,6 +487,24 @@ if (isCarousel) {
             creatorId={creatorId}
             creatorUserId={creatorUserId}
             currentUserId={currentUserId}
+            creatorUsername={creator.username}
+            embedded
+          />
+        </div>
+      )
+    }
+
+    if (
+      lockReason === "purchase" &&
+      postId &&
+      typeof price === "number" &&
+      price > 0
+    ) {
+      return (
+        <div onClick={(event) => event.stopPropagation()}>
+          <PostPurchaseButton
+            postId={postId}
+            price={price}
             creatorUsername={creator.username}
             embedded
           />
@@ -567,6 +581,8 @@ if (isCarousel) {
             previewThumbnailUrl={
               hasLockedPreviewThumbnail ? lockedPreviewThumbnailUrl : null
             }
+            price={price}
+            lockReason={lockReason === "none" ? undefined : lockReason}
             action={renderLockedAction()}
           />
         </div>
@@ -574,9 +590,6 @@ if (isCarousel) {
         <>
           {shouldRenderNormalizedGroups ? (
             <>
-
-       
-
               {groupedBlocks.map((group, index) => {
                 if (group.type === "text") {
                   return (
@@ -609,10 +622,6 @@ if (isCarousel) {
             </>
           ) : (
             <>
-
-              
-              
-
               {shouldRenderFallbackMedia ? renderMedia() : null}
 
               {shouldRenderFallbackText ? (

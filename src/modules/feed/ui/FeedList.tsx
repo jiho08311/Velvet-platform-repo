@@ -2,6 +2,10 @@ import { FeedEmptyState } from "./FeedEmptyState"
 import { UpcomingCard } from "@/modules/feed/ui/UpcomingCard"
 import { PostCard } from "@/modules/post/ui/PostCard"
 import type { PostBlockEditorState } from "@/modules/post/types"
+import {
+  FEED_LIST_EMPTY_STATE,
+  FEED_UPCOMING_STATE,
+} from "./feed-surface-policy"
 
 type FeedListPost = {
   id: string
@@ -41,18 +45,20 @@ type FeedListPost = {
 
 type FeedListProps = {
   posts: FeedListPost[]
+  emptyTitle?: string
   emptyMessage?: string
 }
 
 export function FeedList({
   posts,
-  emptyMessage = "No posts in your feed yet.",
+  emptyTitle,
+  emptyMessage,
 }: FeedListProps) {
   if (posts.length === 0) {
     return (
       <FeedEmptyState
-        title="No feed yet"
-        description={emptyMessage}
+        title={emptyTitle ?? FEED_LIST_EMPTY_STATE.defaultTitle}
+        description={emptyMessage ?? FEED_LIST_EMPTY_STATE.defaultDescription}
       />
     )
   }
@@ -66,7 +72,7 @@ export function FeedList({
           return (
             <UpcomingCard
               key={post.id}
-              title="Upcoming post"
+              title={FEED_UPCOMING_STATE.defaultTitle}
               previewText={null}
               scheduledAt={post.publishedAt ?? ""}
               creator={post.creator}

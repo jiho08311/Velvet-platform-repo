@@ -3,6 +3,9 @@
 import { loadTossPayments } from "@tosspayments/payment-sdk"
 import { useEffect, useMemo, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
+import { Button } from "@/shared/ui/Button"
+import { resolveSubscribeCTA } from "@/shared/ui/cta-state"
+import { getCreatorSubscriptionPresentation } from "./creator-surface-policy"
 
 type SubscribeButtonProps = {
   creatorId: string
@@ -58,6 +61,9 @@ export default function SubscribeButton({
 }: SubscribeButtonProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const subscriptionPresentation = getCreatorSubscriptionPresentation(
+    creatorUsername ?? "this creator"
+  )
   const [loading, setLoading] = useState(false)
   const [subscribed, setSubscribed] = useState(false)
   const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(false)
@@ -123,7 +129,6 @@ export default function SubscribeButton({
     checkCreatorSubscription()
   }, [creatorId, isOwner, isGuest])
 
-  // ✅ 페이지 돌아올 때 상태 다시 확인 (핵심)
   useEffect(() => {
     checkCreatorSubscription()
   }, [pathname])
@@ -176,19 +181,18 @@ export default function SubscribeButton({
       const tossPayments = await loadTossPayments(clientKey)
 
       await tossPayments.requestPayment("카드", {
-        amount: amount,
+        amount,
         orderId,
         orderName,
         successUrl: `${window.location.origin}/payment/success?paymentId=${paymentId}&creatorUsername=${creatorUsername}`,
         failUrl: `${window.location.origin}/payment/fail?paymentId=${paymentId}`,
       })
 
-      // ✅ 즉시 상태 반영 (핵심)
       setSubscribed(true)
       setCancelAtPeriodEnd(false)
       router.refresh()
     } catch {
-      setErrorMessage("구독 처리에 실패했습니다")
+      setErrorMessage(subscriptionPresentation.subscribeFallbackError)
     } finally {
       setLoading(false)
     }
@@ -210,83 +214,103 @@ export default function SubscribeButton({
       const data = await res.json()
 
       if (!res.ok || !data.success) {
-        setErrorMessage(data.error ?? "구독 종료에 실패했습니다")
+        setErrorMessage(
+          data.error ?? subscriptionPresentation.cancelFallbackError
+        )
         return
       }
 
       setCancelAtPeriodEnd(true)
-
-      // ✅ 즉시 반영
       setSubscribed(true)
       router.refresh()
     } catch {
-      setErrorMessage("구독 종료에 실패했습니다")
+      setErrorMessage(subscriptionPresentation.cancelFallbackError)
     } finally {
       setLoading(false)
     }
   }
 
-  const buttonBase = embedded
-    ? "inline-flex h-12 min-w-[220px] items-center justify-center rounded-full bg-[#C2185B] px-6 text-sm font-semibold text-white transition hover:bg-[#D81B60] active:bg-[#AD1457] disabled:cursor-not-allowed disabled:opacity-60"
-    : "inline-flex h-12 items-center justify-center rounded-full px-5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
+  const cta = resolveSubscribeCTA({
+    checking,
+    isOwner,
+    subscribed,
+    cancelAtPeriodEnd,
+    loading,
+  })
 
-  if (checking) {
+  if (checking || isOwner) {
     return (
-      <button disabled className="inline-flex h-12 min-w-[220px] items-center justify-center rounded-full bg-zinc-800 px-6 text-sm font-semibold text-zinc-300">
-        확인 중...
-      </button>
-    )
-  }
-
-  if (isOwner) {
-    return (
-      <button disabled className="inline-flex h-12 min-w-[220px] items-center justify-center rounded-full bg-zinc-800 px-6 text-sm font-semibold text-zinc-400">
-        내 페이지
-      </button>
+      <Button
+        variant={cta.primary.variant}
+        disabled={cta.primary.disabled}
+        loading={cta.primary.loading}
+        loadingLabel={cta.primary.loadingLabel}
+        embedded
+        className={
+          isOwner
+            ? "bg-zinc-800 text-zinc-400 border-zinc-800 hover:bg-zinc-800"
+            : undefined
+        }
+      >
+        {cta.primary.label}
+      </Button>
     )
   }
 
   if (subscribed) {
-  return (
-    <div className="flex flex-col gap-2 w-full">
-      {/* 상태 표시 */}
-      <button
-        disabled
-        className="inline-flex h-12 w-full items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 px-6 text-sm font-semibold text-zinc-100"
-      >
-        {cancelAtPeriodEnd ? "구독 종료 예정" : "구독 중"}
-      </button>
-
-      {/* 🔥 핵심: 취소 버튼 분리 */}
-      {!cancelAtPeriodEnd && (
-        <button
-          onClick={handleCancel}
-          disabled={loading}
-          className="inline-flex h-10 w-full items-center justify-center rounded-full bg-red-600 px-4 text-sm font-semibold text-white transition hover:bg-red-500 active:bg-red-700"
+    return (
+      <div className="flex w-full flex-col gap-2">
+        <Button
+          variant={cta.primary.variant}
+          disabled={cta.primary.disabled}
+          fullWidth
+          className="border-zinc-700 bg-zinc-950 text-zinc-100 hover:bg-zinc-950"
         >
-          {loading ? "처리 중..." : "구독 취소"}
-        </button>
-      )}
+          {cta.primary.label}
+        </Button>
 
-      {/* 안내 문구 (심사용 핵심) */}
-      {cancelAtPeriodEnd && (
-        <p className="text-xs text-zinc-500 text-center">
-          이번 결제 주기 종료 후 자동으로 해지됩니다
-        </p>
-      )}
-    </div>
-  )
-}
-  
+        {cta.secondary ? (
+          <Button
+            type="button"
+            onClick={handleCancel}
+            variant={cta.secondary.variant}
+            loading={cta.secondary.loading}
+            loadingLabel={cta.secondary.loadingLabel}
+          >
+            {cta.secondary.label}
+          </Button>
+        ) : null}
+
+        {cancelAtPeriodEnd ? (
+          <p className="text-center text-xs text-zinc-500">
+            {subscriptionPresentation.cancelAtPeriodEndMessage}
+          </p>
+        ) : null}
+
+        {errorMessage ? (
+          <p className="text-center text-xs text-red-400">{errorMessage}</p>
+        ) : null}
+      </div>
+    )
+  }
 
   return (
-    <button
-      onClick={handleSubscribe}
-      disabled={loading}
-   
-      className={`${buttonBase} w-full bg-[#C2185B] text-white whitespace-nowrap`}
-    >
-      {loading ? "처리 중..." : "구독하기"}
-    </button>
+    <div className="w-full">
+      <Button
+        onClick={handleSubscribe}
+        loading={cta.primary.loading}
+        loadingLabel={cta.primary.loadingLabel}
+        embedded={embedded}
+        fullWidth={!embedded}
+      >
+        {cta.primary.label}
+      </Button>
+
+      {errorMessage ? (
+        <p className="mt-2 text-center text-xs text-red-400">
+          {errorMessage}
+        </p>
+      ) : null}
+    </div>
   )
 }

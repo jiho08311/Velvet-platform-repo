@@ -10,13 +10,42 @@ import { CreatePostComposer } from "@/modules/post/ui/CreatePostComposer"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
 import { getViewerSubscription } from "@/modules/subscription/server/get-viewer-subscription"
 import { SubscriptionStatusCard } from "@/modules/subscription/ui/SubscriptionStatusCard"
-import { Card } from "@/shared/ui/Card"
+import { RestrictedStateShell } from "@/shared/ui/RestrictedStateShell"
 import { CreatorContentTabs } from "@/modules/creator/ui/CreatorContentTabs"
+import { EmptyState } from "@/shared/ui/EmptyState"
+import { Avatar } from "@/shared/ui/Avatar"
+import {
+  CREATOR_PAGE_PRESENTATION,
+  CREATOR_SURFACE_EMPTY_STATE,
+  getCreatorSubscriptionPresentation,
+} from "@/modules/creator/ui/creator-surface-policy"
 
 type CreatorPageProps = {
   params: Promise<{
     username: string
   }>
+}
+
+type CreatorIdentitySectionProps = {
+  displayName: string
+  username: string
+  avatarUrl: string | null
+}
+
+type CreatorActionSectionProps = {
+  isOwner: boolean
+  creatorId: string
+  creatorUserId: string
+  creatorUsername: string
+  currentUserId?: string
+  subscriptionPrice: number
+  displayName: string
+}
+
+type CreatorStatsSectionProps = {
+  mediaPostCount: number
+  updatePostCount: number
+  subscriberCount?: number | null
 }
 
 function formatPrice(amount: number) {
@@ -28,6 +57,114 @@ function formatPrice(amount: number) {
 
 function formatCount(value: number | null | undefined) {
   return new Intl.NumberFormat("en-US").format(value ?? 0)
+}
+
+function CreatorIdentitySection({
+  displayName,
+  username,
+  avatarUrl,
+}: CreatorIdentitySectionProps) {
+  return (
+    <div className="flex items-end gap-4 sm:gap-5">
+      <div className="rounded-full border-4 border-zinc-950 bg-zinc-900 shadow-[0_0_0_1px_rgba(39,39,42,0.6)]">
+        <Avatar
+          src={avatarUrl}
+          alt={displayName}
+          fallback={displayName}
+          size="xl"
+        />
+      </div>
+
+      <div className="pb-1">
+        <h1 className="text-2xl font-semibold tracking-tight text-white">
+          {displayName}
+        </h1>
+
+        <p className="mt-1 text-sm text-zinc-500">@{username}</p>
+      </div>
+    </div>
+  )
+}
+
+function CreatorActionSection({
+  isOwner,
+  creatorId,
+  creatorUserId,
+  creatorUsername,
+  currentUserId,
+  subscriptionPrice,
+  displayName,
+}: CreatorActionSectionProps) {
+  const subscriptionPresentation =
+    getCreatorSubscriptionPresentation(displayName)
+
+  if (isOwner) {
+    return (
+      <div className="flex w-full flex-col gap-4 sm:w-auto sm:items-end">
+        <Link
+          href="/profile/edit"
+          className="inline-flex h-12 w-full items-center justify-center rounded-full bg-zinc-800 px-4 text-sm font-semibold text-white transition hover:bg-zinc-700 sm:w-auto"
+        >
+          {CREATOR_PAGE_PRESENTATION.ownerEditLabel}
+        </Link>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex w-full flex-col gap-4 sm:w-auto sm:items-end">
+      <div className="text-left sm:text-right">
+        <p className="text-lg font-semibold text-white">
+          {formatPrice(subscriptionPrice)}
+        </p>
+        <p className="mt-1 text-sm text-zinc-500">
+          {subscriptionPresentation.pricePeriodLabel}
+        </p>
+      </div>
+
+      <div className="w-full sm:min-w-[220px]">
+        <SubscribeButton
+          creatorId={creatorId}
+          creatorUserId={creatorUserId}
+          currentUserId={currentUserId}
+          creatorUsername={creatorUsername}
+        />
+      </div>
+    </div>
+  )
+}
+
+function CreatorStatsSection({
+  mediaPostCount,
+  updatePostCount,
+  subscriberCount,
+}: CreatorStatsSectionProps) {
+  return (
+    <div className="mt-4 flex items-center gap-8 text-sm text-zinc-400">
+      <div>
+        <p className="text-base font-semibold text-white">{mediaPostCount}</p>
+        <p className="mt-1 text-zinc-500">
+          {CREATOR_PAGE_PRESENTATION.stats.posts}
+        </p>
+      </div>
+
+      <div>
+        <p className="text-base font-semibold text-white">{updatePostCount}</p>
+        <p className="mt-1 text-zinc-500">
+          {CREATOR_PAGE_PRESENTATION.stats.updates}
+        </p>
+      </div>
+
+      <div>
+        <p className="text-base font-semibold text-white">
+          {formatCount(subscriberCount)}
+        </p>
+        <p className="mt-1 text-zinc-500">
+          {CREATOR_PAGE_PRESENTATION.stats.subscribers}
+        </p>
+      </div>
+    </div>
+  )
 }
 
 export default async function CreatorPage({ params }: CreatorPageProps) {
@@ -76,16 +213,16 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
           likesCount: post.likesCount ?? 0,
           commentsCount: post.commentsCount ?? 0,
           isLiked: false,
- status:
-  "status" in post && typeof post.status === "string"
-    ? post.status
-    : "published",
+          status:
+            "status" in post && typeof post.status === "string"
+              ? post.status
+              : "published",
           publishedAt: "publishedAt" in post ? post.publishedAt : null,
           published_at: "publishedAt" in post ? post.publishedAt : null,
           visibility:
-  "visibility" in post && typeof post.visibility === "string"
-    ? post.visibility
-    : "public",
+            "visibility" in post && typeof post.visibility === "string"
+              ? post.visibility
+              : "public",
         })
       )
 
@@ -113,6 +250,10 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
           ? "canceled"
           : "inactive"
 
+  const displayName = creator.displayName ?? creator.username
+  const subscriptionPresentation =
+    getCreatorSubscriptionPresentation(displayName)
+
   return (
     <main className="min-h-screen">
       <div className="grid w-full grid-cols-1 gap-6 px-0 pb-6 pt-6 lg:grid-cols-[600px_378px] lg:gap-8 lg:px-0">
@@ -120,66 +261,25 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
           <div className="h-40 w-full rounded-3xl bg-gradient-to-r from-[#C2185B] via-[#D81B60] to-[#F06292]" />
 
           <div className="mt-[-40px] flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex items-end gap-4 sm:gap-5">
-              <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-zinc-950 bg-zinc-900 shadow-[0_0_0_1px_rgba(39,39,42,0.6)]">
-                {creator.avatarUrl ? (
-                  <img
-                    src={creator.avatarUrl}
-                    alt={creator.displayName ?? creator.username}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-xl font-semibold text-white">
-                    {(creator.displayName ?? creator.username)
-                      .slice(0, 1)
-                      .toUpperCase()}
-                  </div>
-                )}
-              </div>
+            <CreatorIdentitySection
+              displayName={displayName}
+              username={creator.username}
+              avatarUrl={creator.avatarUrl}
+            />
 
-              <div className="pb-1">
-                <h1 className="text-2xl font-semibold tracking-tight text-white">
-                  {creator.displayName ?? creator.username}
-                </h1>
-
-                <p className="mt-1 text-sm text-zinc-500">@{creator.username}</p>
-              </div>
-            </div>
-
-            <div className="flex w-full flex-col gap-3 sm:w-auto sm:items-end sm:gap-4">
-              {isOwner ? (
-                <Link
-                  href="/profile/edit"
-                  className="inline-flex h-12 w-full items-center justify-center rounded-full bg-zinc-800 px-4 text-sm font-semibold text-white transition hover:bg-zinc-700 sm:w-auto"
-                >
-                  Edit profile
-                </Link>
-              ) : (
-                <>
-                  <div className="text-left sm:text-right">
-                    <p className="text-lg font-semibold text-white">
-                      {formatPrice(creator.subscriptionPrice)}
-                    </p>
-                    <p className="mt-1 text-xs text-zinc-500">
-                      monthly subscription
-                    </p>
-                  </div>
-
-                  <div className="w-full sm:min-w-[220px]">
-                    <SubscribeButton
-                      creatorId={creator.id}
-                      creatorUserId={creator.userId}
-                      currentUserId={userId ?? undefined}
-                      creatorUsername={creator.username}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            <CreatorActionSection
+              isOwner={isOwner}
+              creatorId={creator.id}
+              creatorUserId={creator.userId}
+              creatorUsername={creator.username}
+              currentUserId={userId ?? undefined}
+              subscriptionPrice={creator.subscriptionPrice}
+              displayName={displayName}
+            />
           </div>
 
           <p className="mt-6 max-w-2xl text-sm leading-6 text-zinc-400">
-            {creator.bio ?? "No bio yet."}
+            {creator.bio ?? CREATOR_PAGE_PRESENTATION.bioFallback}
           </p>
 
           {!isOwner ? (
@@ -202,36 +302,20 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
             </div>
           ) : null}
 
-          {!isOwner ? (
-            <p className="mt-2 text-sm text-zinc-500">
-              구독자 전용 콘텐츠를 확인할 수 있어요
-            </p>
-          ) : null}
-
-          <div className="mt-4 flex items-center gap-8 text-sm text-zinc-400">
-            <div>
-              <p className="text-base font-semibold text-white">{mediaPosts.length}</p>
-              <p className="mt-1 text-zinc-500">Posts</p>
-            </div>
-
-            <div>
-              <p className="text-base font-semibold text-white">{updatePosts.length}</p>
-              <p className="mt-1 text-zinc-500">Updates</p>
-            </div>
-
-            <div>
-              <p className="text-base font-semibold text-white">
-                {formatCount(summary?.subscriberCount)}
-              </p>
-              <p className="mt-1 text-zinc-500">Subscribers</p>
-            </div>
-          </div>
+          <CreatorStatsSection
+            mediaPostCount={mediaPosts.length}
+            updatePostCount={updatePosts.length}
+            subscriberCount={summary?.subscriberCount}
+          />
 
           <div className="mt-8">
             {isOwner ? <CreatePostComposer creatorId={creator.id} /> : null}
 
             {posts.length === 0 ? (
-              <div className="text-center text-sm text-zinc-500">No posts yet</div>
+              <EmptyState
+                title={CREATOR_SURFACE_EMPTY_STATE.page.title}
+                description={CREATOR_SURFACE_EMPTY_STATE.page.description}
+              />
             ) : (
               <div>
                 <CreatorContentTabs
@@ -247,20 +331,13 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
         <aside className="hidden lg:block w-full max-w-[378px] mx-auto lg:mx-0">
           <div className="space-y-4 lg:sticky lg:top-24">
             {!isOwner ? (
-              <Card className="border-zinc-800 bg-zinc-900/70 p-5">
+              <RestrictedStateShell
+                title={formatPrice(creator.subscriptionPrice)}
+                description={subscriptionPresentation.unlockDescription}
+              >
                 <div className="space-y-4">
-                  <div>
-                    <p className="text-lg font-semibold text-white">
-                      {formatPrice(creator.subscriptionPrice)}
-                    </p>
-                    <p className="mt-1 text-sm text-zinc-500">
-                      monthly subscription
-                    </p>
-                  </div>
-
-                  <p className="text-sm leading-6 text-zinc-400">
-                    Subscribe to unlock posts, updates, and subscriber-only content from{" "}
-                    {creator.displayName ?? creator.username}.
+                  <p className="text-sm text-zinc-500">
+                    {subscriptionPresentation.pricePeriodLabel}
                   </p>
 
                   <SubscribeButton
@@ -270,7 +347,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                     creatorUsername={creator.username}
                   />
                 </div>
-              </Card>
+              </RestrictedStateShell>
             ) : null}
           </div>
         </aside>

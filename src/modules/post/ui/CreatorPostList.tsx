@@ -1,3 +1,5 @@
+import { EmptyState } from "@/shared/ui/EmptyState"
+import { CREATOR_SURFACE_EMPTY_STATE } from "@/modules/creator/ui/creator-surface-policy"
 import { PostCard } from "./PostCard"
 
 type CreatorPostListItem = {
@@ -32,9 +34,10 @@ export function CreatorPostList({
 }: CreatorPostListProps) {
   if (posts.length === 0) {
     return (
-      <section className="rounded-2xl border border-white/10 bg-neutral-950 p-8 text-center text-sm text-white/60">
-        {emptyMessage}
-      </section>
+      <EmptyState
+        title={CREATOR_SURFACE_EMPTY_STATE.postsTab.title}
+        description={emptyMessage || CREATOR_SURFACE_EMPTY_STATE.postsTab.description}
+      />
     )
   }
 
@@ -56,7 +59,6 @@ export function CreatorPostList({
             postId={post.id}
             text={resolvedText}
             createdAt={post.createdAt}
-        
             isLocked={resolvedIsLocked}
             creatorId={post.creatorId ?? ""}
             creatorUserId={post.creatorUserId}

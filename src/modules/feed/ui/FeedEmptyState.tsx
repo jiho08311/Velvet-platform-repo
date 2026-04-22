@@ -1,4 +1,5 @@
 import { EmptyState } from "@/shared/ui/EmptyState"
+import { FEED_EMPTY_STATE } from "./feed-surface-policy"
 
 type FeedEmptyStateProps = {
   title?: string
@@ -6,15 +7,15 @@ type FeedEmptyStateProps = {
 }
 
 export function FeedEmptyState({
-  title = "No feed yet",
-  description = "Subscribe to creators to see posts in your feed.",
+  title = FEED_EMPTY_STATE.defaultTitle,
+  description = FEED_EMPTY_STATE.defaultDescription,
 }: FeedEmptyStateProps) {
   return (
     <EmptyState
       title={title}
       description={description}
-      actionLabel="Explore creators"
-      actionHref="/search"
+      actionLabel={FEED_EMPTY_STATE.actionLabel}
+      actionHref={FEED_EMPTY_STATE.actionHref}
     />
   )
 }

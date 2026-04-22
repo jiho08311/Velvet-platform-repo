@@ -15,9 +15,36 @@ type PostRenderMediaEntry = {
   block?: PostBlock
 }
 
+type ResolvedMediaContext = {
+  mediaById: Map<string, PostRenderMediaItem>
+  resolvedMedia: PostRenderMediaItem[]
+}
+
+function buildResolvedMediaContext(params: {
+  media?: PostRenderMediaItem[]
+}): ResolvedMediaContext {
+  const resolvedMedia = params.media ?? []
+  const mediaById = new Map<string, PostRenderMediaItem>()
+
+  for (const item of resolvedMedia) {
+    const mediaId = item.id?.trim() ?? ""
+
+    if (!mediaId) {
+      continue
+    }
+
+    mediaById.set(mediaId, item)
+  }
+
+  return {
+    mediaById,
+    resolvedMedia,
+  }
+}
+
 function buildMediaEntryMap(params: {
   blocks: PostBlock[]
-  resolvedMedia: PostRenderMediaItem[]
+  mediaById: Map<string, PostRenderMediaItem>
 }): Map<string, PostBlock> {
   const map = new Map<string, PostBlock>()
 
@@ -32,9 +59,7 @@ function buildMediaEntryMap(params: {
       continue
     }
 
-    const matchedMedia = params.resolvedMedia.find((item) => item.id === mediaId)
-
-    if (!matchedMedia) {
+    if (!params.mediaById.has(mediaId)) {
       continue
     }
 
@@ -46,12 +71,6 @@ function buildMediaEntryMap(params: {
 
 function normalizeText(value: string | null | undefined): string {
   return value?.trim() ?? ""
-}
-
-function buildResolvedMedia(params: {
-  media?: PostRenderMediaItem[]
-}): PostRenderMediaItem[] {
-  return params.media ?? []
 }
 
 function buildBlockText(params: {
@@ -72,23 +91,36 @@ function buildBlockText(params: {
 function buildBlockMedia(params: {
   hasBlocks: boolean
   blocks: PostBlock[]
+  mediaById: Map<string, PostRenderMediaItem>
   resolvedMedia: PostRenderMediaItem[]
 }): PostRenderMediaItem[] {
   if (!params.hasBlocks || params.resolvedMedia.length === 0) {
     return params.resolvedMedia
   }
 
-  return params.blocks
-    .filter(
-      (block) =>
-        block.type !== "text" &&
-        block.mediaId &&
-        params.resolvedMedia.some((item) => item.id === block.mediaId)
-    )
-    .map((block) =>
-      params.resolvedMedia.find((item) => item.id === block.mediaId)
-    )
-    .filter((item): item is PostRenderMediaItem => Boolean(item))
+  const blockMedia: PostRenderMediaItem[] = []
+
+  for (const block of params.blocks) {
+    if (block.type === "text") {
+      continue
+    }
+
+    const mediaId = block.mediaId?.trim() ?? ""
+
+    if (!mediaId) {
+      continue
+    }
+
+    const mediaItem = params.mediaById.get(mediaId)
+
+    if (!mediaItem) {
+      continue
+    }
+
+    blockMedia.push(mediaItem)
+  }
+
+  return blockMedia
 }
 
 function buildGroupedBlocks(params: {
@@ -100,13 +132,38 @@ function buildGroupedBlocks(params: {
     return []
   }
 
+  const blockMediaById = new Map<string, PostRenderMediaItem>()
+
+  for (const item of params.blockMedia) {
+    const mediaId = item.id?.trim() ?? ""
+
+    if (!mediaId) {
+      continue
+    }
+
+    blockMediaById.set(mediaId, item)
+  }
+
   const mediaEntryMap = buildMediaEntryMap({
     blocks: params.blocks,
-    resolvedMedia: params.blockMedia,
+    mediaById: blockMediaById,
   })
 
   const groupedBlocks: PostRenderGroup[] = []
   const visitedCarousel = new Set<string>()
+  const carouselBlockMap = new Map<string, PostBlock[]>()
+
+  for (const block of params.blocks) {
+    const groupId = block.editorState?.carousel?.groupId
+
+    if (!groupId) {
+      continue
+    }
+
+    const currentGroup = carouselBlockMap.get(groupId) ?? []
+    currentGroup.push(block)
+    carouselBlockMap.set(groupId, currentGroup)
+  }
 
   for (let i = 0; i < params.blocks.length; i++) {
     const block = params.blocks[i]
@@ -130,8 +187,7 @@ function buildGroupedBlocks(params: {
 
       visitedCarousel.add(groupId)
 
-      const blocks = params.blocks
-        .filter((candidate) => candidate.editorState?.carousel?.groupId === groupId)
+      const blocks = (carouselBlockMap.get(groupId) ?? [])
         .sort((a, b) => {
           const aIndex = a.editorState?.carousel?.index ?? 0
           const bIndex = b.editorState?.carousel?.index ?? 0
@@ -144,7 +200,7 @@ function buildGroupedBlocks(params: {
         const mediaId = groupedBlock.mediaId?.trim() ?? ""
         if (!mediaId) continue
 
-        const mediaItem = params.blockMedia.find((item) => item.id === mediaId)
+        const mediaItem = blockMediaById.get(mediaId)
         if (!mediaItem) continue
 
         mediaEntries.push({
@@ -168,9 +224,7 @@ function buildGroupedBlocks(params: {
     }
 
     const mediaId = block.mediaId?.trim() ?? ""
-    const mediaItem = mediaId
-      ? params.blockMedia.find((item) => item.id === mediaId)
-      : undefined
+    const mediaItem = mediaId ? blockMediaById.get(mediaId) : undefined
 
     if (!mediaItem) {
       continue
@@ -196,7 +250,7 @@ export function buildPostRenderInput(params: BuildPostRenderInputParams) {
   const blocks = params.blocks ?? []
   const hasBlocks = blocks.length > 0
 
-  const resolvedMedia = buildResolvedMedia({
+  const { resolvedMedia, mediaById } = buildResolvedMediaContext({
     media: params.media,
   })
 
@@ -209,6 +263,7 @@ export function buildPostRenderInput(params: BuildPostRenderInputParams) {
   const blockMedia = buildBlockMedia({
     hasBlocks,
     blocks,
+    mediaById,
     resolvedMedia,
   })
 
@@ -225,7 +280,7 @@ export function buildPostRenderInput(params: BuildPostRenderInputParams) {
 
   const mediaBlockMap = buildMediaEntryMap({
     blocks,
-    resolvedMedia: blockMedia,
+    mediaById,
   })
 
   const resolvedMediaEntries = blockMedia.map((item) => ({

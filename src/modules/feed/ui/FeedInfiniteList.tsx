@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { FeedList } from "./FeedList"
 import { FeedListSkeleton } from "./FeedListSkeleton"
 import type { PostBlockEditorState } from "@/modules/post/types"
+import { FEED_LOADING_STATE } from "./feed-surface-policy"
 
 type FeedInfiniteListPost = {
   id: string
@@ -47,6 +48,8 @@ type FeedInfiniteListProps = {
   initialPosts: FeedInfiniteListPost[]
   initialCursor: string | null
   currentUserId?: string
+  emptyTitle?: string
+  emptyMessage?: string
 }
 
 type FeedApiItem = {
@@ -116,14 +119,14 @@ export function FeedInfiniteList({
   initialPosts,
   initialCursor,
   currentUserId,
+  emptyTitle,
+  emptyMessage,
 }: FeedInfiniteListProps) {
   const [posts, setPosts] = useState(initialPosts)
   const [cursor, setCursor] = useState<string | null>(initialCursor)
   const [isLoading, setIsLoading] = useState(false)
   const [hasMore, setHasMore] = useState(Boolean(initialCursor))
   const sentinelRef = useRef<HTMLDivElement | null>(null)
-
-  const postIds = useMemo(() => new Set(posts.map((post) => post.id)), [posts])
 
   useEffect(() => {
     if (!hasMore || isLoading) return
@@ -187,13 +190,24 @@ export function FeedInfiniteList({
     }
   }, [cursor, hasMore, isLoading, currentUserId])
 
+  const shouldRenderSentinel = hasMore
+  const shouldRenderTailLoading = isLoading
+
   return (
     <>
-      <FeedList posts={posts} />
+      <FeedList
+        posts={posts}
+        emptyTitle={emptyTitle}
+        emptyMessage={emptyMessage}
+      />
 
-      {hasMore ? <div ref={sentinelRef} className="h-1 w-full" /> : null}
+      {shouldRenderSentinel ? (
+        <div ref={sentinelRef} className="h-1 w-full" />
+      ) : null}
 
-      {isLoading ? <FeedListSkeleton count={2} /> : null}
+      {shouldRenderTailLoading ? (
+        <FeedListSkeleton count={FEED_LOADING_STATE.infiniteTailSkeletonCount} />
+      ) : null}
     </>
   )
 }

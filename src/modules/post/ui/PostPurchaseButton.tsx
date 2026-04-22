@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk"
+import { Button } from "@/shared/ui/Button"
+import { resolvePurchaseCTA } from "@/shared/ui/cta-state"
 
 type Props = {
   postId: string
@@ -90,23 +92,28 @@ export default function PostPurchaseButton({
     }
   }
 
+  // ✅ CTA 상태 중앙화 (최소 추가)
+  const cta = resolvePurchaseCTA({
+    loading,
+  })
+
   return (
     <div className={embedded ? "mt-0" : "flex flex-col gap-2"}>
-      <button
+      <Button
         type="button"
         onClick={handlePurchase}
-        disabled={loading}
-        className={
-          embedded
-            ? "inline-flex items-center justify-center rounded-xl bg-[#C2185B] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#D81B60] disabled:cursor-not-allowed disabled:opacity-50"
-            : "w-full rounded-xl bg-[#C2185B] py-2 text-sm font-medium text-white"
-        }
+        loading={cta.primary.loading}
+        loadingLabel={cta.primary.loadingLabel}
+        embedded={embedded}
+        fullWidth={!embedded}
       >
-        {loading ? "처리 중..." : "이용권 구매"}
-      </button>
+        {cta.primary.label}
+      </Button>
 
       {!embedded ? (
-        <p className="text-center text-xs text-zinc-500">프리미엄 콘텐츠 이용</p>
+        <p className="text-center text-xs text-zinc-500">
+          프리미엄 콘텐츠 이용
+        </p>
       ) : null}
 
       {error ? (

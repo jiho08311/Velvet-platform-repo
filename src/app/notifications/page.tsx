@@ -15,7 +15,16 @@ type ProfileRow = {
   username: string | null
 }
 
-function getNotificationTone(type: NotificationType) {
+type NotificationBadgeTone =
+  | "default"
+  | "neutral"
+  | "subtle"
+  | "info"
+  | "success"
+  | "warning"
+  | "danger"
+
+function getNotificationTone(type: NotificationType): NotificationBadgeTone {
   switch (type) {
     case "subscription_started":
       return "success"
@@ -127,52 +136,55 @@ export default async function NotificationsPage() {
 
         <Card className="overflow-hidden p-0">
           {notifications.length === 0 ? (
-            <div className="p-6">
-              <EmptyState
-                title="No notifications yet"
-                description="New updates will appear here as they happen."
-              />
-            </div>
+            <EmptyState
+              title="No notifications yet"
+              description="New updates will appear here as they happen."
+            />
           ) : (
             <ul className="divide-y divide-zinc-800">
-              {notifications.map((notification) => (
-                <li key={notification.id}>
-                  <Link
-                    href={`/notifications/${notification.id}`}
-                    className={`block px-5 py-4 transition hover:bg-zinc-900/80 ${
-                      notification.isRead ? "bg-transparent" : "bg-zinc-800/70"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <StatusBadge
-                            label={getNotificationLabel(notification.type)}
-                            tone={getNotificationTone(notification.type)}
-                          />
-                          {!notification.isRead ? (
-                            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-[#C2185B]" />
-                          ) : null}
+              {notifications.map((notification) => {
+                const badgeLabel = getNotificationLabel(notification.type)
+                const badgeTone = getNotificationTone(notification.type)
+
+                return (
+                  <li key={notification.id}>
+                    <Link
+                      href={`/notifications/${notification.id}`}
+                      className={`block px-5 py-4 transition hover:bg-zinc-900/80 ${
+                        notification.isRead ? "bg-transparent" : "bg-zinc-800/70"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <StatusBadge
+                              label={badgeLabel}
+                              tone={badgeTone}
+                            />
+                            {!notification.isRead ? (
+                              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-[#C2185B]" />
+                            ) : null}
+                          </div>
+
+                          <p
+                            className={`mt-2 whitespace-pre-wrap text-sm leading-6 ${
+                              notification.isRead
+                                ? "font-normal text-zinc-400"
+                                : "font-semibold text-white"
+                            }`}
+                          >
+                            {notification.body}
+                          </p>
+
+                          <p className="mt-1.5 text-xs text-zinc-500">
+                            {new Date(notification.createdAt).toLocaleString()}
+                          </p>
                         </div>
-
-                        <p
-                          className={`mt-2 whitespace-pre-wrap text-sm leading-6 ${
-                            notification.isRead
-                              ? "font-normal text-zinc-400"
-                              : "font-semibold text-white"
-                          }`}
-                        >
-                          {notification.body}
-                        </p>
-
-                        <p className="mt-1.5 text-xs text-zinc-500">
-                          {new Date(notification.createdAt).toLocaleString()}
-                        </p>
                       </div>
-                    </div>
-                  </Link>
-                </li>
-              ))}
+                    </Link>
+                  </li>
+                )
+              })}
             </ul>
           )}
         </Card>

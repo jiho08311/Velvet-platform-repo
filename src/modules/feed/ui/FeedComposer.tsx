@@ -1,15 +1,18 @@
 "use client"
 
+import { Button } from "@/shared/ui/Button"
 import { useEffect, useRef, useState, useTransition } from "react"
 import { createFeedPostAction } from "@/modules/post/server/create-feed-post-action"
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/client"
+import { Card } from "@/shared/ui/Card"
 import type { CreatePostUploadedMediaInput } from "@/modules/post/types"
+import { resolveComposerCTA } from "@/shared/ui/cta-state"
+import { FEED_COMPOSER_ACTIONS } from "./feed-surface-policy"
+
 type FeedComposerProps = {
   placeholder?: string
   userId: string
 }
-
-
 
 type ComposerFileItem = {
   id: string
@@ -42,13 +45,15 @@ function createFileItem(file: File): ComposerFileItem {
   }
 }
 
-async function uploadFilesDirect(files: File[]): Promise<CreatePostUploadedMediaInput[]> {
+async function uploadFilesDirect(
+  files: File[]
+): Promise<CreatePostUploadedMediaInput[]> {
   if (files.length === 0) {
     return []
   }
 
   const supabase = createSupabaseBrowserClient()
-const uploaded: CreatePostUploadedMediaInput[] = []
+  const uploaded: CreatePostUploadedMediaInput[] = []
 
   for (const file of files) {
     const path = buildClientUploadPath(file)
@@ -197,6 +202,12 @@ export function FeedComposer({
     })
   }
 
+  const isDisabled = !text.trim() && selectedItems.length === 0
+  const cta = resolveComposerCTA({
+    loading: isPending,
+    disabled: isDisabled,
+  })
+
   function renderPreviewGrid() {
     const count = selectedItems.length
 
@@ -295,7 +306,7 @@ export function FeedComposer({
   }
 
   return (
-    <div className="w-full rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4">
+    <Card className="p-4">
       <textarea
         ref={textareaRef}
         value={text}
@@ -307,17 +318,21 @@ export function FeedComposer({
 
       {renderPreviewGrid()}
 
-      <div className="mt-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <select
             value={visibility}
             onChange={(e) =>
               setVisibility(e.target.value as "public" | "subscribers")
             }
-            className="h-9 rounded-full border border-zinc-700 bg-zinc-900 px-3 text-xs text-white"
+            className="h-11 rounded-2xl border border-zinc-800 bg-zinc-900 px-3 text-xs font-medium text-white"
           >
-            <option value="public">Public</option>
-            <option value="subscribers">Subscribers</option>
+            <option value="public">
+              {FEED_COMPOSER_ACTIONS.visibilityPublicLabel}
+            </option>
+            <option value="subscribers">
+              {FEED_COMPOSER_ACTIONS.visibilitySubscribersLabel}
+            </option>
           </select>
 
           <input
@@ -331,34 +346,33 @@ export function FeedComposer({
             className="hidden"
           />
 
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             onClick={() => fileInputRef.current?.click()}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-white"
           >
-            +
-          </button>
+            {FEED_COMPOSER_ACTIONS.attachLabel}
+          </Button>
 
           {selectedItems.length > 0 ? (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={clearFiles}
-              className="h-9 rounded-full border border-zinc-700 bg-zinc-900 px-3 text-xs text-white"
             >
-              Clear
-            </button>
+              {FEED_COMPOSER_ACTIONS.clearLabel}
+            </Button>
           ) : null}
         </div>
 
-        <button
+        <Button
           onClick={handleSubmit}
-          disabled={(!text.trim() && selectedItems.length === 0) || isPending}
-          className="h-9 rounded-full bg-[#C2185B] px-4 text-xs font-semibold text-white disabled:opacity-50"
+          disabled={cta.primary.disabled}
+          loading={cta.primary.loading}
+          loadingLabel={cta.primary.loadingLabel}
         >
-          {isPending ? "Posting..." : "Post"}
-        </button>
+          {cta.primary.label}
+        </Button>
       </div>
-    </div>
+    </Card>
   )
 }
 

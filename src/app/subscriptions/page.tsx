@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 
 import { getSession } from "@/modules/auth/server/get-session"
 import { listSubscriptions } from "@/modules/subscription/server/list-subscriptions"
+import { EmptyState } from "@/shared/ui/EmptyState"
 
 type SubscriptionListItem = {
   id: string
@@ -190,20 +191,12 @@ export default async function SubscriptionsPage() {
         </div>
 
         {subscriptions.length === 0 ? (
-          <section className="rounded-3xl border border-dashed border-zinc-800 bg-zinc-900/40 p-10 text-center sm:p-12">
-            <h2 className="text-2xl font-semibold text-white">
-              No subscriptions yet
-            </h2>
-            <p className="mt-3 text-sm leading-6 text-zinc-400">
-              Once you subscribe to creators, they will appear here.
-            </p>
-            <Link
-              href="/explore"
-              className="mt-6 inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200"
-            >
-              Explore creators
-            </Link>
-          </section>
+          <EmptyState
+            title="No subscriptions yet"
+            description="Once you subscribe to creators, they will appear here."
+            actionLabel="Explore creators"
+            actionHref="/explore"
+          />
         ) : (
           <section className="grid gap-4">
             {subscriptions.map((subscription) => (
@@ -253,24 +246,10 @@ export default async function SubscriptionsPage() {
                   <div className="flex flex-wrap items-center gap-3">
                     <Link
                       href={`/creator/${subscription.creator.username}`}
-                      className="inline-flex items-center rounded-full border border-zinc-700 px-4 py-2 text-sm text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-900"
+                      className="inline-flex items-center rounded-full border border-zinc-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-800"
                     >
                       View creator
                     </Link>
-
-                    <Link
-                      href={`/subscriptions/${subscription.id}`}
-                      className="inline-flex items-center rounded-full border border-zinc-700 px-4 py-2 text-sm text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-900"
-                    >
-                      View subscription
-                    </Link>
-
-                    <button
-                      type="button"
-                      className="rounded-full bg-red-500/10 px-4 py-2 text-sm font-medium text-red-300 transition hover:bg-red-500/20"
-                    >
-                      Unsubscribe
-                    </button>
                   </div>
                 </div>
               </article>

@@ -2,11 +2,13 @@
 
 import Link from "next/link"
 import { Avatar } from "@/shared/ui/Avatar"
+import { Card } from "@/shared/ui/Card"
+import { StatusBadge } from "@/shared/ui/StatusBadge"
 import { formatInUserTimeZone } from "@/shared/lib/date-time"
-
+import { FEED_UPCOMING_STATE } from "./feed-surface-policy"
 
 type UpcomingCardProps = {
-  title: string
+  title?: string
   previewText: string | null
   scheduledAt: string
   creator: {
@@ -17,70 +19,70 @@ type UpcomingCardProps = {
 }
 
 export function UpcomingCard({
-  title: _title,
-  previewText: _previewText,
+  title = FEED_UPCOMING_STATE.defaultTitle,
+  previewText,
   scheduledAt,
   creator,
 }: UpcomingCardProps) {
   const creatorName = creator.displayName ?? creator.username
+  const hasPreviewText = Boolean(previewText?.trim())
 
   return (
-    <section className="px-4 py-3">
-      <div className="rounded-3xl border-2 border-[#C2185B]/40 bg-white px-5 py-4 shadow-sm">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <img
-              src="/logo-mark-removebg.png"
-              alt=""
-              aria-hidden="true"
-              className="h-10 w-10 animate-pulse object-contain"
-            />
+    <Card className="p-4">
+      <div className="flex items-start justify-between gap-4">
+        <StatusBadge
+          label={FEED_UPCOMING_STATE.badgeLabel}
+          tone={FEED_UPCOMING_STATE.badgeTone}
+        />
 
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#C2185B] animate-pulse">
-              Upcoming
+        <p className="shrink-0 text-xs font-medium text-zinc-400">
+          {formatInUserTimeZone(scheduledAt, { withTime: true })}
+        </p>
+      </div>
+
+      <div className="mt-4 flex items-center gap-3">
+        <Link
+          href={`/creator/${creator.username}`}
+          className="shrink-0"
+        >
+          <Avatar
+            src={creator.avatarUrl}
+            alt={creator.username}
+            fallback={creatorName}
+            size="md"
+          />
+        </Link>
+
+        <div className="min-w-0">
+          <Link
+            href={`/creator/${creator.username}`}
+            className="block"
+          >
+            <p className="truncate text-base font-semibold text-white transition hover:opacity-80">
+              {creatorName}
             </p>
-          </div>
+          </Link>
 
-          <p className="shrink-0 rounded-full border border-[#C2185B]/25 bg-[#C2185B]/10 px-3 py-1.5 text-xs font-medium text-[#C2185B]">
-    {formatInUserTimeZone(scheduledAt, { withTime: true })}
+          <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+            {title}
           </p>
         </div>
-
-        <div className="mt-4 flex items-center gap-3">
-          <Link href={`/creator/${creator.username}`} className="shrink-0">
-            <Avatar
-              src={creator.avatarUrl}
-              alt={creator.username}
-              fallback={creatorName}
-              size="md"
-            />
-          </Link>
-
-          <div className="min-w-0">
-            <Link
-              href={`/creator/${creator.username}`}
-              className="block"
-            >
-              <p className="truncate text-base font-semibold text-zinc-900 transition hover:opacity-80">
-                {creatorName}
-              </p>
-            </Link>
-
-            <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-              Velvet drop
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-3 flex justify-end">
-          <Link
-            href="/drops"
-            className="text-xs font-medium !text-zinc-700 transition hover:underline"
-          >
-            See upcoming posts →
-          </Link>
-        </div>
       </div>
-    </section>
+
+      {hasPreviewText ? (
+        <p className="mt-3 line-clamp-2 whitespace-pre-wrap text-sm leading-6 text-zinc-300">
+          {previewText}
+        </p>
+      ) : null}
+
+      <div className="mt-4 flex justify-end">
+        <Link
+          href={FEED_UPCOMING_STATE.actionHref}
+          className="text-xs font-medium text-zinc-300 transition hover:text-white hover:underline"
+        >
+          {FEED_UPCOMING_STATE.actionLabel}
+        </Link>
+      </div>
+    </Card>
   )
 }
