@@ -7,6 +7,20 @@ type ResolveCreatePostSubmitCTAParams = {
   publishMode: "now" | "scheduled"
 }
 
+export function resolveCreatePostComposerErrorPresentation(
+  message: string | null
+) {
+  if (!message) {
+    return null
+  }
+
+  return {
+    message,
+    className:
+      "rounded-3xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300",
+  }
+}
+
 export function resolvePostComposerSubmitCTA(
   params: ResolvePostComposerSubmitCTAParams
 ) {

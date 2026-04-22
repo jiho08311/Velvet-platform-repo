@@ -10,6 +10,7 @@ import type {
   CreatePostUploadedMediaInput,
 } from "../types"
 import { CreatePostForm } from "./CreatePostForm"
+import { resolveCreatePostComposerErrorPresentation } from "./post-composer-ui-state"
 
 
 
@@ -192,12 +193,13 @@ export function CreatePostComposer({
 }: CreatePostComposerProps) {
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const errorPresentation = resolveCreatePostComposerErrorPresentation(error)
 
   return (
     <div className="space-y-4">
-      {error ? (
-        <div className="rounded-3xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-          {error}
+      {errorPresentation ? (
+        <div className={errorPresentation.className}>
+          {errorPresentation.message}
         </div>
       ) : null}
 
