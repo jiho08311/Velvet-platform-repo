@@ -1,3 +1,6 @@
+import { Button } from "@/shared/ui/Button"
+import { resolvePostComposerSubmitCTA } from "./post-composer-ui-state"
+
 type PostComposerVisibility = "public" | "subscribers"
 
 type PostComposerProps = {
@@ -19,6 +22,10 @@ export function PostComposer({
   onVisibilityChange,
   onSubmit,
 }: PostComposerProps) {
+  const submitCTA = resolvePostComposerSubmitCTA({
+    disabled,
+  })
+
   return (
     <section className="rounded-2xl border border-white/10 bg-neutral-950 p-5">
       <div className="flex flex-col gap-4">
@@ -66,14 +73,14 @@ export function PostComposer({
         </div>
 
         <div className="flex justify-end">
-          <button
+          <Button
             type="button"
-            disabled={disabled}
+            disabled={submitCTA.disabled}
             onClick={onSubmit}
-            className="inline-flex h-11 items-center justify-center rounded-full border border-white/10 bg-white px-5 text-sm font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="min-h-[44px] border border-white/10 bg-white px-5 font-medium text-black hover:bg-white/90"
           >
-            Publish
-          </button>
+            {submitCTA.label}
+          </Button>
         </div>
       </div>
     </section>
