@@ -8,7 +8,11 @@ import type {
   CreatePostDraftBlock,
   PostBlockEditorState,
 } from "@/modules/post/types"
-import { resolveCreatePostSubmitCTA } from "./post-composer-ui-state"
+import {
+  getComposerMinorCTAClassName,
+  resolveComposerToolChipClassName,
+  resolveCreatePostSubmitCTA,
+} from "./post-composer-ui-state"
 
 type PostVisibility = "public" | "subscribers"
 type PublishMode = "now" | "scheduled"
@@ -1483,11 +1487,9 @@ onSubmitPost({
                             enableImageOverlayText(block.id)
                             setActiveMediaTool(block.id, "text")
                           }}
-                          className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                          className={resolveComposerToolChipClassName(
                             getActiveMediaTool(block.id) === "text"
-                              ? "bg-white text-black"
-                              : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                          }`}
+                          )}
                         >
                           Text
                         </button>
@@ -1495,11 +1497,9 @@ onSubmitPost({
                         <button
                           type="button"
                           onClick={() => setActiveMediaTool(block.id, "filter")}
-                          className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                          className={resolveComposerToolChipClassName(
                             getActiveMediaTool(block.id) === "filter"
-                              ? "bg-white text-black"
-                              : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                          }`}
+                          )}
                         >
                           Filter
                         </button>
@@ -1510,7 +1510,7 @@ onSubmitPost({
     pendingCarouselBlockIdRef.current = block.id
     carouselFileInputRef.current?.click()
   }}
-  className="rounded-full bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:bg-zinc-700"
+  className={getComposerMinorCTAClassName()}
 >
   +
 </button>
@@ -1581,11 +1581,9 @@ onSubmitPost({
                       <button
                         type="button"
                         onClick={() => setActiveMediaTool(block.id, "trim")}
-                        className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                        className={resolveComposerToolChipClassName(
                           getActiveMediaTool(block.id) === "trim"
-                            ? "bg-white text-black"
-                            : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                        }`}
+                        )}
                       >
                         Trim
                       </button>
@@ -1607,7 +1605,7 @@ onSubmitPost({
     pendingCarouselBlockIdRef.current = block.id
     carouselFileInputRef.current?.click()
   }}
-  className="rounded-full px-3 py-1.5 text-xs font-medium transition bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+  className={getComposerMinorCTAClassName()}
 >
   +
 </button>
@@ -1622,7 +1620,7 @@ onSubmitPost({
                             !(block.editorState?.video?.muted ?? true)
                           )
                         }
-                        className="rounded-full bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:bg-zinc-700"
+                        className={getComposerMinorCTAClassName()}
                       >
                         {(block.editorState?.video?.muted ?? true)
                           ? "Sound On"

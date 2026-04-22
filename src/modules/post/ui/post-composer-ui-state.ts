@@ -7,6 +7,12 @@ type ResolveCreatePostSubmitCTAParams = {
   publishMode: "now" | "scheduled"
 }
 
+const COMPOSER_TOOL_CHIP_BASE_CLASS_NAME =
+  "rounded-full px-3 py-1.5 text-xs font-medium transition"
+
+const COMPOSER_MINOR_CTA_CLASS_NAME =
+  "rounded-full bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:bg-zinc-700"
+
 export function resolveCreatePostComposerErrorPresentation(
   message: string | null
 ) {
@@ -19,6 +25,16 @@ export function resolveCreatePostComposerErrorPresentation(
     className:
       "rounded-3xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300",
   }
+}
+
+export function resolveComposerToolChipClassName(active: boolean) {
+  return `${COMPOSER_TOOL_CHIP_BASE_CLASS_NAME} ${
+    active ? "bg-white text-black" : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+  }`
+}
+
+export function getComposerMinorCTAClassName() {
+  return COMPOSER_MINOR_CTA_CLASS_NAME
 }
 
 export function resolvePostComposerSubmitCTA(
