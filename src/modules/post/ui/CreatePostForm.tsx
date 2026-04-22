@@ -2,11 +2,13 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react"
 import { StoryVideoTrimField } from "@/modules/media/ui/StoryVideoTrimField"
+import { Button } from "@/shared/ui/Button"
 import type {
   CreatePostCarouselItem,
   CreatePostDraftBlock,
   PostBlockEditorState,
 } from "@/modules/post/types"
+import { resolveCreatePostSubmitCTA } from "./post-composer-ui-state"
 
 type PostVisibility = "public" | "subscribers"
 type PublishMode = "now" | "scheduled"
@@ -135,8 +137,6 @@ export function CreatePostForm({
   initialVisibility,
   initialBlocks,
 }: CreatePostFormProps) {
-
-
 const [blocks, setBlocks] = useState<EditorBlock[]>(() => {
   if (initialBlocks && initialBlocks.length > 0) {
     return initialBlocks.map((block): EditorBlock => {
@@ -201,6 +201,10 @@ const [blocks, setBlocks] = useState<EditorBlock[]>(() => {
 
   const [publishMode, setPublishMode] = useState<PublishMode>("now")
 const [publishedAt, setPublishedAt] = useState("")
+  const submitCTA = resolveCreatePostSubmitCTA({
+    isSubmitting,
+    publishMode,
+  })
   const [draggingBlockId, setDraggingBlockId] = useState<string | null>(null)
 const [dropTargetBlockId, setDropTargetBlockId] = useState<string | null>(null)
 
@@ -1737,19 +1741,13 @@ onSubmitPost({
           </button>
         </div>
 
-        <button
+        <Button
           type="submit"
-          disabled={isSubmitting}
-          className="inline-flex h-12 items-center justify-center rounded-full bg-pink-600 px-6 text-sm font-semibold text-white transition hover:bg-pink-500 disabled:opacity-50"
+          disabled={submitCTA.disabled}
+          className="min-h-[48px] bg-pink-600 px-6 hover:bg-pink-500"
         >
-    {isSubmitting
-  ? publishMode === "scheduled"
-    ? "Scheduling..."
-    : "Publishing..."
-  : publishMode === "scheduled"
-    ? "Schedule"
-    : "Publish"}
-        </button>
+          {submitCTA.label}
+        </Button>
       </div>
     </form>
   )
