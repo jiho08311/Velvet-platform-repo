@@ -1,12 +1,8 @@
 // src/app/onboarding/page.tsx
 import { redirect } from "next/navigation"
 import { createClient } from "@/infrastructure/supabase/server"
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { readOnboardingReadiness } from "@/modules/auth/server/read-onboarding-readiness"
 import { OnboardingForm } from "@/modules/profile/ui/OnboardingForm"
-
-type ProfileRow = {
-  username: string | null
-}
 
 export default async function OnboardingPage() {
   const supabase = await createClient()
@@ -19,17 +15,11 @@ export default async function OnboardingPage() {
     redirect("/sign-in")
   }
 
-  const { data: profile, error } = await supabaseAdmin
-    .from("profiles")
-    .select("username")
-    .eq("id", user.id)
-    .maybeSingle<ProfileRow>()
+  const readiness = await readOnboardingReadiness({
+    userId: user.id,
+  })
 
-  if (error) {
-    throw error
-  }
-
-  if (profile?.username) {
+  if (readiness.ok) {
     redirect("/")
   }
 
