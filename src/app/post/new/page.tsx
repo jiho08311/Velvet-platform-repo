@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 
 import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
+import { readOnboardingReadiness } from "@/modules/auth/server/read-onboarding-readiness"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { CreatePostComposer } from "@/modules/post/ui/CreatePostComposer"
@@ -10,6 +11,14 @@ export default async function NewPostPage() {
 
   if (!user) {
     redirect("/sign-in?next=/post/new")
+  }
+
+  const readiness = await readOnboardingReadiness({
+    userId: user.id,
+  })
+
+  if (!readiness.ok) {
+    redirect("/onboarding")
   }
 
   try {
