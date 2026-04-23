@@ -1,15 +1,24 @@
 import { redirect } from "next/navigation";
 import { becomeCreatorAction } from "./actions";
-import { requireUser } from "@/modules/auth/server/require-user";
+import { readOnboardingReadiness } from "@/modules/auth/server/read-onboarding-readiness";
+import { requireActiveUser } from "@/modules/auth/server/require-active-user";
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id";
 
 export default async function BecomeCreatorPage() {
-  let user: Awaited<ReturnType<typeof requireUser>>;
+  let user: Awaited<ReturnType<typeof requireActiveUser>>;
 
   try {
-    user = await requireUser();
+    user = await requireActiveUser();
   } catch {
     redirect("/sign-in?next=/become-creator");
+  }
+
+  const readiness = await readOnboardingReadiness({
+    userId: user.id,
+  });
+
+  if (!readiness.ok) {
+    redirect("/onboarding");
   }
 
   const creator = await getCreatorByUserId(user.id);
