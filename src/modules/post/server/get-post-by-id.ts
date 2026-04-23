@@ -6,7 +6,8 @@ import { getPostAccess } from "./get-post-access"
 import { getPostMedia } from "./get-post-media"
 import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
 import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
-import { buildPostRenderInput } from "@/modules/post/ui/post-render-input"
+import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
+import { mapItemsToPostRenderMedia } from "./post-render-read-model"
 
 type PostRow = {
   id: string
@@ -231,13 +232,7 @@ export async function getPostById(
   const renderInput = buildPostRenderInput({
     text: access.canView ? (post.content ?? "") : "",
     blocks: access.canView ? rawBlocks : [],
-    media: media.map((item) => ({
-      id: item.id,
-      url: item.url,
-      type: item.type,
-      mimeType: item.mimeType,
-      sortOrder: item.sortOrder,
-    })),
+    media: mapItemsToPostRenderMedia(media),
   })
 
   const lockReason: "none" | "subscription" | "purchase" = access.canView

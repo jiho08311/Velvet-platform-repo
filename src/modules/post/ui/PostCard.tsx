@@ -12,7 +12,7 @@ import {
   ChatBubbleOvalLeftIcon,
 } from "@heroicons/react/24/outline"
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline"
-import { buildPostRenderInput } from "./post-render-input"
+import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid"
 import { formatInUserTimeZone } from "@/shared/lib/date-time"
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
@@ -40,7 +40,13 @@ type CommentItem = {
     | null
 }
 
-type PostCardProps = {
+export type PostCardCreator = {
+  username: string
+  displayName: string | null
+  avatarUrl: string | null
+}
+
+export type PostCardSurfaceProps = {
   commentsCount?: number
   postId?: string
   text?: string
@@ -55,11 +61,7 @@ type PostCardProps = {
   currentUserId?: string
   likesCount?: number
   isLiked?: boolean
-  creator: {
-    username: string
-    displayName: string | null
-    avatarUrl: string | null
-  }
+  creator: PostCardCreator
 }
 
 function formatPostDate(value: string) {
@@ -97,7 +99,7 @@ export function PostCard({
   commentsCount = 0,
   isLiked = false,
   creator,
-}: PostCardProps) {
+}: PostCardSurfaceProps) {
   const router = useRouter()
   const pathname = usePathname()
 

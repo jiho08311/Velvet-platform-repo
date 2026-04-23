@@ -1,8 +1,9 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { getPostBlocks } from "@/modules/post/server/get-post-blocks"
-import { buildPostRenderInput } from "@/modules/post/ui/post-render-input"
-import type { EditPostDraftBlock } from "@/modules/post/server/edit-post-draft-policy"
+import { buildPostEditorDraftFromPostBlocks } from "@/modules/post/server/post-editor-draft-normalizer"
+import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
+import type { CreateOrEditPostFormBlock } from "@/modules/post/types"
 
 export type CreatorStudioPostDetail = {
   id: string
@@ -20,7 +21,7 @@ export type CreatorStudioPostDetail = {
     url: string
     type: "image" | "video" | "audio" | "file"
   }[]
-  blocks: EditPostDraftBlock[]
+  blocks: CreateOrEditPostFormBlock[]
 }
 
 type GetCreatorStudioPostParams = {
@@ -50,71 +51,6 @@ type MediaRow = {
   status: "processing" | "ready" | "failed"
   sort_order: number
 }
-
-
-function isEditableRawBlockType(
-  value: string
-): value is "text" | "image" | "video" | "audio" | "file" {
-  return (
-    value === "text" ||
-    value === "image" ||
-    value === "video" ||
-    value === "audio" ||
-    value === "file"
-  )
-}
-
-function buildEditDraftBlocksFromRawBlocks(params: {
-  blocks: {
-    id: string
-    postId: string
-    type: string
-    content: string | null
-    mediaId: string | null
-    sortOrder: number
-    createdAt: string
-    editorState?: unknown | null
-  }[]
-}): EditPostDraftBlock[] {
-  const sortedBlocks = [...params.blocks].sort((a, b) => a.sortOrder - b.sortOrder)
-
-  const result: EditPostDraftBlock[] = []
-
-  for (const block of sortedBlocks) {
-    if (!isEditableRawBlockType(block.type)) {
-      continue
-    }
-
-    if (block.type === "text") {
-      result.push({
-        type: "text",
-        content: block.content ?? "",
-        sortOrder: block.sortOrder,
-        editorState: (block.editorState as any) ?? null,
-      })
-      continue
-    }
-
-    if (!block.mediaId) {
-      continue
-    }
-
-    result.push({
-      type: block.type,
-      sortOrder: block.sortOrder,
-      media: {
-        kind: "existing",
-        mediaId: block.mediaId,
-      },
-      editorState: (block.editorState as any) ?? null,
-      content: null,
-    })
-  }
-
-  return result
-}
-
-  
 
 export async function getCreatorStudioPost({
   postId,
@@ -185,6 +121,8 @@ export async function getCreatorStudioPost({
     })),
   })
 
+  const initialDraftBlocks = buildPostEditorDraftFromPostBlocks(rawBlocks)
+
   return {
     id: post.id,
     creatorId: post.creator_id,
@@ -197,17 +135,6 @@ export async function getCreatorStudioPost({
     updatedAt: post.updated_at,
     deletedAt: post.deleted_at,
     media,
-    blocks: buildEditDraftBlocksFromRawBlocks({
-      blocks: rawBlocks.map((block) => ({
-        id: block.id,
-        postId: block.postId,
-        type: block.type,
-        content: block.content,
-        mediaId: block.mediaId,
-        sortOrder: block.sortOrder,
-        createdAt: block.createdAt,
-        editorState: block.editorState ?? null,
-      })),
-    }),
+    blocks: initialDraftBlocks,
   }
 }

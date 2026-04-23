@@ -1,14 +1,10 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin";
-
-type CreatePostInput = {
-  creatorId: string;
-  title?: string | null;
-  content?: string | null;
-  status?: "draft" | "scheduled" | "published" | "archived";
-  visibility?: "public" | "subscribers" | "paid";
-  price?: number;
-  publishedAt?: string | null;
-};
+import type {
+  CreatePostPersistedRowInput,
+  Post,
+  PostStatus,
+  PostVisibility,
+} from "../types";
 
 type CreatorRow = {
   id: string;
@@ -19,8 +15,8 @@ type PostRow = {
   creator_id: string;
   title: string | null;
   content: string | null;
-  status: "draft" | "scheduled" | "published" | "archived";
-  visibility: "public" | "subscribers" | "paid";
+  status: PostStatus;
+  visibility: PostVisibility;
   price: number;
   published_at: string | null;
   created_at: string;
@@ -35,18 +31,7 @@ export async function createPost({
   visibility = "subscribers",
   price = 0,
   publishedAt,
-}: CreatePostInput): Promise<{
-  id: string;
-  creatorId: string;
-  title: string | null;
-  content: string | null;
-  status: "draft" | "scheduled" | "published" | "archived";
-  visibility: "public" | "subscribers" | "paid";
-  price: number;
-  publishedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-}> {
+}: CreatePostPersistedRowInput): Promise<Post> {
   if (!["draft", "scheduled", "published", "archived"].includes(status)) {
     throw new Error("Invalid post status");
   }

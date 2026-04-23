@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import type { Media, MediaStatus, MediaType } from "../types"
+import type { CreatePostAuthoringMediaRowInput } from "@/modules/post/types"
 import { buildInitialMediaMutationModerationState } from "./media-mutation-moderation-policy"
 
 type CreateMediaInput = {
@@ -25,6 +26,23 @@ type MediaRow = {
   sort_order: number
   status: MediaStatus
   created_at: string
+}
+
+type CreatePostAuthoringMediaInput = {
+  postId: string
+  ownerUserId: string
+  media: CreatePostAuthoringMediaRowInput
+  status?: MediaStatus
+  useInitialModerationState?: boolean
+}
+
+function resolvePersistedMediaType(
+  type: CreatePostAuthoringMediaRowInput["uploaded"]["type"]
+): MediaType {
+  if (type === "image") return "image"
+  if (type === "video") return "video"
+  if (type === "audio") return "audio"
+  return "file"
 }
 
 export async function createMedia({
@@ -98,4 +116,23 @@ export async function createMedia({
     status: data.status,
     createdAt: data.created_at,
   }
+}
+
+export async function createPostAuthoringMedia({
+  postId,
+  ownerUserId,
+  media,
+  status = "processing",
+  useInitialModerationState = true,
+}: CreatePostAuthoringMediaInput): Promise<Media> {
+  return createMedia({
+    postId,
+    ownerUserId,
+    type: resolvePersistedMediaType(media.uploaded.type),
+    storagePath: media.uploaded.path,
+    mimeType: media.uploaded.mimeType || undefined,
+    sortOrder: media.sortOrder,
+    status,
+    useInitialModerationState,
+  })
 }

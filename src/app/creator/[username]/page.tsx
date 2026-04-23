@@ -200,8 +200,9 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
     : ((await getCreatorPage({ username, viewerUserId: null }))?.posts ?? []).map(
         (post) => ({
           id: post.id,
+          creatorId: creator.id,
           content: post.text ?? "",
-          created_at: post.createdAt,
+          createdAt: post.createdAt,
           media: post.media ?? [],
           blocks:
             "blocks" in post && Array.isArray(post.blocks)
@@ -218,7 +219,6 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
               ? post.status
               : "published",
           publishedAt: "publishedAt" in post ? post.publishedAt : null,
-          published_at: "publishedAt" in post ? post.publishedAt : null,
           visibility:
             "visibility" in post && typeof post.visibility === "string"
               ? post.visibility

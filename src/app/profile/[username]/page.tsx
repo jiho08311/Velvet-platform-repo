@@ -78,7 +78,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                 >
                   <div className="flex flex-col gap-3 border-b border-zinc-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-sm text-zinc-500">
-                      {new Date(post.created_at).toLocaleString()}
+                      {new Date(post.createdAt).toLocaleString()}
                     </p>
 
                     <span className="inline-flex w-fit items-center rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-xs font-medium capitalize text-zinc-700">

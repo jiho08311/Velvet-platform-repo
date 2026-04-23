@@ -141,12 +141,13 @@ const posts = creatorFeedPosts.map((post) => {
   return {
     id: post.id,
     creatorId: creatorId ?? "",
-    text: post.content ?? "",
+    content: post.content,
     status: resolvedStatus,
     visibility: post.visibility,
     isLocked: post.isLocked,
-    createdAt: post.created_at,
-    publishedAt: post.published_at ?? null,
+    price: post.price,
+    createdAt: post.createdAt,
+    publishedAt: post.publishedAt ?? null,
     media:
       post.media?.map((item) => ({
         url: item.url,

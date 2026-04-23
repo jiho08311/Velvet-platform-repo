@@ -146,3 +146,5 @@
 - test after every change
 - commit after every verified change
 - rollback immediately if critical flow breaks
+
+한국어로 말해

@@ -47,10 +47,10 @@ export default async function CreatorContentPage() {
       <CreatorPostList
         posts={result.items.map((post) => ({
           id: post.id,
-          text: post.text,
+          content: post.content,
           createdAt: post.publishedAt ?? post.createdAt,
           isLocked: post.visibility !== "public",
-          previewText: post.text,
+          previewText: post.content ?? "",
         }))}
         isSubscribed
         emptyMessage="You have not created any posts yet."

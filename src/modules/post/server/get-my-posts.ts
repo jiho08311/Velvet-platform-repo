@@ -1,21 +1,10 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
-import { buildPostRenderInput } from "@/modules/post/ui/post-render-input"
+import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
+import type { PostRenderListItem } from "../types"
+import { buildPostRenderReadModel } from "./post-render-read-model"
 
-export type MyPostListItem = {
-  id: string
-  creatorId: string
-  text: string
-  status: "draft" | "scheduled" | "published" | "archived"
-  visibility: "public" | "subscribers" | "paid"
-  isLocked: boolean
-  createdAt: string
-  publishedAt: string | null
-  media?: {
-    url: string
-    type?: "image" | "video" | "audio" | "file"
-  }[]
-}
+export type MyPostListItem = PostRenderListItem
 
 export type GetMyPostsInput = {
   creatorId: string
@@ -45,6 +34,7 @@ type PostRow = {
 }
 
 type MediaRow = {
+  id: string
   post_id: string
   storage_path: string
   type: "image" | "video" | "audio" | "file" | null
@@ -144,7 +134,7 @@ export async function getMyPosts(
 
   const { data: mediaRows, error: mediaError } = await supabaseAdmin
     .from("media")
-    .select("post_id, storage_path, type, mime_type, sort_order, status")
+    .select("id, post_id, storage_path, type, mime_type, sort_order, status")
     .in("post_id", postIds)
     .in("status", ["processing", "ready"])
     .order("sort_order", { ascending: true })
@@ -197,7 +187,7 @@ export async function getMyPosts(
           })
 
           return {
-            id: `${post.id}:${item.sort_order}:${item.storage_path}`,
+            id: item.id,
             url,
             type: resolveMediaType(item),
             mimeType: item.mime_type,
@@ -206,33 +196,24 @@ export async function getMyPosts(
         })
       )
 
-        const renderInput = buildPostRenderInput({
+      const renderReadModel = buildPostRenderReadModel({
+        blockRows: blocksMap.get(post.id) ?? [],
+        mediaItems: media,
+      })
+
+      const renderInput = buildPostRenderInput({
         text: post.content ?? "",
-        blocks: (blocksMap.get(post.id) ?? []).map((block) => ({
-          id: block.id,
-          postId: block.post_id,
-          type: block.type,
-          content: block.content,
-          mediaId: block.media_id,
-          sortOrder: block.sort_order,
-          createdAt: block.created_at,
-          editorState: block.editor_state ?? null,
-        })),
-        media: media.map((item) => ({
-          id: item.id,
-          url: item.url,
-          type: item.type,
-          mimeType: item.mimeType,
-          sortOrder: item.sortOrder,
-        })),
+        blocks: renderReadModel.blocks,
+        media: renderReadModel.media,
       })
 
       return {
         id: post.id,
         creatorId: post.creator_id,
-           text: renderInput.blockText ?? "",
+        content: renderInput.blockText || null,
         status: post.status,
         visibility: post.visibility,
+        price: 0,
         isLocked: false,
         createdAt: post.created_at,
         publishedAt: post.published_at,

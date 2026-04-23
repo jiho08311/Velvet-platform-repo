@@ -1,10 +1,11 @@
 import { EmptyState } from "@/shared/ui/EmptyState"
 import { CREATOR_SURFACE_EMPTY_STATE } from "@/modules/creator/ui/creator-surface-policy"
 import { PostCard } from "./PostCard"
+import type { PostCardCreator } from "./PostCard"
 
 type CreatorPostListItem = {
   id: string
-  text: string
+  content: string | null
   createdAt: string
   isLocked: boolean
   previewText?: string
@@ -12,11 +13,7 @@ type CreatorPostListItem = {
   creatorId?: string
   creatorUserId?: string
   currentUserId?: string
-  creator?: {
-    username: string
-    displayName: string | null
-    avatarUrl: string | null
-  }
+  creator?: PostCardCreator
 }
 
 type CreatorPostListProps = {
@@ -44,7 +41,7 @@ export function CreatorPostList({
   return (
     <section className="grid gap-4">
       {posts.map((post) => {
-        const resolvedText = post.previewText ?? post.text
+        const resolvedText = post.previewText ?? post.content ?? ""
         const resolvedIsLocked = post.isLocked && !isSubscribed
         const resolvedCreator =
           post.creator ?? {

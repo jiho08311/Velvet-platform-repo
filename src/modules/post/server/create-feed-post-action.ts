@@ -5,9 +5,9 @@ import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user
 
 import { createPostWithMediaWorkflow } from "@/workflows/create-post-with-media-workflow"
 import type {
-  CreatePostDraftBlock,
   CreatePostUploadedMediaInput,
 } from "@/modules/post/types"
+import { normalizeFeedCreatePostDraftIntent } from "@/modules/post/server/normalize-create-post-draft"
 
 type Input = {
   text: string
@@ -16,68 +16,26 @@ type Input = {
   files?: CreatePostUploadedMediaInput[]
 }
 
-function buildQuickCreateBlocks(params: {
-  text: string
-  files: CreatePostUploadedMediaInput[]
-}): CreatePostDraftBlock[] {
-  const trimmedText = params.text.trim()
-  const blocks: CreatePostDraftBlock[] = []
-
-  if (trimmedText) {
-    blocks.push({
-      type: "text",
-      content: trimmedText,
-      sortOrder: 0,
-    })
-  }
-
-params.files.forEach((file, index) => {
-  blocks.push({
-    type: file.type as "image" | "video" | "audio" | "file",
-    sortOrder: trimmedText ? index + 1 : index,
-    media: {
-      kind: "uploaded",
-      uploaded: file,
-    },
-    content: null,
-  })
-})
-
-  return blocks
-}
-
 export async function createFeedPostAction({
   text,
   visibility,
   userId,
   files = [],
 }: Input) {
-  const normalizedText = text.trim()
-  const hasMedia = files.length > 0
-
-  if (!normalizedText && !hasMedia) {
-    throw new Error("Empty post")
-  }
-
   const creator = await getCreatorByUserId(userId)
 
   if (!creator) {
     throw new Error("Creator not found")
   }
 
-  const blocks = buildQuickCreateBlocks({
-    text: normalizedText,
+  const draftIntent = normalizeFeedCreatePostDraftIntent({
+    creatorId: creator.id,
+    text,
+    visibility,
     files,
   })
 
-await createPostWithMediaWorkflow({
-  creatorId: creator.id,
-  content: null,
-  visibility,
-  price: 0,
-  status: "published",
-  blocks,
-})
+  await createPostWithMediaWorkflow(draftIntent)
 
   revalidatePath("/feed")
 }

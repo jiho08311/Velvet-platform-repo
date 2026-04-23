@@ -1,15 +1,15 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { CreatePostBlockInput } from "../types"
+import { CreatePostPersistedBlockRowInput } from "../types"
 
 export async function createPostBlocks(
   postId: string,
-  blocks: CreatePostBlockInput[]
+  persistedBlocks: CreatePostPersistedBlockRowInput[]
 ) {
-  if (!blocks || blocks.length === 0) {
+  if (!persistedBlocks || persistedBlocks.length === 0) {
     return
   }
 
-  const rows = blocks.map((block) => ({
+  const rows = persistedBlocks.map((block) => ({
     post_id: postId,
     type: block.type,
     content: block.content ?? null,

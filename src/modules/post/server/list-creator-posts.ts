@@ -4,8 +4,9 @@ import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 import { checkSubscription } from "@/modules/subscription/server/check-subscription"
 import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
 import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
-import { buildPostRenderInput } from "@/modules/post/ui/post-render-input"
-import type { PostBlockEditorState } from "../types"
+import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
+import type { PostBlockEditorState, PostRenderListItem } from "../types"
+import { buildPostRenderReadModel } from "./post-render-read-model"
 
 type PostRow = {
   id: string
@@ -37,9 +38,11 @@ type CreatorRow = {
 }
 
 type MediaRow = {
+  id: string
   post_id: string
   storage_path: string
   type: "image" | "video" | "audio" | "file"
+  mime_type?: string | null
   status: "processing" | "ready" | "failed"
   sort_order: number
 }
@@ -67,22 +70,7 @@ export async function listCreatorPosts({
   userId,
   limit = 20,
   status,
-}: ListCreatorPostsInput): Promise<
-  Array<{
-    id: string
-    creatorId: string
-    title?: string
-    content?: string
-    status: "draft" | "scheduled" | "published" | "archived"
-    visibility: "public" | "subscribers" | "paid"
-    price: number
-    publishedAt?: string
-    createdAt: string
-    updatedAt: string
-    mediaThumbnailUrls?: string[]
-    isLocked?: boolean
-  }>
-> {
+}: ListCreatorPostsInput): Promise<PostRenderListItem[]> {
   const safeUserId =
     typeof userId === "string" && userId.trim().length > 0
       ? userId.trim()
@@ -236,7 +224,7 @@ export async function listCreatorPosts({
 
   const { data: mediaRows, error: mediaError } = await supabaseAdmin
     .from("media")
-    .select("post_id, storage_path, type, status, sort_order")
+    .select("id, post_id, storage_path, type, mime_type, status, sort_order")
     .in("post_id", postIds)
     .eq("status", "ready")
     .order("sort_order", { ascending: true })
@@ -292,39 +280,40 @@ export async function listCreatorPosts({
         )
       )
 
-      const renderInput = buildPostRenderInput({
-        text: post.content ?? "",
-        blocks: (blocksMap.get(post.id) ?? []).map((block) => ({
-          id: block.id,
-          postId: block.post_id,
-          type: block.type,
-          content: block.content,
-          mediaId: block.media_id,
-          sortOrder: block.sort_order,
-          createdAt: block.created_at,
-          editorState: block.editor_state ?? null,
-        })),
-        media: media.map((item, index) => ({
-          id: `${post.id}:${item.sort_order}:${index}`,
+      const renderReadModel = buildPostRenderReadModel({
+        blockRows: blocksMap.get(post.id) ?? [],
+        mediaItems: media.map((item, index) => ({
+          id: item.id,
           url: mediaThumbnailUrls[index] ?? "",
           type: item.type,
+          mimeType: item.mime_type,
           sortOrder: item.sort_order,
         })),
+      })
+
+      const renderInput = buildPostRenderInput({
+        text: post.content ?? "",
+        blocks: renderReadModel.blocks,
+        media: renderReadModel.media,
       })
 
       return {
         id: post.id,
         creatorId: post.creator_id,
-        title: post.title ?? undefined,
-        content: post.isLocked ? undefined : (renderInput.blockText || undefined),
+        content: post.isLocked ? null : (renderInput.blockText || null),
         status: post.status,
         visibility: post.visibility,
         price: post.price,
-        publishedAt: post.published_at ?? undefined,
+        isLocked: Boolean(post.isLocked),
+        publishedAt: post.published_at ?? null,
         createdAt: post.created_at,
-        updatedAt: post.updated_at,
-        mediaThumbnailUrls,
-        isLocked: post.isLocked,
+        media: media.map((item, index) => ({
+          id: item.id,
+          url: mediaThumbnailUrls[index] ?? "",
+          type: item.type,
+          mimeType: item.mime_type,
+          sortOrder: item.sort_order,
+        })),
       }
     })
   )

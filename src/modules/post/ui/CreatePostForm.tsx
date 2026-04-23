@@ -5,7 +5,13 @@ import { StoryVideoTrimField } from "@/modules/media/ui/StoryVideoTrimField"
 import { Button } from "@/shared/ui/Button"
 import type {
   CreatePostCarouselItem,
-  CreatePostDraftBlock,
+  CreatePostClientDraftBlock,
+  CreatePostClientCarouselItem,
+  CreatePostClientDraftMediaSource,
+  CreatePostUploadedMediaInput,
+  NormalizedPostEditorBlock,
+  NormalizedPostEditorMediaSource,
+  PostVisibility,
   PostBlockEditorState,
 } from "@/modules/post/types"
 import {
@@ -16,14 +22,13 @@ import {
   resolveCreatePostSubmitCTA,
 } from "./post-composer-ui-state"
 
-type PostVisibility = "public" | "subscribers"
 type PublishMode = "now" | "scheduled"
 
 type SubmitPostInput = {
   visibility: PostVisibility
   publishMode: PublishMode
   publishedAt: string | null
-  blocks: CreatePostDraftBlock[]
+  blocks: CreatePostClientDraftBlock[]
   uploadedFiles: Record<string, File>
 }
 
@@ -32,41 +37,48 @@ type CreatePostFormProps = {
   onSubmitPost: (input: SubmitPostInput) => void
   initialTextBlocks?: string[]
   initialVisibility?: PostVisibility
-  initialBlocks?: CreatePostDraftBlock[]
+  initialBlocks?: NormalizedPostEditorBlock<CreatePostUploadedMediaInput>[]
+  visibilityOptions?: PostVisibility[]
+  showPublishMode?: boolean
+  submitLabel?: string
+  resetAfterSubmit?: boolean
 }
 
 type CarouselEditorItem = {
   id: string
   type: CreatePostCarouselItem["type"]
+  media: CreatePostClientDraftMediaSource
   file?: File
   previewUrl?: string
-  mediaId?: string
   editorState?: PostBlockEditorState
 }
 
+type EditorTextBlock = Extract<CreatePostClientDraftBlock, { type: "text" }> & {
+  id: string
+}
+
+type EditorMediaBlock = Extract<
+  CreatePostClientDraftBlock,
+  { type: "image" | "video" | "audio" | "file" }
+> & {
+  id: string
+  file?: File
+  previewUrl?: string
+}
+
+type EditorCarouselBlock = {
+  id: string
+  type: "carousel"
+  sortOrder: number
+  items: CarouselEditorItem[]
+  editorState?: null
+  content?: null
+}
+
 type EditorBlock =
-  | {
-      id: string
-      type: "text"
-      content?: string
-      editorState?: PostBlockEditorState
-    }
-  | {
-      id: string
-type: "image" | "video" | "audio" | "file"
-      file?: File
-      previewUrl?: string
-      mediaId?: string
-      editorState?: PostBlockEditorState
-      content?: string
-    }
-  | {
-      id: string
-      type: "carousel"
-      items: CarouselEditorItem[]
-      editorState?: null
-      content?: string
-    }
+  | EditorTextBlock
+  | EditorMediaBlock
+  | EditorCarouselBlock
 
 const FILTER_PRESETS = ["none", "warm", "cool", "mono", "vivid"] as const
 type PostFilterPreset = (typeof FILTER_PRESETS)[number]
@@ -80,8 +92,167 @@ function createCarouselBlock(items: CarouselEditorItem[] = []): EditorBlock {
   return {
     id: createBlockId(),
     type: "carousel",
+    sortOrder: 0,
     items,
     editorState: null,
+  }
+}
+
+function createUploadedPlaceholderId(file: File) {
+  return `create-upload:${file.name}:${file.size}:${file.lastModified}:${file.type}`
+}
+
+function createUploadedMediaSource(
+  file: File,
+  type: CreatePostCarouselItem["type"]
+): CreatePostClientDraftMediaSource {
+  return {
+    kind: "uploaded",
+    uploaded: {
+      placeholderId: createUploadedPlaceholderId(file),
+      type,
+      mimeType: file.type || "",
+      size: file.size,
+      originalName: file.name,
+    },
+  }
+}
+
+function createClientUploadedMediaSourceFromDraft(
+  uploaded: CreatePostUploadedMediaInput
+): CreatePostClientDraftMediaSource {
+  return {
+    kind: "uploaded",
+    uploaded: {
+      ...uploaded,
+      placeholderId: uploaded.path,
+    },
+  }
+}
+
+function createClientDraftMediaSourceFromNormalizedSource(
+  media: NormalizedPostEditorMediaSource<CreatePostUploadedMediaInput>
+): CreatePostClientDraftMediaSource {
+  if (media.kind === "existing") {
+    return {
+      kind: "existing",
+      mediaId: media.mediaId,
+    }
+  }
+
+  return createClientUploadedMediaSourceFromDraft(media.uploaded)
+}
+
+function normalizeEditorBlocks(blocks: EditorBlock[]): EditorBlock[] {
+  return blocks.map((block, index) => ({
+    ...block,
+    sortOrder: index,
+  }))
+}
+
+function createEditorTextBlockFromDraft(
+  block: Extract<
+    NormalizedPostEditorBlock<CreatePostUploadedMediaInput>,
+    { type: "text" }
+  >
+): EditorTextBlock {
+  return {
+    id: createBlockId(),
+    type: "text",
+    sortOrder: block.sortOrder,
+    content: block.content ?? "",
+    editorState: block.editorState ?? null,
+  }
+}
+
+function createEditorCarouselItemFromDraft(
+  item: CreatePostCarouselItem
+): CarouselEditorItem {
+  return {
+    id: createBlockId(),
+    type: item.type,
+    previewUrl: undefined,
+    media: createClientDraftMediaSourceFromNormalizedSource(item.media),
+    file: undefined,
+    editorState: item.editorState ?? null,
+  }
+}
+
+function createEditorMediaBlockFromDraft(
+  block: Extract<
+    NormalizedPostEditorBlock<CreatePostUploadedMediaInput>,
+    { type: "image" | "video" | "audio" | "file" }
+  >
+): EditorMediaBlock {
+  return {
+    id: createBlockId(),
+    type: block.type,
+    sortOrder: block.sortOrder,
+    previewUrl: undefined,
+    media: createClientDraftMediaSourceFromNormalizedSource(block.media),
+    file: undefined,
+    editorState: block.editorState ?? null,
+    content: null,
+  }
+}
+
+function createEditorBlockFromNormalizedDraft(
+  block: NormalizedPostEditorBlock<CreatePostUploadedMediaInput>
+): EditorBlock {
+  if (block.type === "text") {
+    return createEditorTextBlockFromDraft(block)
+  }
+
+  if (block.type === "carousel") {
+    return {
+      id: createBlockId(),
+      type: "carousel",
+      sortOrder: block.sortOrder,
+      items: block.items.map(createEditorCarouselItemFromDraft),
+      editorState: null,
+    }
+  }
+
+  return createEditorMediaBlockFromDraft(block)
+}
+
+function createInitialEditorBlocks(params: {
+  initialBlocks?: NormalizedPostEditorBlock<CreatePostUploadedMediaInput>[]
+  initialTextBlocks?: string[]
+}): EditorBlock[] {
+  if (params.initialBlocks && params.initialBlocks.length > 0) {
+    return normalizeEditorBlocks(
+      params.initialBlocks.map(createEditorBlockFromNormalizedDraft)
+    )
+  }
+
+  return normalizeEditorBlocks(
+    (params.initialTextBlocks ?? [""]).map(
+      (content): EditorBlock => ({
+        id: createBlockId(),
+        type: "text",
+        sortOrder: 0,
+        content,
+        editorState: undefined,
+      })
+    )
+  )
+}
+
+function createSerializedUploadedMediaSource(params: {
+  placeholderId: string
+  type: CreatePostCarouselItem["type"]
+  file: File
+}): CreatePostClientDraftMediaSource {
+  return {
+    kind: "uploaded",
+    uploaded: {
+      placeholderId: params.placeholderId,
+      type: params.type,
+      mimeType: params.file.type || "",
+      size: params.file.size,
+      originalName: params.file.name,
+    },
   }
 }
 
@@ -142,62 +313,17 @@ export function CreatePostForm({
   initialTextBlocks,
   initialVisibility,
   initialBlocks,
+  visibilityOptions = ["public", "subscribers"],
+  showPublishMode = true,
+  submitLabel,
+  resetAfterSubmit = true,
 }: CreatePostFormProps) {
-const [blocks, setBlocks] = useState<EditorBlock[]>(() => {
-  if (initialBlocks && initialBlocks.length > 0) {
-    return initialBlocks.map((block): EditorBlock => {
-      if (block.type === "text") {
-        return {
-          id: createBlockId(),
-          type: "text",
-          content: block.content ?? "",
-          editorState: block.editorState ?? null,
-        }
-      }
-
-      if (block.type === "carousel") {
-        return {
-          id: createBlockId(),
-          type: "carousel",
-          items: block.items.map((item): CarouselEditorItem => ({
-            id: createBlockId(),
-            type: item.type,
-            previewUrl: undefined,
-            mediaId:
-              item.media.kind === "existing"
-                ? item.media.mediaId
-                : undefined,
-            file: undefined,
-            editorState: item.editorState ?? null,
-          })),
-          editorState: null,
-        }
-      }
-
-      return {
-        id: createBlockId(),
-        type: block.type,
-        previewUrl: undefined,
-        mediaId:
-          block.media.kind === "existing"
-            ? block.media.mediaId
-            : undefined,
-        file: undefined,
-        editorState: block.editorState ?? null,
-        content: undefined,
-      }
-    })
-  }
-
-  return (initialTextBlocks ?? [""]).map(
-    (content): EditorBlock => ({
-      id: createBlockId(),
-      type: "text",
-      content,
-      editorState: undefined,
-    })
-  )
-})
+const [blocks, setBlocks] = useState<EditorBlock[]>(() =>
+  createInitialEditorBlocks({
+    initialBlocks,
+    initialTextBlocks,
+  })
+)
 
 
 
@@ -207,10 +333,15 @@ const [blocks, setBlocks] = useState<EditorBlock[]>(() => {
 
   const [publishMode, setPublishMode] = useState<PublishMode>("now")
 const [publishedAt, setPublishedAt] = useState("")
-  const submitCTA = resolveCreatePostSubmitCTA({
-    isSubmitting,
-    publishMode,
-  })
+  const submitCTA = submitLabel
+    ? {
+        label: isSubmitting ? `${submitLabel}...` : submitLabel,
+        disabled: isSubmitting,
+      }
+    : resolveCreatePostSubmitCTA({
+        isSubmitting,
+        publishMode,
+      })
   const [draggingBlockId, setDraggingBlockId] = useState<string | null>(null)
 const [dropTargetBlockId, setDropTargetBlockId] = useState<string | null>(null)
 
@@ -256,7 +387,9 @@ function setActiveMediaTool(
   function updateTextBlock(blockId: string, value: string) {
     setBlocks((prev) =>
       prev.map((block) =>
-        block.id === blockId ? { ...block, content: value } : block
+        block.id === blockId && block.type === "text"
+          ? { ...block, content: value }
+          : block
       )
     )
   }
@@ -690,19 +823,22 @@ function setActiveMediaTool(
   }
 
   function addTextBlock() {
-    setBlocks((prev) => [
-      ...prev,
-      {
-        id: createBlockId(),
-        type: "text",
-        content: "",
-      },
-    ])
+    setBlocks((prev) =>
+      normalizeEditorBlocks([
+        ...prev,
+        {
+          id: createBlockId(),
+          type: "text",
+          sortOrder: prev.length,
+          content: "",
+        },
+      ])
+    )
   }
 
   function addCarouselBlock() {
-  setBlocks((prev) => [...prev, createCarouselBlock()])
-}
+    setBlocks((prev) => normalizeEditorBlocks([...prev, createCarouselBlock()]))
+  }
 
 function addCarouselItems(blockId: string, nextFiles: File[]) {
   if (nextFiles.length === 0) {
@@ -718,17 +854,18 @@ function addCarouselItems(blockId: string, nextFiles: File[]) {
     return {
       id: createBlockId(),
       type: isVideo ? "video" : "image",
+      media: createUploadedMediaSource(file, isVideo ? "video" : "image"),
       file,
       previewUrl: URL.createObjectURL(file),
-      mediaId: undefined,
       editorState: isVideo
         ? createDefaultVideoEditorState()
         : createDefaultImageEditorState(),
+      content: null,
     }
   })
 
   setBlocks((prev) =>
-    prev.map((block) => {
+    normalizeEditorBlocks(prev.map((block) => {
       if (block.id !== blockId) {
         return block
       }
@@ -744,15 +881,16 @@ function addCarouselItems(blockId: string, nextFiles: File[]) {
         const currentItem: CarouselEditorItem = {
           id: createBlockId(),
           type: block.type,
+          media: block.media,
           file: block.file,
           previewUrl: block.previewUrl,
-          mediaId: block.mediaId,
           editorState: block.editorState ?? null,
         }
 
         return {
           id: block.id,
           type: "carousel",
+          sortOrder: block.sortOrder,
           items: [currentItem, ...nextItems],
           editorState: null,
           content: undefined,
@@ -760,7 +898,7 @@ function addCarouselItems(blockId: string, nextFiles: File[]) {
       }
 
       return block
-    })
+    }))
   )
 
   if (carouselFileInputRef.current) {
@@ -792,15 +930,18 @@ function addCarouselItems(blockId: string, nextFiles: File[]) {
       return {
         id: createBlockId(),
         type: isVideo ? "video" : "image",
+        sortOrder: 0,
+        media: createUploadedMediaSource(file, isVideo ? "video" : "image"),
         file,
         previewUrl: URL.createObjectURL(file),
         editorState: isVideo
           ? createDefaultVideoEditorState()
           : createDefaultImageEditorState(),
+        content: null,
       }
     })
 
-    setBlocks((prev) => [...prev, ...nextBlocks])
+    setBlocks((prev) => normalizeEditorBlocks([...prev, ...nextBlocks]))
 
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
@@ -861,7 +1002,7 @@ function handleDrop(targetBlockId: string) {
     }
 
     next.splice(toIndex, 0, movedBlock)
-    return next
+    return normalizeEditorBlocks(next)
   })
 
   setDraggingBlockId(null)
@@ -880,7 +1021,7 @@ function moveBlockUp(index: number) {
     }
 
     next.splice(index - 1, 0, movedBlock)
-    return next
+    return normalizeEditorBlocks(next)
   })
 }
 
@@ -898,12 +1039,14 @@ function moveBlockDown(index: number) {
     }
 
     next.splice(index + 1, 0, movedBlock)
-    return next
+    return normalizeEditorBlocks(next)
   })
 }
 
 function removeBlock(blockId: string) {
-  setBlocks((prev) => prev.filter((block) => block.id !== blockId))
+  setBlocks((prev) =>
+    normalizeEditorBlocks(prev.filter((block) => block.id !== blockId))
+  )
 
   setActiveMediaToolByBlock((prev) => {
     if (!(blockId in prev)) {
@@ -931,16 +1074,69 @@ function removeBlock(blockId: string) {
 
 
 type SerializedEditorSubmitResult = {
-  blocks: CreatePostDraftBlock[]
+  blocks: CreatePostClientDraftBlock[]
   uploadedFiles: Record<string, File>
 }
+
+function hasExistingMediaSource(
+  media: CreatePostClientDraftMediaSource
+): media is Extract<CreatePostClientDraftMediaSource, { kind: "existing" }> {
+  return media.kind === "existing" && (media.mediaId?.trim() ?? "").length > 0
+}
+
+function hasUploadedMediaFile(params: {
+  media: CreatePostClientDraftMediaSource
+  file?: File
+}): params is {
+  media: Extract<CreatePostClientDraftMediaSource, { kind: "uploaded" }>
+  file: File
+} {
+  return params.media.kind === "uploaded" && Boolean(params.file && params.file.size > 0)
+}
+
+function serializeMediaSourceForSubmit(params: {
+  type: CreatePostClientCarouselItem["type"]
+  media: CreatePostClientDraftMediaSource
+  file?: File
+  uploadedFiles: Record<string, File>
+}): CreatePostClientCarouselItem | null {
+  if (hasExistingMediaSource(params.media)) {
+    return {
+      type: params.type,
+      media: params.media,
+    }
+  }
+
+  if (!hasUploadedMediaFile({ media: params.media, file: params.file })) {
+    return null
+  }
+
+  const placeholderId = params.media.uploaded.placeholderId
+  const uploadedFile = params.file
+
+  if (!uploadedFile) {
+    return null
+  }
+
+  params.uploadedFiles[placeholderId] = uploadedFile
+
+  return {
+    type: params.type,
+    media: createSerializedUploadedMediaSource({
+      placeholderId,
+      type: params.type,
+      file: uploadedFile,
+    }),
+  }
+}
+
 function serializeEditorBlocksForSubmit(
   blocks: EditorBlock[]
 ): SerializedEditorSubmitResult {
   const uploadedFiles: Record<string, File> = {}
 
-  const serializedBlocks = blocks
-    .flatMap((block, index): CreatePostDraftBlock[] => {
+  const serializedBlocks = blocks.flatMap(
+    (block): CreatePostClientDraftBlock[] => {
       if (block.type === "text") {
         const content = block.content?.trim() ?? ""
 
@@ -952,126 +1148,80 @@ function serializeEditorBlocksForSubmit(
           {
             type: "text",
             content,
-            sortOrder: index,
+            sortOrder: block.sortOrder,
             editorState: block.editorState ?? null,
           },
         ]
       }
 
-if (block.type === "carousel") {
-  const carouselGroupId = block.id
+      if (block.type === "carousel") {
+        const carouselGroupId = block.id
 
-  const items = block.items.flatMap((item, itemIndex): CreatePostCarouselItem[] => {
-    const hasExistingMediaId = (item.mediaId?.trim() ?? "").length > 0
-    const hasNewFile = Boolean(item.file && item.file.size > 0)
+        const items = block.items.flatMap(
+          (item, itemIndex): CreatePostClientCarouselItem[] => {
+            const serializedItem = serializeMediaSourceForSubmit({
+              type: item.type,
+              media: item.media,
+              file: item.file,
+              uploadedFiles,
+            })
 
-    if (!hasExistingMediaId && !hasNewFile) {
-      return []
-    }
+            if (!serializedItem) {
+              return []
+            }
 
-    const nextEditorState = {
-      ...(item.editorState ?? null),
-      carousel: {
-        groupId: carouselGroupId,
-        index: itemIndex,
-        size: block.items.length,
-      },
-    }
+            const nextEditorState = {
+              ...(serializedItem.editorState ?? item.editorState ?? null),
+              carousel: {
+                groupId: carouselGroupId,
+                index: itemIndex,
+                size: block.items.length,
+              },
+            }
 
-    if (hasExistingMediaId) {
-      return [
-        {
-          type: item.type,
-          media: {
-            kind: "existing",
-            mediaId: item.mediaId!.trim(),
+            return [
+              {
+                ...serializedItem,
+                editorState: nextEditorState,
+              },
+            ]
+          }
+        )
+
+        if (items.length === 0) {
+          return []
+        }
+
+        return [
+          {
+            type: "carousel",
+            sortOrder: block.sortOrder,
+            items,
+            editorState: null,
           },
-          editorState: nextEditorState,
-        },
-      ]
-    }
+        ]
+      }
 
-    const uploadedPath = `__create-upload__/${item.file!.name}-${item.file!.size}-${item.file!.lastModified}`
+      const serializedMedia = serializeMediaSourceForSubmit({
+        type: block.type,
+        media: block.media,
+        file: block.file,
+        uploadedFiles,
+      })
 
-    uploadedFiles[uploadedPath] = item.file!
-
-    return [
-      {
-        type: item.type,
-        media: {
-          kind: "uploaded",
-          uploaded: {
-            path: uploadedPath,
-            type: item.type,
-            mimeType: item.file!.type || "",
-            size: item.file!.size,
-            originalName: item.file!.name,
-          },
-        },
-        editorState: nextEditorState,
-      },
-    ]
-  })
-
-  if (items.length === 0) {
-    return []
-  }
-
-  return [
-    {
-      type: "carousel",
-      sortOrder: index,
-      items,
-      editorState: null,
-    },
-  ]
-}
-
-
-      const hasExistingMediaId = (block.mediaId?.trim() ?? "").length > 0
-      const hasNewFile = Boolean(block.file && block.file.size > 0)
-
-      if (!hasExistingMediaId && !hasNewFile) {
+      if (!serializedMedia) {
         return []
       }
 
-      if (hasExistingMediaId) {
-        return [
-          {
-            type: block.type,
-            sortOrder: index,
-            media: {
-              kind: "existing",
-              mediaId: block.mediaId!.trim(),
-            },
-            editorState: block.editorState ?? null,
-          },
-        ]
-      }
-
-      const uploadedPath = `__create-upload__/${block.file!.name}-${block.file!.size}-${block.file!.lastModified}`
-
-      uploadedFiles[uploadedPath] = block.file!
-
       return [
         {
-          type: block.type,
-          sortOrder: index,
-          media: {
-            kind: "uploaded",
-            uploaded: {
-              path: uploadedPath,
-              type: block.type,
-              mimeType: block.file!.type || "",
-              size: block.file!.size,
-              originalName: block.file!.name,
-            },
-          },
+          ...serializedMedia,
+          sortOrder: block.sortOrder,
           editorState: block.editorState ?? null,
         },
       ]
-    })
-    .sort((a, b) => a.sortOrder - b.sortOrder)
+    }
+  ).sort((a, b) => a.sortOrder - b.sortOrder)
 
   return {
     blocks: serializedBlocks,
@@ -1096,18 +1246,24 @@ onSubmitPost({
   uploadedFiles: serialized.uploadedFiles,
 })
 
-    setBlocks([{ id: createBlockId(), type: "text", content: "" }])
-    setVisibility("subscribers")
-    setPublishMode("now")
-    setPublishedAt("")
-    setDraggingBlockId(null)
-    setDropTargetBlockId(null)
-    setActiveMediaToolByBlock({})
-    setShowFilterIndicator(false)
-    setFilterSwipeOffsetX(0)
+    if (resetAfterSubmit) {
+      setBlocks(
+        normalizeEditorBlocks([
+          { id: createBlockId(), type: "text", sortOrder: 0, content: "" },
+        ])
+      )
+      setVisibility("subscribers")
+      setPublishMode("now")
+      setPublishedAt("")
+      setDraggingBlockId(null)
+      setDropTargetBlockId(null)
+      setActiveMediaToolByBlock({})
+      setShowFilterIndicator(false)
+      setFilterSwipeOffsetX(0)
 
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
     }
   }
 
@@ -1658,26 +1814,37 @@ onSubmitPost({
             onChange={(e) => setVisibility(e.target.value as PostVisibility)}
             className={getComposerControlClassName()}
           >
-            <option value="public">Public</option>
-            <option value="subscribers">Subscribers</option>
+            {visibilityOptions.map((option) => (
+              <option key={option} value={option}>
+                {option === "public"
+                  ? "Public"
+                  : option === "subscribers"
+                    ? "Subscribers"
+                    : "Paid"}
+              </option>
+            ))}
           </select>
 
- <select
-  value={publishMode}
-  onChange={(e) => setPublishMode(e.target.value as PublishMode)}
-  className={getComposerControlClassName()}
->
-  <option value="now">Publish now</option>
-  <option value="scheduled">Schedule</option>
-</select>
+{showPublishMode ? (
+  <>
+    <select
+      value={publishMode}
+      onChange={(e) => setPublishMode(e.target.value as PublishMode)}
+      className={getComposerControlClassName()}
+    >
+      <option value="now">Publish now</option>
+      <option value="scheduled">Schedule</option>
+    </select>
 
-{publishMode === "scheduled" ? (
-  <input
-    type="datetime-local"
-    value={publishedAt}
-    onChange={(e) => setPublishedAt(e.target.value)}
-    className={getComposerControlClassName()}
-  />
+    {publishMode === "scheduled" ? (
+      <input
+        type="datetime-local"
+        value={publishedAt}
+        onChange={(e) => setPublishedAt(e.target.value)}
+        className={getComposerControlClassName()}
+      />
+    ) : null}
+  </>
 ) : null}
 
           <input

@@ -18,7 +18,7 @@ import {
 type CreatorContentTabPost = {
   id: string
   content: string | null
-  created_at: string
+  createdAt: string
   media?: Array<{
     id?: string
     url: string
@@ -28,7 +28,6 @@ type CreatorContentTabPost = {
   status?: string | null
   visibility?: string | null
   publishedAt?: string | null
-  published_at?: string | null
 }
 
 type CreatorContentTabsProps = {
@@ -102,8 +101,8 @@ function getUpdateSurfaceState(
   })
 
   const formattedDate = isUpcoming
-    ? formatDate(post.publishedAt ?? post.published_at)
-    : formatDate(post.created_at)
+    ? formatDate(post.publishedAt)
+    : formatDate(post.createdAt)
 
   return {
     isLocked,

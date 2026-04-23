@@ -1,6 +1,8 @@
 import type {
   PostBlock,
+  PostNormalizedRenderGroup,
   PostRenderGroup,
+  PostRenderInput,
   PostRenderMediaItem,
 } from "../types"
 
@@ -124,10 +126,51 @@ function buildBlockMedia(params: {
 }
 
 function buildGroupedBlocks(params: {
+  normalizedGroups: PostNormalizedRenderGroup[]
+}): PostRenderGroup[] {
+  const groupedBlocks: PostRenderGroup[] = []
+
+  for (const group of params.normalizedGroups) {
+    if (group.type === "text") {
+      groupedBlocks.push({
+        type: "text",
+        block: group.block,
+      })
+      continue
+    }
+
+    const mediaItems = group.mediaEntries.map((entry) => entry.media)
+
+    if (mediaItems.length === 0) {
+      continue
+    }
+
+    if (group.variant === "carousel") {
+      groupedBlocks.push({
+        type: "carousel",
+        blocks: group.blocks,
+        mediaItems,
+        mediaEntries: group.mediaEntries,
+      })
+      continue
+    }
+
+    groupedBlocks.push({
+      type: "media",
+      blocks: group.blocks,
+      mediaItems,
+      mediaEntries: group.mediaEntries,
+    })
+  }
+
+  return groupedBlocks
+}
+
+function buildNormalizedGroups(params: {
   hasBlocks: boolean
   blocks: PostBlock[]
   blockMedia: PostRenderMediaItem[]
-}): PostRenderGroup[] {
+}): PostNormalizedRenderGroup[] {
   if (!params.hasBlocks) {
     return []
   }
@@ -149,7 +192,7 @@ function buildGroupedBlocks(params: {
     mediaById: blockMediaById,
   })
 
-  const groupedBlocks: PostRenderGroup[] = []
+  const normalizedGroups: PostNormalizedRenderGroup[] = []
   const visitedCarousel = new Set<string>()
   const carouselBlockMap = new Map<string, PostBlock[]>()
 
@@ -169,7 +212,7 @@ function buildGroupedBlocks(params: {
     const block = params.blocks[i]
 
     if (block.type === "text") {
-      groupedBlocks.push({
+      normalizedGroups.push({
         type: "text",
         block,
       })
@@ -187,12 +230,11 @@ function buildGroupedBlocks(params: {
 
       visitedCarousel.add(groupId)
 
-      const blocks = (carouselBlockMap.get(groupId) ?? [])
-        .sort((a, b) => {
-          const aIndex = a.editorState?.carousel?.index ?? 0
-          const bIndex = b.editorState?.carousel?.index ?? 0
-          return aIndex - bIndex
-        })
+      const blocks = (carouselBlockMap.get(groupId) ?? []).sort((a, b) => {
+        const aIndex = a.editorState?.carousel?.index ?? 0
+        const bIndex = b.editorState?.carousel?.index ?? 0
+        return aIndex - bIndex
+      })
 
       const mediaEntries: PostRenderMediaEntry[] = []
 
@@ -213,10 +255,10 @@ function buildGroupedBlocks(params: {
         continue
       }
 
-      groupedBlocks.push({
-        type: "carousel",
+      normalizedGroups.push({
+        type: "media",
+        variant: "carousel",
         blocks,
-        mediaItems: mediaEntries.map((entry) => entry.media),
         mediaEntries,
       })
 
@@ -230,10 +272,10 @@ function buildGroupedBlocks(params: {
       continue
     }
 
-    groupedBlocks.push({
+    normalizedGroups.push({
       type: "media",
+      variant: "single",
       blocks: [block],
-      mediaItems: [mediaItem],
       mediaEntries: [
         {
           media: mediaItem,
@@ -243,10 +285,12 @@ function buildGroupedBlocks(params: {
     })
   }
 
-  return groupedBlocks
+  return normalizedGroups
 }
 
-export function buildPostRenderInput(params: BuildPostRenderInputParams) {
+export function buildPostRenderInput(
+  params: BuildPostRenderInputParams
+): PostRenderInput {
   const blocks = params.blocks ?? []
   const hasBlocks = blocks.length > 0
 
@@ -267,10 +311,14 @@ export function buildPostRenderInput(params: BuildPostRenderInputParams) {
     resolvedMedia,
   })
 
-  const groupedBlocks = buildGroupedBlocks({
+  const normalizedGroups = buildNormalizedGroups({
     hasBlocks,
     blocks,
     blockMedia,
+  })
+
+  const groupedBlocks = buildGroupedBlocks({
+    normalizedGroups,
   })
 
   const lockedPreviewText = blockText
@@ -291,6 +339,7 @@ export function buildPostRenderInput(params: BuildPostRenderInputParams) {
   return {
     hasBlocks,
     resolvedMedia,
+    normalizedGroups,
     blockText,
     blockMedia,
     groupedBlocks,

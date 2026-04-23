@@ -8,6 +8,7 @@ import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 import { getPostById } from "@/modules/post/server/get-post-by-id"
 import { deletePostAction } from "@/modules/post/server/delete-post-action"
 import PostPurchaseButton from "@/modules/post/ui/PostPurchaseButton"
+import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
 import { EmptyState } from "@/shared/ui/EmptyState"
 
 type PostDetailPageProps = {
@@ -59,32 +60,17 @@ export default async function PostDetailPage({
   const isOwner = myCreator?.id === post.creatorId
   const shouldAutoReloadOnce = !isLocked && post.media.length === 0
 
-  const detailCardMedia = post.media.map((media) => ({
-    id: media.id,
-    url: media.url,
-    type: media.type,
-  }))
-
-  const detailCardBlocks = post.blocks ?? []
-
-  const detailCardText = post.content ?? ""
+  const renderInput = buildPostRenderInput({
+    text: post.content ?? "",
+    media: post.media,
+    blocks: post.blocks ?? [],
+  })
 
   const detailCreator = {
     username: post.creator.username,
     displayName: post.creator.displayName,
     avatarUrl: null,
   }
-
-const lockedPreviewMedia = post.media[0] ?? null
-const hasLockedMedia = Boolean(lockedPreviewMedia)
-const lockedPreviewThumbnailUrl = hasLockedMedia
-  ? lockedPreviewMedia?.url ?? null
-  : null
-const lockedPreviewText = post.content ?? ""
-
-
-
-
 
   return (
    <main className="min-h-screen bg-zinc-950 px-0 py-8  text-white sm:px-6 sm:py-10">
@@ -136,9 +122,9 @@ const lockedPreviewText = post.content ?? ""
 
        {isLocked ? (
   <LockedPostCard
-    previewText={lockedPreviewText}
+    previewText={renderInput.lockedPreviewText}
     createdAt={formatDate(post.publishedAt ?? post.createdAt)}
-    previewThumbnailUrl={lockedPreviewThumbnailUrl}
+    previewThumbnailUrl={renderInput.primaryLockedPreviewMedia?.url ?? null}
     price={post.price ?? undefined}
     lockReason={
       lockReason === "subscription" || lockReason === "purchase"
@@ -160,10 +146,10 @@ const lockedPreviewText = post.content ?? ""
 ) : (
   <PostCard
     postId={post.id}
-    text={detailCardText}
+    text={post.content ?? ""}
     createdAt={post.publishedAt ?? post.createdAt}
-    media={detailCardMedia}
-    blocks={detailCardBlocks}
+    media={post.media}
+    blocks={post.blocks ?? []}
     isLocked={false}
     creator={detailCreator}
     creatorId={post.creatorId}

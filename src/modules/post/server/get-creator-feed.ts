@@ -3,37 +3,12 @@ import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed
 import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 import { checkSubscription } from "@/modules/subscription/server/check-subscription"
 import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
-import type { PostBlockEditorState } from "../types"
-import { buildPostRenderInput } from "@/modules/post/ui/post-render-input"
-
-type CreatorFeedPost = {
-  id: string
-  content: string | null
-  created_at: string
-  media: Array<{
-    id: string
-    url: string
-    type: "image" | "video" | "audio" | "file"
-  }>
-  blocks?: {
-    id: string
-    postId: string
-    type: "text" | "image" | "video" | "audio" | "file"
-    content: string | null
-    mediaId: string | null
-    sortOrder: number
-    createdAt: string
-    editorState: PostBlockEditorState | null
-  }[]
-  price: number
-  isLocked: boolean
-  isLiked: boolean
-  likesCount: number
-  commentsCount: number
-  visibility: "public" | "subscribers" | "paid"
-  status?: string
-  published_at?: string | null
-}
+import type {
+  PostBlockEditorState,
+  PostRenderSurfaceItem,
+} from "../types"
+import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
+import { buildPostRenderReadModel } from "./post-render-read-model"
 
 type GetCreatorFeedInput = {
   creatorId: string
@@ -107,7 +82,7 @@ export async function getCreatorFeed({
   creatorId,
   creatorUserId,
   userId,
-}: GetCreatorFeedInput): Promise<CreatorFeedPost[]> {
+}: GetCreatorFeedInput): Promise<PostRenderSurfaceItem[]> {
   const safeUserId =
     typeof userId === "string" && userId.trim().length > 0
       ? userId.trim()
@@ -264,8 +239,9 @@ export async function getCreatorFeed({
   if (postIds.length === 0) {
     return resolvedPosts.map((post) => ({
       id: post.id,
+      creatorId: post.creator_id,
       content: null,
-      created_at: post.created_at,
+      createdAt: post.created_at,
       media: [],
       blocks: [],
       price: post.price,
@@ -274,8 +250,8 @@ export async function getCreatorFeed({
       isLiked: false,
       visibility: post.visibility,
       commentsCount: 0,
-      status: post.status,
-      published_at: post.published_at ?? null,
+      status: post.status as PostRenderSurfaceItem["status"],
+      publishedAt: post.published_at ?? null,
     }))
   }
 
@@ -312,22 +288,11 @@ export async function getCreatorFeed({
     mediaMap.set(media.post_id, current)
   }
 
-  const blocksMap = new Map<string, CreatorFeedPost["blocks"]>()
+  const blocksMap = new Map<string, PostBlockRow[]>()
 
   for (const block of blockRows ?? []) {
     const current = blocksMap.get(block.post_id) ?? []
-
-    current.push({
-      id: block.id,
-      postId: block.post_id,
-      type: block.type,
-      content: block.content,
-      mediaId: block.media_id,
-      sortOrder: block.sort_order,
-      createdAt: block.created_at,
-      editorState: block.editor_state ?? null,
-    })
-
+    current.push(block)
     blocksMap.set(block.post_id, current)
   }
 
@@ -357,37 +322,40 @@ export async function getCreatorFeed({
             id: item.id,
             url,
             type: resolveMediaType(item),
+            mimeType: item.mime_type,
+            sortOrder: item.sort_order,
           }
         })
       )
 
-        const renderInput = buildPostRenderInput({
+      const renderReadModel = buildPostRenderReadModel({
+        blockRows: blocksMap.get(post.id) ?? [],
+        mediaItems: media,
+      })
+
+      const renderInput = buildPostRenderInput({
         text: post.content ?? "",
-        blocks: blocksMap.get(post.id) ?? [],
-        media: media.map((item, index) => ({
-          id: item.id,
-          url: item.url,
-          type: item.type,
-          sortOrder: index,
-        })),
+        blocks: renderReadModel.blocks,
+        media: renderReadModel.media,
       })
 
       return {
         id: post.id,
+        creatorId: post.creator_id,
         content: post.shouldHideContent
           ? null
           : (renderInput.blockText || null),
-        created_at: post.created_at,
+        createdAt: post.created_at,
         media,
-        blocks: post.shouldHideContent ? [] : (blocksMap.get(post.id) ?? []),
+        blocks: post.shouldHideContent ? [] : renderReadModel.blocks,
         price: post.price,
         isLocked: post.isLocked,
         likesCount: likeCountMap.get(post.id) ?? 0,
         isLiked: myLikeSet.has(post.id),
         visibility: post.visibility,
         commentsCount: commentCountMap.get(post.id) ?? 0,
-        status: post.status,
-        published_at: post.published_at ?? null,
+        status: post.status as PostRenderSurfaceItem["status"],
+        publishedAt: post.published_at ?? null,
       }
     })
   )

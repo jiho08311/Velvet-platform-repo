@@ -1,10 +1,10 @@
 "use server"
-import type { CreatePostDraftBlock } from "../types"
+import type { CreateOrEditPostFormBlock } from "../types"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
 import { createPostWithMediaWorkflow } from "@/workflows/create-post-with-media-workflow"
-import { localDateTimeToUtcIso } from "@/shared/lib/date-time"
+import { normalizeCreatePostDraftIntent } from "@/modules/post/server/normalize-create-post-draft"
 
 
 type CreatePostActionInput = {
@@ -13,7 +13,7 @@ type CreatePostActionInput = {
   publishedAt?: string | null
   visibility: "public" | "subscribers" | "paid"
   price?: number
-  blocks?: CreatePostDraftBlock[]
+  blocks?: CreateOrEditPostFormBlock[]
 }
 
 export async function createPostAction({
@@ -24,34 +24,17 @@ export async function createPostAction({
   price = 0,
   blocks = [],
 }: CreatePostActionInput): Promise<void> {
-const normalizedContent = null
-  const hasBlocks = blocks.length > 0
-
-  if (!normalizedContent && !hasBlocks) {
-    throw new Error("Post must have text or media")
-  }
-
-  if (visibility === "paid" && price <= 0) {
-    throw new Error("Paid post price must be greater than 0")
-  }
-
-  const normalizedPublishedAt =
-    status === "scheduled" ? localDateTimeToUtcIso(publishedAt) : null
-
-  if (status === "scheduled" && !normalizedPublishedAt) {
-    throw new Error("Scheduled post requires valid publishedAt")
-  }
+  const draftIntent = normalizeCreatePostDraftIntent({
+    creatorId,
+    status,
+    publishedAt,
+    visibility,
+    price,
+    blocks,
+  })
 
   try {
-    await createPostWithMediaWorkflow({
-      creatorId,
-      content: normalizedContent,
-      visibility,
-      price: visibility === "paid" ? price : 0,
-      status,
-      publishedAt: normalizedPublishedAt,
-      blocks,
-    })
+    await createPostWithMediaWorkflow(draftIntent)
   } catch (error) {
     console.error("[createPostAction]", error)
 

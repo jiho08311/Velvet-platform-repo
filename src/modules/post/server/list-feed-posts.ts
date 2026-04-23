@@ -2,8 +2,9 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
 import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
 import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
-import { buildPostRenderInput } from "@/modules/post/ui/post-render-input"
-import type { PostBlockEditorState } from "../types"
+import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
+import type { PostBlockEditorState, PostRenderListItem } from "../types"
+import { buildPostRenderReadModel } from "./post-render-read-model"
 
 type SubscriptionRow = {
   creator_id: string
@@ -41,6 +42,7 @@ type CreatorRow = {
 type MediaType = "image" | "video" | "audio" | "file"
 
 type MediaRow = {
+  id: string
   post_id: string
   storage_path: string
   type: MediaType | null
@@ -87,24 +89,7 @@ function resolveMediaType(row: MediaRow): MediaType {
 export async function listFeedPosts({
   userId,
   limit = 20,
-}: ListFeedPostsInput): Promise<
-  Array<{
-    id: string
-    creatorId: string
-    title?: string
-    content?: string
-    status: "draft" | "scheduled" | "published" | "archived"
-    visibility: "public" | "subscribers" | "paid"
-    price: number
-    publishedAt?: string
-    createdAt: string
-    updatedAt: string
-    media: Array<{
-      url: string
-      type: MediaType
-    }>
-  }>
-> {
+}: ListFeedPostsInput): Promise<PostRenderListItem[]> {
   const safeLimit = Math.max(1, Math.min(limit, 100))
   const now = new Date().toISOString()
 
@@ -215,7 +200,7 @@ export async function listFeedPosts({
 
   const { data: mediaRows, error: mediaError } = await supabaseAdmin
     .from("media")
-    .select("post_id, storage_path, type, mime_type, status, sort_order")
+    .select("id, post_id, storage_path, type, mime_type, status, sort_order")
     .in("post_id", postIds)
     .eq("status", "ready")
     .order("sort_order", { ascending: true })
@@ -271,7 +256,7 @@ export async function listFeedPosts({
           })
 
           return {
-            id: `${post.id}:${item.sort_order}:${item.storage_path}`,
+            id: item.id,
             url,
             type: resolveMediaType(item),
             mimeType: item.mime_type,
@@ -280,41 +265,33 @@ export async function listFeedPosts({
         })
       )
 
-          const renderInput = buildPostRenderInput({
+      const renderReadModel = buildPostRenderReadModel({
+        blockRows: blocksMap.get(post.id) ?? [],
+        mediaItems: media,
+      })
+
+      const renderInput = buildPostRenderInput({
         text: post.content ?? "",
-        blocks: (blocksMap.get(post.id) ?? []).map((block) => ({
-          id: block.id,
-          postId: block.post_id,
-          type: block.type,
-          content: block.content,
-          mediaId: block.media_id,
-          sortOrder: block.sort_order,
-          createdAt: block.created_at,
-          editorState: block.editor_state ?? null,
-        })),
+        blocks: renderReadModel.blocks,
+        media: renderReadModel.media,
+      })
+
+      return {
+        id: post.id,
+        creatorId: post.creator_id,
+        content: renderInput.blockText || null,
+        status: post.status,
+        visibility: post.visibility,
+        price: post.price,
+        isLocked: false,
+        publishedAt: post.published_at ?? null,
+        createdAt: post.created_at,
         media: media.map((item) => ({
           id: item.id,
           url: item.url,
           type: item.type,
           mimeType: item.mimeType,
           sortOrder: item.sortOrder,
-        })),
-      })
-
-      return {
-        id: post.id,
-        creatorId: post.creator_id,
-        title: post.title ?? undefined,
-        content: renderInput.blockText || undefined,
-        status: post.status,
-        visibility: post.visibility,
-        price: post.price,
-        publishedAt: post.published_at ?? undefined,
-        createdAt: post.created_at,
-        updatedAt: post.updated_at,
-        media: media.map((item) => ({
-          url: item.url,
-          type: item.type,
         })),
       }
     })

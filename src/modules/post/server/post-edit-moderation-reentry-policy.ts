@@ -1,11 +1,4 @@
-type PostEditModerationReentryInput = {
-  currentContent: string | null
-  nextContent: string | null
-  currentBlockFingerprint: string
-  nextBlockFingerprint: string
-  hasNewMedia: boolean
-  hasRemovedMedia: boolean
-}
+import type { PostEditModerationReentryInput } from "../types"
 
 function normalizeText(value: string | null | undefined): string {
   return value?.trim() ?? ""

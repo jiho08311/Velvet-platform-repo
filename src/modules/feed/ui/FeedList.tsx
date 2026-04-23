@@ -1,46 +1,16 @@
 import { FeedEmptyState } from "./FeedEmptyState"
 import { UpcomingCard } from "@/modules/feed/ui/UpcomingCard"
 import { PostCard } from "@/modules/post/ui/PostCard"
-import type { PostBlockEditorState } from "@/modules/post/types"
+import type { PostCardSurfaceProps } from "@/modules/post/ui/PostCard"
 import {
   FEED_LIST_EMPTY_STATE,
   FEED_UPCOMING_STATE,
 } from "./feed-surface-policy"
 
-type FeedListPost = {
+type FeedListPost = PostCardSurfaceProps & {
   id: string
-  postId?: string
-  creatorId: string
-  creatorUserId?: string
-  commentsCount?: number
-  currentUserId?: string
-  text: string
-  createdAt: string
-  media?: Array<{
-    id?: string
-    url: string
-    type: "image" | "video" | "audio" | "file"
-  }>
-  blocks?: Array<{
-    id: string
-    postId: string
-    type: "text" | "image" | "video" | "audio" | "file"
-    content: string | null
-    mediaId: string | null
-    sortOrder: number
-    createdAt: string
-    editorState: PostBlockEditorState
-  }>
-  isLocked?: boolean
-  likesCount?: number
-  isLiked?: boolean
   status?: "draft" | "scheduled" | "published" | "archived"
   publishedAt?: string | null
-  creator: {
-    username: string
-    displayName: string | null
-    avatarUrl: string | null
-  }
 }
 
 type FeedListProps = {
@@ -83,19 +53,7 @@ export function FeedList({
         return (
           <PostCard
             key={post.id}
-            postId={post.postId}
-            text={post.text}
-            createdAt={post.createdAt}
-            media={post.media ?? []}
-            blocks={post.blocks ?? []}
-            isLocked={post.isLocked}
-            commentsCount={post.commentsCount}
-            likesCount={post.likesCount}
-            isLiked={post.isLiked}
-            creatorId={post.creatorId}
-            creatorUserId={post.creatorUserId}
-            currentUserId={post.currentUserId}
-            creator={post.creator}
+            {...post}
           />
         )
       })}

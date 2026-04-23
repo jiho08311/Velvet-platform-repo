@@ -1,6 +1,6 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { buildPostRenderInput } from "@/modules/post/ui/post-render-input"
+import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
 import type { PostBlockEditorState } from "../types"
 
 export type CreatorStudioPost = {

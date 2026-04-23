@@ -4,18 +4,14 @@ import {
   shouldReenterPostModerationOnEdit,
 } from "@/modules/post/server/post-edit-moderation-reentry-policy"
 import {
+  buildNormalizedEditPostUpdateDraft,
   buildInitialEditPostDraft,
   buildSubmittedEditPostDraft,
-  buildEditPostModerationComparisonInput,
-  deriveEditPostContentFromDraft,
-  extractRemovedExistingMediaIdsFromEditDraft,
-  extractUploadedMediaFromEditDraft,
-  isRemoveOnlyEditDraftMutation,
   projectPersistedEditBlocksFromDraft,
 } from "@/modules/post/server/edit-post-draft-policy"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
-import type { PostBlockEditorState } from "../types"
+import type { CreatePostClientDraftBlock } from "../types"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
@@ -34,7 +30,7 @@ type UpdatePostActionInput = {
   visibility: "public" | "subscribers" | "paid"
   price?: number
   files?: File[]
- blocks?: import("../types").CreatePostDraftBlock[]
+  blocks?: CreatePostClientDraftBlock[]
 }
 
 type MediaRow = {
@@ -161,8 +157,10 @@ export async function updatePostAction({
     blocks,
     uploadedFiles: uploadedFilesForDraft,
   })
-
-  const nextContent = deriveEditPostContentFromDraft(submittedDraft)
+  const normalizedUpdateDraft = buildNormalizedEditPostUpdateDraft({
+    current: currentDraft,
+    next: submittedDraft,
+  })
 
   if (currentPost.visibility === "paid" && price <= 0) {
     throw new Error("Paid post price must be greater than 0")
@@ -171,17 +169,14 @@ export async function updatePostAction({
   await updatePost({
     postId,
     creatorId: creator.id,
-    content: nextContent,
+    content: normalizedUpdateDraft.content,
     visibility: currentPost.visibility,
     price: currentPost.visibility === "paid" ? price : 0,
   })
 
-  const removedExistingMediaIds = extractRemovedExistingMediaIdsFromEditDraft({
-    current: currentDraft,
-    next: submittedDraft,
-  })
-
-  const hasRemovedMedia = removedExistingMediaIds.length > 0
+  const removedExistingMediaIds =
+    normalizedUpdateDraft.media.removedExistingMediaIds
+  const hasRemovedMedia = normalizedUpdateDraft.media.hasRemovedMedia
 
   if (hasRemovedMedia) {
     const { data: mediaToDelete, error: mediaToDeleteError } = await supabaseAdmin
@@ -223,7 +218,7 @@ export async function updatePostAction({
   }
 
   const validFiles = files.filter((file) => file instanceof File && file.size > 0)
-  const uploadedDraftMedia = extractUploadedMediaFromEditDraft(submittedDraft)
+  const uploadedDraftMedia = normalizedUpdateDraft.media.uploadedMedia
 
   if (uploadedDraftMedia.length !== validFiles.length) {
     throw new Error("Uploaded media does not match submitted blocks")
@@ -235,19 +230,13 @@ export async function updatePostAction({
     }
   }
 
-  const moderationComparison = buildEditPostModerationComparisonInput({
-    current: currentDraft,
-    next: submittedDraft,
-  })
+  const moderationComparison = normalizedUpdateDraft.comparison
 
   const shouldReenterModeration = shouldReenterPostModerationOnEdit(
     moderationComparison
   )
 
-  const isRemoveOnlyEdit = isRemoveOnlyEditDraftMutation({
-    current: currentDraft,
-    next: submittedDraft,
-  })
+  const isRemoveOnlyEdit = normalizedUpdateDraft.isRemoveOnlyMutation
 
   const createdMediaForModeration: EnqueuedVideoMedia[] = []
 
@@ -344,7 +333,9 @@ export async function updatePostAction({
     .delete()
     .eq("post_id", postId)
 
-const persistedBlocks = projectPersistedEditBlocksFromDraft(submittedDraft)
+  const persistedBlocks = projectPersistedEditBlocksFromDraft(
+    normalizedUpdateDraft
+  )
 
 if (persistedBlocks.length > 0) {
   const insertData = persistedBlocks.map((block) => ({

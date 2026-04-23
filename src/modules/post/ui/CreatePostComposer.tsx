@@ -6,7 +6,9 @@ import { createSupabaseBrowserClient } from "@/infrastructure/supabase/client"
 
 import { createPostAction } from "../server/create-post-action"
 import type {
-  CreatePostDraftBlock,
+  CreateOrEditPostFormBlock,
+  CreatePostClientDraftBlock,
+  CreatePostCarouselItem,
   CreatePostUploadedMediaInput,
 } from "../types"
 import { CreatePostForm } from "./CreatePostForm"
@@ -36,22 +38,43 @@ function buildClientUploadPath(file: File) {
   return `creator/${now}-${random}${safeExtension}`
 }
 
-async function uploadFilesDirect(files: File[]): Promise<CreatePostUploadedMediaInput[]> {
+type ClientUploadEntry = {
+  placeholderId: string
+  file: File
+}
+
+function createExistingFormMediaSource(mediaId: string) {
+  return {
+    kind: "existing" as const,
+    mediaId,
+  }
+}
+
+function createUploadedFormMediaSource(uploaded: CreatePostUploadedMediaInput) {
+  return {
+    kind: "uploaded" as const,
+    uploaded,
+  }
+}
+
+async function uploadFilesDirect(
+  files: ClientUploadEntry[]
+): Promise<Record<string, CreatePostUploadedMediaInput>> {
   if (files.length === 0) {
-    return []
+    return {}
   }
 
   const supabase = createSupabaseBrowserClient()
-  const uploaded: CreatePostUploadedMediaInput[] = []
+  const uploaded: Record<string, CreatePostUploadedMediaInput> = {}
 
-  for (const file of files) {
-    const path = buildClientUploadPath(file)
+  for (const entry of files) {
+    const path = buildClientUploadPath(entry.file)
 
     const { error } = await supabase.storage
       .from(MEDIA_BUCKET)
-      .upload(path, file, {
+      .upload(path, entry.file, {
         cacheControl: "3600",
-        contentType: file.type || undefined,
+        contentType: entry.file.type || undefined,
         upsert: false,
       })
 
@@ -59,19 +82,19 @@ async function uploadFilesDirect(files: File[]): Promise<CreatePostUploadedMedia
       throw new Error(error.message)
     }
 
-    uploaded.push({
+    uploaded[entry.placeholderId] = {
       path,
-      type: file.type.startsWith("image/")
+      type: entry.file.type.startsWith("image/")
         ? "image"
-        : file.type.startsWith("video/")
+        : entry.file.type.startsWith("video/")
           ? "video"
-          : file.type.startsWith("audio/")
+          : entry.file.type.startsWith("audio/")
             ? "audio"
             : "file",
-      mimeType: file.type || "",
-      size: file.size,
-      originalName: file.name,
-    })
+      mimeType: entry.file.type || "",
+      size: entry.file.size,
+      originalName: entry.file.name,
+    }
   }
 
   return uploaded
@@ -79,10 +102,10 @@ async function uploadFilesDirect(files: File[]): Promise<CreatePostUploadedMedia
 
 
 function collectUploadedFilesFromDraft(
-  blocks: CreatePostDraftBlock[],
+  blocks: CreatePostClientDraftBlock[],
   uploadedFiles: Record<string, File>
-): File[] {
-  const files: File[] = []
+): ClientUploadEntry[] {
+  const files: ClientUploadEntry[] = []
 
   for (const block of blocks) {
     if (block.type === "text") {
@@ -95,9 +118,12 @@ function collectUploadedFilesFromDraft(
           continue
         }
 
-        const file = uploadedFiles[item.media.uploaded.path]
+        const file = uploadedFiles[item.media.uploaded.placeholderId]
         if (file) {
-          files.push(file)
+          files.push({
+            placeholderId: item.media.uploaded.placeholderId,
+            file,
+          })
         }
       }
 
@@ -108,21 +134,36 @@ function collectUploadedFilesFromDraft(
       continue
     }
 
-    const file = uploadedFiles[block.media.uploaded.path]
+    const file = uploadedFiles[block.media.uploaded.placeholderId]
     if (file) {
-      files.push(file)
+      files.push({
+        placeholderId: block.media.uploaded.placeholderId,
+        file,
+      })
     }
   }
 
   return files
 }
 
-function replaceUploadedDraftPaths(params: {
-  blocks: CreatePostDraftBlock[]
-  uploadedFiles: CreatePostUploadedMediaInput[]
-}): CreatePostDraftBlock[] {
-  let uploadedIndex = 0
+function resolveUploadedMediaOrThrow(params: {
+  placeholderId: string
+  uploadedFiles: Record<string, CreatePostUploadedMediaInput>
+  errorMessage: string
+}): CreatePostUploadedMediaInput {
+  const uploaded = params.uploadedFiles[params.placeholderId]
 
+  if (!uploaded) {
+    throw new Error(params.errorMessage)
+  }
+
+  return uploaded
+}
+
+function replaceUploadedDraftPaths(params: {
+  blocks: CreatePostClientDraftBlock[]
+  uploadedFiles: Record<string, CreatePostUploadedMediaInput>
+}): CreateOrEditPostFormBlock[] {
   return params.blocks.map((block, sortOrder) => {
     if (block.type === "text") {
       return {
@@ -135,25 +176,24 @@ function replaceUploadedDraftPaths(params: {
       return {
         ...block,
         sortOrder,
-        items: block.items.map((item) => {
+        items: block.items.map((item): CreatePostCarouselItem => {
           if (item.media.kind !== "uploaded") {
-            return item
+            return {
+              type: item.type,
+              media: createExistingFormMediaSource(item.media.mediaId),
+              editorState: item.editorState,
+            }
           }
 
-          const uploaded = params.uploadedFiles[uploadedIndex]
-
-          if (!uploaded) {
-            throw new Error("Uploaded carousel media mapping failed")
-          }
-
-          uploadedIndex += 1
+          const uploaded = resolveUploadedMediaOrThrow({
+            placeholderId: item.media.uploaded.placeholderId,
+            uploadedFiles: params.uploadedFiles,
+            errorMessage: "Uploaded carousel media mapping failed",
+          })
 
           return {
             ...item,
-            media: {
-              kind: "uploaded" as const,
-              uploaded,
-            },
+            media: createUploadedFormMediaSource(uploaded),
           }
         }),
       }
@@ -161,26 +201,24 @@ function replaceUploadedDraftPaths(params: {
 
     if (block.media.kind !== "uploaded") {
       return {
-        ...block,
+        type: block.type,
         sortOrder,
+        media: createExistingFormMediaSource(block.media.mediaId),
+        editorState: block.editorState,
+        content: block.content ?? null,
       }
     }
 
-    const uploaded = params.uploadedFiles[uploadedIndex]
-
-    if (!uploaded) {
-      throw new Error("Uploaded media mapping failed")
-    }
-
-    uploadedIndex += 1
+    const uploaded = resolveUploadedMediaOrThrow({
+      placeholderId: block.media.uploaded.placeholderId,
+      uploadedFiles: params.uploadedFiles,
+      errorMessage: "Uploaded media mapping failed",
+    })
 
     return {
       ...block,
       sortOrder,
-      media: {
-        kind: "uploaded" as const,
-        uploaded,
-      },
+      media: createUploadedFormMediaSource(uploaded),
     }
   })
 }

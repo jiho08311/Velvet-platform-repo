@@ -159,7 +159,7 @@ const extraMediaCount = (post.media?.length ?? 0) > 1 ? (post.media?.length ?? 0
 
                 <div className="mt-4 min-h-[72px]">
                   <p className="line-clamp-4 whitespace-pre-wrap text-[15px] font-medium leading-6 text-zinc-100">
-                    {post.text || "No content"}
+                    {post.content || "No content"}
                   </p>
                 </div>
 

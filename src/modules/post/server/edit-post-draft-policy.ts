@@ -1,92 +1,43 @@
 import type {
+  CreateOrEditPostFormBlock,
+  CreateOrEditPostFormInput,
+  CreatePostClientDraftBlock,
   CreatePostUploadedMediaInput,
+  EditPostMediaDiff,
+  EditPostRemovedMediaDiff,
+  EditPostUploadedMediaDiffItem,
+  NormalizedEditPostUpdateDraft,
+  PersistedPostEditorBlockInput,
+  PostEditModerationReentryInput,
+  PostEditorCarouselItem,
+  PostEditorDraftMediaSource,
   PostBlockEditorState,
   PostBlockType,
 } from "../types"
-
-type PersistedEditBlockInput = {
-  type: Exclude<PostBlockType, "carousel">
-  content?: string | null
-  sortOrder: number
-  mediaId?: string | null
-  editorState?: PostBlockEditorState
-}
-
-type SubmittedEditBlockInput =
-  | {
-      type: "text"
-      content?: string | null
-      sortOrder: number
-      editorState?: PostBlockEditorState
-    }
-  | {
-      type: "image" | "video" | "audio" | "file"
-      content?: string | null
-      sortOrder: number
-      mediaId?: string | null
-      editorState?: PostBlockEditorState
-    }
-  | {
-      type: "carousel"
-      sortOrder: number
-      items: EditPostDraftCarouselItem[]
-      editorState?: null
-    }
+import { buildPostEditorDraftFromPersistedBlocks } from "./post-editor-draft-normalizer"
 
 export type EditPostDraftMediaSource =
-  | {
-      kind: "existing"
-      mediaId: string
-    }
-  | {
-      kind: "uploaded"
-      uploaded: CreatePostUploadedMediaInput
-    }
+  PostEditorDraftMediaSource<CreatePostUploadedMediaInput>
 
-export type EditPostDraftCarouselItem = {
-  type: "image" | "video" | "audio" | "file"
-  media: EditPostDraftMediaSource
-  editorState?: PostBlockEditorState
-}
+export type EditPostDraftCarouselItem =
+  PostEditorCarouselItem<CreatePostUploadedMediaInput>
 
-export type EditPostDraftBlock =
-  | {
-      type: "text"
-      content: string
-      sortOrder: number
-      editorState?: PostBlockEditorState
-    }
-  | {
-      type: "image" | "video" | "audio" | "file"
-      sortOrder: number
-      media: EditPostDraftMediaSource
-      editorState?: PostBlockEditorState
-      content?: null
-    }
-  | {
-      type: "carousel"
-      sortOrder: number
-      items: EditPostDraftCarouselItem[]
-      editorState?: null
-      content?: null
-    }
+export type EditPostDraftBlock = CreateOrEditPostFormBlock
 
-export type EditPostDraft = {
-  blocks: EditPostDraftBlock[]
-}
+export type EditPostDraft = CreateOrEditPostFormInput
 
-export type EditPostModerationComparisonInput = {
-  currentContent: string | null
-  nextContent: string | null
-  currentBlockFingerprint: string
-  nextBlockFingerprint: string
-  hasNewMedia: boolean
-  hasRemovedMedia: boolean
-}
+export type EditPostModerationComparisonInput = PostEditModerationReentryInput
 
 type NormalizeSubmittedEditDraftInput = {
-  blocks: SubmittedEditBlockInput[]
+  blocks: CreatePostClientDraftBlock[]
   uploadedFiles?: CreatePostUploadedMediaInput[]
+}
+
+type UploadedEditDraftMedia = {
+  type: "image" | "video" | "audio" | "file"
+  sortOrder: number
+  uploaded: CreatePostUploadedMediaInput
+  editorState?: PostBlockEditorState
 }
 
 function normalizeText(value: string | null | undefined): string {
@@ -106,6 +57,112 @@ function isMediaType(
 
 function sortBySortOrder<T extends { sortOrder: number }>(items: T[]): T[] {
   return [...items].sort((a, b) => a.sortOrder - b.sortOrder)
+}
+
+function buildTextDraftBlock(params: {
+  content: string | null | undefined
+  sortOrder: number
+  editorState?: PostBlockEditorState
+}): EditPostDraftBlock | null {
+  const content = normalizeText(params.content)
+
+  if (!content) {
+    return null
+  }
+
+  return {
+    type: "text",
+    content,
+    sortOrder: params.sortOrder,
+    editorState: params.editorState ?? null,
+  }
+}
+
+function buildExistingMediaDraftSource(
+  mediaId: string
+): EditPostDraftMediaSource | null {
+  const normalizedMediaId = mediaId.trim()
+
+  if (!normalizedMediaId) {
+    return null
+  }
+
+  return {
+    kind: "existing",
+    mediaId: normalizedMediaId,
+  }
+}
+
+function buildExistingMediaDraftBlock(params: {
+  type: "image" | "video" | "audio" | "file"
+  mediaId: string
+  sortOrder: number
+  editorState?: PostBlockEditorState
+}): EditPostDraftBlock | null {
+  const media = buildExistingMediaDraftSource(params.mediaId)
+
+  if (!media) {
+    return null
+  }
+
+  return {
+    type: params.type,
+    sortOrder: params.sortOrder,
+    media,
+    editorState: params.editorState ?? null,
+    content: null,
+  }
+}
+
+function buildUploadedMediaDraftBlock(params: {
+  type: "image" | "video" | "audio" | "file"
+  uploaded: CreatePostUploadedMediaInput
+  sortOrder: number
+  editorState?: PostBlockEditorState
+}): EditPostDraftBlock {
+  return {
+    type: params.type,
+    sortOrder: params.sortOrder,
+    media: {
+      kind: "uploaded",
+      uploaded: params.uploaded,
+    },
+    editorState: params.editorState ?? null,
+    content: null,
+  }
+}
+
+function buildExistingCarouselItem(params: {
+  type: "image" | "video" | "audio" | "file"
+  mediaId: string
+  editorState?: PostBlockEditorState
+}): EditPostDraftCarouselItem | null {
+  const media = buildExistingMediaDraftSource(params.mediaId)
+
+  if (!media) {
+    return null
+  }
+
+  return {
+    type: params.type,
+    media,
+    editorState: params.editorState ?? null,
+  }
+}
+
+function buildUploadedCarouselItem(params: {
+  type: "image" | "video" | "audio" | "file"
+  uploaded: CreatePostUploadedMediaInput
+  editorState?: PostBlockEditorState
+}): EditPostDraftCarouselItem {
+  return {
+    type: params.type,
+    media: {
+      kind: "uploaded",
+      uploaded: params.uploaded,
+    },
+    editorState: params.editorState ?? null,
+  }
 }
 
 function isNonEmptyTextBlock(
@@ -136,67 +193,6 @@ function isUploadedMediaBlock(
   return block.type !== "text" && block.type !== "carousel" && block.media.kind === "uploaded"
 }
 
-function flattenPersistedMediaBlocksToDraft(
-  blocks: PersistedEditBlockInput[]
-): EditPostDraftBlock[] {
-  const sorted = sortBySortOrder(blocks)
-  const result: EditPostDraftBlock[] = []
-  let mediaBuffer: PersistedEditBlockInput[] = []
-
-  function flushMediaBuffer() {
-    if (mediaBuffer.length === 0) return
-
-const validMediaBlocks = mediaBuffer.filter(
-  (
-    block
-  ): block is PersistedEditBlockInput & {
-    type: "image" | "video" | "audio" | "file"
-    mediaId: string
-  } => isMediaType(block.type) && (block.mediaId?.trim() ?? "").length > 0
-)
-
-    for (const block of validMediaBlocks) {
-      result.push({
-        type: block.type,
-        sortOrder: block.sortOrder,
-        media: {
-          kind: "existing",
-          mediaId: block.mediaId.trim(),
-        },
-        editorState: block.editorState ?? null,
-        content: null,
-      })
-    }
-
-    mediaBuffer = []
-  }
-
-  for (const block of sorted) {
-    if (block.type === "text") {
-      flushMediaBuffer()
-
-      result.push({
-        type: "text",
-        content: normalizeText(block.content),
-        sortOrder: block.sortOrder,
-        editorState: block.editorState ?? null,
-      })
-
-      continue
-    }
-
-    if (!isMediaType(block.type)) {
-      continue
-    }
-
-    mediaBuffer.push(block)
-  }
-
-  flushMediaBuffer()
-
-  return result
-}
-
 function flattenSubmittedMediaBlocksToDraft(input: NormalizeSubmittedEditDraftInput): EditPostDraftBlock[] {
   const sortedBlocks = sortBySortOrder(input.blocks)
   const uploadedFiles = input.uploadedFiles ?? []
@@ -204,89 +200,76 @@ function flattenSubmittedMediaBlocksToDraft(input: NormalizeSubmittedEditDraftIn
 
   return sortedBlocks.flatMap((block): EditPostDraftBlock[] => {
     if (block.type === "text") {
-      const content = normalizeText(block.content)
+      const draftBlock = buildTextDraftBlock({
+        content: block.content,
+        sortOrder: block.sortOrder,
+        editorState: block.editorState,
+      })
 
-      if (!content) {
+      if (!draftBlock) {
+        return []
+      }
+
+      return [draftBlock]
+    }
+
+    if (block.type === "carousel") {
+      const items = block.items.flatMap((item): EditPostDraftCarouselItem[] => {
+        if (item.media.kind === "existing") {
+          const carouselItem = buildExistingCarouselItem({
+            type: item.type,
+            mediaId: item.media.mediaId,
+            editorState: item.editorState,
+          })
+
+          return carouselItem ? [carouselItem] : []
+        }
+
+        const uploaded = uploadedFiles[uploadedFileIndex]
+
+        if (!uploaded) {
+          return []
+        }
+
+        uploadedFileIndex += 1
+
+        return [
+          buildUploadedCarouselItem({
+            type: item.type,
+            uploaded,
+            editorState: item.editorState,
+          }),
+        ]
+      })
+
+      if (items.length === 0) {
         return []
       }
 
       return [
         {
-          type: "text",
-          content,
+          type: "carousel",
           sortOrder: block.sortOrder,
-          editorState: block.editorState ?? null,
+          items,
+          editorState: null,
+          content: null,
         },
       ]
     }
-
-if (block.type === "carousel") {
-  const items = block.items.flatMap((item): EditPostDraftCarouselItem[] => {
-    if (item.media.kind === "existing") {
-      const mediaId = item.media.mediaId.trim()
-
-      if (!mediaId) {
-        return []
-      }
-
-      return [
-        {
-          type: item.type,
-          media: {
-            kind: "existing",
-            mediaId,
-          },
-          editorState: item.editorState ?? null,
-        },
-      ]
-    }
-
-    return [
-      {
-        type: item.type,
-        media: {
-          kind: "uploaded",
-          uploaded: item.media.uploaded,
-        },
-        editorState: item.editorState ?? null,
-      },
-    ]
-  })
-
-  if (items.length === 0) {
-    return []
-  }
-
-  return [
-    {
-      type: "carousel",
-      sortOrder: block.sortOrder,
-      items,
-      editorState: null,
-      content: null,
-    },
-  ]
-}
 
     if (!isMediaType(block.type)) {
       return []
     }
 
-    const mediaId = block.mediaId?.trim() ?? ""
+    if (block.media.kind === "existing") {
+      const draftBlock = buildExistingMediaDraftBlock({
+        type: block.type,
+        mediaId: block.media.mediaId,
+        sortOrder: block.sortOrder,
+        editorState: block.editorState,
+      })
 
-    if (mediaId) {
-      return [
-        {
-          type: block.type,
-          sortOrder: block.sortOrder,
-          media: {
-            kind: "existing",
-            mediaId,
-          },
-          editorState: block.editorState ?? null,
-          content: null,
-        },
-      ]
+      return draftBlock ? [draftBlock] : []
     }
 
     const uploaded = uploadedFiles[uploadedFileIndex]
@@ -298,16 +281,12 @@ if (block.type === "carousel") {
     uploadedFileIndex += 1
 
     return [
-      {
+      buildUploadedMediaDraftBlock({
         type: block.type,
+        uploaded,
         sortOrder: block.sortOrder,
-        media: {
-          kind: "uploaded",
-          uploaded,
-        },
-        editorState: block.editorState ?? null,
-        content: null,
-      },
+        editorState: block.editorState,
+      }),
     ]
   })
 }
@@ -316,10 +295,10 @@ if (block.type === "carousel") {
  * Persisted blocks -> normalized edit draft
  */
 export function buildInitialEditPostDraft(params: {
-  blocks: PersistedEditBlockInput[]
+  blocks: PersistedPostEditorBlockInput[]
 }): EditPostDraft {
   return {
-    blocks: flattenPersistedMediaBlocksToDraft(params.blocks),
+    blocks: buildPostEditorDraftFromPersistedBlocks(params.blocks),
   }
 }
 
@@ -348,29 +327,18 @@ export function deriveEditPostContentFromDraft(
 
 export function projectPersistedEditBlocksFromDraft(
   draft: Pick<EditPostDraft, "blocks">
-): Array<{
-  type: Exclude<PostBlockType, "carousel">
-  content?: string | null
-  sortOrder: number
-  mediaId?: string | null
-  editorState?: PostBlockEditorState
-}> {
+): PersistedPostEditorBlockInput[] {
   let nextSortOrder = 0
 
-  return sortBySortOrder(draft.blocks).flatMap(
-    (
-      block
-    ): Array<{
-      type: Exclude<PostBlockType, "carousel">
-      content?: string | null
-      sortOrder: number
-      mediaId?: string | null
-      editorState?: PostBlockEditorState
-    }> => {
+  return sortBySortOrder(draft.blocks).flatMap((block): PersistedPostEditorBlockInput[] => {
       if (block.type === "text") {
-        const content = normalizeText(block.content)
+        const draftBlock = buildTextDraftBlock({
+          content: block.content,
+          sortOrder: block.sortOrder,
+          editorState: block.editorState,
+        })
 
-        if (!content) {
+        if (!draftBlock) {
           return []
         }
 
@@ -380,39 +348,28 @@ export function projectPersistedEditBlocksFromDraft(
         return [
           {
             type: "text",
-            content,
+            content: draftBlock.content,
             sortOrder: currentSortOrder,
             mediaId: null,
-            editorState: block.editorState ?? null,
+            editorState: draftBlock.editorState ?? null,
           },
         ]
       }
 
-   
-if (block.type === "carousel") {
-  const items: Array<{
-    type: Exclude<PostBlockType, "carousel">
-    content?: string | null
-    sortOrder: number
-    mediaId?: string | null
-    editorState?: PostBlockEditorState
-  }> = block.items.map((item) => {
-    const currentSortOrder = nextSortOrder
-    nextSortOrder += 1
+      if (block.type === "carousel") {
+        return block.items.map((item) => {
+          const currentSortOrder = nextSortOrder
+          nextSortOrder += 1
 
-    return {
-      type: item.type,
-      content: null,
-      sortOrder: currentSortOrder,
-      mediaId: item.media.kind === "existing" ? item.media.mediaId : null,
-      editorState: item.editorState ?? null,
-    }
-  })
-
-  return items
-}
-
-
+          return {
+            type: item.type,
+            content: null,
+            sortOrder: currentSortOrder,
+            mediaId: item.media.kind === "existing" ? item.media.mediaId : null,
+            editorState: item.editorState ?? null,
+          }
+        })
+      }
 
       if (isExistingMediaBlock(block)) {
         const currentSortOrder = nextSortOrder
@@ -445,18 +402,12 @@ if (block.type === "carousel") {
       }
 
       return []
-    }
-  )
+    })
 }
 
 export function extractUploadedMediaFromEditDraft(
   draft: Pick<EditPostDraft, "blocks">
-): Array<{
-  type: "image" | "video" | "audio" | "file"
-  sortOrder: number
-  uploaded: CreatePostUploadedMediaInput
-  editorState?: PostBlockEditorState
-}> {
+): UploadedEditDraftMedia[] {
   let nextSortOrder = 0
 
   return sortBySortOrder(draft.blocks).flatMap((block) => {
@@ -531,6 +482,15 @@ export function extractRemovedExistingMediaIdsFromEditDraft(params: {
   return Array.from(currentIds).filter((mediaId) => !nextIds.has(mediaId))
 }
 
+export function buildEditPostRemovedMediaDiff(params: {
+  current: Pick<EditPostDraft, "blocks">
+  next: Pick<EditPostDraft, "blocks">
+}): EditPostRemovedMediaDiff {
+  return {
+    removedExistingMediaIds: extractRemovedExistingMediaIdsFromEditDraft(params),
+  }
+}
+
 export function hasNewUploadedMediaInEditDraft(
   draft: Pick<EditPostDraft, "blocks">
 ): boolean {
@@ -587,30 +547,60 @@ export function buildEditPostDraftBlockFingerprint(
     .join("|")
 }
 
+function analyzeEditPostDraftMutation(params: {
+  current: Pick<EditPostDraft, "blocks">
+  next: Pick<EditPostDraft, "blocks">
+}) {
+  const currentContent = deriveEditPostContentFromDraft(params.current)
+  const nextContent = deriveEditPostContentFromDraft(params.next)
+  const currentBlockFingerprint = buildEditPostDraftBlockFingerprint(
+    params.current
+  )
+  const nextBlockFingerprint = buildEditPostDraftBlockFingerprint(params.next)
+  const uploadedMedia: EditPostUploadedMediaDiffItem[] =
+    extractUploadedMediaFromEditDraft(params.next)
+  const existingMediaIds = extractExistingMediaIdsFromEditDraft(params.next)
+  const removedExistingMediaIds = extractRemovedExistingMediaIdsFromEditDraft(
+    params
+  )
+  const hasNewMedia = uploadedMedia.length > 0
+  const hasRemovedMedia = removedExistingMediaIds.length > 0
+
+  return {
+    currentContent,
+    nextContent,
+    currentBlockFingerprint,
+    nextBlockFingerprint,
+    uploadedMedia,
+    existingMediaIds,
+    removedExistingMediaIds,
+    hasNewMedia,
+    hasRemovedMedia,
+  }
+}
+
 export function isEditDraftStructurallyEqual(params: {
   current: Pick<EditPostDraft, "blocks">
   next: Pick<EditPostDraft, "blocks">
 }): boolean {
-  return (
-    buildEditPostDraftBlockFingerprint(params.current) ===
-    buildEditPostDraftBlockFingerprint(params.next)
-  )
+  const analysis = analyzeEditPostDraftMutation(params)
+
+  return analysis.currentBlockFingerprint === analysis.nextBlockFingerprint
 }
 
 export function buildEditPostModerationComparisonInput(params: {
   current: Pick<EditPostDraft, "blocks">
   next: Pick<EditPostDraft, "blocks">
 }): EditPostModerationComparisonInput {
+  const analysis = analyzeEditPostDraftMutation(params)
+
   return {
-    currentContent: deriveEditPostContentFromDraft(params.current),
-    nextContent: deriveEditPostContentFromDraft(params.next),
-    currentBlockFingerprint: buildEditPostDraftBlockFingerprint(params.current),
-    nextBlockFingerprint: buildEditPostDraftBlockFingerprint(params.next),
-    hasNewMedia: hasNewUploadedMediaInEditDraft(params.next),
-    hasRemovedMedia: extractRemovedExistingMediaIdsFromEditDraft({
-      current: params.current,
-      next: params.next,
-    }).length > 0,
+    currentContent: analysis.currentContent,
+    nextContent: analysis.nextContent,
+    currentBlockFingerprint: analysis.currentBlockFingerprint,
+    nextBlockFingerprint: analysis.nextBlockFingerprint,
+    hasNewMedia: analysis.hasNewMedia,
+    hasRemovedMedia: analysis.hasRemovedMedia,
   }
 }
 
@@ -618,15 +608,64 @@ export function isRemoveOnlyEditDraftMutation(params: {
   current: Pick<EditPostDraft, "blocks">
   next: Pick<EditPostDraft, "blocks">
 }): boolean {
-  const comparison = buildEditPostModerationComparisonInput(params)
-
-  const currentContent = comparison.currentContent ?? ""
-  const nextContent = comparison.nextContent ?? ""
+  const analysis = analyzeEditPostDraftMutation(params)
+  const currentContent = analysis.currentContent ?? ""
+  const nextContent = analysis.nextContent ?? ""
 
   return (
-    comparison.hasRemovedMedia &&
-    !comparison.hasNewMedia &&
+    analysis.hasRemovedMedia &&
+    !analysis.hasNewMedia &&
     currentContent === nextContent &&
-    comparison.currentBlockFingerprint !== comparison.nextBlockFingerprint
+    analysis.currentBlockFingerprint !== analysis.nextBlockFingerprint
   )
+}
+
+export function buildEditPostMediaDiff(params: {
+  current: Pick<EditPostDraft, "blocks">
+  next: Pick<EditPostDraft, "blocks">
+}): EditPostMediaDiff {
+  const analysis = analyzeEditPostDraftMutation(params)
+
+  return {
+    existingMediaIds: analysis.existingMediaIds,
+    uploadedMedia: analysis.uploadedMedia,
+    removedExistingMediaIds: analysis.removedExistingMediaIds,
+    hasNewMedia: analysis.hasNewMedia,
+    hasRemovedMedia: analysis.hasRemovedMedia,
+  }
+}
+
+export function buildNormalizedEditPostUpdateDraft(params: {
+  current: Pick<EditPostDraft, "blocks">
+  next: EditPostDraft
+}): NormalizedEditPostUpdateDraft {
+  const analysis = analyzeEditPostDraftMutation(params)
+
+  return {
+    blocks: params.next.blocks,
+    content: analysis.nextContent,
+    blockFingerprint: analysis.nextBlockFingerprint,
+    media: {
+      existingMediaIds: analysis.existingMediaIds,
+      uploadedMedia: analysis.uploadedMedia,
+      removedExistingMediaIds: analysis.removedExistingMediaIds,
+      hasNewMedia: analysis.hasNewMedia,
+      hasRemovedMedia: analysis.hasRemovedMedia,
+    },
+    comparison: {
+      currentContent: analysis.currentContent,
+      nextContent: analysis.nextContent,
+      currentBlockFingerprint: analysis.currentBlockFingerprint,
+      nextBlockFingerprint: analysis.nextBlockFingerprint,
+      hasNewMedia: analysis.hasNewMedia,
+      hasRemovedMedia: analysis.hasRemovedMedia,
+    },
+    isStructuralEqualToCurrent:
+      analysis.currentBlockFingerprint === analysis.nextBlockFingerprint,
+    isRemoveOnlyMutation:
+      analysis.hasRemovedMedia &&
+      !analysis.hasNewMedia &&
+      (analysis.currentContent ?? "") === (analysis.nextContent ?? "") &&
+      analysis.currentBlockFingerprint !== analysis.nextBlockFingerprint,
+  }
 }

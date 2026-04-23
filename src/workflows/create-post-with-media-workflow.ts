@@ -1,13 +1,13 @@
 import OpenAI from "openai"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createPost } from "@/modules/post/server/create-post"
-import { createMedia } from "@/modules/media/server/create-media"
+import { createPostAuthoringMedia } from "@/modules/media/server/create-media"
 import { updatePostStatus } from "@/modules/post/server/update-post-status"
 import { enqueueVideoModeration } from "@/modules/moderation/server/enqueue-video-moderation"
 import { createPostBlocks } from "@/modules/post/server/create-post-blocks"
 import {
   projectCreatePostDraft,
-  deriveCreatePostContentFromDraft,
+  resolveCreatePostBlocksForPersistence,
 } from "@/modules/post/server/create-post-draft-policy"
 
 import type {
@@ -140,14 +140,8 @@ export async function createPostWithMediaWorkflow({
   // ✅ draft → projection
   const projectedDraft = projectCreatePostDraft({ blocks })
 
-  const resolvedContent =
-    projectedDraft?.content ??
-    deriveCreatePostContentFromDraft({ blocks }) ??
-    content ??
-    null
-
-  const moderationFiles =
-    projectedDraft?.media.map((item) => item.uploaded) ?? []
+  const resolvedContent = projectedDraft.content ?? content ?? null
+  const moderationFiles = projectedDraft.mediaToCreate.map((item) => item.uploaded)
 
   const hasVideo = moderationFiles.some(
     (file) => resolveUploadedMediaType(file.type) === "video"
@@ -169,19 +163,16 @@ export async function createPostWithMediaWorkflow({
 
   // ✅ media 생성
   const media: CreatedMedia[] = []
+  const mediaIdByProjectionKey = new Map<string, string>()
 
-  for (const mediaItem of projectedDraft.media) {
-    const type = resolveUploadedMediaType(mediaItem.uploaded.type)
-
-    const mediaRow = await createMedia({
+  for (const mediaItem of projectedDraft.mediaToCreate) {
+    const mediaRow = await createPostAuthoringMedia({
       postId: post.id,
       ownerUserId: creatorRow.user_id,
-      type,
-      storagePath: mediaItem.uploaded.path,
-      mimeType: mediaItem.uploaded.mimeType || undefined,
-      sortOrder: mediaItem.sortOrder,
-      useInitialModerationState: true,
+      media: mediaItem,
     })
+
+    mediaIdByProjectionKey.set(mediaItem.projectionKey, mediaRow.id)
 
     media.push({
       id: mediaRow.id,
@@ -190,28 +181,11 @@ export async function createPostWithMediaWorkflow({
     })
   }
 
-  // ✅ mediaId 매핑
-  const mediaIdBySortOrder = new Map<number, string>(
-    media.map((m, i) => [projectedDraft.media[i].sortOrder, m.id])
-  )
-
   // ✅ block 생성
-  const blocksToInsert = projectedDraft.blocks
-    .map((block) => {
-      if (block.type === "text") return block
-
-      return {
-        ...block,
-        mediaId:
-          block.mediaId ?? mediaIdBySortOrder.get(block.sortOrder) ?? null,
-      }
-    })
-    .filter((block) => {
-      if (block.type === "text") {
-        return (block.content?.trim() ?? "").length > 0
-      }
-      return Boolean(block.mediaId)
-    })
+  const blocksToInsert = resolveCreatePostBlocksForPersistence({
+    persistenceItems: projectedDraft.persistenceItems,
+    mediaIdByProjectionKey,
+  })
 
   await createPostBlocks(post.id, blocksToInsert)
 
