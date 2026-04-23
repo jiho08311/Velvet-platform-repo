@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
 import { readOnboardingReadiness } from "@/modules/auth/server/read-onboarding-readiness"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
+import { readCreatorReadiness } from "@/modules/creator/server/read-creator-readiness"
 import { CreatePostComposer } from "@/modules/post/ui/CreatePostComposer"
 
 export default async function NewPostPage() {
@@ -27,9 +27,11 @@ export default async function NewPostPage() {
     redirect("/verify-pass")
   }
 
-  const creator = await getCreatorByUserId(user.id)
+  const creatorReadiness = await readCreatorReadiness({
+    userId: user.id,
+  })
 
-  if (!creator) {
+  if (!creatorReadiness.ok) {
     return (
       <main className="w-full px-0 py-8">
         <div className="rounded-3xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
@@ -38,6 +40,8 @@ export default async function NewPostPage() {
       </main>
     )
   }
+
+  const { creator } = creatorReadiness
 
   return (
     <main className="w-full px-0 py-8">
