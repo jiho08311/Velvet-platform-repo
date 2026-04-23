@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { readOnboardingReadiness } from "@/modules/auth/server/read-onboarding-readiness";
 import { requireActiveUser } from "@/modules/auth/server/require-active-user";
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id";
+import { readCreatorReadiness } from "@/modules/creator/server/read-creator-readiness";
 import { createCreatorProfile } from "@/modules/creator/server/create-creator-profile";
 
 export async function becomeCreatorAction(formData: FormData) {
@@ -23,9 +23,11 @@ export async function becomeCreatorAction(formData: FormData) {
     redirect("/onboarding");
   }
 
-  const existingCreator = await getCreatorByUserId(user.id);
+  const creatorReadiness = await readCreatorReadiness({
+    userId: user.id,
+  });
 
-  if (existingCreator) {
+  if (creatorReadiness.ok) {
     redirect("/dashboard");
   }
 
