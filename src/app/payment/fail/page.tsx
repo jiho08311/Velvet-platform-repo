@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { getPaymentResultPageState } from "@/modules/payment/server/payment-result-state"
 import { Card } from "@/shared/ui/Card"
 
 type PaymentFailPageProps = {
@@ -8,20 +9,11 @@ type PaymentFailPageProps = {
   }>
 }
 
-const reasonMessageMap: Record<string, string> = {
-  canceled: "결제가 취소되었어요.",
-  failed: "결제 처리에 실패했어요.",
-  invalid_request: "잘못된 결제 요청이에요.",
-  verification_failed: "결제 검증에 실패했어요.",
-}
-
 export default async function PaymentFailPage({
   searchParams,
 }: PaymentFailPageProps) {
   const params = searchParams ? await searchParams : undefined
-  const reason = params?.reason ?? "failed"
-  const message =
-    reasonMessageMap[reason] ?? "결제를 완료하지 못했어요. 다시 시도해 주세요."
+  const resultState = getPaymentResultPageState(params?.reason)
 
   return (
     <main className="min-h-screen bg-zinc-50 px-4 py-10 text-zinc-900 sm:px-6">
@@ -32,13 +24,15 @@ export default async function PaymentFailPage({
           </div>
 
           <h1 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-950">
-            결제에 실패했어요
+            {resultState.title}
           </h1>
 
-          <p className="mt-2 text-sm leading-6 text-zinc-600">{message}</p>
+          <p className="mt-2 text-sm leading-6 text-zinc-600">
+            {resultState.message}
+          </p>
 
           <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            문제가 계속되면 결제 수단, 네트워크 상태, 또는 중복 요청 여부를 확인해 주세요.
+            {resultState.notice}
           </div>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">

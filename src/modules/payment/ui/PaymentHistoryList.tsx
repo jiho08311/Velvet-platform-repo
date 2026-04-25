@@ -1,14 +1,8 @@
+import type { CreatorPaymentHistoryItem } from "@/modules/payment/types"
 import { StatusBadge } from "@/shared/ui/StatusBadge"
 
-type PaymentHistoryItem = {
-  id: string
-  amount: number
-  status: "pending" | "paid" | "failed"
-  createdAt: string
-}
-
 type PaymentHistoryListProps = {
-  payments: PaymentHistoryItem[]
+  payments: CreatorPaymentHistoryItem[]
   emptyMessage?: string
 }
 
@@ -34,12 +28,12 @@ export function PaymentHistoryList({
           >
             <div>
               <p className="text-sm font-medium text-zinc-900">
-                ₩{payment.amount.toLocaleString()}
+                {payment.displayAmount}
               </p>
-              <p className="text-xs text-zinc-500">{payment.createdAt}</p>
+              <p className="text-xs text-zinc-500">{payment.displayDate}</p>
             </div>
 
-            <StatusBadge label={payment.status} />
+            <StatusBadge label={payment.statusLabel} />
           </li>
         ))}
       </ul>

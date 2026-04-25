@@ -1,5 +1,6 @@
 export type PaymentType =
   | "subscription"
+  | "tip"
   | "ppv_post"
   | "ppv_message"
 
@@ -29,4 +30,19 @@ export type Payment = {
   confirmedAt: string | null
   createdAt: string
   updatedAt: string
+}
+
+export type CreatorPaymentHistoryItem = {
+  id: string
+  payerUserId: string | null
+  payerLabel: string
+  amount: number
+  currency: string
+  displayAmount: string
+  status: PaymentStatus
+  statusLabel: string
+  paymentType: PaymentType
+  paymentTypeLabel: string
+  createdAt: string
+  displayDate: string
 }

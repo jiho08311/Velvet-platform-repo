@@ -1,8 +1,5 @@
 import Link from "next/link"
-import {
-  formatCreatorAnalyticsSummaryMetricValue,
-} from "@/modules/analytics/lib/creator-analytics-summary-metrics"
-import { getDashboardPayoutOverviewReadModel } from "@/modules/analytics/server/get-dashboard-payout-overview-read-model"
+import { getDashboardMainReadModel } from "@/modules/analytics/server/get-dashboard-main-read-model"
 import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
 import { readCreatorOperationalReadiness } from "@/modules/creator/server/read-creator-operational-readiness"
 import { updateCreatorSettings } from "@/modules/creator/server/update-creator-settings"
@@ -14,13 +11,6 @@ import { PayoutEmptyState } from "@/modules/payout/ui/PayoutEmptyState"
 import { PayoutList } from "@/modules/payout/ui/PayoutHistoryList"
 
 import { Card } from "@/shared/ui/Card"
-
-function formatPrice(amount: number, currency = "KRW") {
-  return new Intl.NumberFormat("ko-KR", {
-    style: "currency",
-    currency,
-  }).format(amount)
-}
 
 async function requestPayoutAction(formData: FormData) {
   "use server"
@@ -105,15 +95,18 @@ export default async function PayoutsPage() {
     )
   }
 
-  const { creator } = readiness
+  const dashboard = await getDashboardMainReadModel(readiness.creator)
 
-  const overview = await getDashboardPayoutOverviewReadModel(creator.id)
-
-  if (!overview) {
+  if (!dashboard) {
     return <PayoutEmptyState />
   }
 
-  const { payoutSummary: summary, payouts, subscribersMetric } = overview
+  const {
+    creator,
+    payoutSummary: summary,
+    payouts,
+    subscribersMetric,
+  } = dashboard
   const requestableBalance = summary.requestableBalance
   const requestedPayoutAmount = summary.requestedPayoutAmount
 
@@ -131,7 +124,7 @@ export default async function PayoutsPage() {
           <Card>
             <p className="text-sm text-zinc-500">구독 가격</p>
             <p className="mt-2 text-2xl font-semibold text-white">
-              {formatPrice(creator.subscriptionPrice)}
+              {creator.displaySubscriptionPrice}
             </p>
             <p className="mt-2 text-sm text-zinc-500">
               월 구독 가격을 설정하세요
@@ -175,7 +168,7 @@ export default async function PayoutsPage() {
           <Card>
             <p className="text-sm text-zinc-500">출금 가능 금액</p>
             <p className="mt-2 text-2xl font-semibold text-white">
-              {formatPrice(requestableBalance, summary.currency)}
+              {summary.displayRequestableBalance}
             </p>
             <p className="mt-2 text-sm text-zinc-500">
               현재 출금 가능한 전액 기준으로 요청됩니다.
@@ -198,7 +191,7 @@ export default async function PayoutsPage() {
           <Card>
             <p className="text-sm text-zinc-500">출금 요청 중 금액</p>
             <p className="mt-2 text-2xl font-semibold text-white">
-              {formatPrice(requestedPayoutAmount, summary.currency)}
+              {summary.displayRequestedPayoutAmount}
             </p>
           </Card>
         </div>
@@ -211,7 +204,7 @@ export default async function PayoutsPage() {
             >
               <p className="text-sm text-zinc-500">구독자 관리</p>
               <p className="mt-2 text-2xl font-semibold text-white">
-                {formatCreatorAnalyticsSummaryMetricValue(subscribersMetric)}
+                {subscribersMetric.displayValue}
               </p>
               <p className="mt-1 text-sm text-zinc-500">
                 구독자 목록 확인 및 메시지 보내기

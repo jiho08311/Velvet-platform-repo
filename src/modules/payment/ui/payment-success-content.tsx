@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 
 import { Card } from "@/shared/ui/Card"
 import { Skeleton } from "@/shared/ui/Skeleton"
+import type { PaymentResultPageState } from "@/modules/payment/server/payment-result-state"
 
 type ConfirmInput = {
   paymentId: string
@@ -88,7 +89,13 @@ function resolveSuccessDestination(
   }
 }
 
-export function PaymentSuccessContent() {
+type PaymentSuccessContentProps = {
+  resultState: PaymentResultPageState
+}
+
+export function PaymentSuccessContent({
+  resultState,
+}: PaymentSuccessContentProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -169,15 +176,15 @@ export function PaymentSuccessContent() {
           </div>
 
           <h1 className="mt-4 text-2xl font-semibold tracking-tight text-white">
-            결제 처리 중이에요
+            {resultState.title}
           </h1>
 
           <p className="mt-2 text-sm leading-6 text-zinc-400">
-            결제 확인을 진행하고 있어요. 잠시만 기다려 주세요.
+            {resultState.message}
           </p>
 
           <div className="mt-6 rounded-2xl border border-green-900/60 bg-green-950/60 px-4 py-3 text-sm text-green-300">
-            완료되면 자동으로 반영돼요.
+            {resultState.notice}
           </div>
 
           <div className="mt-6 space-y-3">

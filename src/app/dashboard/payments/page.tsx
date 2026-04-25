@@ -1,17 +1,9 @@
+import { getDashboardPaymentsReadModel } from "@/modules/analytics/server/get-dashboard-payments-read-model"
 import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
 import { readCreatorOperationalReadiness } from "@/modules/creator/server/read-creator-operational-readiness"
-import { listCreatorPayments } from "@/modules/payment/server/list-creator-payments"
 
 import { Card } from "@/shared/ui/Card"
 import { EmptyState } from "@/shared/ui/EmptyState"
-
-function formatPrice(amount: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "KRW",
-    maximumFractionDigits: 2,
-  }).format(amount)
-}
 
 export default async function DashboardPaymentsPage() {
   const { user } = await requireCreatorReadyUser({
@@ -36,11 +28,7 @@ export default async function DashboardPaymentsPage() {
     )
   }
 
-  const { creator } = readiness
-
-  const payments = await listCreatorPayments({
-    creatorId: creator.id,
-  })
+  const { payments } = await getDashboardPaymentsReadModel(readiness.creator.id)
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -71,15 +59,18 @@ export default async function DashboardPaymentsPage() {
                 >
                   <div className="min-w-0 flex-1">
                     <span className="block truncate text-sm text-zinc-300">
-                      {payment.user_id}
+                      {payment.payerLabel}
                     </span>
                     <span className="mt-1 block text-xs text-zinc-500">
-                      {new Date(payment.created_at).toLocaleString()}
+                      {payment.displayDate}
+                    </span>
+                    <span className="mt-1 block text-xs text-zinc-600">
+                      {payment.paymentTypeLabel} · {payment.statusLabel}
                     </span>
                   </div>
 
                   <span className="shrink-0 text-sm font-semibold text-[#F472B6] tabular-nums">
-                    {formatPrice(payment.amount ?? 0)}
+                    {payment.displayAmount}
                   </span>
                 </div>
               ))}

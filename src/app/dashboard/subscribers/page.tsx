@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 
+import { getDashboardSubscribersReadModel } from "@/modules/analytics/server/get-dashboard-subscribers-read-model"
 import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
 import { readCreatorOperationalReadiness } from "@/modules/creator/server/read-creator-operational-readiness"
 import { getOrCreateConversation } from "@/modules/message/server/get-or-create-conversation"
@@ -8,14 +9,6 @@ import { sendMessage } from "@/modules/message/server/send-message"
 import { normalizeSendMessagePayload } from "@/modules/message/types"
 import { getCreatorSubscribers } from "@/modules/subscription/server/get-creator-subscribers"
 import { Card } from "@/shared/ui/Card"
-
-function formatSubscribedAt(value: string) {
-  return new Intl.DateTimeFormat("ko-KR", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(value))
-}
 
 async function broadcastMessageAction(formData: FormData) {
   "use server"
@@ -88,15 +81,12 @@ export default async function SubscribersPage({
     )
   }
 
-  const { creator } = readiness
-
   const params = searchParams ? await searchParams : undefined
   const isSent = params?.sent === "1"
 
-  const { items: subscribers } = await getCreatorSubscribers({
-    creatorId: creator.id,
-    limit: 50,
-  })
+  const { subscribers } = await getDashboardSubscribersReadModel(
+    readiness.creator.id
+  )
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -160,50 +150,45 @@ export default async function SubscribersPage({
           </Card>
         ) : (
           <div className="space-y-3">
-            {subscribers.map((subscriber) => {
-              const name = subscriber.displayName || subscriber.username || "User"
-              const initial = name.slice(0, 1).toUpperCase()
-
-              return (
-                <Link
-                  key={subscriber.subscriptionId}
-                  href={`/messages?userId=${subscriber.viewerUserId}`}
-                  className="block"
-                >
-                  <Card className="transition hover:border-zinc-700 hover:bg-zinc-900/70">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-zinc-800 bg-zinc-900 text-sm font-semibold text-white">
-                        {subscriber.avatarUrl ? (
-                          <img
-                            src={subscriber.avatarUrl}
-                            alt={name}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          initial
-                        )}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-white">
-                          {name}
-                        </p>
-                        <p className="truncate text-sm text-zinc-500">
-                          @{subscriber.username}
-                        </p>
-                      </div>
-
-                      <div className="shrink-0 text-right">
-                        <p className="text-xs text-zinc-500">구독 시작</p>
-                        <p className="text-sm text-white">
-                          {formatSubscribedAt(subscriber.subscribedAt)}
-                        </p>
-                      </div>
+            {subscribers.map((subscriber) => (
+              <Link
+                key={subscriber.subscriptionId}
+                href={subscriber.messageHref}
+                className="block"
+              >
+                <Card className="transition hover:border-zinc-700 hover:bg-zinc-900/70">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-zinc-800 bg-zinc-900 text-sm font-semibold text-white">
+                      {subscriber.avatarUrl ? (
+                        <img
+                          src={subscriber.avatarUrl}
+                          alt={subscriber.displayName}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        subscriber.avatarInitial
+                      )}
                     </div>
-                  </Card>
-                </Link>
-              )
-            })}
+
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-white">
+                        {subscriber.displayName}
+                      </p>
+                      <p className="truncate text-sm text-zinc-500">
+                        @{subscriber.username}
+                      </p>
+                    </div>
+
+                    <div className="shrink-0 text-right">
+                      <p className="text-xs text-zinc-500">구독 시작</p>
+                      <p className="text-sm text-white">
+                        {subscriber.displaySubscribedAt}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </Link>
+            ))}
           </div>
         )}
       </div>

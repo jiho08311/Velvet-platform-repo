@@ -1,8 +1,11 @@
 import Link from "next/link"
 
+import { getPaymentResultPageState } from "@/modules/payment/server/payment-result-state"
 import { Card } from "@/shared/ui/Card"
 
 export default function PaymentCancelPage() {
+  const resultState = getPaymentResultPageState("canceled")
+
   return (
     <main className="min-h-screen bg-zinc-50 px-4 py-10 text-zinc-900 sm:px-6">
       <div className="mx-auto max-w-xl">
@@ -12,15 +15,15 @@ export default function PaymentCancelPage() {
           </div>
 
           <h1 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-950">
-            결제가 취소되었어요
+            {resultState.title}
           </h1>
 
           <p className="mt-2 text-sm leading-6 text-zinc-600">
-            결제 과정이 중단되었어요. 언제든 다시 시도할 수 있어요.
+            {resultState.message}
           </p>
 
           <div className="mt-6 rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-700">
-            결제를 진행하지 않으면 콘텐츠 접근이 제한될 수 있어요.
+            {resultState.notice}
           </div>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
