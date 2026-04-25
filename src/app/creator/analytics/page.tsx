@@ -1,17 +1,21 @@
 import { redirect } from "next/navigation"
 
 import { buildPathWithNext } from "@/modules/auth/lib/redirect-handoff"
+import {
+  formatCreatorAnalyticsSummaryMetricValue,
+  getCreatorAnalyticsSummaryMetrics,
+  type CreatorAnalyticsSummaryMetricKey,
+} from "@/modules/analytics/lib/creator-analytics-summary-metrics"
 import { getCreatorAnalyticsSummary } from "@/modules/analytics/server/get-creator-analytics"
 import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
 import { readCreatorOperationalReadiness } from "@/modules/creator/server/read-creator-operational-readiness"
 
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "KRW",
-    maximumFractionDigits: 0,
-  }).format(value)
-}
+const CREATOR_ANALYTICS_PAGE_METRICS: CreatorAnalyticsSummaryMetricKey[] = [
+  "totalRevenue",
+  "subscribers",
+  "posts",
+  "engagement",
+]
 
 export default async function CreatorAnalyticsPage() {
   const nextPath = "/creator/analytics"
@@ -32,6 +36,10 @@ export default async function CreatorAnalyticsPage() {
   }
 
   const analytics = await getCreatorAnalyticsSummary(readiness.creator.id)
+  const metrics = getCreatorAnalyticsSummaryMetrics(
+    analytics,
+    CREATOR_ANALYTICS_PAGE_METRICS
+  )
 
   return (
     <main className="min-h-screen bg-zinc-950 px-6 py-10 text-zinc-100">
@@ -61,41 +69,19 @@ export default async function CreatorAnalyticsPage() {
         </div>
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5">
-            <p className="text-sm uppercase tracking-[0.2em] text-zinc-500">
-              Revenue
-            </p>
-            <p className="mt-4 text-3xl font-semibold text-white">
-              {formatCurrency(analytics.revenue.totalRevenue)}
-            </p>
-          </div>
-
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5">
-            <p className="text-sm uppercase tracking-[0.2em] text-zinc-500">
-              Subscribers
-            </p>
-            <p className="mt-4 text-3xl font-semibold text-white">
-              {analytics.counts.subscriberCount}
-            </p>
-          </div>
-
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5">
-            <p className="text-sm uppercase tracking-[0.2em] text-zinc-500">
-              Posts
-            </p>
-            <p className="mt-4 text-3xl font-semibold text-white">
-              {analytics.counts.postCount}
-            </p>
-          </div>
-
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5">
-            <p className="text-sm uppercase tracking-[0.2em] text-zinc-500">
-              Engagement
-            </p>
-            <p className="mt-4 text-3xl font-semibold text-white">
-              {analytics.engagement.label}
-            </p>
-          </div>
+          {metrics.map((metric) => (
+            <div
+              key={metric.id}
+              className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5"
+            >
+              <p className="text-sm uppercase tracking-[0.2em] text-zinc-500">
+                {metric.label}
+              </p>
+              <p className="mt-4 text-3xl font-semibold text-white">
+                {formatCreatorAnalyticsSummaryMetricValue(metric)}
+              </p>
+            </div>
+          ))}
         </section>
 
         <section className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]">

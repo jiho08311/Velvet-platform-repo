@@ -5,6 +5,11 @@ import {
   buildPathWithNext,
   SIGN_IN_PATH,
 } from "@/modules/auth/lib/redirect-handoff"
+import {
+  formatCreatorAnalyticsSummaryMetricValue,
+  getCreatorAnalyticsSummaryMetrics,
+  type CreatorAnalyticsSummaryMetricKey,
+} from "@/modules/analytics/lib/creator-analytics-summary-metrics"
 import { getCreatorAnalyticsSummary } from "@/modules/analytics/server/get-creator-analytics"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { listPayments } from "@/modules/payment/server/list-payments"
@@ -14,12 +19,6 @@ type EarningHistoryItem = {
   amount: string
   createdAt: string
   type: "subscription" | "tip" | "purchase"
-}
-
-type EarningsSummary = {
-  grossRevenue: string
-  netRevenue: string
-  fees: string
 }
 
 function formatDate(value: string) {
@@ -133,6 +132,12 @@ function normalizeHistoryItem(item: unknown, index: number): EarningHistoryItem 
   }
 }
 
+const CREATOR_EARNINGS_SUMMARY_METRICS: CreatorAnalyticsSummaryMetricKey[] = [
+  "grossRevenue",
+  "netRevenue",
+  "fees",
+]
+
 function normalizeHistory(data: unknown) {
   if (!Array.isArray(data)) {
     return []
@@ -183,11 +188,10 @@ export default async function CreatorEarningsPage() {
     listPayments(),
   ])
 
-  const summary: EarningsSummary = {
-    grossRevenue: formatCurrency(analytics.revenue.grossRevenue),
-    netRevenue: formatCurrency(analytics.revenue.netRevenue),
-    fees: formatCurrency(analytics.revenue.fees),
-  }
+  const summaryMetrics = getCreatorAnalyticsSummaryMetrics(
+    analytics,
+    CREATOR_EARNINGS_SUMMARY_METRICS
+  )
   const earnings = normalizeHistory(paymentsData)
 
   return (
@@ -204,32 +208,19 @@ export default async function CreatorEarningsPage() {
         </div>
 
         <section className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5">
-            <p className="text-sm uppercase tracking-[0.2em] text-zinc-500">
-              Gross revenue
-            </p>
-            <p className="mt-4 text-3xl font-semibold text-white">
-              {summary.grossRevenue}
-            </p>
-          </div>
-
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5">
-            <p className="text-sm uppercase tracking-[0.2em] text-zinc-500">
-              Net revenue
-            </p>
-            <p className="mt-4 text-3xl font-semibold text-white">
-              {summary.netRevenue}
-            </p>
-          </div>
-
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5">
-            <p className="text-sm uppercase tracking-[0.2em] text-zinc-500">
-              Fees
-            </p>
-            <p className="mt-4 text-3xl font-semibold text-white">
-              {summary.fees}
-            </p>
-          </div>
+          {summaryMetrics.map((metric) => (
+            <div
+              key={metric.id}
+              className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5"
+            >
+              <p className="text-sm uppercase tracking-[0.2em] text-zinc-500">
+                {metric.label}
+              </p>
+              <p className="mt-4 text-3xl font-semibold text-white">
+                {formatCreatorAnalyticsSummaryMetricValue(metric)}
+              </p>
+            </div>
+          ))}
         </section>
 
         <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-6 shadow-2xl shadow-black/20">
