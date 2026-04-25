@@ -6,7 +6,7 @@ import {
   type CreatePayoutRequestInput,
   type CreatePayoutRequestResult,
 } from "./payout-request-contract"
-
+import { createAuditLog } from "@/modules/analytics/server/create-audit-log"
 import {
   filterRequestableEarnings,
   resolvePayoutBalanceTotals,
@@ -169,6 +169,17 @@ export async function createPayoutRequest(
 
     throw new Error("FAILED_TO_LOCK_EARNINGS_FOR_PAYOUT_REQUEST")
   }
+
+  await createAuditLog({
+    actorId: creatorId,
+    action: "payout_requested",
+    targetType: "payout_request",
+    targetId: payoutRequest.id,
+    metadata: {
+      amount: payoutRequest.amount,
+      currency: payoutRequest.currency,
+    },
+  })
 
   return mapCreatePayoutRequestResult(payoutRequest)
 }

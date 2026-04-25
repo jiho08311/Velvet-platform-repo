@@ -19,6 +19,23 @@ type ReportDetailReporterRow = ReportListReporterRow & {
 
 type RelationRow<T> = T | T[] | null
 
+export type ReportReviewListAdminItem = ReportReviewListItem & {
+  reporterLabel: string
+  reporterEmailLabel: string
+  targetShortId: string
+  createdDateLabel: string
+}
+
+export type ReportReviewDetailAdminItem = ReportReviewDetailItem & {
+  reporterLabel: string
+  reporterEmailLabel: string
+  reporterUsernameLabel: string
+  reporterIdLabel: string
+  createdDateTimeLabel: string
+  updatedDateTimeLabel: string
+  reviewedDateTimeLabel: string
+}
+
 export type ReportReviewListRow = {
   id: string
   target_type: ReportTargetType
@@ -49,6 +66,31 @@ function firstRelationRow<T>(value: RelationRow<T>): T | null {
   }
 
   return value
+}
+
+function formatDateLabel(value: string): string {
+  return new Date(value).toLocaleDateString()
+}
+
+function formatNullableDateTimeLabel(value: string | null): string {
+  if (!value) {
+    return "-"
+  }
+
+  return new Date(value).toLocaleString()
+}
+
+function buildReporterLabel(
+  reporter: ReportReviewListItem["reporter"],
+  fallback: string
+): string {
+  return reporter?.displayName || reporter?.username || fallback
+}
+
+function buildReporterEmailLabel(
+  reporter: ReportReviewListItem["reporter"]
+): string {
+  return reporter?.email || "-"
 }
 
 function buildListReporter(
@@ -101,8 +143,8 @@ function buildMissingTargetReference(input: {
 
 export function buildReportReviewListItem(
   row: ReportReviewListRow
-): ReportReviewListItem {
-  return {
+): ReportReviewListAdminItem {
+  const item: ReportReviewListItem = {
     id: row.id,
     targetType: row.target_type,
     targetId: row.target_id,
@@ -112,12 +154,20 @@ export function buildReportReviewListItem(
     createdAt: row.created_at,
     reporter: buildListReporter(row.reporter),
   }
+
+  return {
+    ...item,
+    reporterLabel: buildReporterLabel(item.reporter, "Unknown"),
+    reporterEmailLabel: buildReporterEmailLabel(item.reporter),
+    targetShortId: item.targetId.slice(0, 8),
+    createdDateLabel: formatDateLabel(item.createdAt),
+  }
 }
 
 export function buildReportReviewDetailItem(
   row: ReportReviewDetailRow
-): ReportReviewDetailItem {
-  return {
+): ReportReviewDetailAdminItem {
+  const item: ReportReviewDetailItem = {
     id: row.id,
     targetType: row.target_type,
     targetId: row.target_id,
@@ -132,5 +182,16 @@ export function buildReportReviewDetailItem(
       type: row.target_type,
       id: row.target_id,
     }),
+  }
+
+  return {
+    ...item,
+    reporterLabel: buildReporterLabel(item.reporter, "Unknown reporter"),
+    reporterEmailLabel: buildReporterEmailLabel(item.reporter),
+    reporterUsernameLabel: item.reporter?.username || "-",
+    reporterIdLabel: item.reporter?.id || "-",
+    createdDateTimeLabel: formatNullableDateTimeLabel(item.createdAt),
+    updatedDateTimeLabel: formatNullableDateTimeLabel(item.updatedAt),
+    reviewedDateTimeLabel: formatNullableDateTimeLabel(item.reviewedAt),
   }
 }

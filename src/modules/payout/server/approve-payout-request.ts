@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin";
 import { resolvePayoutRequestLifecycleState } from "@/modules/payout/lib/resolve-payout-state";
-
+import { createAuditLog } from "@/modules/analytics/server/create-audit-log"
 type ApprovePayoutRequestParams = {
   payoutRequestId: string;
 };
@@ -85,13 +85,28 @@ export async function approvePayoutRequest({
     throw error;
   }
 
-  const rows = (data ?? []) as ApprovePayoutRequestResultRow[];
+ const rows = (data ?? []) as ApprovePayoutRequestResultRow[];
 
-  if (rows.length === 0) {
-    throw new Error("FAILED_TO_APPROVE_PAYOUT_REQUEST");
-  }
+if (rows.length === 0) {
+  throw new Error("FAILED_TO_APPROVE_PAYOUT_REQUEST");
+}
 
-  await verifyApprovedPostcondition({
-    payoutRequestId: safePayoutRequestId,
-  });
+const approvedRow = rows[0];
+
+await verifyApprovedPostcondition({
+  payoutRequestId: safePayoutRequestId,
+});
+
+await createAuditLog({
+  actorId: null,
+  action: "payout_approved",
+  targetType: "payout_request",
+  targetId: safePayoutRequestId,
+  metadata: {
+    payoutId: approvedRow.payout_id,
+    creatorId: approvedRow.creator_id,
+    amount: approvedRow.amount,
+    currency: approvedRow.currency,
+  },
+});
 }

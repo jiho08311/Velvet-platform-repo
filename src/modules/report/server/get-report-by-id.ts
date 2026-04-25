@@ -1,14 +1,14 @@
 import { requireAdmin } from "@/modules/admin/server/require-admin"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import type { ReportReviewDetailItem } from "@/modules/report/types"
 import {
   buildReportReviewDetailItem,
+  type ReportReviewDetailAdminItem,
   type ReportReviewDetailRow,
 } from "@/modules/report/server/report-review-read-model"
 
 export async function getReportById(
   reportId: string
-): Promise<ReportReviewDetailItem | null> {
+): Promise<ReportReviewDetailAdminItem | null> {
   await requireAdmin()
 
   if (!reportId) {

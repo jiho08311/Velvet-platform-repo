@@ -55,29 +55,24 @@ export default async function AdminReportsPage({ searchParams }: Props) {
             </thead>
 
             <tbody className="divide-y divide-zinc-800">
-              {reports.map((report) => {
-                const reporter = report.reporter
-
-                return (
+              {reports.map((report) => (
                   <tr
                     key={report.id}
                     className="hover:bg-zinc-900/50 transition"
                   >
                     <td className="py-3">
                       <div className="font-medium text-white">
-                        {reporter?.displayName ||
-                          reporter?.username ||
-                          "Unknown"}
+                        {report.reporterLabel}
                       </div>
                       <div className="text-xs text-zinc-500">
-                        {reporter?.email || "-"}
+                        {report.reporterEmailLabel}
                       </div>
                     </td>
 
                     <td className="py-3 text-zinc-300">
                       <div>{report.targetType}</div>
                       <div className="text-xs text-zinc-500">
-                        {report.targetId.slice(0, 8)}
+                        {report.targetShortId}
                       </div>
                     </td>
 
@@ -145,11 +140,10 @@ export default async function AdminReportsPage({ searchParams }: Props) {
                     </td>
 
                     <td className="py-3 text-zinc-400">
-                      {new Date(report.createdAt).toLocaleDateString()}
+                      {report.createdDateLabel}
                     </td>
                   </tr>
-                )
-              })}
+              ))}
             </tbody>
           </table>
         </div>

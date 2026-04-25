@@ -85,7 +85,7 @@ export default function PostPurchaseButton({
         },
         orderId: data.orderId ?? payment.id,
         orderName: data.orderName ?? "프리미엄 콘텐츠 이용권",
-        successUrl: `${window.location.origin}/payment/success?postId=${postId}&creatorUsername=${creatorUsername ?? ""}`,
+        successUrl: `${window.location.origin}/payment/success?paymentId=${payment.id}&postId=${postId}&creatorUsername=${creatorUsername ?? ""}`,
         failUrl: `${window.location.origin}/payment/fail`,
       })
     } catch (error) {

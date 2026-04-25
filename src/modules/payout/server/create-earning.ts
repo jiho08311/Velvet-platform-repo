@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-
+import { createAuditLog } from "@/modules/analytics/server/create-audit-log"
 import type { Earning, EarningSourceType } from "../types"
 
 type PaymentType = "subscription" | "tip" | "ppv_message" | "ppv_post"
@@ -187,5 +187,22 @@ export async function createEarning({
     throw error
   }
 
-  return toEarning(data)
+ await createAuditLog({
+  actorId: payment.creator_id,
+  action: "earning_created",
+  targetType: "earning",
+  targetId: data.id,
+  metadata: {
+    paymentId: payment.id,
+    creatorId: payment.creator_id,
+    sourceType,
+    grossAmount: grossamount,
+    feeRateBps,
+    feeAmount: feeamount,
+    netAmount: netamount,
+    currency: payment.currency ?? "KRW",
+  },
+})
+
+return toEarning(data)
 }

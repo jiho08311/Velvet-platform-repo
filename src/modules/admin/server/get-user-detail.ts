@@ -1,7 +1,10 @@
 import { requireAdmin } from "./require-admin"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import {
+  buildAdminUserCreatorDetailModel,
   buildAdminUserOperationalModel,
+  type AdminUserCreatorDetailModel,
+  type AdminUserCreatorDetailRow,
   type AdminUserOperationalModel,
   type AdminUserOperationalRow,
 } from "@/modules/admin/lib/admin-user-operational-policy"
@@ -10,15 +13,9 @@ type GetUserDetailParams = {
   userId: string
 }
 
-type CreatorDetail = {
-  id: string
-  status: string
-  subscription_price: number
-}
-
 type GetUserDetailResult = {
   profile: AdminUserOperationalModel
-  creator: CreatorDetail | null
+  creator: AdminUserCreatorDetailModel | null
 }
 
 export async function getUserDetail({
@@ -44,10 +41,10 @@ export async function getUserDetail({
     .select("id, status, subscription_price")
     .eq("user_id", userId)
     .maybeSingle()
-    .returns<CreatorDetail | null>()
+    .returns<AdminUserCreatorDetailRow | null>()
 
   return {
     profile: buildAdminUserOperationalModel(profile),
-    creator: creator ?? null,
+    creator: creator ? buildAdminUserCreatorDetailModel(creator) : null,
   }
 }

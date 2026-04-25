@@ -14,6 +14,28 @@ export type PaymentProvider = "mock" | "toss"
 
 export type PaymentTargetType = "post" | "message" | null
 
+export type PaymentAccessVerification =
+  | {
+      kind: "post"
+      status: "unlocked" | "locked" | "missing_target"
+      postId: string | null
+    }
+  | {
+      kind: "subscription"
+      status: "active" | "inactive" | "missing_creator"
+      creatorId: string | null
+      creatorUsername: string | null
+    }
+  | {
+      kind: "payment"
+      status: "payment_not_found" | "payment_not_successful" | "viewer_mismatch"
+    }
+  | {
+      kind: "unsupported"
+      status: "not_applicable"
+      paymentType: "tip" | "ppv_message"
+    }
+
 export type Payment = {
   id: string
   userId: string

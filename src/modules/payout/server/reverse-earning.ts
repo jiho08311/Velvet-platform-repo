@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-
+import { createAuditLog } from "@/modules/analytics/server/create-audit-log"
 type ReverseEarningInput = {
   paymentId: string
   reason?: string
@@ -53,4 +53,19 @@ export async function reverseEarning({
   if (updateError) {
     throw updateError
   }
+  if (updateError) {
+  throw updateError
+}
+
+await createAuditLog({
+  actorId: null,
+  action: "earning_reversed",
+  targetType: "earning",
+  targetId: earning.id,
+  metadata: {
+    paymentId: safePaymentId,
+    previousStatus: earning.status,
+    nextStatus: "reversed",
+  },
+})
 }

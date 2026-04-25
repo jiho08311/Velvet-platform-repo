@@ -1,8 +1,8 @@
 import { requireAdmin } from "@/modules/admin/server/require-admin"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import type { ReportReviewListItem } from "@/modules/report/types"
 import {
   buildReportReviewListItem,
+  type ReportReviewListAdminItem,
   type ReportReviewListRow,
 } from "@/modules/report/server/report-review-read-model"
 
@@ -12,7 +12,7 @@ type ListReportsParams = {
 }
 
 type ListReportsResult = {
-  data: ReportReviewListItem[]
+  data: ReportReviewListAdminItem[]
   nextCursor: string | null
 }
 

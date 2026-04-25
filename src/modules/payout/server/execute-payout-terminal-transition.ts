@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-
+import { createAuditLog } from "@/modules/analytics/server/create-audit-log"
 /**
  * Canonical terminal execution authority for payout paid/failed transitions.
  *
@@ -273,16 +273,26 @@ export async function executePayoutTerminalTransition({
       }
     }
 
-    await verifyPaidPostcondition({
-      payoutId: safePayoutId,
-      earningIds: linkedRequestedEarningIds,
-    })
+ await verifyPaidPostcondition({
+  payoutId: safePayoutId,
+  earningIds: linkedRequestedEarningIds,
+})
 
-    return {
-      payoutId: safePayoutId,
-      targetState,
-      linkedEarningIds: linkedRequestedEarningIds,
-    }
+await createAuditLog({
+  actorId: null,
+  action: "payout_paid",
+  targetType: "payout",
+  targetId: safePayoutId,
+  metadata: {
+    linkedEarningIds: linkedRequestedEarningIds,
+  },
+})
+
+return {
+  payoutId: safePayoutId,
+  targetState,
+  linkedEarningIds: linkedRequestedEarningIds,
+}
   }
 
   const normalizedFailureReason =

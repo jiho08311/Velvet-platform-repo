@@ -2,13 +2,6 @@ import { requireAdmin } from "@/modules/admin/server/require-admin"
 import { AdminBadge } from "@/modules/admin/ui/AdminBadge"
 import { listModerationQueue } from "@/modules/moderation/server/list-moderation-queue"
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("ko-KR", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value))
-}
-
 export default async function AdminModerationPage() {
   await requireAdmin()
 
@@ -68,7 +61,7 @@ export default async function AdminModerationPage() {
                 </div>
 
                 <div className="text-zinc-400">
-                  {formatDate(item.createdAt)}
+                  {item.createdDateTimeLabel}
                 </div>
               </div>
             ))}

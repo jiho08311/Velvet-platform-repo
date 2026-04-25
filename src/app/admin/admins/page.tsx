@@ -48,7 +48,7 @@ export default async function AdminDashboardPage() {
   const totalUsers = users.length
   const totalCreators = creators.length
   const pendingPayoutRequests = payoutRequests.filter(
-    (item) => item.request_lifecycle_state === "pending_request"
+    (item) => item.requestLifecycleState === "pending_request"
   ).length
   const activeSubscriptions = activeSubscriptionsCountResult.count ?? 0
 
@@ -225,7 +225,7 @@ const monthlyRevenue = recentPayments.reduce((sum, payment) => {
         ) : (
           <div className="divide-y divide-zinc-800">
             {payoutRequests
-              .filter((item) => item.request_lifecycle_state === "pending_request")
+              .filter((item) => item.requestLifecycleState === "pending_request")
               .slice(0, 5)
               .map((item) => (
                 <div
@@ -234,9 +234,9 @@ const monthlyRevenue = recentPayments.reduce((sum, payment) => {
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-white">
-                      {item.creator_display_name ||
-                        item.creator_username ||
-                        item.creator_id}
+                      {item.creatorDisplayName ||
+                        item.creatorUsername ||
+                        item.creatorId}
                     </p>
                     <p className="truncate text-xs text-zinc-500">
                       {item.id}
@@ -248,7 +248,7 @@ const monthlyRevenue = recentPayments.reduce((sum, payment) => {
                       {formatCurrency(item.amount, item.currency || "KRW")}
                     </p>
                     <p className="text-xs text-zinc-500">
-                      {formatDate(item.created_at)}
+                      {formatDate(item.createdAt)}
                     </p>
                   </div>
                 </div>

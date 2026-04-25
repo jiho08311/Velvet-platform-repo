@@ -9,14 +9,6 @@ type Props = {
   }>
 }
 
-function formatDate(value: string | null) {
-  if (!value) {
-    return "-"
-  }
-
-  return new Date(value).toLocaleString()
-}
-
 export default async function AdminReportDetailPage({ params }: Props) {
   const { reportId } = await params
   const report = await getReportById(reportId)
@@ -24,11 +16,6 @@ export default async function AdminReportDetailPage({ params }: Props) {
   if (!report) {
     notFound()
   }
-
-  const reporterName =
-    report.reporter?.displayName ||
-    report.reporter?.username ||
-    "Unknown reporter"
 
   return (
     <div className="space-y-6">
@@ -79,7 +66,7 @@ export default async function AdminReportDetailPage({ params }: Props) {
                 Created
               </div>
               <div className="mt-1 text-sm text-zinc-300">
-                {formatDate(report.createdAt)}
+                {report.createdDateTimeLabel}
               </div>
             </div>
 
@@ -88,7 +75,7 @@ export default async function AdminReportDetailPage({ params }: Props) {
                 Updated
               </div>
               <div className="mt-1 text-sm text-zinc-300">
-                {formatDate(report.updatedAt)}
+                {report.updatedDateTimeLabel}
               </div>
             </div>
 
@@ -97,7 +84,7 @@ export default async function AdminReportDetailPage({ params }: Props) {
                 Reviewed
               </div>
               <div className="mt-1 text-sm text-zinc-300">
-                {formatDate(report.reviewedAt)}
+                {report.reviewedDateTimeLabel}
               </div>
             </div>
           </div>
@@ -130,7 +117,7 @@ export default async function AdminReportDetailPage({ params }: Props) {
                 Name
               </div>
               <div className="mt-1 text-sm text-white">
-                {reporterName}
+                {report.reporterLabel}
               </div>
             </div>
 
@@ -139,7 +126,7 @@ export default async function AdminReportDetailPage({ params }: Props) {
                 Email
               </div>
               <div className="mt-1 text-sm text-zinc-300">
-                {report.reporter?.email || "-"}
+                {report.reporterEmailLabel}
               </div>
             </div>
 
@@ -148,7 +135,7 @@ export default async function AdminReportDetailPage({ params }: Props) {
                 Username
               </div>
               <div className="mt-1 text-sm text-zinc-300">
-                {report.reporter?.username || "-"}
+                {report.reporterUsernameLabel}
               </div>
             </div>
 
@@ -157,7 +144,7 @@ export default async function AdminReportDetailPage({ params }: Props) {
                 Reporter ID
               </div>
               <div className="mt-1 break-all font-mono text-sm text-zinc-300">
-                {report.reporter?.id || "-"}
+                {report.reporterIdLabel}
               </div>
             </div>
           </div>

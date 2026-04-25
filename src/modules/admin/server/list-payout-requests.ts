@@ -31,24 +31,24 @@ export type AdminPayoutStatusBadge = {
 
 export type AdminPayoutRequestListItem = {
   id: string
-  creator_id: string
-  creator_username: string | null
-  creator_display_name: string | null
-  creator_label: string
+  creatorId: string
+  creatorUsername: string | null
+  creatorDisplayName: string | null
+  creatorLabel: string
   amount: number
   currency: string
-  created_at: string
-  approved_at: string | null
-  rejected_at: string | null
-  rejection_reason: string | null
-  payout_id: string | null
-  payout_paid_at: string | null
-  payout_failure_reason: string | null
-  request_lifecycle_state: PayoutRequestLifecycleState
-  payout_execution_state: PayoutExecutionLifecycleState | null
-  status_badges: AdminPayoutStatusBadge[]
-  available_action_order: AdminPayoutAction[]
-  failure_message: string | null
+  createdAt: string
+  approvedAt: string | null
+  rejectedAt: string | null
+  rejectionReason: string | null
+  payoutId: string | null
+  payoutPaidAt: string | null
+  payoutFailureReason: string | null
+  requestLifecycleState: PayoutRequestLifecycleState
+  payoutExecutionState: PayoutExecutionLifecycleState | null
+  statusBadges: AdminPayoutStatusBadge[]
+  availableActionOrder: AdminPayoutAction[]
+  failureMessage: string | null
 }
 
 type PayoutRow = PayoutExecutionRow & {
@@ -186,24 +186,24 @@ function toAdminPayoutRequestListItem(input: {
 
   return {
     id: requestReadModel.id,
-    creator_id: requestReadModel.creatorId,
-    creator_username: creatorUsername,
-    creator_display_name: creatorDisplayName,
-    creator_label: creatorLabel,
+    creatorId: requestReadModel.creatorId,
+    creatorUsername,
+    creatorDisplayName,
+    creatorLabel,
     amount: requestReadModel.amount,
     currency: requestReadModel.currency,
-    created_at: requestReadModel.createdAt,
-    approved_at: requestReadModel.approvedAt,
-    rejected_at: requestReadModel.rejectedAt,
-    rejection_reason: rejectionReason,
-    payout_id: payout?.id ?? null,
-    payout_paid_at: payout?.readModel.paidAt ?? null,
-    payout_failure_reason: payoutFailureReason,
-    request_lifecycle_state: requestLifecycleState,
-    payout_execution_state: payoutExecutionState,
-    status_badges: adminRowPolicy.badges,
-    available_action_order: adminRowPolicy.actions,
-    failure_message: failureMessage,
+    createdAt: requestReadModel.createdAt,
+    approvedAt: requestReadModel.approvedAt,
+    rejectedAt: requestReadModel.rejectedAt,
+    rejectionReason,
+    payoutId: payout?.id ?? null,
+    payoutPaidAt: payout?.readModel.paidAt ?? null,
+    payoutFailureReason,
+    requestLifecycleState,
+    payoutExecutionState,
+    statusBadges: adminRowPolicy.badges,
+    availableActionOrder: adminRowPolicy.actions,
+    failureMessage,
   }
 }
 
@@ -286,13 +286,13 @@ export async function listPayoutRequests(): Promise<
   )
 
   return items.sort((a, b) => {
-    const aPending = a.request_lifecycle_state === "pending_request" ? 0 : 1
-    const bPending = b.request_lifecycle_state === "pending_request" ? 0 : 1
+    const aPending = a.requestLifecycleState === "pending_request" ? 0 : 1
+    const bPending = b.requestLifecycleState === "pending_request" ? 0 : 1
 
     if (aPending !== bPending) {
       return aPending - bPending
     }
 
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   })
 }

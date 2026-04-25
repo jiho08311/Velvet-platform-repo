@@ -29,6 +29,14 @@ export type ModerationQueueItem = {
   status: ModerationQueueStatus
   statusBadge: ModerationQueueStatusBadge
   createdAt: string
+  createdDateTimeLabel: string
+}
+
+function formatCreatedDateTimeLabel(value: string): string {
+  return new Intl.DateTimeFormat("ko-KR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value))
 }
 
 export function buildModerationQueueItem(
@@ -48,5 +56,6 @@ export function buildModerationQueueItem(
     status: row.status,
     statusBadge: getModerationQueueStatusBadge(row.status),
     createdAt: row.created_at,
+    createdDateTimeLabel: formatCreatedDateTimeLabel(row.created_at),
   }
 }

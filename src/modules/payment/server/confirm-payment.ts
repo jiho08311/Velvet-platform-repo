@@ -7,7 +7,7 @@ import {
   createPpvMessagePurchasedNotificationInput,
   createPpvPostPurchasedNotificationInput,
 } from "@/modules/notification/server/create-notification-inputs"
-
+import { createAuditLog } from "@/modules/analytics/server/create-audit-log"
 import { getPaymentProvider } from "./payment-provider-factory"
 import { isSuccessfulPaymentStatus } from "./payment-result-state"
 
@@ -218,7 +218,19 @@ export async function confirmPayment({
 
   if (error) throw error
   if (!data) return null
-
+await createAuditLog({
+  actorId: data.user_id,
+  action: "payment_confirmed",
+  targetType: "payment",
+  targetId: data.id,
+  metadata: {
+    userId: data.user_id,
+    creatorId: data.creator_id,
+    type: data.type,
+    provider: data.provider,
+    confirmedAt: data.confirmed_at ?? confirmedAt,
+  },
+})
   if (data.type === "subscription") {
     await activateSubscriptionFromPayment(data)
   }

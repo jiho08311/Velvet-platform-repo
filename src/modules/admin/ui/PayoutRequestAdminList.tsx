@@ -14,13 +14,13 @@ type PayoutRequestAdminListProps = {
 type ResolvedAdminPayoutRow = Pick<
   AdminPayoutRequestListItem,
   | "id"
-  | "creator_label"
+  | "creatorLabel"
   | "amount"
   | "currency"
-  | "created_at"
-  | "status_badges"
-  | "available_action_order"
-  | "failure_message"
+  | "createdAt"
+  | "statusBadges"
+  | "availableActionOrder"
+  | "failureMessage"
 >;
 
 function formatAmount(amount: number, currency: string) {
@@ -99,7 +99,7 @@ function PayoutRequestAdminRow({ row }: { row: ResolvedAdminPayoutRow }) {
   return (
     <div className="grid grid-cols-5 gap-4 px-5 py-4 text-sm text-white">
       <div className="min-w-0">
-        <p className="truncate font-medium">{row.creator_label}</p>
+        <p className="truncate font-medium">{row.creatorLabel}</p>
         <p className="mt-1 truncate text-xs text-zinc-400">{row.id}</p>
       </div>
 
@@ -107,7 +107,7 @@ function PayoutRequestAdminRow({ row }: { row: ResolvedAdminPayoutRow }) {
 
       <div>
         <div className="flex flex-wrap gap-2">
-          {row.status_badges.map((badge) => (
+          {row.statusBadges.map((badge) => (
             <AdminBadge
               key={`${row.id}-${badge.key}-${badge.label}`}
               label={badge.label}
@@ -116,12 +116,12 @@ function PayoutRequestAdminRow({ row }: { row: ResolvedAdminPayoutRow }) {
           ))}
         </div>
 
-        {renderFailureMessage(row.failure_message)}
+        {renderFailureMessage(row.failureMessage)}
       </div>
 
-      <div className="text-zinc-300">{formatDate(row.created_at)}</div>
+      <div className="text-zinc-300">{formatDate(row.createdAt)}</div>
 
-      <div>{renderActions(row.available_action_order, row.id)}</div>
+      <div>{renderActions(row.availableActionOrder, row.id)}</div>
     </div>
   );
 }
@@ -153,13 +153,13 @@ export function PayoutRequestAdminList({
             key={item.id}
             row={{
               id: item.id,
-              creator_label: item.creator_label,
+              creatorLabel: item.creatorLabel,
               amount: item.amount,
               currency: item.currency,
-              created_at: item.created_at,
-              status_badges: item.status_badges,
-              available_action_order: item.available_action_order,
-              failure_message: item.failure_message,
+              createdAt: item.createdAt,
+              statusBadges: item.statusBadges,
+              availableActionOrder: item.availableActionOrder,
+              failureMessage: item.failureMessage,
             }}
           />
         ))}
