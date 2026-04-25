@@ -1,11 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { startTransition, useState } from "react"
 import { useRouter } from "next/navigation"
 import { MessageComposer } from "./MessageComposer"
+import {
+  normalizeSendMessagePayload,
+  type ConversationMessageItem,
+  type SendMessageResult,
+} from "@/modules/message/types"
 
 type MessageComposerSectionProps = {
   conversationId: string
+  onMessageSent?: (message: ConversationMessageItem) => void
 }
 
 type MessageComposerSendData = {
@@ -16,6 +22,7 @@ type MessageComposerSendData = {
 
 export function MessageComposerSection({
   conversationId,
+  onMessageSent,
 }: MessageComposerSectionProps) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
@@ -83,15 +90,17 @@ export function MessageComposerSection({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
+        body: JSON.stringify(
+          normalizeSendMessagePayload({
           conversationId,
           content: data.content,
           type: "text",
           mediaIds,
-        }),
+          })
+        ),
       })
 
-      let result: unknown = null
+      let result: SendMessageResult | { error?: string } | null = null
 
       try {
         result = await response.json()
@@ -111,7 +120,18 @@ export function MessageComposerSection({
         throw new Error(message)
       }
 
-      router.refresh()
+      if (
+        result &&
+        typeof result === "object" &&
+        "message" in result &&
+        result.message
+      ) {
+        onMessageSent?.(result.message)
+      }
+
+      startTransition(() => {
+        router.refresh()
+      })
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === "TEXT_BLOCKED") {

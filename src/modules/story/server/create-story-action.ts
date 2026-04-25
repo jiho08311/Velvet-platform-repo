@@ -4,14 +4,12 @@ import { revalidatePath } from "next/cache"
 
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
+import { normalizeStoryCreatePayload } from "@/modules/story/lib/story-create-payload"
 import { createStory } from "@/modules/story/server/create-story"
-import type { StoryEditorState } from "../types"
+import type { StoryCreatePayload } from "../types"
 
-type CreateStoryActionInput = {
+type CreateStoryActionInput = StoryCreatePayload & {
   storagePath: string
-  text?: string
-  visibility: "public" | "subscribers"
-  editorState?: StoryEditorState
 }
 
 export async function createStoryAction({
@@ -32,12 +30,16 @@ export async function createStoryAction({
     throw new Error("Creator not found")
   }
 
+  const payload = normalizeStoryCreatePayload({
+    text,
+    visibility,
+    editorState,
+  })
+
   await createStory({
     creatorId: creator.id,
     storagePath,
-    text: text?.trim() || null,
-    visibility,
-    editorState: editorState ?? null,
+    story: payload,
   })
 
   revalidatePath("/feed")

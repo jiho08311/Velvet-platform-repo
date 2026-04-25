@@ -10,43 +10,11 @@ import {
 } from "@heroicons/react/24/outline"
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid"
 import { SearchExploreCommentsDrawer } from "./SearchExploreCommentsDrawer"
-
-type ExplorePostGridItem = {
-  id: string
-  postId: string
-  creatorId: string
-  creatorUserId: string
-  creatorUsername: string
-  creatorDisplayName: string | null
-  imageUrl: string
-  mediaType?: "image" | "video"
-  mediaCount?: number
-  text: string | null
-  likesCount: number
-  commentsCount: number
-  createdAt: string
-  media?: Array<{
-    id: string
-    postId: string
-    type: "image" | "video" | "audio" | "file"
-    url: string
-    mimeType: string | null
-    sortOrder: number
-  }>
-  blocks?: Array<{
-    id: string
-    postId: string
-    type: "text" | "image" | "video" | "audio" | "file"
-    content: string | null
-    mediaId: string | null
-    sortOrder: number
-    createdAt: string
-    editorState: unknown | null
-  }>
-}
+import type { DiscoveryPostLinkItem } from "../types"
+import { readLikeInteractionResult } from "@/shared/lib/like-interaction-result"
 
 type ExplorePostGridProps = {
-  posts: ExplorePostGridItem[]
+  posts: DiscoveryPostLinkItem[]
 }
 
 type ViewerBlock =
@@ -67,7 +35,7 @@ type ViewerBlock =
 
 export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
   const router = useRouter()
-  const [selected, setSelected] = useState<ExplorePostGridItem | null>(null)
+  const [selected, setSelected] = useState<DiscoveryPostLinkItem | null>(null)
   const [isViewerVisible, setIsViewerVisible] = useState(false)
   const [likedPostIds, setLikedPostIds] = useState<Record<string, boolean>>({})
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
@@ -194,15 +162,33 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
         return
       }
 
+      const data = readLikeInteractionResult(await response.json().catch(() => null))
+
+      if (!data || data.targetType !== "post" || data.targetId !== postId) {
+        return
+      }
+
       setLikedPostIds((prev) => ({
         ...prev,
-        [postId]: !liked,
+        [postId]: data.viewerHasLiked,
       }))
 
       setLikeCounts((prev) => ({
         ...prev,
-        [postId]: liked ? Math.max(0, currentCount - 1) : currentCount + 1,
+        [postId]: data.likesCount,
       }))
+
+      setSelected((prev) => {
+        if (!prev || prev.postId !== postId) {
+          return prev
+        }
+
+        return {
+          ...prev,
+          likesCount: data.likesCount,
+          isLiked: data.viewerHasLiked,
+        }
+      })
     } finally {
       setIsLikeLoading(false)
     }

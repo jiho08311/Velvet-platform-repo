@@ -1,5 +1,9 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { resolveSubscriptionState } from "@/modules/subscription/lib/resolve-subscription-state"
+import {
+  buildSubscriptionIdentity,
+  buildSubscriptionReadModel,
+  toSubscriptionDisplayStatus,
+} from "@/modules/subscription/server/build-subscription-read-model"
 
 type SubscriptionStatus =
   | "incomplete"
@@ -7,15 +11,9 @@ type SubscriptionStatus =
   | "canceled"
   | "expired"
 
-type SubscriptionDisplayStatus =
-  | "active"
-  | "canceled"
-  | "expired"
-  | "inactive"
-
 type SubscriptionView = {
   id: string
-  status: SubscriptionDisplayStatus
+  status: ReturnType<typeof toSubscriptionDisplayStatus>
   startedAt: string | null
   creator: {
     id: string
@@ -32,29 +30,23 @@ type SubscriptionView = {
 
 type CreatorRow = {
   id: string
-  username: string
-  display_name: string
+  username: string | null
+  display_name: string | null
   avatar_url: string | null
 }
 
 type SubscriptionRow = {
   id: string
+  user_id: string
+  creator_id: string
   status: SubscriptionStatus
   current_period_start: string | null
   current_period_end: string | null
   cancel_at_period_end?: boolean | null
   canceled_at?: string | null
+  created_at: string
+  updated_at?: string
   creator: CreatorRow | CreatorRow[] | null
-}
-
-function toDisplayStatus(
-  status: ReturnType<typeof resolveSubscriptionState>["displayState"]
-): SubscriptionDisplayStatus {
-  if (status === "ending") {
-    return "canceled"
-  }
-
-  return status
 }
 
 export async function getSubscriptionById(
@@ -65,11 +57,15 @@ export async function getSubscriptionById(
     .select(
       `
       id,
+      user_id,
+      creator_id,
       status,
       current_period_start,
       current_period_end,
       cancel_at_period_end,
       canceled_at,
+      created_at,
+      updated_at,
       creator:creators(
         id,
         username,
@@ -95,25 +91,26 @@ export async function getSubscriptionById(
     return null
   }
 
-  const resolved = resolveSubscriptionState({
+  const readModel = buildSubscriptionReadModel({
+    id: data.id,
+    user_id: data.user_id,
+    creator_id: data.creator_id,
     status: data.status,
-    currentPeriodEndAt: data.current_period_end,
-    cancelAtPeriodEnd: data.cancel_at_period_end ?? false,
-    canceledAt: data.canceled_at ?? null,
+    current_period_start: data.current_period_start,
+    current_period_end: data.current_period_end,
+    cancel_at_period_end: data.cancel_at_period_end ?? false,
+    canceled_at: data.canceled_at ?? null,
+    created_at: data.created_at,
+    updated_at: data.updated_at ?? data.created_at,
   })
 
   return {
     id: data.id,
-    status: toDisplayStatus(resolved.displayState),
-    startedAt: data.current_period_start,
-    creator: {
-      id: creatorData.id,
-      username: creatorData.username,
-      displayName: creatorData.display_name,
-      avatarUrl: creatorData.avatar_url,
-    },
+    status: toSubscriptionDisplayStatus(readModel.state),
+    startedAt: readModel.currentPeriodStartAt ?? readModel.createdAt,
+    creator: buildSubscriptionIdentity(creatorData),
     billing: {
-      renewalDate: data.current_period_end,
+      renewalDate: readModel.currentPeriodEndAt,
       planLabel: "Monthly subscription",
       amountLabel: "Subscription",
     },

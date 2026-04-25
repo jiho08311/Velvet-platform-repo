@@ -1,6 +1,14 @@
 import { redirect } from "next/navigation"
 import { Card } from "@/shared/ui/Card"
-import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
+import {
+  assertPassVerified,
+  getPassVerificationRedirectPath,
+} from "@/modules/auth/server/assert-pass-verified"
+import {
+  buildPathWithNext,
+  ONBOARDING_PATH,
+  SIGN_IN_PATH,
+} from "@/modules/auth/lib/redirect-handoff"
 import { requireActiveUser } from "@/modules/auth/server/require-active-user"
 import { listConversations } from "@/modules/message/server/list-conversations"
 import { ConversationList } from "@/modules/message/ui/ConversationList"
@@ -22,18 +30,40 @@ type ProfileRow = {
 export default async function MessagesPage({
   searchParams,
 }: MessagesPageProps) {
+  const { creatorId, userId } = await searchParams
+  const nextSearchParams = new URLSearchParams()
+
+  if (creatorId) {
+    nextSearchParams.set("creatorId", creatorId)
+  }
+
+  if (userId) {
+    nextSearchParams.set("userId", userId)
+  }
+
+  const nextQuery = nextSearchParams.toString()
+  const nextPath = nextQuery ? `/messages?${nextQuery}` : "/messages"
   let user: Awaited<ReturnType<typeof requireActiveUser>>
 
   try {
     user = await requireActiveUser()
   } catch {
-    redirect("/sign-in?next=/messages")
+    redirect(
+      buildPathWithNext({
+        path: SIGN_IN_PATH,
+        next: nextPath,
+      })
+    )
   }
 
   try {
     await assertPassVerified({ profileId: user.id })
   } catch {
-    redirect("/verify-pass")
+    redirect(
+      getPassVerificationRedirectPath({
+        next: nextPath,
+      })
+    )
   }
 
   const { data: profile, error: profileError } = await supabaseAdmin
@@ -47,10 +77,13 @@ export default async function MessagesPage({
   }
 
   if (!profile?.username) {
-    redirect("/onboarding")
+    redirect(
+      buildPathWithNext({
+        path: ONBOARDING_PATH,
+        next: nextPath,
+      })
+    )
   }
-
-  const { creatorId, userId } = await searchParams
 
   if (userId) {
     const conversation = await getOrCreateConversation({
@@ -77,6 +110,13 @@ export default async function MessagesPage({
   const conversations = await listConversations({
     userId: user.id,
   })
+  const visibleConversations = conversations.filter(
+    (
+      conversation
+    ): conversation is typeof conversation & {
+      participant: NonNullable<typeof conversation.participant>
+    } => conversation.participant !== null
+  )
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6">
@@ -88,15 +128,7 @@ export default async function MessagesPage({
       </Card>
 
       <ConversationList
-        conversations={conversations.map((conversation) => ({
-          id: conversation.id,
-          participantName: conversation.participant.displayName,
-          participantAvatarUrl: conversation.participant.avatarUrl,
-          lastMessage: conversation.lastMessage?.content ?? "",
-          lastMessageAt:
-            conversation.lastMessage?.createdAt ?? conversation.updatedAt,
-          participantUsername: conversation.participant.username,
-        }))}
+        conversations={visibleConversations}
         emptyMessage="No conversations yet."
       />
     </main>

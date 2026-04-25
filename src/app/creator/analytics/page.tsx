@@ -1,14 +1,9 @@
 import { redirect } from "next/navigation"
 
-import { getSession } from "@/modules/auth/server/get-session"
-import { getCreatorAnalytics } from "@/modules/analytics/server/get-creator-analytics"
-
-type AnalyticsSummaryView = {
-  revenue: string
-  subscribersCount: number
-  postsCount: number
-  engagementLabel: string
-}
+import { buildPathWithNext } from "@/modules/auth/lib/redirect-handoff"
+import { getCreatorAnalyticsSummary } from "@/modules/analytics/server/get-creator-analytics"
+import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
+import { readCreatorOperationalReadiness } from "@/modules/creator/server/read-creator-operational-readiness"
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-US", {
@@ -18,115 +13,25 @@ function formatCurrency(value: number) {
   }).format(value)
 }
 
-function getSessionUserId(session: unknown) {
-  if (!session || typeof session !== "object") {
-    return null
-  }
-
-  if ("userId" in session && typeof session.userId === "string") {
-    return session.userId
-  }
-
-  if (
-    "user" in session &&
-    session.user &&
-    typeof session.user === "object" &&
-    "id" in session.user &&
-    typeof session.user.id === "string"
-  ) {
-    return session.user.id
-  }
-
-  return null
-}
-
-function normalizeAnalyticsSummary(data: unknown): AnalyticsSummaryView | null {
-  if (!data || typeof data !== "object") {
-    return null
-  }
-
-  const source = data as {
-    revenue?: string
-    revenueLabel?: string
-    revenueAmount?: number
-    subscribersCount?: number
-    subscriberCount?: number
-    postsCount?: number
-    postCount?: number
-    engagementLabel?: string
-    engagementRate?: number
-  }
-
-  const revenue =
-    typeof source.revenue === "string"
-      ? source.revenue
-      : typeof source.revenueLabel === "string"
-        ? source.revenueLabel
-        : typeof source.revenueAmount === "number"
-          ? formatCurrency(source.revenueAmount)
-          : "$0"
-
-  const subscribersCount =
-    typeof source.subscribersCount === "number"
-      ? source.subscribersCount
-      : typeof source.subscriberCount === "number"
-        ? source.subscriberCount
-        : 0
-
-  const postsCount =
-    typeof source.postsCount === "number"
-      ? source.postsCount
-      : typeof source.postCount === "number"
-        ? source.postCount
-        : 0
-
-  const engagementLabel =
-    typeof source.engagementLabel === "string"
-      ? source.engagementLabel
-      : typeof source.engagementRate === "number"
-        ? `${source.engagementRate}% avg engagement`
-        : "No engagement data"
-
-  return {
-    revenue,
-    subscribersCount,
-    postsCount,
-    engagementLabel,
-  }
-}
-
 export default async function CreatorAnalyticsPage() {
-  const session = await getSession()
+  const nextPath = "/creator/analytics"
+  const { user } = await requireCreatorReadyUser({
+    signInNext: nextPath,
+  })
+  const readiness = await readCreatorOperationalReadiness({
+    userId: user.id,
+  })
 
-  if (!session) {
-    redirect("/login")
-  }
-
-  const userId = getSessionUserId(session)
-
-  if (!userId) {
-    redirect("/login")
-  }
-
-  const analyticsData = await getCreatorAnalytics(userId)
-  const analytics = normalizeAnalyticsSummary(analyticsData)
-
-  if (!analytics) {
-    return (
-      <main className="min-h-screen bg-zinc-950 px-6 py-10 text-zinc-100">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6">
-          <section className="rounded-3xl border border-dashed border-zinc-800 bg-zinc-900/40 p-12 text-center">
-            <h1 className="text-2xl font-semibold text-white">
-              No analytics yet
-            </h1>
-            <p className="mt-3 text-sm text-zinc-400">
-              Creator analytics will appear here once data is available.
-            </p>
-          </section>
-        </div>
-      </main>
+  if (!readiness.ok) {
+    redirect(
+      buildPathWithNext({
+        path: "/dashboard",
+        next: nextPath,
+      })
     )
   }
+
+  const analytics = await getCreatorAnalyticsSummary(readiness.creator.id)
 
   return (
     <main className="min-h-screen bg-zinc-950 px-6 py-10 text-zinc-100">
@@ -161,7 +66,7 @@ export default async function CreatorAnalyticsPage() {
               Revenue
             </p>
             <p className="mt-4 text-3xl font-semibold text-white">
-              {analytics.revenue}
+              {formatCurrency(analytics.revenue.totalRevenue)}
             </p>
           </div>
 
@@ -170,7 +75,7 @@ export default async function CreatorAnalyticsPage() {
               Subscribers
             </p>
             <p className="mt-4 text-3xl font-semibold text-white">
-              {analytics.subscribersCount}
+              {analytics.counts.subscriberCount}
             </p>
           </div>
 
@@ -179,7 +84,7 @@ export default async function CreatorAnalyticsPage() {
               Posts
             </p>
             <p className="mt-4 text-3xl font-semibold text-white">
-              {analytics.postsCount}
+              {analytics.counts.postCount}
             </p>
           </div>
 
@@ -188,7 +93,7 @@ export default async function CreatorAnalyticsPage() {
               Engagement
             </p>
             <p className="mt-4 text-3xl font-semibold text-white">
-              {analytics.engagementLabel}
+              {analytics.engagement.label}
             </p>
           </div>
         </section>

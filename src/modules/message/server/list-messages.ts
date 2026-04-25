@@ -1,6 +1,14 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
-import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
-import { getConversationVisibility } from "@/modules/message/server/get-conversation-visibility"
+import {
+  createConversationMessageMediaMap,
+  type MessageMediaRow,
+} from "@/modules/message/server/create-conversation-message-media"
+import { requireConversationAccess } from "@/modules/message/server/get-conversation-access"
+import {
+  compareConversationMessageOrder,
+  normalizeConversationMessageItem,
+  type ConversationMessageItem,
+} from "@/modules/message/types"
 
 type ListMessagesParams = {
   conversationId: string
@@ -11,61 +19,29 @@ type MessageRow = {
   id: string
   conversation_id: string
   sender_id: string
-  content: string
+  content: string | null
   created_at: string
+  read_at: string | null
+  status: string | null
   type: string | null
   price: number | null
-}
-
-type MediaRow = {
-  id: string
-  message_id: string
-  storage_path: string
-  mime_type: string
-}
-
-type MessageMedia = {
-  id: string
-  url: string
-  type: "image" | "video"
-  mimeType: string
-}
-
-export type Message = {
-  id: string
-  conversationId: string
-  senderId: string
-  content: string
-  createdAt: string
-  type: "text"
-  price: null
-  isLocked: false
-  media: MessageMedia[]
-}
-
-function getMediaType(mimeType: string): "image" | "video" {
-  return mimeType.startsWith("video/") ? "video" : "image"
 }
 
 export async function listMessages({
   conversationId,
   userId,
-}: ListMessagesParams): Promise<Message[]> {
+}: ListMessagesParams): Promise<ConversationMessageItem[]> {
   const supabase = await createSupabaseServerClient()
 
-  const visibility = await getConversationVisibility({
+  await requireConversationAccess({
     conversationId,
     userId,
   })
 
-  if (!visibility.isVisible) {
-    throw new Error("Unauthorized")
-  }
-
   const { data: messagesData, error: messagesError } = await supabase
     .from("messages")
     .select(
-      "id, conversation_id, sender_id, content, created_at, type, price"
+      "id, conversation_id, sender_id, content, created_at, read_at, status, type, price"
     )
     .eq("conversation_id", conversationId)
     .order("created_at", { ascending: true })
@@ -77,7 +53,7 @@ export async function listMessages({
   const messageRows = (messagesData ?? []) as MessageRow[]
   const messageIds = messageRows.map((message) => message.id)
 
-  let mediaRows: MediaRow[] = []
+  let mediaRows: MessageMediaRow[] = []
 
   if (messageIds.length > 0) {
     const { data: mediaData, error: mediaError } = await supabase
@@ -90,50 +66,21 @@ export async function listMessages({
       throw mediaError
     }
 
-    mediaRows = (mediaData ?? []) as MediaRow[]
+    mediaRows = (mediaData ?? []) as MessageMediaRow[]
   }
 
-  const signedMediaEntries = await Promise.all(
-    mediaRows.map(async (media) => {
-      const url = await createMediaSignedUrl({
-        storagePath: media.storage_path,
-        viewerUserId: userId,
-        creatorUserId: userId,
-        visibility: "paid",
-        hasPurchased: true,
-      })
-
-      return {
-        ...media,
-        signedUrl: url,
-      }
-    })
+  const senderUserIdByMessageId = new Map(
+    messageRows.map((message) => [message.id, message.sender_id])
   )
+  const mediaMap = await createConversationMessageMediaMap({
+    mediaRows,
+    viewerUserId: userId,
+    senderUserIdByMessageId,
+  })
 
-  const mediaMap = new Map<string, MessageMedia[]>()
-
-  for (const media of signedMediaEntries) {
-    const current = mediaMap.get(media.message_id) ?? []
-
-    current.push({
-      id: media.id,
-      url: media.signedUrl,
-      type: getMediaType(media.mime_type),
-      mimeType: media.mime_type,
-    })
-
-    mediaMap.set(media.message_id, current)
-  }
-
-  return messageRows.map((row) => ({
-    id: row.id,
-    conversationId: row.conversation_id,
-    senderId: row.sender_id,
-    content: row.content,
-    createdAt: row.created_at,
-    type: "text",
-    price: null,
-    isLocked: false,
-    media: mediaMap.get(row.id) ?? [],
-  }))
+  return messageRows
+    .map((row) =>
+      normalizeConversationMessageItem(row, mediaMap.get(row.id) ?? [])
+    )
+    .sort(compareConversationMessageOrder)
 }

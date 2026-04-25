@@ -1,63 +1,21 @@
-import { getSession } from "@/modules/auth/server/get-session"
-import { getCreatorOverview } from "@/modules/analytics/server/get-creator-overview"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
-import { getUserById } from "@/modules/user/server/get-user-by-id"
+import { getCreatorAnalyticsSummary } from "@/modules/analytics/server/get-creator-analytics"
+import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
+import { DashboardStats } from "@/modules/analytics/ui/DashboardStats"
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "KRW",
+    maximumFractionDigits: 0,
+  }).format(value)
+}
 
 export default async function CreatorDashboardPage() {
-  const session = await getSession()
+  const { creator } = await requireCreatorReadyUser({
+    signInNext: "/creator/dashboard",
+  })
 
-  if (!session) {
-    return (
-      <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
-        <section className="rounded-2xl border border-white/10 bg-neutral-950 p-8 text-center text-sm text-white/60">
-          Sign in to view your dashboard.
-        </section>
-      </main>
-    )
-  }
-
-  const user = await getUserById(session.userId)
-
-  if (!user) {
-    return (
-      <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
-        <section className="rounded-2xl border border-white/10 bg-neutral-950 p-8 text-center text-sm text-white/60">
-          Creator access is required to view this page.
-        </section>
-      </main>
-    )
-  }
-
-  const creator = await getCreatorByUserId(user.id)
-
-  if (!creator) {
-    return (
-      <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
-        <section className="rounded-2xl border border-white/10 bg-neutral-950 p-8 text-center text-sm text-white/60">
-          Creator access is required to view this page.
-        </section>
-      </main>
-    )
-  }
-
-  const overview = await getCreatorOverview(session.userId)
-
-  if (!overview) {
-    return (
-      <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
-        <section className="rounded-2xl border border-white/10 bg-neutral-950 p-8 text-center text-sm text-white/60">
-          Unable to load dashboard overview.
-        </section>
-      </main>
-    )
-  }
-
-  const cards = [
-    { label: "Total posts", value: overview.totalPosts },
-    { label: "Active subscribers", value: overview.activeSubscribers },
-    { label: "Monthly revenue", value: `$${overview.monthlyRevenue}` },
-    { label: "Total revenue", value: `$${overview.totalRevenue}` },
-  ]
+  const summary = await getCreatorAnalyticsSummary(creator.id)
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
@@ -68,18 +26,22 @@ export default async function CreatorDashboardPage() {
         </p>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card) => (
-          <article
-            key={card.label}
-            className="rounded-2xl border border-white/10 bg-neutral-950 p-5"
-          >
-            <p className="text-sm text-white/60">{card.label}</p>
-            <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
-              {card.value}
-            </p>
-          </article>
-        ))}
+      <DashboardStats summary={summary} />
+
+      <section className="grid gap-4 sm:grid-cols-2">
+        <article className="rounded-2xl border border-white/10 bg-neutral-950 p-5">
+          <p className="text-sm text-white/60">Total posts</p>
+          <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
+            {summary.counts.postCount}
+          </p>
+        </article>
+
+        <article className="rounded-2xl border border-white/10 bg-neutral-950 p-5">
+          <p className="text-sm text-white/60">Total revenue</p>
+          <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
+            {formatCurrency(summary.revenue.totalRevenue)}
+          </p>
+        </article>
       </section>
     </main>
   )

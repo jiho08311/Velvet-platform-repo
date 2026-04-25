@@ -1,12 +1,11 @@
-import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
 import Link from "next/link"
-import { requireActiveUser } from "@/modules/auth/server/require-active-user"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
+import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
+import { readCreatorOperationalReadiness } from "@/modules/creator/server/read-creator-operational-readiness"
 import { updateCreatorSettings } from "@/modules/creator/server/update-creator-settings"
 import { createPayoutRequest } from "@/modules/payout/server/create-payout-request"
 import { getPayoutSummary } from "@/modules/payout/server/get-payout-summary"
 import { listCreatorPayouts } from "@/modules/payout/server/list-creator-payouts"
+import { revalidatePayoutSurfaces } from "@/modules/payout/server/revalidate-payout-surfaces"
 import { SUBSCRIPTION_PRICES } from "@/modules/subscription/lib/subscription-price"
 
 import { PayoutEmptyState } from "@/modules/payout/ui/PayoutEmptyState"
@@ -21,23 +20,34 @@ function formatPrice(amount: number, currency = "KRW") {
   }).format(amount)
 }
 
-async function requestPayoutAction() {
+async function requestPayoutAction(formData: FormData) {
   "use server"
 
-  const user = await requireActiveUser()
-  const creator = await getCreatorByUserId(user.id)
-
-  if (!creator) {
-    throw new Error("Creator not found")
-  }
-
-  await createPayoutRequest({
-    creatorId: creator.id,
-    currency: "KRW",
+  const { user } = await requireCreatorReadyUser({
+    signInNext: "/dashboard/payouts",
+  })
+  const readiness = await readCreatorOperationalReadiness({
+    userId: user.id,
   })
 
-  revalidatePath("/dashboard/payouts")
-  revalidatePath("/dashboard")
+  if (!readiness.ok) {
+    throw new Error("Creator is not active")
+  }
+
+  const currencyValue = formData.get("currency")
+  const currency =
+    typeof currencyValue === "string" && currencyValue.trim()
+      ? currencyValue
+      : "KRW"
+
+  await createPayoutRequest({
+    creatorId: readiness.creator.id,
+    currency,
+  })
+
+  revalidatePayoutSurfaces({
+    creatorUsername: readiness.creator.username,
+  })
 }
 
 async function updateSubscriptionPriceAction(formData: FormData) {
@@ -49,11 +59,15 @@ async function updateSubscriptionPriceAction(formData: FormData) {
     throw new Error("Invalid subscription price")
   }
 
-  const user = await requireActiveUser()
-  const creator = await getCreatorByUserId(user.id)
+  const { user, creator } = await requireCreatorReadyUser({
+    signInNext: "/dashboard/payouts",
+  })
+  const readiness = await readCreatorOperationalReadiness({
+    userId: user.id,
+  })
 
-  if (!creator) {
-    throw new Error("Creator not found")
+  if (!readiness.ok) {
+    throw new Error("Creator is not active")
   }
 
   await updateCreatorSettings({
@@ -61,27 +75,20 @@ async function updateSubscriptionPriceAction(formData: FormData) {
     subscriptionPrice: price,
   })
 
-  revalidatePath("/dashboard/payouts")
-  revalidatePath("/dashboard")
-  revalidatePath(`/creator/${creator.username}`)
+  revalidatePayoutSurfaces({
+    creatorUsername: creator.username,
+  })
 }
 
 export default async function PayoutsPage() {
-  let user: Awaited<ReturnType<typeof requireActiveUser>>
+  const { user } = await requireCreatorReadyUser({
+    signInNext: "/dashboard/payouts",
+  })
+  const readiness = await readCreatorOperationalReadiness({
+    userId: user.id,
+  })
 
-  try {
-    user = await requireActiveUser()
-  } catch {
-    redirect("/sign-in?next=/dashboard/payouts")
-  }
-
-  const creator = await getCreatorByUserId(user.id)
-
-  if (!creator) {
-    redirect("/become-creator")
-  }
-
-  if (creator.status !== "active") {
+  if (!readiness.ok) {
     return (
       <main className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
         <div className="max-w-md text-center">
@@ -96,6 +103,8 @@ export default async function PayoutsPage() {
     )
   }
 
+  const { creator } = readiness
+
   const summary = await getPayoutSummary(creator.id)
   const payouts = await listCreatorPayouts({ creatorId: creator.id })
 
@@ -103,8 +112,8 @@ export default async function PayoutsPage() {
     return <PayoutEmptyState />
   }
 
-  const available = summary.availableBalance
-  const pending = summary.pendingAmount
+  const requestableBalance = summary.requestableBalance
+  const requestedPayoutAmount = summary.requestedPayoutAmount
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -164,16 +173,17 @@ export default async function PayoutsPage() {
           <Card>
             <p className="text-sm text-zinc-500">출금 가능 금액</p>
             <p className="mt-2 text-2xl font-semibold text-white">
-              {formatPrice(available)}
+              {formatPrice(requestableBalance, summary.currency)}
             </p>
             <p className="mt-2 text-sm text-zinc-500">
               현재 출금 가능한 전액 기준으로 요청됩니다.
             </p>
 
             <form action={requestPayoutAction} className="mt-4">
+              <input type="hidden" name="currency" value={summary.currency} />
               <button
                 type="submit"
-                disabled={available === 0}
+                disabled={requestableBalance === 0}
                 className="w-full rounded-2xl bg-[#C2185B] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#D81B60] active:bg-[#AD1457] disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500"
               >
                 전액 출금 요청
@@ -184,9 +194,9 @@ export default async function PayoutsPage() {
 
         <div className="grid gap-4 md:grid-cols-1">
           <Card>
-            <p className="text-sm text-zinc-500">출금 대기 금액</p>
+            <p className="text-sm text-zinc-500">출금 요청 중 금액</p>
             <p className="mt-2 text-2xl font-semibold text-white">
-              {formatPrice(pending)}
+              {formatPrice(requestedPayoutAmount, summary.currency)}
             </p>
           </Card>
         </div>

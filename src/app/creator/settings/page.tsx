@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation"
 
 import { getSession } from "@/modules/auth/server/get-session"
+import {
+  buildPathWithNext,
+  SIGN_IN_PATH,
+} from "@/modules/auth/lib/redirect-handoff"
 import { getCreatorById } from "@/modules/creator/server/get-creator-by-id"
 import { getProfileByUserId } from "@/modules/profile/server/get-profile-by-user-id"
 
@@ -104,16 +108,27 @@ function normalizeCreatorSettings(
 }
 
 export default async function CreatorSettingsPage() {
+  const nextPath = "/creator/settings"
   const session = await getSession()
 
   if (!session) {
-    redirect("/login")
+    redirect(
+      buildPathWithNext({
+        path: SIGN_IN_PATH,
+        next: nextPath,
+      })
+    )
   }
 
   const userId = getSessionUserId(session)
 
   if (!userId) {
-    redirect("/login")
+    redirect(
+      buildPathWithNext({
+        path: SIGN_IN_PATH,
+        next: nextPath,
+      })
+    )
   }
 
   const [profileData, creatorData] = await Promise.all([

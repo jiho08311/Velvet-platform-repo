@@ -1,6 +1,6 @@
 import {
-  claimStoryVideoJob,
-  markStoryVideoJobCompleted,
+  claimStoryVideoJobForProcessing,
+  completeStoryVideoJobFromProcessorResult,
   markStoryVideoJobFailed,
 } from "@/modules/media/server/story-video-job.service"
 import { processStoryVideoJob } from "@/modules/media/server/story-video-processor.server"
@@ -18,45 +18,42 @@ async function run() {
 
   for (;;) {
     try {
-      const job = await claimStoryVideoJob()
+      const claimedJob = await claimStoryVideoJobForProcessing()
 
-      if (!job || !job.id) {
+      if (!claimedJob) {
         await sleep(POLL_INTERVAL_MS)
         continue
       }
 
       console.log("🔥 STORY VIDEO WORKER START", {
-        jobId: job.id,
-        creatorId: job.creator_id,
-        startTime: job.start_time,
-        status: job.status,
+        jobId: claimedJob.processorInput.jobId,
+        creatorId: claimedJob.processorInput.creatorId,
+        startTime: claimedJob.processorInput.startTime,
       })
 
       try {
-        const result = await processStoryVideoJob(job)
-
-        await markStoryVideoJobCompleted({
-          jobId: job.id,
-          storyId: result.storyId,
-          trimmedStoragePath: result.finalStoragePath,
+        const result = await processStoryVideoJob(claimedJob.processorInput)
+        const completed = await completeStoryVideoJobFromProcessorResult({
+          processorInput: claimedJob.processorInput,
+          result,
         })
 
         console.log("✅ STORY VIDEO WORKER DONE", {
-          jobId: job.id,
-          storyId: result.storyId,
-          trimmedStoragePath: result.finalStoragePath,
+          jobId: result.jobId,
+          storyId: completed.storyId,
+          trimmedStoragePath: completed.trimmedStoragePath,
         })
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Story video processing failed"
 
         await markStoryVideoJobFailed({
-          jobId: job.id,
+          jobId: claimedJob.processorInput.jobId,
           errorMessage: message,
         })
 
         console.error("❌ STORY VIDEO WORKER FAILED", {
-          jobId: job.id,
+          jobId: claimedJob.processorInput.jobId,
           error: message,
         })
       }

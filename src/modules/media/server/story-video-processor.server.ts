@@ -6,24 +6,29 @@ import { promisify } from "node:util"
 import ffmpegPath from "ffmpeg-static"
 import ffprobe from "ffprobe-static"
 import {
-  StoryVideoJob,
-  createStoryFromProcessedVideo,
   downloadTempStoryVideo,
   removeTempStoryVideo,
   uploadProcessedStoryVideo,
-} from "./story-video-job.service"
+} from "./story-video-storage.service"
+import {
+  buildStoryVideoProcessorOutput,
+  type StoryVideoProcessorInput,
+  type StoryVideoProcessorOutput,
+} from "@/modules/media/lib/story-video-processor-contract"
 
 const execFileAsync = promisify(execFile)
 
 const MAX_STORY_VIDEO_SECONDS = 10
 
-export async function processStoryVideoJob(job: StoryVideoJob) {
+export async function processStoryVideoJob(
+  job: StoryVideoProcessorInput
+): Promise<StoryVideoProcessorOutput> {
   const workDir = await fs.mkdtemp(path.join(os.tmpdir(), "story-video-"))
   const inputPath = path.join(workDir, "input")
   const outputPath = path.join(workDir, "output.mp4")
 
   try {
-    const inputBuffer = await downloadTempStoryVideo(job.temp_storage_path)
+    const inputBuffer = await downloadTempStoryVideo(job.tempStoragePath)
     await fs.writeFile(inputPath, inputBuffer)
 
     const duration = await getVideoDurationSeconds(inputPath)
@@ -37,39 +42,31 @@ export async function processStoryVideoJob(job: StoryVideoJob) {
     } else {
       const maxStartTime = Math.max(0, duration - MAX_STORY_VIDEO_SECONDS)
 
-      if (job.start_time < 0 || job.start_time > maxStartTime) {
+      if (job.startTime < 0 || job.startTime > maxStartTime) {
         throw new Error("Invalid startTime")
       }
 
       await trimVideo({
         inputPath,
         outputPath,
-        startTime: job.start_time,
+        startTime: job.startTime,
         durationSeconds: MAX_STORY_VIDEO_SECONDS,
       })
     }
 
     const outputBuffer = await fs.readFile(outputPath)
     const finalStoragePath = await uploadProcessedStoryVideo({
-      creatorId: job.creator_id,
+      creatorId: job.creatorId,
       localFileBuffer: outputBuffer,
       contentType: "video/mp4",
     })
 
-    const storyId = await createStoryFromProcessedVideo({
-      creatorId: job.creator_id,
-      storagePath: finalStoragePath,
-      visibility: job.visibility,
-      expiresAt: job.expires_at,
-      editorState: job.editor_state ?? null,
+    return buildStoryVideoProcessorOutput({
+      input: job,
+      processedVideoStoragePath: finalStoragePath,
     })
-
-    return {
-      storyId,
-      finalStoragePath,
-    }
   } finally {
-    await safeRemoveTempStorage(job.temp_storage_path)
+    await safeRemoveTempStorage(job.tempStoragePath)
     await safeCleanupDir(workDir)
   }
 }

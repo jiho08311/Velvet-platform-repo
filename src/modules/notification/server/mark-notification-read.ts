@@ -5,9 +5,11 @@ import type {
   NotificationRow,
 } from "../types"
 import { getNotificationVisibilityScope } from "./notification-visibility-policy"
+import { NOTIFICATION_READ_STATE_SELECT } from "./notification-read-row-query"
 import {
   createMarkNotificationReadResult,
   createNotificationReadUpdate,
+  resolveNotificationReadState,
 } from "./notification-read-state-policy"
 
 export async function markNotificationRead(
@@ -23,7 +25,7 @@ export async function markNotificationRead(
 
   const { data, error } = await supabase
     .from("notifications")
-    .select("id, user_id, status, read_at")
+    .select(NOTIFICATION_READ_STATE_SELECT)
     .eq("id", notificationId)
     .in("user_id", scope.ownerIds)
     .maybeSingle<NotificationRow>()
@@ -36,7 +38,7 @@ export async function markNotificationRead(
     return null
   }
 
-  if (data.read_at) {
+  if (resolveNotificationReadState(data).isRead) {
     return createMarkNotificationReadResult(data)
   }
 

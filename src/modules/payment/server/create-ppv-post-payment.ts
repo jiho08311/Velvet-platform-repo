@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createNotification } from "@/modules/notification/server/create-notification"
+import { createPpvPostPurchasedNotificationInput } from "@/modules/notification/server/create-notification-inputs"
 
 type CreatePpvPostPaymentInput = {
   userId: string
@@ -69,16 +70,14 @@ export async function createPpvPostPayment({
       .maybeSingle()
 
     if (creator?.user_id) {
-      await createNotification({
-        userId: creator.user_id,
-        type: "ppv_post_purchased",
-        title: "Content unlocked",
-        body: "A user unlocked your content.",
-        data: {
+      await createNotification(
+        createPpvPostPurchasedNotificationInput({
+          userId: creator.user_id,
           paymentId: data.id,
           buyerId: userId,
-        },
-      })
+          postId,
+        }),
+      )
     }
   } catch (e) {
     console.error("ppv_post notification error:", e)

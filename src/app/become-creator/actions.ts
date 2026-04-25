@@ -1,34 +1,26 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { readOnboardingReadiness } from "@/modules/auth/server/read-onboarding-readiness";
-import { requireActiveUser } from "@/modules/auth/server/require-active-user";
+import { resolveRedirectTarget } from "@/modules/auth/lib/redirect-handoff";
+import { requireOnboardingReadyUser } from "@/modules/auth/server/require-onboarding-ready-user";
 import { readCreatorReadiness } from "@/modules/creator/server/read-creator-readiness";
 import { createCreatorProfile } from "@/modules/creator/server/create-creator-profile";
 
 export async function becomeCreatorAction(formData: FormData) {
-  let user: Awaited<ReturnType<typeof requireActiveUser>>;
-
-  try {
-    user = await requireActiveUser();
-  } catch {
-    redirect("/sign-in?next=/become-creator");
-  }
-
-  const readiness = await readOnboardingReadiness({
-    userId: user.id,
+  const resolvedNext = resolveRedirectTarget({
+    fallback: "/dashboard",
+    target: formData.get("next")?.toString(),
   });
-
-  if (!readiness.ok) {
-    redirect("/onboarding");
-  }
+  const user = await requireOnboardingReadyUser({
+    signInNext: "/become-creator",
+  });
 
   const creatorReadiness = await readCreatorReadiness({
     userId: user.id,
   });
 
   if (creatorReadiness.ok) {
-    redirect("/dashboard");
+    redirect(resolvedNext);
   }
 
   const instagramUsername =
@@ -48,5 +40,5 @@ export async function becomeCreatorAction(formData: FormData) {
     accountNumber,
   });
 
-  redirect("/dashboard");
+  redirect(resolvedNext);
 }

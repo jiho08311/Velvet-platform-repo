@@ -1,5 +1,4 @@
 import Link from "next/link"
-import { redirect } from "next/navigation"
 import { PostCard } from "@/modules/post/ui/PostCard"
 import { LockedPostCard } from "@/modules/post/ui/LockedPostCard"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
@@ -9,6 +8,8 @@ import { getPostById } from "@/modules/post/server/get-post-by-id"
 import { deletePostAction } from "@/modules/post/server/delete-post-action"
 import PostPurchaseButton from "@/modules/post/ui/PostPurchaseButton"
 import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
+import { getPostLockedPreviewPresentation } from "@/modules/post/lib/get-post-locked-preview-presentation"
+import { getPostPurchaseCtaVisibility } from "@/modules/post/lib/get-post-purchase-cta-visibility"
 import { EmptyState } from "@/shared/ui/EmptyState"
 
 type PostDetailPageProps = {
@@ -24,25 +25,20 @@ function formatDate(value: string) {
   }).format(new Date(value))
 }
 
-
 export default async function PostDetailPage({
   params,
 }: PostDetailPageProps) {
   const { postId } = await params
   const user = await getCurrentUser()
 
-  if (!user) {
-    redirect(`/sign-in?next=/post/${postId}`)
-  }
-
   const [post, myCreator] = await Promise.all([
-    getPostById(postId, user.id),
-    getCreatorByUserId(user.id),
+    getPostById(postId, user?.id ?? null),
+    user ? getCreatorByUserId(user.id) : Promise.resolve(null),
   ])
 
   if (!post) {
     return (
-     <main className="min-h-screen bg-zinc-950 px-0 py-8 text-white sm:px-6 sm:py-10">
+      <main className="min-h-screen bg-zinc-950 px-0 py-8 text-white sm:px-6 sm:py-10">
         <div className="mx-auto max-w-3xl">
           <EmptyState
             title="Post not found"
@@ -56,14 +52,32 @@ export default async function PostDetailPage({
   }
 
   const isLocked = post.isLocked
-  const lockReason = post.lockReason ?? "none"
   const isOwner = myCreator?.id === post.creatorId
   const shouldAutoReloadOnce = !isLocked && post.media.length === 0
+  const renderInput =
+    post.renderInput ??
+    buildPostRenderInput({
+      text: post.content ?? "",
+      media: post.media,
+      blocks: post.blocks ?? [],
+    })
 
-  const renderInput = buildPostRenderInput({
-    text: post.content ?? "",
-    media: post.media,
-    blocks: post.blocks ?? [],
+  const lockedPreviewPresentation = getPostLockedPreviewPresentation({
+    canView: !isLocked,
+    locked: isLocked,
+    lockReason: post.lockReason,
+  })
+
+  const shouldShowSubscribeCta =
+    isLocked && lockedPreviewPresentation.previewVariant === "subscription"
+
+  const shouldShowPurchaseCta = getPostPurchaseCtaVisibility({
+    isLocked,
+    purchaseEligibility:
+      post.purchaseEligibility ?? {
+        canPurchase: false,
+        blockingReason: "not_paid_post",
+      },
   })
 
   const detailCreator = {
@@ -73,7 +87,7 @@ export default async function PostDetailPage({
   }
 
   return (
-   <main className="min-h-screen bg-zinc-950 px-0 py-8  text-white sm:px-6 sm:py-10">
+    <main className="min-h-screen bg-zinc-950 px-0 py-8 text-white sm:px-6 sm:py-10">
       {shouldAutoReloadOnce ? (
         <script
           dangerouslySetInnerHTML={{
@@ -98,69 +112,80 @@ export default async function PostDetailPage({
         >
           ← Back to search
         </Link>
-{isOwner ? (
-  <div className="flex justify-end gap-2">
-    <Link
-      href={`/post/${post.id}/edit`}
-      className="inline-flex h-10 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-white transition hover:bg-zinc-800"
-    >
-      Edit
-    </Link>
 
-    <form action={deletePostAction.bind(null, post.id)}>
-      <button
-        type="submit"
-        className="inline-flex h-10 items-center justify-center rounded-full border border-red-900/60 bg-red-950/60 px-4 text-sm font-medium text-red-300 transition hover:bg-red-950"
-      >
-        Delete
-      </button>
-    </form>
-  </div>
-) : null}
+        {isOwner ? (
+          <div className="flex justify-end gap-2">
+            <Link
+              href={`/post/${post.id}/edit`}
+              className="inline-flex h-10 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-white transition hover:bg-zinc-800"
+            >
+              Edit
+            </Link>
+
+            <form action={deletePostAction.bind(null, post.id)}>
+              <button
+                type="submit"
+                className="inline-flex h-10 items-center justify-center rounded-full border border-red-900/60 bg-red-950/60 px-4 text-sm font-medium text-red-300 transition hover:bg-red-950"
+              >
+                Delete
+              </button>
+            </form>
+          </div>
+        ) : null}
+
         <article className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/70">
-        
-
-       {isLocked ? (
-  <LockedPostCard
-    previewText={renderInput.lockedPreviewText}
-    createdAt={formatDate(post.publishedAt ?? post.createdAt)}
-    previewThumbnailUrl={renderInput.primaryLockedPreviewMedia?.url ?? null}
-    price={post.price ?? undefined}
-    lockReason={
-      lockReason === "subscription" || lockReason === "purchase"
-        ? lockReason
-        : undefined
-    }
-    action={
-      lockReason === "subscription" ? (
-        <SubscribeButton
-          creatorId={post.creatorId}
-          creatorUserId={post.creatorUserId}
-          currentUserId={user.id}
-        />
-      ) : (
-        <PostPurchaseButton postId={post.id} />
-      )
-    }
-  />
-) : (
-  <PostCard
-    postId={post.id}
-    text={post.content ?? ""}
-    createdAt={post.publishedAt ?? post.createdAt}
-    media={post.media}
-    blocks={post.blocks ?? []}
-    isLocked={false}
-    creator={detailCreator}
-    creatorId={post.creatorId}
-    creatorUserId={post.creatorUserId}
-    currentUserId={user.id}
-    likesCount={post.likesCount}
-    isLiked={false}
-  />
-)}
-
-
+          {isLocked ? (
+            <LockedPostCard
+              renderInput={renderInput}
+              previewText={renderInput.lockedPreviewText}
+              createdAt={formatDate(post.publishedAt ?? post.createdAt)}
+              previewThumbnailUrl={
+                renderInput.primaryLockedPreviewMedia?.url ?? null
+              }
+              price={post.price ?? undefined}
+              lockReason={
+                lockedPreviewPresentation.previewVariant === "subscription" ||
+                lockedPreviewPresentation.previewVariant === "purchase"
+                  ? lockedPreviewPresentation.previewVariant
+                  : undefined
+              }
+              action={
+                shouldShowSubscribeCta && user ? (
+                  <SubscribeButton
+                    creatorId={post.creatorId}
+                    creatorUserId={post.creatorUserId}
+                    currentUserId={user.id}
+                  />
+                ) : shouldShowPurchaseCta ? (
+                  <PostPurchaseButton
+                    postId={post.id}
+                    price={post.price ?? undefined}
+                    creatorUsername={post.creator.username}
+                  />
+                ) : null
+              }
+            />
+          ) : (
+            <PostCard
+              postId={post.id}
+              text={post.content ?? ""}
+              createdAt={post.publishedAt ?? post.createdAt}
+              media={post.media}
+              blocks={post.blocks ?? []}
+              renderInput={renderInput}
+              isLocked={false}
+              lockReason="none"
+              purchaseEligibility={post.purchaseEligibility}
+              price={post.price ?? undefined}
+              creator={detailCreator}
+              creatorId={post.creatorId}
+              creatorUserId={post.creatorUserId}
+              currentUserId={user?.id}
+              likesCount={post.likesCount}
+              commentsCount={post.commentsCount}
+              isLiked={false}
+            />
+          )}
         </article>
       </div>
     </main>

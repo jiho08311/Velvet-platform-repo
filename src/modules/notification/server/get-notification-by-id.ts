@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import type { Notification, NotificationRow } from "../types"
 import { mapNotificationRow } from "../types"
 import { getNotificationVisibilityScope } from "./notification-visibility-policy"
+import { NOTIFICATION_ROW_SELECT } from "./notification-row-query"
 
 type GetNotificationByIdParams = {
   notificationId: string
@@ -22,17 +23,7 @@ export async function getNotificationById({
 
   const { data, error } = await supabase
     .from("notifications")
-    .select(`
-      id,
-      user_id,
-      type,
-      status,
-      title,
-      body,
-      data,
-      created_at,
-      read_at
-    `)
+    .select(NOTIFICATION_ROW_SELECT)
     .eq("id", notificationId)
     .in("user_id", scope.ownerIds)
     .maybeSingle<NotificationRow>()

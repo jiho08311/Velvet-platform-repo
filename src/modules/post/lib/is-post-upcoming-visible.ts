@@ -1,3 +1,5 @@
+import { isPostPublicBaseVisible } from "./is-post-public-base-visible"
+
 type PostUpcomingVisibilityInput = {
   status: string | null | undefined
   visibility: string | null | undefined
@@ -7,28 +9,16 @@ type PostUpcomingVisibilityInput = {
   now: string
 }
 
-function isSupportedPublicVisibility(
-  visibility: string | null | undefined
-): boolean {
-  return visibility === "public" || visibility === "subscribers"
-}
-
 export function isPostUpcomingVisible(
   input: PostUpcomingVisibilityInput
 ): boolean {
-  if (input.deletedAt) {
-    return false
-  }
-
-  if (!isSupportedPublicVisibility(input.visibility)) {
-    return false
-  }
-
-  if (input.status !== "scheduled") {
-    return false
-  }
-
-  if (input.moderationStatus !== "approved") {
+  if (
+    !isPostPublicBaseVisible({
+      visibility: input.visibility,
+      moderationStatus: input.moderationStatus,
+      deletedAt: input.deletedAt,
+    })
+  ) {
     return false
   }
 
@@ -36,9 +26,5 @@ export function isPostUpcomingVisible(
     return false
   }
 
-  if (input.publishedAt <= input.now) {
-    return false
-  }
-
-  return true
+  return input.status === "scheduled" && input.publishedAt > input.now
 }

@@ -1,31 +1,11 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import {
-  resolvePayoutRequestLifecycleState,
-  type PayoutRequestLifecycleState,
-} from "@/modules/payout/lib/resolve-payout-state"
+  buildPayoutRequestReadModel,
+  type PayoutRequestReadModel,
+  type PayoutRequestRow,
+} from "@/modules/payout/server/build-payout-request-read-model"
 
-type PayoutRequestRow = {
-  id: string
-  creator_id: string
-  amount: number
-  currency: string
-  status: string
-  created_at: string
-  approved_at: string | null
-  rejected_at: string | null
-}
-
-export type PayoutRequest = {
-  id: string
-  creatorId: string
-  amount: number
-  currency: string
-  status: string
-  lifecycleState: PayoutRequestLifecycleState
-  createdAt: string
-  approvedAt: string | null
-  rejectedAt: string | null
-}
+export type PayoutRequest = PayoutRequestReadModel
 
 export async function listAllPayoutRequests(): Promise<PayoutRequest[]> {
   const supabase = await createSupabaseServerClient()
@@ -41,17 +21,5 @@ export async function listAllPayoutRequests(): Promise<PayoutRequest[]> {
     throw error
   }
 
-  return (data ?? []).map((row: PayoutRequestRow) => ({
-    id: row.id,
-    creatorId: row.creator_id,
-    amount: row.amount,
-    currency: row.currency,
-    status: row.status,
-    lifecycleState: resolvePayoutRequestLifecycleState({
-      payoutRequestStatus: row.status,
-    }).state,
-    createdAt: row.created_at,
-    approvedAt: row.approved_at,
-    rejectedAt: row.rejected_at,
-  }))
+  return (data ?? []).map(buildPayoutRequestReadModel)
 }

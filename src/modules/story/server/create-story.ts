@@ -1,12 +1,26 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import type { StoryEditorState } from "../types"
+import {
+  buildStoryInsertValues,
+  normalizeStoryCreatePayload,
+} from "../lib/story-create-payload"
+import type {
+  ProcessedStoryVideoCreateInput,
+  StoryCreatePayload,
+  StoryEditorState,
+} from "../types"
 
 type CreateStoryInput = {
   creatorId: string
   storagePath: string
-  text?: string | null
-  visibility?: "public" | "subscribers"
-  editorState?: StoryEditorState | null
+  story: StoryCreatePayload
+}
+
+type PersistStoryRowInput = {
+  creatorId: string
+  storagePath: string
+  story: StoryCreatePayload
+  createdAt: string
+  expiresAt: string
 }
 
 type CreatorRow = {
@@ -25,12 +39,56 @@ type StoryRow = {
   is_deleted: boolean
 }
 
+function mapStoryRowToStory(data: StoryRow) {
+  return {
+    id: data.id,
+    creatorId: data.creator_id,
+    mediaUrl: data.storage_path,
+    text: data.text,
+    visibility: data.visibility,
+    editorState: data.editor_state,
+    createdAt: data.created_at,
+    expiresAt: data.expires_at,
+    isDeleted: data.is_deleted,
+  }
+}
+
+export async function persistStoryRow({
+  creatorId,
+  storagePath,
+  story,
+  createdAt,
+  expiresAt,
+}: PersistStoryRowInput): Promise<StoryRow> {
+  const payload = normalizeStoryCreatePayload(story)
+
+  const { data, error } = await supabaseAdmin
+    .from("stories")
+    .insert(
+      buildStoryInsertValues({
+        creatorId,
+        storagePath,
+        story: payload,
+        createdAt,
+        expiresAt,
+      })
+    )
+    .select(
+      "id, creator_id, storage_path, text, visibility, editor_state, created_at, expires_at, is_deleted"
+    )
+    .single<StoryRow>()
+
+  if (error) {
+    throw error
+  }
+
+  return data
+}
+
 export async function createStory({
   creatorId,
   storagePath,
-  text,
-  visibility = "subscribers",
-  editorState = null,
+  story,
 }: CreateStoryInput): Promise<{
   id: string
   creatorId: string
@@ -69,37 +127,34 @@ export async function createStory({
 
   const createdAt = new Date()
   const expiresAt = new Date(createdAt.getTime() + 24 * 60 * 60 * 1000)
+  const data = await persistStoryRow({
+    creatorId: resolvedCreatorId,
+    storagePath: resolvedStoragePath,
+    story,
+    createdAt: createdAt.toISOString(),
+    expiresAt: expiresAt.toISOString(),
+  })
 
-  const { data, error } = await supabaseAdmin
-    .from("stories")
-    .insert({
-      creator_id: resolvedCreatorId,
-      storage_path: resolvedStoragePath,
-      text: text?.trim() || null,
-      visibility,
-      editor_state: editorState,
-      created_at: createdAt.toISOString(),
-      expires_at: expiresAt.toISOString(),
-      is_deleted: false,
-    })
-    .select(
-      "id, creator_id, storage_path, text, visibility, editor_state, created_at, expires_at, is_deleted"
-    )
-    .single<StoryRow>()
+  return mapStoryRowToStory(data)
+}
 
-  if (error) {
-    throw error
-  }
+export async function createStoryFromVideoProcessing({
+  creatorId,
+  processedVideoStoragePath,
+  story,
+  expiresAt,
+}: ProcessedStoryVideoCreateInput): Promise<string> {
+  const data = await persistStoryRow({
+    creatorId,
+    storagePath: processedVideoStoragePath,
+    story: {
+      text: null,
+      visibility: story.visibility,
+      editorState: story.editorState,
+    },
+    createdAt: new Date().toISOString(),
+    expiresAt,
+  })
 
-  return {
-    id: data.id,
-    creatorId: data.creator_id,
-    mediaUrl: data.storage_path,
-    text: data.text,
-    visibility: data.visibility,
-    editorState: data.editor_state,
-    createdAt: data.created_at,
-    expiresAt: data.expires_at,
-    isDeleted: data.is_deleted,
-  }
+  return data.id
 }

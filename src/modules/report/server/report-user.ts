@@ -1,8 +1,9 @@
 import { createReport } from "./create-report"
+import type { ReportReason } from "@/modules/report/types"
 
 type ReportUserParams = {
   targetUserId: string
-  reason: string
+  reason: ReportReason
   description?: string
 }
 

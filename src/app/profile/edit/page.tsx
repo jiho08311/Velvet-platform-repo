@@ -3,6 +3,10 @@ import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 
 import { getSession } from "@/modules/auth/server/get-session"
+import {
+  buildPathWithNext,
+  SIGN_IN_PATH,
+} from "@/modules/auth/lib/redirect-handoff"
 import { getProfileByUserId } from "@/modules/profile/server/get-profile-by-user-id"
 import { updateProfile } from "@/modules/profile/server/update-profile"
 import { createClient } from "@/infrastructure/supabase/server"
@@ -70,11 +74,26 @@ function sanitizeFileName(fileName: string) {
 }
 
 export default async function ProfileEditPage() {
+  const nextPath = "/profile/edit"
   const session = await getSession()
-  if (!session) redirect("/sign-in")
+  if (!session) {
+    redirect(
+      buildPathWithNext({
+        path: SIGN_IN_PATH,
+        next: nextPath,
+      })
+    )
+  }
 
   const userId = getSessionUserId(session)
-  if (!userId) redirect("/sign-in")
+  if (!userId) {
+    redirect(
+      buildPathWithNext({
+        path: SIGN_IN_PATH,
+        next: nextPath,
+      })
+    )
+  }
 
   const profileData = await getProfileByUserId(userId)
   const profile = normalizeProfileData(profileData)
@@ -84,7 +103,14 @@ export default async function ProfileEditPage() {
 
     const session = await getSession()
     const userId = getSessionUserId(session)
-    if (!userId) redirect("/sign-in")
+    if (!userId) {
+      redirect(
+        buildPathWithNext({
+          path: SIGN_IN_PATH,
+          next: "/profile/edit",
+        })
+      )
+    }
 
     const supabase = await createClient()
 

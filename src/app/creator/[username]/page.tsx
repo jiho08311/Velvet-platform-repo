@@ -1,10 +1,9 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { getCreatorPage } from "@/modules/creator/server/get-creator-page"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { getCreatorByUsername } from "@/modules/creator/server/get-creator-by-username"
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
-import { getCreatorDashboardSummary } from "@/modules/analytics/server/get-creator-dashboard-summary"
+import { getCreatorAnalyticsSummary } from "@/modules/analytics/server/get-creator-analytics"
 import { getCreatorFeed } from "@/modules/post/server/get-creator-feed"
 import { CreatePostComposer } from "@/modules/post/ui/CreatePostComposer"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
@@ -184,47 +183,20 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
     notFound()
   }
 
+  // Creator pages are intentionally public. Guests can view the page,
+  // and the downstream feed read model applies guest-safe access policy.
   const user = await getCurrentUser()
   const userId = user?.id ?? null
   const isOwner = userId === creator.userId
   const pathname = `/creator/${username}`
 
-  const summary = await getCreatorDashboardSummary(creator.id)
+  const summary = await getCreatorAnalyticsSummary(creator.id)
 
-  const posts = userId
-    ? await getCreatorFeed({
-        creatorId: creator.id,
-        creatorUserId: creator.userId,
-        userId,
-      })
-    : ((await getCreatorPage({ username, viewerUserId: null }))?.posts ?? []).map(
-        (post) => ({
-          id: post.id,
-          creatorId: creator.id,
-          content: post.text ?? "",
-          createdAt: post.createdAt,
-          media: post.media ?? [],
-          blocks:
-            "blocks" in post && Array.isArray(post.blocks)
-              ? post.blocks
-              : [],
-          isLocked: post.isLocked,
-          lockReason: undefined,
-          price: post.price ?? 0,
-          likesCount: post.likesCount ?? 0,
-          commentsCount: post.commentsCount ?? 0,
-          isLiked: false,
-          status:
-            "status" in post && typeof post.status === "string"
-              ? post.status
-              : "published",
-          publishedAt: "publishedAt" in post ? post.publishedAt : null,
-          visibility:
-            "visibility" in post && typeof post.visibility === "string"
-              ? post.visibility
-              : "public",
-        })
-      )
+  const posts = await getCreatorFeed({
+    creatorId: creator.id,
+    creatorUserId: creator.userId,
+    userId,
+  })
 
   const updatePosts = posts.filter(
     (post) => (post.media?.length ?? 0) === 0 || post.status !== "published"
@@ -285,9 +257,11 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
           {!isOwner ? (
             <div className="mt-3">
               <ReportButton
-                targetType="creator"
-                targetId={creator.id}
-                pathname={pathname}
+                payload={{
+                  targetType: "creator",
+                  targetId: creator.id,
+                  pathname,
+                }}
                 currentUserId={userId ?? undefined}
               />
             </div>
@@ -305,7 +279,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
           <CreatorStatsSection
             mediaPostCount={mediaPosts.length}
             updatePostCount={updatePosts.length}
-            subscriberCount={summary?.subscriberCount}
+            subscriberCount={summary.counts.subscriberCount}
           />
 
           <div className="mt-8">

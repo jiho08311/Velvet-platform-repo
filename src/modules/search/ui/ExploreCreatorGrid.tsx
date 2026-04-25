@@ -1,15 +1,8 @@
 import Link from "next/link"
-
-type ExploreCreatorItem = {
-  id: string
-  username: string
-  displayName: string | null
-  avatarUrl?: string | null
-  headline?: string | null
-}
+import type { DiscoveryCreatorLinkItem } from "../types"
 
 type ExploreCreatorGridProps = {
-  creators: ExploreCreatorItem[]
+  creators: DiscoveryCreatorLinkItem[]
 }
 
 export function ExploreCreatorGrid({

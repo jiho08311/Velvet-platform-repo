@@ -2,6 +2,10 @@ import { NextResponse } from "next/server"
 
 import { requireUser } from "@/modules/auth/server/require-user"
 import { listNotifications } from "@/modules/notification/server/list-notifications"
+import {
+  getUnreadNotificationCount,
+  hasUnreadNotifications,
+} from "@/modules/notification/types"
 
 export async function GET() {
   try {
@@ -10,10 +14,13 @@ export async function GET() {
     const notifications = await listNotifications({
       userId: user.id,
     })
+    const unreadCount = getUnreadNotificationCount(notifications)
 
     return NextResponse.json(
       {
         notifications,
+        unreadCount,
+        hasUnread: hasUnreadNotifications(notifications),
       },
       { status: 200 },
     )

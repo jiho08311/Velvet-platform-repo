@@ -7,17 +7,19 @@ export function getStoryAccessState(
     return "visible_unlocked"
   }
 
-  if (input.visibility === "public") {
-    return "visible_unlocked"
-  }
-
-  if (input.visibility === "subscribers") {
-    if (input.hasSubscriptionAccess) {
+  switch (input.visibility) {
+    case "public":
       return "visible_unlocked"
-    }
 
-    return "visible_locked"
+    case "subscribers":
+      if (input.hasSubscriptionAccess) {
+        return "visible_unlocked"
+      }
+
+      return "visible_locked"
   }
 
-  return "not_visible"
+  const unreachableVisibility: never = input.visibility
+
+  throw new Error(`Unsupported story visibility: ${unreachableVisibility}`)
 }

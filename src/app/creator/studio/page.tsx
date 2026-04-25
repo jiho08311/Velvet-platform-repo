@@ -1,8 +1,6 @@
 import Link from "next/link"
-import { notFound } from "next/navigation"
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
+import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
 import { listCreatorStudioPosts } from "@/modules/post/server/list-creator-studio-posts"
 
 async function deletePostAction(postId: string) {
@@ -14,12 +12,9 @@ async function deletePostAction(postId: string) {
 }
 
 export default async function CreatorStudioPage() {
-  const user = await requireUser()
-  const creator = await getCreatorByUserId(user.id)
-
-  if (!creator) {
-    notFound()
-  }
+  const { creator } = await requireCreatorReadyUser({
+    signInNext: "/creator/studio",
+  })
 
   const posts = await listCreatorStudioPosts({
     creatorId: creator.id,

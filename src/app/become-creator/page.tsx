@@ -1,32 +1,33 @@
 import { redirect } from "next/navigation";
 import { becomeCreatorAction } from "./actions";
-import { readOnboardingReadiness } from "@/modules/auth/server/read-onboarding-readiness";
-import { requireActiveUser } from "@/modules/auth/server/require-active-user";
+import { resolveRedirectTarget } from "@/modules/auth/lib/redirect-handoff";
+import { requireOnboardingReadyUser } from "@/modules/auth/server/require-onboarding-ready-user";
 import { readCreatorReadiness } from "@/modules/creator/server/read-creator-readiness";
 
-export default async function BecomeCreatorPage() {
-  let user: Awaited<ReturnType<typeof requireActiveUser>>;
+type BecomeCreatorPageProps = {
+  searchParams: Promise<{
+    next?: string;
+  }>;
+};
 
-  try {
-    user = await requireActiveUser();
-  } catch {
-    redirect("/sign-in?next=/become-creator");
-  }
-
-  const readiness = await readOnboardingReadiness({
-    userId: user.id,
+export default async function BecomeCreatorPage({
+  searchParams,
+}: BecomeCreatorPageProps) {
+  const { next } = await searchParams;
+  const resolvedNext = resolveRedirectTarget({
+    fallback: "/dashboard",
+    target: next,
   });
-
-  if (!readiness.ok) {
-    redirect("/onboarding");
-  }
+  const user = await requireOnboardingReadyUser({
+    signInNext: "/become-creator",
+  });
 
   const creatorReadiness = await readCreatorReadiness({
     userId: user.id,
   });
 
   if (creatorReadiness.ok) {
-    redirect("/dashboard");
+    redirect(resolvedNext);
   }
 
   return (
@@ -56,6 +57,8 @@ export default async function BecomeCreatorPage() {
             </div>
 
             <form action={becomeCreatorAction} className="mt-6 flex flex-col gap-4">
+              <input type="hidden" name="next" value={resolvedNext} />
+
               <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4">
                 <p className="text-sm font-medium text-zinc-900">
                   Create your creator profile

@@ -1,16 +1,11 @@
 import Link from "next/link"
-import { notFound } from "next/navigation"
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
+import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
 
 export default async function NewPostPage() {
-  const user = await requireUser()
-  const creator = await getCreatorByUserId(user.id)
-
-  if (!creator) {
-    notFound()
-  }
+  await requireCreatorReadyUser({
+    signInNext: "/creator/studio/posts/new",
+  })
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6">

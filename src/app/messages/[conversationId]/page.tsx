@@ -2,12 +2,20 @@ import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 
 import { requireUser } from "@/modules/auth/server/require-user"
-import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
+import {
+  assertPassVerified,
+  getPassVerificationRedirectPath,
+} from "@/modules/auth/server/assert-pass-verified"
+import {
+  buildPathWithNext,
+  ONBOARDING_PATH,
+  SIGN_IN_PATH,
+} from "@/modules/auth/lib/redirect-handoff"
 import { getConversationById } from "@/modules/message/server/get-conversation-by-id"
 import { listMessages } from "@/modules/message/server/list-messages"
-import { MessageComposerSection } from "@/modules/message/ui/MessageComposerSection"
-import { ReportButton } from "@/modules/report/ui/ReportButton"
+import { markConversationRead } from "@/modules/message/server/mark-conversation-read"
+import { MessageThreadSection } from "@/modules/message/ui/MessageThreadSection"
+import { toConversationMessageListItem } from "@/modules/message/types"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 type ConversationDetailPageProps = {
@@ -23,12 +31,25 @@ type ProfileRow = {
 export default async function ConversationDetailPage({
   params,
 }: ConversationDetailPageProps) {
-  const user = await requireUser()
+  const { conversationId } = await params
+  const pathname = `/messages/${conversationId}`
+  let user: Awaited<ReturnType<typeof requireUser>>
+
+  try {
+    user = await requireUser()
+  } catch {
+    redirect(
+      buildPathWithNext({
+        path: SIGN_IN_PATH,
+        next: pathname,
+      })
+    )
+  }
 
   try {
     await assertPassVerified({ profileId: user.id })
   } catch {
-    redirect("/verify-pass")
+    redirect(getPassVerificationRedirectPath({ next: pathname }))
   }
 
   const { data: profile, error: profileError } = await supabaseAdmin
@@ -42,11 +63,13 @@ export default async function ConversationDetailPage({
   }
 
   if (!profile?.username) {
-    redirect("/onboarding")
+    redirect(
+      buildPathWithNext({
+        path: ONBOARDING_PATH,
+        next: pathname,
+      })
+    )
   }
-
-  const { conversationId } = await params
-  const pathname = `/messages/${conversationId}`
 
   const conversation = await getConversationById({
     conversationId,
@@ -61,17 +84,23 @@ export default async function ConversationDetailPage({
     conversationId,
     userId: user.id,
   })
-  
-  await supabaseAdmin
-  .from("conversation_participants")
-  .update({
-    last_read_at: new Date().toISOString(),
+  const messageListItems = messages.map((message) =>
+    toConversationMessageListItem({
+      message,
+      currentUserId: user.id,
+      reportPathname: pathname,
+    })
+  )
+
+  await markConversationRead({
+    conversationId,
+    userId: user.id,
   })
-  .eq("conversation_id", conversationId)
-  .eq("user_id", user.id)
 
   const participant = conversation.participant
-  const meAsCreator = await getCreatorByUserId(user.id)
+  const participantDisplayName = participant?.displayName ?? "Unknown user"
+  const participantUsername = participant?.username ?? "unknown"
+  const participantAvatarUrl = participant?.avatarUrl ?? null
 
   return (
     <main className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-4xl flex-col gap-4 px-4 py-6">
@@ -84,119 +113,34 @@ export default async function ConversationDetailPage({
         </Link>
 
         <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5 text-sm font-semibold text-white/80">
-          {participant?.avatarUrl ? (
+          {participantAvatarUrl ? (
             <img
-              src={participant.avatarUrl}
-              alt={participant.displayName ?? "User"}
+              src={participantAvatarUrl}
+              alt={participantDisplayName}
               className="h-full w-full object-cover"
             />
           ) : (
-            (participant?.displayName ?? participant?.username ?? "U")
-              .slice(0, 1)
-              .toUpperCase()
+            participantDisplayName.slice(0, 1).toUpperCase()
           )}
         </div>
 
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-white">
-            {participant?.displayName ?? "Unknown user"}
+            {participantDisplayName}
           </p>
           <p className="truncate text-xs text-white/50">
-            @{participant?.username ?? "unknown"}
+            @{participantUsername}
           </p>
         </div>
       </section>
 
       <section className="flex flex-1 flex-col rounded-2xl border border-white/10 bg-neutral-950 p-4">
-        {messages.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center px-6 py-12 text-center">
-            <div>
-              <p className="text-base font-medium text-white">
-                아직 대화가 없습니다
-              </p>
-              <p className="mt-2 text-sm text-white/60">
-                첫 메시지를 보내 대화를 시작해보세요
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-1 flex-col gap-3">
-            {messages.map((message) => {
-              const isMine = message.senderId === user.id
-
-              return (
-                <div
-                  key={message.id}
-                  className={`flex ${isMine ? "justify-end" : "justify-start"}`}
-                >
-                  <div className="max-w-[80%]">
-                    <div
-                      className={`rounded-2xl px-4 py-3 ${
-                        isMine
-                          ? "bg-white text-black"
-                          : "border border-white/10 bg-white/5 text-white"
-                      }`}
-                    >
-                      <div className="space-y-3">
-                        {message.content ? (
-                          <p className="whitespace-pre-wrap text-sm leading-6">
-                            {message.content}
-                          </p>
-                        ) : null}
-
-                        {message.media.length > 0 ? (
-                          <div className="space-y-3">
-                            {message.media.map((media) =>
-                              media.type === "image" ? (
-                                <img
-                                  key={media.id}
-                                  src={media.url}
-                                  alt=""
-                                  className="w-full rounded-xl object-cover"
-                                />
-                              ) : (
-                                <video
-                                  key={media.id}
-                                  src={media.url}
-                                  controls
-                                  playsInline
-                                  preload="metadata"
-                                  className="w-full rounded-xl"
-                                />
-                              )
-                            )}
-                          </div>
-                        ) : null}
-                      </div>
-
-                      <p
-                        className={`mt-2 text-xs ${
-                          isMine ? "text-black/60" : "text-white/50"
-                        }`}
-                      >
-                        {new Date(message.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-
-                    {!isMine && (
-                      <div className="mt-1">
-                        <ReportButton
-                          targetType="message"
-                          targetId={message.id}
-                          pathname={pathname}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-        <div className="mt-4 border-t border-white/10 pt-4">
-          <MessageComposerSection conversationId={conversation.id} />
-        </div>
+        <MessageThreadSection
+          conversationId={conversation.id}
+          currentUserId={user.id}
+          reportPathname={pathname}
+          initialMessages={messageListItems}
+        />
       </section>
     </main>
   )

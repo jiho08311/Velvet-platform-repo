@@ -1,6 +1,13 @@
 import { redirect } from "next/navigation"
 import { Avatar } from "@/shared/ui/Avatar"
-import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
+import {
+  assertPassVerified,
+  getPassVerificationRedirectPath,
+} from "@/modules/auth/server/assert-pass-verified"
+import {
+  buildPathWithNext,
+  ONBOARDING_PATH,
+} from "@/modules/auth/lib/redirect-handoff"
 import { getSession } from "@/modules/auth/server/get-session"
 import { requireActiveUser } from "@/modules/auth/server/require-active-user"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
@@ -90,6 +97,7 @@ function normalizePrice(item: unknown): number | undefined {
 }
 
 export default async function FeedPage() {
+  const nextPath = "/feed"
   const session = await getSession()
 
   if (session) {
@@ -102,7 +110,7 @@ export default async function FeedPage() {
     try {
       await assertPassVerified({ profileId: session.userId })
     } catch {
-      redirect("/verify-pass")
+      redirect(getPassVerificationRedirectPath({ next: nextPath }))
     }
   }
 
@@ -147,7 +155,12 @@ export default async function FeedPage() {
     }
 
     if (!profile?.username) {
-      redirect("/onboarding")
+      redirect(
+        buildPathWithNext({
+          path: ONBOARDING_PATH,
+          next: nextPath,
+        })
+      )
     }
 
     currentCreatorId = creator?.id

@@ -1,7 +1,7 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { resolveConversationParticipants } from "@/modules/message/server/resolve-conversation-participants"
-import { getConversationVisibility } from "@/modules/message/server/get-conversation-visibility"
+import { getConversationAccess } from "@/modules/message/server/get-conversation-access"
+import { getConversationParticipantIdentity } from "@/modules/message/server/get-conversation-participant-identity"
+import { type ConversationSummary } from "@/modules/message/types"
 
 type GetConversationByIdInput = {
   conversationId: string
@@ -15,22 +15,10 @@ type ConversationRow = {
   last_message_at: string | null
 }
 
-type ProfileRow = {
-  id: string
-  username: string
-  display_name: string | null
-  avatar_url: string | null
-}
-
-type CreatorRow = {
-  id: string
-  user_id: string
-}
-
 export async function getConversationById({
   conversationId,
   userId,
-}: GetConversationByIdInput) {
+}: GetConversationByIdInput): Promise<ConversationSummary | null> {
   const supabase = await createSupabaseServerClient()
 
   const { data: conversation, error: conversationError } = await supabase
@@ -47,75 +35,18 @@ export async function getConversationById({
     return null
   }
 
-  const visibility = await getConversationVisibility({
+  const access = await getConversationAccess({
     conversationId,
     userId,
   })
 
-  if (!visibility.isVisible) {
+  if (!access.canAccess) {
     return null
   }
 
-  const { otherUserId } = await resolveConversationParticipants({
-    conversationId,
-    userId,
+  const participant = await getConversationParticipantIdentity({
+    userId: access.otherUserId,
   })
-
-  let participant = null
-
-  if (otherUserId) {
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .select("id, username, display_name, avatar_url")
-      .eq("id", otherUserId)
-      .maybeSingle<ProfileRow>()
-
-    if (profileError) {
-      throw profileError
-    }
-
-    if (profile) {
-      participant = {
-        userId: profile.id,
-        username: profile.username,
-        displayName: profile.display_name ?? profile.username,
-        avatarUrl: profile.avatar_url,
-      }
-    } else {
-      const { data: creator, error: creatorError } = await supabaseAdmin
-        .from("creators")
-        .select("id, user_id")
-        .eq("user_id", otherUserId)
-        .maybeSingle<CreatorRow>()
-
-      if (creatorError) {
-        throw creatorError
-      }
-
-      if (creator) {
-        const { data: creatorProfile, error: creatorProfileError } =
-          await supabaseAdmin
-            .from("profiles")
-            .select("id, username, display_name, avatar_url")
-            .eq("id", creator.user_id)
-            .maybeSingle<ProfileRow>()
-
-        if (creatorProfileError) {
-          throw creatorProfileError
-        }
-
-        participant = creatorProfile
-          ? {
-              userId: creatorProfile.id,
-              username: creatorProfile.username,
-              displayName:
-                creatorProfile.display_name ?? creatorProfile.username,
-              avatarUrl: creatorProfile.avatar_url,
-            }
-          : null
-      }
-    }
-  }
 
   return {
     id: conversation.id,
@@ -123,5 +54,6 @@ export async function getConversationById({
     updatedAt: conversation.updated_at,
     lastMessageAt: conversation.last_message_at,
     participant,
+    lastMessage: null,
   }
 }

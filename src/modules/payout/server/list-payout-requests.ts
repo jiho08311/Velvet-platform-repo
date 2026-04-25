@@ -1,30 +1,9 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
-
-type PayoutRequestLifecycleState =
-  | "pending_request"
-  | "approved"
-  | "rejected"
-  | "inactive"
-
-function resolvePayoutRequestLifecycleState(input: {
-  payoutRequestStatus?: string | null
-}): { state: PayoutRequestLifecycleState } {
-  const payoutRequestStatus = input.payoutRequestStatus ?? null
-
-  if (payoutRequestStatus === "rejected") {
-    return { state: "rejected" }
-  }
-
-  if (payoutRequestStatus === "approved") {
-    return { state: "approved" }
-  }
-
-  if (payoutRequestStatus === "pending") {
-    return { state: "pending_request" }
-  }
-
-  return { state: "inactive" }
-}
+import {
+  buildPayoutRequestReadModel,
+  type PayoutRequestReadModel,
+  type PayoutRequestRow,
+} from "@/modules/payout/server/build-payout-request-read-model"
 
 /**
  * Canonical creator-facing payout request list reader.
@@ -49,24 +28,10 @@ type ListPayoutRequestsParams = {
   creatorId: string
 }
 
-type PayoutRequestRow = {
-  id: string
-  creator_id: string
-  amount: number
-  currency: string
-  status: string
-  created_at: string
-}
-
-export type PayoutRequest = {
-  id: string
-  creatorId: string
-  amount: number
-  currency: string
-  status: string
-  lifecycleState: PayoutRequestLifecycleState
-  createdAt: string
-}
+export type PayoutRequest = Omit<
+  PayoutRequestReadModel,
+  "approvedAt" | "rejectedAt"
+>
 
 export async function listPayoutRequests({
   creatorId,
@@ -83,15 +48,17 @@ export async function listPayoutRequests({
     throw error
   }
 
-  return (data ?? []).map((row: PayoutRequestRow) => ({
-    id: row.id,
-    creatorId: row.creator_id,
-    amount: row.amount,
-    currency: row.currency,
-    status: row.status,
-    lifecycleState: resolvePayoutRequestLifecycleState({
-      payoutRequestStatus: row.status,
-    }).state,
-    createdAt: row.created_at,
-  }))
-} 
+  return (data ?? []).map((row: PayoutRequestRow) => {
+    const readModel = buildPayoutRequestReadModel(row)
+
+    return {
+      id: readModel.id,
+      creatorId: readModel.creatorId,
+      amount: readModel.amount,
+      currency: readModel.currency,
+      status: readModel.status,
+      lifecycleState: readModel.lifecycleState,
+      createdAt: readModel.createdAt,
+    }
+  })
+}

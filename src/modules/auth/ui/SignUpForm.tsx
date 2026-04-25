@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/client";
+import {
+  buildPathWithNext,
+  resolveRedirectTarget,
+  VERIFY_PASS_PATH,
+} from "@/modules/auth/lib/redirect-handoff";
 
 function GoogleLogo() {
   return (
@@ -20,7 +26,12 @@ function KakaoLogo() {
 }
 
 export function SignUpForm() {
+  const searchParams = useSearchParams();
   const supabase = createSupabaseBrowserClient();
+  const next = resolveRedirectTarget({
+    fallback: "/",
+    target: searchParams.get("next"),
+  });
 
   const [googleLoading, setGoogleLoading] = useState(false);
   const [kakaoLoading, setKakaoLoading] = useState(false);
@@ -46,7 +57,7 @@ export function SignUpForm() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/`,
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
         },
       });
 
@@ -69,7 +80,7 @@ export function SignUpForm() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "kakao",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/`,
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
         },
       });
 
@@ -113,7 +124,10 @@ export function SignUpForm() {
         return;
       }
 
-    window.location.href = "/verify-pass";
+      window.location.href = buildPathWithNext({
+        path: VERIFY_PASS_PATH,
+        next,
+      });
     } catch (e) {
       alert("에러 발생");
     } finally {

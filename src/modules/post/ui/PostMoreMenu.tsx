@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 
+import { buildReportTriggerPayload } from "@/modules/report/report-trigger"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
 
 type PostMoreMenuProps = {
@@ -55,15 +56,17 @@ export function PostMoreMenu({
           className="absolute right-0 z-20 mt-2 w-[280px] rounded-2xl border border-zinc-800 bg-black p-3 shadow-2xl"
           onClick={(event) => event.stopPropagation()}
         >
-       <ReportButton
-  targetType="post"
-  targetId={postId}
-  pathname={pathname}
-  currentUserId={currentUserId}
-  defaultOpen
-  hideTrigger
-  onClose={() => setShowReport(false)}
-/>
+          <ReportButton
+            payload={buildReportTriggerPayload({
+              targetType: "post",
+              targetId: postId,
+              pathname,
+            })}
+            currentUserId={currentUserId}
+            defaultOpen
+            hideTrigger
+            onClose={() => setShowReport(false)}
+          />
         </div>
       ) : null}
     </div>

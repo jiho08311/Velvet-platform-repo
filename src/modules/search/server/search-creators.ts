@@ -1,7 +1,8 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
+import { buildCreatorIdentity } from "@/modules/creator/server/build-creator-identity"
+import { isEligiblePublicDiscoveryCreator } from "@/modules/post/lib/public-discovery-inclusion"
 
-import type { CreatorSearchResult } from "../types"
+import type { CreatorSearchConnection, CreatorSearchResult } from "../types"
 
 export type SearchCreatorsInput = {
   query: string
@@ -18,8 +19,10 @@ type CreatorRow = {
 
 type ProfileRow = {
   id: string
-  username: string
+  username: string | null
   display_name: string | null
+  avatar_url?: string | null
+  bio?: string | null
   is_deactivated: boolean | null
   is_delete_pending: boolean | null
   deleted_at: string | null
@@ -28,10 +31,7 @@ type ProfileRow = {
 
 export async function searchCreators(
   input: SearchCreatorsInput
-): Promise<{
-  items: CreatorSearchResult[]
-  nextCursor: string | null
-}> {
+): Promise<CreatorSearchConnection> {
   const query = input.query.trim()
 
   if (!query) {
@@ -93,29 +93,28 @@ export async function searchCreators(
 
   const items = matchedProfiles
     .filter((profile) =>
-      isPublicCreatorProfileVisible({
+      isEligiblePublicDiscoveryCreator({
         creator: creatorMap.has(profile.id)
           ? {
-              status: creatorMap.get(profile.id)?.status,
+              status: creatorMap.get(profile.id)?.status ?? null,
             }
           : null,
-        profile: {
-          isDeactivated: profile.is_deactivated,
-          isDeletePending: profile.is_delete_pending,
-          deletedAt: profile.deleted_at,
-          isBanned: profile.is_banned,
-        },
+        profile,
       })
     )
     .map((profile) => {
       const creator = creatorMap.get(profile.id)!
+      const identity = buildCreatorIdentity({
+        creator,
+        profile,
+      })
 
       return {
-        id: creator.id,
-        bio: null,
-        username: creator.username,
-        displayName: profile.display_name ?? profile.username,
-        avatarUrl: null,
+        id: identity.id,
+        bio: identity.bio || null,
+        username: identity.username,
+        displayName: identity.displayName,
+        avatarUrl: identity.avatarUrl,
         headline: null,
         isVerified: false,
       }

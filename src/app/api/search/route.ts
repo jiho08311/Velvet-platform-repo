@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { searchCreators } from "@/modules/search/server/search-creators"
+import type { CreatorSearchResponse } from "@/modules/search/types"
 
 export async function GET(request: Request) {
   try {
@@ -12,27 +13,26 @@ const cursor = searchParams.get("cursor")
 const limit = limitParam ? Number(limitParam) : undefined
 
     if (!query) {
-      return NextResponse.json(
-        {
-          creators: [],
-        },
-        { status: 200 }
-      )
+      const emptyResponse: CreatorSearchResponse = {
+        creators: [],
+        nextCursor: null,
+      }
+
+      return NextResponse.json(emptyResponse, { status: 200 })
     }
 
-const result = await searchCreators({
-  query,
-  limit,
-  cursor,
-})
+    const result = await searchCreators({
+      query,
+      limit,
+      cursor,
+    })
 
-  return NextResponse.json(
-  {
-    creators: result.items,
-    nextCursor: result.nextCursor,
-  },
-  { status: 200 }
-)
+    const response: CreatorSearchResponse = {
+      creators: result.items,
+      nextCursor: result.nextCursor,
+    }
+
+    return NextResponse.json(response, { status: 200 })
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Search failed"

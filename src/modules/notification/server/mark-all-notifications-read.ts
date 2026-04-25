@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 
 import { getNotificationVisibilityScope } from "./notification-visibility-policy"
+import { NOTIFICATION_READ_STATE_SELECT } from "./notification-read-row-query"
 import { createNotificationReadUpdate } from "./notification-read-state-policy"
 
 type MarkAllNotificationsReadParams = {
@@ -9,6 +10,9 @@ type MarkAllNotificationsReadParams = {
 
 type NotificationUnreadRow = {
   id: string
+  user_id: string
+  status: string
+  read_at: string | null
 }
 
 export async function markAllNotificationsRead({
@@ -23,7 +27,7 @@ export async function markAllNotificationsRead({
 
   const { data, error } = await supabase
     .from("notifications")
-    .select("id")
+    .select(NOTIFICATION_READ_STATE_SELECT)
     .in("user_id", scope.ownerIds)
     .is("read_at", null)
 

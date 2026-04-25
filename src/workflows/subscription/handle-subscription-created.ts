@@ -1,5 +1,6 @@
 import { upsertSubscription } from "@/modules/subscription/server/upsert-subscription"
 import { createNotification } from "@/modules/notification/server/create-notification"
+import { createSubscriptionStartedNotificationInput } from "@/modules/notification/server/create-notification-inputs"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { resolveSubscriptionState } from "@/modules/subscription/lib/resolve-subscription-state"
 
@@ -58,15 +59,12 @@ export async function handleSubscriptionCreated({
       .maybeSingle()
 
     if (creator?.user_id) {
-      await createNotification({
-        userId: creator.user_id,
-        type: "subscription_started",
-        title: "New subscriber",
-        body: "You have a new subscriber.",
-        data: {
+      await createNotification(
+        createSubscriptionStartedNotificationInput({
+          userId: creator.user_id,
           subscriptionId: subscription.id,
-        },
-      })
+        }),
+      )
     }
   }
 

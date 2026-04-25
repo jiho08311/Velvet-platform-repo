@@ -1,6 +1,9 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
-import { resolvePayoutExecutionProjection } from "@/modules/payout/lib/resolve-payout-execution-projection"
-import type { PayoutExecutionLifecycleState } from "@/modules/payout/lib/resolve-payout-state"
+import {
+  buildPayoutExecutionReadModel,
+  type PayoutExecutionReadModel,
+  type PayoutExecutionRow,
+} from "@/modules/payout/server/build-payout-execution-read-model"
 
 /**
  * Canonical generic creatorId-based payout execution history reader.
@@ -27,49 +30,7 @@ type ListCreatorPayoutsParams = {
   creatorId: string
 }
 
-type CreatorPayoutRow = {
-  id: string
-  amount: number | null
-  currency: string | null
-  status: "pending" | "processing" | "paid" | "failed"
-  created_at: string
-  paid_at: string | null
-  failure_reason: string | null
-}
-
-export type CreatorPayout = {
-  id: string
-  amount: number
-  currency: string
-  status: "pending" | "processing" | "paid" | "failed"
-  lifecycleState: PayoutExecutionLifecycleState
-  createdAt: string
-  paidAt: string | null
-  failureReason: string | null
-}
-
-function toCreatorPayout(row: CreatorPayoutRow): CreatorPayout {
-  const projection = resolvePayoutExecutionProjection({
-    id: row.id,
-    amount: row.amount,
-    currency: row.currency,
-    status: row.status,
-    createdAt: row.created_at,
-    paidAt: row.paid_at,
-    failureReason: row.failure_reason,
-  })
-
-  return {
-    id: projection.id,
-    amount: projection.amount,
-    currency: projection.currency,
-    status: projection.status,
-    lifecycleState: projection.lifecycleState,
-    createdAt: projection.createdAt,
-    paidAt: projection.paidAt,
-    failureReason: projection.failureReason,
-  }
-}
+export type CreatorPayout = PayoutExecutionReadModel
 
 export async function listCreatorPayouts({
   creatorId,
@@ -88,11 +49,11 @@ export async function listCreatorPayouts({
     )
     .eq("creator_id", safeCreatorId)
     .order("created_at", { ascending: false })
-    .returns<CreatorPayoutRow[]>()
+    .returns<PayoutExecutionRow[]>()
 
   if (error) {
     throw new Error(error.message)
   }
 
-  return (data ?? []).map(toCreatorPayout)
+  return (data ?? []).map(buildPayoutExecutionReadModel)
 }

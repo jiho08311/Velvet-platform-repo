@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { isTerminalFailedPaymentStatus } from "./payment-result-state"
 
 export type HandlePaymentFailureInput = {
   paymentId: string
@@ -44,7 +45,7 @@ export async function handlePaymentFailure(
   }
 
   if (payment) {
-    if (payment.status !== "failed" && payment.status !== "refunded") {
+    if (!isTerminalFailedPaymentStatus(payment.status)) {
       const { error: updateError } = await supabaseAdmin
         .from("payments")
         .update({

@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createNotification } from "@/modules/notification/server/create-notification"
+import { createSubscriptionCanceledNotificationInput } from "@/modules/notification/server/create-notification-inputs"
 
 type NotifySubscriptionCanceledWorkflowInput = {
   subscriptionId: string
@@ -32,21 +33,13 @@ export async function notifySubscriptionCanceledWorkflow({
     return
   }
 
-  await createNotification({
-    userId: creator.user_id,
-    type: "subscription_canceled",
-    title:
-      mode === "period_end"
-        ? "Subscription cancellation scheduled"
-        : "Subscription canceled",
-    body:
-      mode === "period_end"
-        ? "A subscriber scheduled cancellation at period end."
-        : "A subscriber canceled their subscription immediately.",
-    data: {
+  await createNotification(
+    createSubscriptionCanceledNotificationInput({
+      userId: creator.user_id,
       creatorId,
       subscriberId,
       subscriptionId,
-    },
-  })
+      mode,
+    }),
+  )
 }

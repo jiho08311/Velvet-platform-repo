@@ -1,8 +1,10 @@
+import type { ReportStatus, ReportTargetType } from "@/modules/report/types"
+
 export type AdminReportDetail = {
   id: string
-  targetType: "creator" | "post" | "message"
+  targetType: ReportTargetType
   reason: string
-  status: "pending" | "reviewed" | "resolved"
+  status: ReportStatus
   createdAt: string
   reporter: {
     username: string

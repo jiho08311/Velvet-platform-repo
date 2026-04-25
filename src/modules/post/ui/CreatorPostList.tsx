@@ -25,15 +25,17 @@ type CreatorPostListProps = {
 
 export function CreatorPostList({
   posts,
-  isSubscribed,
-  unlockLabel = "Subscribe to unlock",
+  isSubscribed: _isSubscribed,
+  unlockLabel: _unlockLabel = "Subscribe to unlock",
   emptyMessage = "No posts yet.",
 }: CreatorPostListProps) {
   if (posts.length === 0) {
     return (
       <EmptyState
         title={CREATOR_SURFACE_EMPTY_STATE.postsTab.title}
-        description={emptyMessage || CREATOR_SURFACE_EMPTY_STATE.postsTab.description}
+        description={
+          emptyMessage || CREATOR_SURFACE_EMPTY_STATE.postsTab.description
+        }
       />
     )
   }
@@ -41,8 +43,6 @@ export function CreatorPostList({
   return (
     <section className="grid gap-4">
       {posts.map((post) => {
-        const resolvedText = post.previewText ?? post.content ?? ""
-        const resolvedIsLocked = post.isLocked && !isSubscribed
         const resolvedCreator =
           post.creator ?? {
             username: "creator",
@@ -54,9 +54,9 @@ export function CreatorPostList({
           <PostCard
             key={post.id}
             postId={post.id}
-            text={resolvedText}
+            text={post.content ?? ""}
             createdAt={post.createdAt}
-            isLocked={resolvedIsLocked}
+            isLocked={post.isLocked}
             creatorId={post.creatorId ?? ""}
             creatorUserId={post.creatorUserId}
             currentUserId={post.currentUserId}

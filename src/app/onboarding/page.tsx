@@ -2,9 +2,32 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/infrastructure/supabase/server"
 import { readOnboardingReadiness } from "@/modules/auth/server/read-onboarding-readiness"
+import {
+  buildPathWithNext,
+  ONBOARDING_PATH,
+  resolveRedirectTarget,
+  SIGN_IN_PATH,
+} from "@/modules/auth/lib/redirect-handoff"
 import { OnboardingForm } from "@/modules/profile/ui/OnboardingForm"
 
-export default async function OnboardingPage() {
+type OnboardingPageProps = {
+  searchParams: Promise<{
+    next?: string
+  }>
+}
+
+export default async function OnboardingPage({
+  searchParams,
+}: OnboardingPageProps) {
+  const { next } = await searchParams
+  const resolvedNext = resolveRedirectTarget({
+    fallback: "/",
+    target: next,
+  })
+  const onboardingPath = buildPathWithNext({
+    path: ONBOARDING_PATH,
+    next: resolvedNext,
+  })
   const supabase = await createClient()
 
   const {
@@ -12,7 +35,12 @@ export default async function OnboardingPage() {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect("/sign-in")
+    redirect(
+      buildPathWithNext({
+        path: SIGN_IN_PATH,
+        next: onboardingPath,
+      })
+    )
   }
 
   const readiness = await readOnboardingReadiness({
@@ -20,7 +48,7 @@ export default async function OnboardingPage() {
   })
 
   if (readiness.ok) {
-    redirect("/")
+    redirect(resolvedNext)
   }
 
   return (
@@ -36,7 +64,7 @@ export default async function OnboardingPage() {
             </p>
           </div>
 
-          <OnboardingForm />
+          <OnboardingForm next={resolvedNext} />
         </div>
       </div>
     </main>

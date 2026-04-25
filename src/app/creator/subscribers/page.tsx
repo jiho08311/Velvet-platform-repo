@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation"
 
 import { getSession } from "@/modules/auth/server/get-session"
+import {
+  buildPathWithNext,
+  SIGN_IN_PATH,
+} from "@/modules/auth/lib/redirect-handoff"
 import { listSubscriptions } from "@/modules/subscription/server/list-subscriptions"
 
 type SubscriberListItem = {
@@ -149,16 +153,27 @@ function normalizeSubscribers(data: unknown) {
 }
 
 export default async function CreatorSubscribersPage() {
+  const nextPath = "/creator/subscribers"
   const session = await getSession()
 
   if (!session) {
-    redirect("/login")
+    redirect(
+      buildPathWithNext({
+        path: SIGN_IN_PATH,
+        next: nextPath,
+      })
+    )
   }
 
   const userId = getSessionUserId(session)
 
   if (!userId) {
-    redirect("/login")
+    redirect(
+      buildPathWithNext({
+        path: SIGN_IN_PATH,
+        next: nextPath,
+      })
+    )
   }
 
   const subscriptionsData = await listSubscriptions(userId)

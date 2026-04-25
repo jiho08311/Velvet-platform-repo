@@ -1,6 +1,8 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
 
+import { buildCreatorIdentity } from "./build-creator-identity"
+
 type CreatorRow = {
   id: string
   user_id: string
@@ -72,15 +74,18 @@ export async function getCreatorByUsername(username?: string) {
     return null
   }
 
-  const resolvedProfile = profile
+  const identity = buildCreatorIdentity({
+    creator,
+    profile,
+  })
 
   return {
-    id: creator.id,
-    userId: creator.user_id,
-    username: creator.username,
-    displayName: resolvedProfile.display_name ?? resolvedProfile.username,
-    avatarUrl: resolvedProfile.avatar_url ?? null,
-    bio: resolvedProfile.bio ?? "",
+    id: identity.id,
+    userId: identity.userId,
+    username: identity.username,
+    displayName: identity.displayName,
+    avatarUrl: identity.avatarUrl,
+    bio: identity.bio,
     status: creator.status,
     subscriptionPrice: creator.subscription_price,
     subscriptionCurrency: creator.subscription_currency,

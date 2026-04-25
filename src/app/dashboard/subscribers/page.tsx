@@ -1,10 +1,11 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 
-import { requireActiveUser } from "@/modules/auth/server/require-active-user"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
+import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
+import { readCreatorOperationalReadiness } from "@/modules/creator/server/read-creator-operational-readiness"
 import { getOrCreateConversation } from "@/modules/message/server/get-or-create-conversation"
 import { sendMessage } from "@/modules/message/server/send-message"
+import { normalizeSendMessagePayload } from "@/modules/message/types"
 import { getCreatorSubscribers } from "@/modules/subscription/server/get-creator-subscribers"
 import { Card } from "@/shared/ui/Card"
 
@@ -25,15 +26,19 @@ async function broadcastMessageAction(formData: FormData) {
     throw new Error("Message is required")
   }
 
-  const user = await requireActiveUser()
-  const creator = await getCreatorByUserId(user.id)
+  const { user, creator } = await requireCreatorReadyUser({
+    signInNext: "/dashboard/subscribers",
+  })
+  const readiness = await readCreatorOperationalReadiness({
+    userId: user.id,
+  })
 
-  if (!creator) {
-    throw new Error("Creator not found")
+  if (!readiness.ok) {
+    throw new Error("Creator is not active")
   }
 
   const { items: subscribers } = await getCreatorSubscribers({
-    creatorId: creator.id,
+    creatorId: readiness.creator.id,
     limit: 100,
   })
 
@@ -44,9 +49,12 @@ async function broadcastMessageAction(formData: FormData) {
     })
 
     await sendMessage({
-      conversationId: conversation.id,
       senderId: user.id,
-      content,
+      ...normalizeSendMessagePayload({
+        conversationId: conversation.id,
+        content,
+        type: "text",
+      }),
     })
   }
 
@@ -58,19 +66,29 @@ export default async function SubscribersPage({
 }: {
   searchParams?: Promise<{ sent?: string }>
 }) {
-  let user: Awaited<ReturnType<typeof requireActiveUser>>
+  const { user } = await requireCreatorReadyUser({
+    signInNext: "/dashboard/subscribers",
+  })
+  const readiness = await readCreatorOperationalReadiness({
+    userId: user.id,
+  })
 
-  try {
-    user = await requireActiveUser()
-  } catch {
-    redirect("/sign-in?next=/dashboard/subscribers")
+  if (!readiness.ok) {
+    return (
+      <main className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
+        <div className="max-w-md text-center">
+          <h1 className="text-2xl font-semibold text-white">
+            승인 대기중입니다
+          </h1>
+          <p className="mt-3 text-sm text-zinc-500">
+            현재 크리에이터 신청이 검토 중입니다. 승인 후 기능을 이용할 수 있습니다.
+          </p>
+        </div>
+      </main>
+    )
   }
 
-  const creator = await getCreatorByUserId(user.id)
-
-  if (!creator) {
-    redirect("/become-creator")
-  }
+  const { creator } = readiness
 
   const params = searchParams ? await searchParams : undefined
   const isSent = params?.sent === "1"

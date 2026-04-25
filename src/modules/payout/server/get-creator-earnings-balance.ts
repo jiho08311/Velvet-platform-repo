@@ -1,13 +1,16 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 
 import type { CreatorEarningsBalance, EarningStatus } from "../types"
-import { resolvePayoutBalanceTotals } from "@/modules/payout/lib/payout-balance-policy"
+import {
+  resolvePayoutBalanceTotals,
+  type EarningBalanceRow,
+} from "@/modules/payout/lib/payout-balance-policy"
 
 type GetCreatorEarningsBalanceInput = {
   creatorId: string
 }
 
-type EarningAmountRow = {
+type EarningAmountRow = EarningBalanceRow & {
   net_amount: number | null
   status: EarningStatus | "requested"
   currency: string

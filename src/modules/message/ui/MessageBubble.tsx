@@ -42,9 +42,11 @@ export function MessageBubble({
         {!isOwnMessage ? (
           <div className="mt-2">
             <ReportButton
-              targetType="message"
-              targetId={messageId}
-              pathname={pathname}
+              payload={{
+                targetType: "message",
+                targetId: messageId,
+                pathname,
+              }}
             />
           </div>
         ) : null}

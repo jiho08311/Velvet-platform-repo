@@ -2,20 +2,15 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 
 import { getSession } from "@/modules/auth/server/get-session"
-import { listSubscriptions } from "@/modules/subscription/server/list-subscriptions"
+import {
+  buildPathWithNext,
+  SIGN_IN_PATH,
+} from "@/modules/auth/lib/redirect-handoff"
+import {
+  listUserSubscriptions,
+  type UserSubscriptionListItem,
+} from "@/modules/subscription/server/list-user-subscriptions"
 import { EmptyState } from "@/shared/ui/EmptyState"
-
-type SubscriptionListItem = {
-  id: string
-  status: "active" | "canceled" | "expired"
-  startedAt: string
-  creator: {
-    id: string
-    username: string
-    displayName: string
-    avatarUrl: string | null
-  }
-}
 
 function formatDate(value?: string | null) {
   if (!value) return "N/A"
@@ -25,7 +20,7 @@ function formatDate(value?: string | null) {
   }).format(new Date(value))
 }
 
-function getStatusClassName(status: SubscriptionListItem["status"]) {
+function getStatusClassName(status: UserSubscriptionListItem["status"]) {
   if (status === "active") {
     return "border-emerald-500/20 bg-emerald-500/15 text-emerald-300"
   }
@@ -59,121 +54,31 @@ function getSessionUserId(session: unknown) {
   return null
 }
 
-function getStringValue(record: Record<string, unknown>, keys: string[]) {
-  for (const key of keys) {
-    const value = record[key]
-
-    if (typeof value === "string" && value.length > 0) {
-      return value
-    }
-  }
-
-  return null
-}
-
-function normalizeStatus(value: string | null): SubscriptionListItem["status"] {
-  if (value === "active") {
-    return "active"
-  }
-
-  if (value === "canceled" || value === "cancelled") {
-    return "canceled"
-  }
-
-  return "expired"
-}
-
-function normalizeSubscription(
-  item: unknown,
-  index: number
-): SubscriptionListItem | null {
-  if (!item || typeof item !== "object") {
-    return null
-  }
-
-  const source = item as Record<string, unknown>
-
-  const id =
-    getStringValue(source, ["id", "subscriptionId"]) ??
-    `subscription_${index + 1}`
-
-  const status = normalizeStatus(
-    getStringValue(source, ["status", "subscriptionStatus"])
-  )
-
-  const startedAt =
-    getStringValue(source, [
-      "startedAt",
-      "started_at",
-      "createdAt",
-      "created_at",
-      "currentPeriodStartAt",
-      "current_period_start",
-    ]) ?? new Date().toISOString()
-
-  const creatorId =
-    getStringValue(source, ["creatorId", "creator_id"]) ?? ""
-
-  const creatorUsername =
-    getStringValue(source, [
-      "creatorUsername",
-      "creator_username",
-      "username",
-    ]) ?? "unknown"
-
-  const creatorDisplayName =
-    getStringValue(source, [
-      "creatorDisplayName",
-      "creator_display_name",
-      "displayName",
-      "name",
-    ]) ?? "Unknown creator"
-
-  const creatorAvatarUrl = getStringValue(source, [
-    "creatorAvatarUrl",
-    "creator_avatar_url",
-    "avatarUrl",
-    "avatar_url",
-  ])
-
-  return {
-    id,
-    status,
-    startedAt,
-    creator: {
-      id: creatorId,
-      username: creatorUsername,
-      displayName: creatorDisplayName,
-      avatarUrl: creatorAvatarUrl,
-    },
-  }
-}
-
-function normalizeSubscriptions(data: unknown) {
-  if (!Array.isArray(data)) {
-    return []
-  }
-
-  return data
-    .map((item, index) => normalizeSubscription(item, index))
-    .filter((item): item is SubscriptionListItem => item !== null)
-}
-
 export default async function SubscriptionsPage() {
+  const nextPath = "/subscriptions"
   const session = await getSession()
 
   if (!session) {
-    redirect("/login")
+    redirect(
+      buildPathWithNext({
+        path: SIGN_IN_PATH,
+        next: nextPath,
+      })
+    )
   }
 
   const userId = getSessionUserId(session)
 
   if (!userId) {
-    redirect("/login")
+    redirect(
+      buildPathWithNext({
+        path: SIGN_IN_PATH,
+        next: nextPath,
+      })
+    )
   }
 
-  const subscriptionsData = await listSubscriptions(userId)
-  const subscriptions = normalizeSubscriptions(subscriptionsData)
+  const subscriptions = await listUserSubscriptions(userId)
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">

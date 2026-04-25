@@ -1,29 +1,24 @@
-import type { StoryEditorState } from "@/modules/story/types"
+import { buildStoryVideoJobFormData } from "@/modules/story/lib/story-create-payload"
+import type { StoryVideoJobPayload } from "@/modules/story/types"
+import {
+  isCompletedStoryVideoJobPollResponse,
+  isFailedStoryVideoJobPollResponse,
+  type CompletedStoryVideoJobPollResponse,
+  type StoryVideoJobPollResponse,
+} from "./story-video-job-contract"
 
-type QueueStoryVideoJobInput = {
+type QueueStoryVideoJobInput = StoryVideoJobPayload & {
   file: File
-  visibility: "public" | "subscribers"
-  startTime: number
-  editorState?: StoryEditorState | null
 }
 
 export async function queueStoryVideoJob({
   file,
-  visibility,
-  startTime,
-  editorState,
-}: QueueStoryVideoJobInput): Promise<{
-  jobId: string
-}> {
-  const formData = new FormData()
-
-  formData.append("file", file)
-  formData.append("visibility", visibility)
-  formData.append("startTime", String(startTime))
-
-  if (editorState) {
-    formData.append("editorState", JSON.stringify(editorState))
-  }
+  ...story
+}: QueueStoryVideoJobInput): Promise<StoryVideoJobPollResponse> {
+  const formData = buildStoryVideoJobFormData({
+    file,
+    story,
+  })
 
   const response = await fetch("/api/story/video-job", {
     method: "POST",
@@ -34,18 +29,14 @@ export async function queueStoryVideoJob({
     throw new Error("Failed to queue story video job")
   }
 
-  const data = await response.json()
-
-  return {
-    jobId: data.jobId,
-  }
+  return (await response.json()) as StoryVideoJobPollResponse
 }
 
 export async function waitForStoryVideoJob({
   jobId,
 }: {
   jobId: string
-}) {
+}): Promise<CompletedStoryVideoJobPollResponse> {
   const maxAttempts = 60
   const intervalMs = 1000
 
@@ -56,13 +47,13 @@ export async function waitForStoryVideoJob({
       throw new Error("Failed to fetch job status")
     }
 
-    const data = await res.json()
+    const data = (await res.json()) as StoryVideoJobPollResponse
 
-    if (data.status === "completed") {
-      return
+    if (isCompletedStoryVideoJobPollResponse(data)) {
+      return data
     }
 
-    if (data.status === "failed") {
+    if (isFailedStoryVideoJobPollResponse(data)) {
       throw new Error(data.errorMessage || "Video processing failed")
     }
 

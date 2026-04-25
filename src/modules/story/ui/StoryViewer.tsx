@@ -14,7 +14,15 @@ type StoryViewerProps = {
   onSeenStories?: (input: {
     creatorId: string
     storyId: string
-  }) => Promise<void> | void
+  }) => Promise<
+    | {
+        ok: true
+        persistedStoryId: string
+      }
+    | {
+        ok: false
+      }
+  > | void
 }
 
 
@@ -111,26 +119,39 @@ const fixedDurationMs = playbackPolicy?.durationMs ?? 10000
 
  
 
-  const markSeen = useCallback(async () => {
+  const markSeen = useCallback(
+    async (trigger: "advance" | "close") => {
     if (!story) return
 
     const resolution = resolveStorySeenUpdate({
       creatorId: story.creatorId,
       storyId: story.id,
       lastMarkedStoryId: lastMarkedStoryIdRef.current,
+      trigger,
     })
 
     if (!resolution.shouldMarkSeen) {
       return
     }
 
-    lastMarkedStoryIdRef.current = story.id
-
-    await onSeenStories?.({
+    const result = await onSeenStories?.({
       creatorId: story.creatorId,
       storyId: story.id,
     })
-  }, [onSeenStories, story])
+
+    if (result && !result.ok) {
+      return
+    }
+
+    lastMarkedStoryIdRef.current = result?.persistedStoryId ?? story.id
+    },
+    [onSeenStories, story]
+  )
+
+  const handleClose = useCallback(async () => {
+    await markSeen("close")
+    onClose()
+  }, [markSeen, onClose])
 
 function handlePrev() {
   if (currentIndex === 0) return
@@ -157,7 +178,7 @@ async function handleNext() {
 
   timerStartedAtRef.current = null
 
-  await markSeen()
+  await markSeen("advance")
 
   const resolution = resolveNextStoryIndex(stories, currentIndex)
 
@@ -329,7 +350,12 @@ async function handleNext() {
   const musicStickerY = Math.min(0.22, Math.max(0.14, storyMusic?.y ?? 0.12))
 const storyMusicStyle = storyMusic?.style ?? "default"
   return (
-    <div className="fixed inset-0 z-[100] bg-black/90" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[100] bg-black/90"
+      onClick={() => {
+        void handleClose()
+      }}
+    >
       <div className="flex h-full w-full items-center justify-center p-4">
         <div
           className="relative w-full max-w-md overflow-hidden rounded-3xl border border-zinc-800 bg-black"
@@ -382,7 +408,9 @@ const storyMusicStyle = storyMusic?.style ?? "default"
 
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => {
+                void handleClose()
+              }}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-lg text-white transition hover:bg-black/70"
               aria-label="Close story"
             >

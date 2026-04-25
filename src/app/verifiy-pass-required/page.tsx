@@ -1,9 +1,17 @@
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { createServerClient } from "@supabase/ssr"
-import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
+import {
+  assertPassVerified,
+  getPassVerificationRedirectPath,
+} from "@/modules/auth/server/assert-pass-verified"
+import {
+  buildPathWithNext,
+  SIGN_IN_PATH,
+} from "@/modules/auth/lib/redirect-handoff"
 
 export default async function VerifyPassRequiredPage() {
+  const nextPath = "/verifiy-pass-required"
   const cookieStore = await cookies()
 
   const supabase = createServerClient(
@@ -24,13 +32,18 @@ export default async function VerifyPassRequiredPage() {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect("/sign-in")
+    redirect(
+      buildPathWithNext({
+        path: SIGN_IN_PATH,
+        next: nextPath,
+      })
+    )
   }
 
   try {
     await assertPassVerified({ profileId: user.id })
   } catch {
-    redirect("/verify-pass")
+    redirect(getPassVerificationRedirectPath({ next: nextPath }))
   }
 
   return (

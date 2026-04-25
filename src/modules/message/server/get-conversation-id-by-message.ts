@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
-import { getConversationVisibility } from "@/modules/message/server/get-conversation-visibility"
+import { getConversationAccess } from "@/modules/message/server/get-conversation-access"
 
 type GetConversationIdByMessageParams = {
   messageId: string
@@ -31,12 +31,12 @@ export async function getConversationIdByMessage({
     return null
   }
 
-  const visibility = await getConversationVisibility({
+  const access = await getConversationAccess({
     conversationId: message.conversation_id,
     userId,
   })
 
-  if (!visibility.isVisible) {
+  if (!access.canAccess) {
     return null
   }
 

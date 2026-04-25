@@ -1,22 +1,40 @@
 import type { Story, StorySurfaceItemInput } from "../types"
 
 export function toStorySurfaceItem(input: StorySurfaceItemInput): Story {
-  const isLocked = input.accessState === "visible_locked"
-  const isUnlocked = input.accessState === "visible_unlocked"
-
-  return {
+  const baseStory: Omit<Story, "mediaUrl" | "text" | "editorState" | "isLocked" | "lockReason"> = {
     id: input.id,
     creatorId: input.creatorId,
-    mediaUrl: isUnlocked ? input.mediaUrl : "",
     mediaType: input.mediaType,
-    text: isUnlocked ? input.text : null,
     visibility: input.visibility,
-    editorState: isUnlocked ? input.editorState : null,
     createdAt: input.createdAt,
     expiresAt: input.expiresAt,
     isDeleted: input.isDeleted,
-    isLocked,
-    lockReason: isLocked ? "subscription" : "none",
     creator: input.creator,
   }
+
+  switch (input.accessState) {
+    case "visible_unlocked":
+      return {
+        ...baseStory,
+        mediaUrl: input.mediaUrl,
+        text: input.text,
+        editorState: input.editorState,
+        isLocked: false,
+        lockReason: "none",
+      }
+
+    case "visible_locked":
+      return {
+        ...baseStory,
+        mediaUrl: "",
+        text: null,
+        editorState: null,
+        isLocked: true,
+        lockReason: "subscription",
+      }
+  }
+
+  const unreachableAccessState: never = input.accessState
+
+  throw new Error(`Unsupported story access state: ${unreachableAccessState}`)
 }

@@ -1,5 +1,9 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { resolveSubscriptionState } from "@/modules/subscription/lib/resolve-subscription-state"
+import {
+  findLatestSubscriptionReadModel,
+  toSubscriptionDisplayStatus,
+  type SubscriptionReadModelRow,
+} from "@/modules/subscription/server/build-subscription-read-model"
 
 export type ViewerSubscriptionStatus = {
   isActive: boolean
@@ -13,16 +17,7 @@ export type ViewerSubscriptionStatus = {
   } | null
 }
 
-type SubscriptionRow = {
-  id: string
-  user_id: string
-  creator_id: string
-  current_period_end: string | null
-  cancel_at_period_end: boolean | null
-  status: "active" | "canceled" | "expired"
-  canceled_at?: string | null
-  created_at: string
-}
+type SubscriptionRow = SubscriptionReadModelRow
 
 export async function getViewerSubscription(
   viewerUserId: string,
@@ -41,7 +36,7 @@ export async function getViewerSubscription(
   const { data, error } = await supabaseAdmin
     .from("subscriptions")
     .select(
-      "id, user_id, creator_id, current_period_end, cancel_at_period_end, status, canceled_at, created_at"
+      "id, user_id, creator_id, current_period_start, current_period_end, cancel_at_period_end, status, canceled_at, created_at, updated_at"
     )
     .eq("user_id", viewerId)
     .eq("creator_id", creator)
@@ -62,28 +57,39 @@ export async function getViewerSubscription(
     }
   }
 
-  const resolved = resolveSubscriptionState({
-    status: row.status,
-    currentPeriodEndAt: row.current_period_end,
-    cancelAtPeriodEnd: row.cancel_at_period_end,
-    canceledAt: row.canceled_at ?? null,
-  })
+  const readModel = findLatestSubscriptionReadModel([
+    {
+      ...row,
+      current_period_start: row.current_period_start ?? null,
+      current_period_end: row.current_period_end ?? null,
+      cancel_at_period_end: row.cancel_at_period_end ?? false,
+      canceled_at: row.canceled_at ?? null,
+      updated_at: row.updated_at ?? row.created_at,
+    },
+  ])
+
+  if (!readModel) {
+    return {
+      isActive: false,
+      subscription: null,
+    }
+  }
 
   const resolvedStatus: "active" | "canceled" | "expired" =
-    resolved.displayState === "expired"
+    toSubscriptionDisplayStatus(readModel.state) === "expired"
       ? "expired"
-      : resolved.displayState === "ending"
+      : toSubscriptionDisplayStatus(readModel.state) === "canceled"
         ? "canceled"
         : "active"
 
   return {
-    isActive: resolved.hasAccess,
+    isActive: readModel.hasAccess,
     subscription: {
-      id: row.id,
-      viewerUserId: row.user_id,
-      creatorId: row.creator_id,
-      currentPeriodEndAt: row.current_period_end,
-      cancelAtPeriodEnd: Boolean(row.cancel_at_period_end),
+      id: readModel.id,
+      viewerUserId: readModel.userId,
+      creatorId: readModel.creatorId,
+      currentPeriodEndAt: readModel.currentPeriodEndAt,
+      cancelAtPeriodEnd: readModel.cancelAtPeriodEnd,
       status: resolvedStatus,
     },
   }

@@ -2,6 +2,15 @@ import { NextResponse } from "next/server"
 
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
+import {
+  createCommentItem,
+  type CommentRow,
+  type CommentItemProfile,
+} from "@/modules/post/lib/comment-item"
+import {
+  incrementLikeCountMap,
+  readLikeCountFromMap,
+} from "@/shared/lib/like-interaction-result"
 
 type RouteContext = {
   params: Promise<{
@@ -9,19 +18,9 @@ type RouteContext = {
   }>
 }
 
-type CommentRow = {
-  id: string
-  post_id: string
-  user_id: string
-  content: string
-  created_at: string
-}
-
 type ProfileRow = {
   id: string
-  username: string | null
-  avatar_url: string | null
-}
+} & CommentItemProfile
 
 type CommentLikeRow = {
   comment_id: string
@@ -79,10 +78,7 @@ export async function GET(
   const likeCountMap = new Map<string, number>()
 
   for (const row of likeRows ?? []) {
-    likeCountMap.set(
-      row.comment_id,
-      (likeCountMap.get(row.comment_id) ?? 0) + 1
-    )
+    incrementLikeCountMap(likeCountMap, row.comment_id)
   }
 
   const likedCommentIdSet = new Set(
@@ -119,15 +115,12 @@ export async function GET(
   const items = (comments ?? []).map((comment) => {
     const profile = profileMap.get(comment.user_id)
 
-    return {
-      ...comment,
-      likes_count: likeCountMap.get(comment.id) ?? 0,
-      is_liked: likedCommentIdSet.has(comment.id),
-      profiles: {
-        username: profile?.username ?? null,
-        avatar_url: profile?.avatar_url ?? null,
-      },
-    }
+    return createCommentItem({
+      comment,
+      profile,
+      likesCount: readLikeCountFromMap(likeCountMap, comment.id),
+      isLiked: likedCommentIdSet.has(comment.id),
+    })
   })
 
   return NextResponse.json({ items })

@@ -4,7 +4,11 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
-export function OnboardingForm() {
+type OnboardingFormProps = {
+  next?: string
+}
+
+export function OnboardingForm({ next = "/" }: OnboardingFormProps) {
   const router = useRouter()
   const [username, setUsername] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
@@ -34,7 +38,7 @@ export function OnboardingForm() {
         return
       }
 
-      router.replace("/")
+      router.replace(next)
       router.refresh()
     } catch (error) {
       setErrorMessage(

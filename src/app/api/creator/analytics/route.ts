@@ -1,22 +1,28 @@
 import { NextResponse } from "next/server"
-import { requireUser } from "@/modules/auth/server/require-user"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
-import { getCreatorAnalytics } from "@/modules/analytics/server/get-creator-analytics"
+import { getCreatorAnalyticsSummary } from "@/modules/analytics/server/get-creator-analytics"
+import { requireActiveUser } from "@/modules/auth/server/require-active-user"
+import { readCreatorOperationalReadiness } from "@/modules/creator/server/read-creator-operational-readiness"
 
 export async function GET() {
   try {
-    const user = await requireUser()
+    const user = await requireActiveUser()
+    const readiness = await readCreatorOperationalReadiness({
+      userId: user.id,
+    })
 
-    const creator = await getCreatorByUserId(user.id)
-
-    if (!creator) {
+    if (!readiness.ok) {
       return NextResponse.json(
-        { error: "Creator not found" },
-        { status: 404 }
+        {
+          error:
+            readiness.reason === "creator_required"
+              ? "Creator not found"
+              : "Creator is not active",
+        },
+        { status: readiness.reason === "creator_required" ? 404 : 403 }
       )
     }
 
-    const analytics = await getCreatorAnalytics(creator.id)
+    const analytics = await getCreatorAnalyticsSummary(readiness.creator.id)
 
     return NextResponse.json(
       { analytics },

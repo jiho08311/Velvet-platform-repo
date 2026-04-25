@@ -6,10 +6,15 @@ import { useRouter } from "next/navigation"
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/client"
 import { CreateStoryForm } from "./CreateStoryForm"
 import {
+  buildStoryCreatePayloadFromDraft,
+  buildStoryCreateRequestBody,
+  buildStoryVideoJobPayload,
+} from "../lib/story-create-payload"
+import {
   queueStoryVideoJob,
   waitForStoryVideoJob,
 } from "@/modules/media/lib/queue-story-video-job"
-import type { StoryEditorState } from "../types"
+import type { StoryEditorDraft } from "../types"
 
 type CreateStoryComposerProps = {
   onCreated?: () => void
@@ -22,18 +27,6 @@ type StorySubmitPhase =
   | "publishing"
 
 type StoryComposerStep = "editor" | "publish"
-
-type SubmitStoryInput = {
-  file: File | null
-  trim: {
-    duration: number
-    requiresTrim: boolean
-    startTime: number
-  }
-  editorState: StoryEditorState
-}
-
-type StoryVisibility = "public" | "subscribers"
 
 const MEDIA_BUCKET =
   process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "media"
@@ -122,39 +115,39 @@ export function CreateStoryComposer({
   const [phase, setPhase] = useState<StorySubmitPhase>("idle")
   const [isPending, setIsPending] = useState(false)
   const [step, setStep] = useState<StoryComposerStep>("editor")
-  const [draft, setDraft] = useState<SubmitStoryInput | null>(null)
-  const [visibility, setVisibility] =
-    useState<StoryVisibility>("subscribers")
+  const [draft, setDraft] = useState<StoryEditorDraft | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!draft?.file) {
+    if (!draft?.media.file) {
       setPreviewUrl(null)
       return
     }
 
-    const url = URL.createObjectURL(draft.file)
+    const url = URL.createObjectURL(draft.media.file)
     setPreviewUrl(url)
 
     return () => {
       URL.revokeObjectURL(url)
     }
-  }, [draft?.file])
+  }, [draft?.media.file])
 
   const selectedFilterPreset = draft?.editorState?.filter?.preset ?? "none"
   const previewMusic = draft?.editorState?.music ?? null
   const previewMusicStyle = previewMusic?.style ?? "default"
   const previewMusicX = Math.min(0.78, Math.max(0.22, previewMusic?.x ?? 0.22))
   const previewMusicY = Math.min(0.22, Math.max(0.14, previewMusic?.y ?? 0.12))
+  const draftVisibility = draft?.visibility ?? "subscribers"
 
-  async function handleSubmitStory({
-    file,
-    trim,
-    editorState,
-  }: SubmitStoryInput) {
+  async function handleSubmitStory(storyDraft: StoryEditorDraft) {
     try {
       setError(null)
       setIsPending(true)
+
+      const { media } = storyDraft
+      const file = media.file
+      const trim = media.trim
+      const story = buildStoryCreatePayloadFromDraft(storyDraft)
 
       if (!file) {
         throw new Error("Story file is required")
@@ -167,18 +160,25 @@ export function CreateStoryComposer({
       if (file.type.startsWith("video/") && trim?.requiresTrim) {
         setPhase("uploading")
 
-        const queued = await queueStoryVideoJob({
-          file,
-          visibility,
-          startTime: trim.startTime,
-          editorState,
-        })
+        const queued = await queueStoryVideoJob(
+          {
+            file,
+            ...buildStoryVideoJobPayload({
+              story,
+              startTime: trim.startTime,
+            }),
+          }
+        )
 
         setPhase("processing")
 
-        await waitForStoryVideoJob({
+        const completedJob = await waitForStoryVideoJob({
           jobId: queued.jobId,
         })
+
+        if (!completedJob.storyId) {
+          throw new Error("Processed story is missing story id")
+        }
 
         setPhase("publishing")
 
@@ -198,11 +198,12 @@ export function CreateStoryComposer({
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({
-          storagePath,
-          visibility,
-          editorState,
-        }),
+        body: JSON.stringify(
+          buildStoryCreateRequestBody({
+            storagePath,
+            story,
+          })
+        ),
       })
 
       if (!res.ok) {
@@ -246,7 +247,6 @@ export function CreateStoryComposer({
           isSubmitting={isPending}
           onNextStory={(input) => {
             setDraft(input)
-            setVisibility("subscribers")
             setStep("publish")
           }}
         />
@@ -282,7 +282,7 @@ export function CreateStoryComposer({
               <div className="overflow-hidden rounded-[28px] border border-zinc-200 bg-white">
                 <div className="relative aspect-[9/16] w-full bg-white">
                   {previewUrl ? (
-                    draft.file?.type.startsWith("video/") ? (
+                    draft.media.file?.type.startsWith("video/") ? (
                       <video
                         src={previewUrl}
                         className="h-full w-full object-contain"
@@ -442,9 +442,18 @@ export function CreateStoryComposer({
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => setVisibility("public")}
+                  onClick={() =>
+                    setDraft((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            visibility: "public",
+                          }
+                        : prev
+                    )
+                  }
                   className={`rounded-full border px-4 py-2 text-sm transition ${
-                    visibility === "public"
+                    draftVisibility === "public"
                       ? "border-pink-500 bg-pink-500/10 text-black"
                       : "border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100"
                   }`}
@@ -454,9 +463,18 @@ export function CreateStoryComposer({
 
                 <button
                   type="button"
-                  onClick={() => setVisibility("subscribers")}
+                  onClick={() =>
+                    setDraft((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            visibility: "subscribers",
+                          }
+                        : prev
+                    )
+                  }
                   className={`rounded-full border px-4 py-2 text-sm transition ${
-                    visibility === "subscribers"
+                    draftVisibility === "subscribers"
                       ? "border-pink-500 bg-pink-500/10 text-black"
                       : "border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100"
                   }`}

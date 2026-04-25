@@ -1,90 +1,103 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import {
+  buildSubscriptionIdentity,
+  buildSubscriptionReadModel,
+  toSubscriptionDisplayStatus,
+  type SubscriptionReadModelRow,
+} from "@/modules/subscription/server/build-subscription-read-model"
 
 type SubscriptionStatus = "incomplete" | "active" | "canceled" | "expired"
-type SubscriptionProvider = "toss" | "mock"
 
-type SubscriptionRow = {
+type CreatorRow = {
   id: string
-  user_id: string
-  creator_id: string
+  username: string | null
+  display_name: string | null
+  avatar_url: string | null
+}
+
+type SubscriptionRow = SubscriptionReadModelRow & {
   status: SubscriptionStatus
-  provider: SubscriptionProvider
-  provider_subscription_id: string | null
-  current_period_start: string | null
-  current_period_end: string | null
-  canceled_at: string | null
-  cancel_at_period_end: boolean
-  created_at: string
-  updated_at: string
+  creator: CreatorRow | CreatorRow[] | null
 }
 
-type GetActiveSubscriptionInput = {
-  userId: string
-  creatorId: string
-}
-
-type ActiveSubscription = {
+export type UserSubscriptionListItem = {
   id: string
-  userId: string
-  creatorId: string
-  status: SubscriptionStatus
-  provider: SubscriptionProvider
-  providerSubscriptionId: string | null
-  cancelAtPeriodEnd: boolean
-  currentPeriodStart: string | null
-  currentPeriodEnd: string | null
-  cancelledAt: string | null
-  createdAt: string
-  updatedAt: string
+  status: ReturnType<typeof toSubscriptionDisplayStatus>
+  startedAt: string
+  creator: {
+    id: string
+    username: string
+    displayName: string
+    avatarUrl: string | null
+  }
 }
 
-export async function getActiveSubscription({
-  userId,
-  creatorId,
-}: GetActiveSubscriptionInput): Promise<ActiveSubscription | null> {
+export async function listUserSubscriptions(
+  userId: string
+): Promise<UserSubscriptionListItem[]> {
+  const resolvedUserId = userId.trim()
+
+  if (!resolvedUserId) {
+    return []
+  }
+
   const { data, error } = await supabaseAdmin
     .from("subscriptions")
     .select(
-      "id, user_id, creator_id, status, provider, provider_subscription_id, cancel_at_period_end, current_period_start, current_period_end, canceled_at, created_at, updated_at"
+      `
+        id,
+        user_id,
+        creator_id,
+        status,
+        current_period_start,
+        current_period_end,
+        cancel_at_period_end,
+        canceled_at,
+        created_at,
+        updated_at,
+        creator:creators(
+          id,
+          username,
+          display_name,
+          avatar_url
+        )
+      `
     )
-    .eq("user_id", userId)
-    .eq("creator_id", creatorId)
-    .eq("status", "active")
+    .eq("user_id", resolvedUserId)
     .order("created_at", { ascending: false })
     .returns<SubscriptionRow[]>()
 
   if (error) {
-    throw error
+    throw new Error("Failed to load subscriptions")
   }
 
-  const rows = data ?? []
-  const now = new Date()
+  return (data ?? []).flatMap((row) => {
+    const creator = Array.isArray(row.creator) ? row.creator[0] : row.creator
 
-  const activeRow =
-    rows.find((row) => {
-      if (!row.current_period_end) {
-        return false
-      }
+    if (!creator) {
+      return []
+    }
 
-      return new Date(row.current_period_end) > now
-    }) ?? null
+    const readModel = buildSubscriptionReadModel({
+      id: row.id,
+      user_id: row.user_id,
+      creator_id: row.creator_id,
+      status: row.status,
+      current_period_start: row.current_period_start ?? null,
+      current_period_end: row.current_period_end ?? null,
+      cancel_at_period_end: row.cancel_at_period_end ?? false,
+      canceled_at: row.canceled_at ?? null,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    })
 
-  if (!activeRow) {
-    return null
-  }
-
-  return {
-    id: activeRow.id,
-    userId: activeRow.user_id,
-    creatorId: activeRow.creator_id,
-    status: activeRow.status,
-    provider: activeRow.provider,
-    providerSubscriptionId: activeRow.provider_subscription_id,
-    cancelAtPeriodEnd: activeRow.cancel_at_period_end,
-    currentPeriodStart: activeRow.current_period_start,
-    currentPeriodEnd: activeRow.current_period_end,
-    cancelledAt: activeRow.canceled_at,
-    createdAt: activeRow.created_at,
-    updatedAt: activeRow.updated_at,
-  }
+    return [
+      {
+        id: readModel.id,
+        status: toSubscriptionDisplayStatus(readModel.state),
+        startedAt: readModel.currentPeriodStartAt ?? readModel.createdAt,
+        creator: buildSubscriptionIdentity(creator),
+      },
+    ]
+  })
 }

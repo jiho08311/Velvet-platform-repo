@@ -1,4 +1,8 @@
 import { resolveNotificationReadState } from "./server/notification-read-state-policy"
+import {
+  NOTIFICATION_DATA_KEYS,
+  getNotificationTypePolicy,
+} from "./server/notification-type-policy"
 
 export const NOTIFICATION_TYPES = [
   "subscription_started",
@@ -24,6 +28,15 @@ export const NOTIFICATION_STATUSES = [
 
 export type NotificationStatus = (typeof NOTIFICATION_STATUSES)[number]
 
+export type NotificationBadgeTone =
+  | "default"
+  | "neutral"
+  | "subtle"
+  | "info"
+  | "success"
+  | "warning"
+  | "danger"
+
 export type NotificationData = {
   creatorId?: string
   creatorUsername?: string
@@ -46,7 +59,7 @@ export type NotificationRow = {
   status: NotificationStatus
   title: string
   body: string
-  data: NotificationData | null
+  data: unknown | null
   created_at: string
   read_at: string | null
 }
@@ -62,6 +75,8 @@ export type Notification = {
   createdAt: string
   readAt: string | null
   isRead: boolean
+  label: string
+  tone: NotificationBadgeTone
 }
 
 export type NotificationListItem = Notification
@@ -93,8 +108,43 @@ export function isNotificationStatus(
   return (NOTIFICATION_STATUSES as readonly string[]).includes(value)
 }
 
-export function mapNotificationRow(row: NotificationRow): Notification {
+function isNotificationDataRecord(
+  value: unknown,
+): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+export function normalizeNotificationData(
+  data: unknown,
+  type?: NotificationType,
+): NotificationData {
+  if (!isNotificationDataRecord(data)) {
+    return {}
+  }
+
+  const allowedKeys = type
+    ? getNotificationTypePolicy(type).dataKeys
+    : NOTIFICATION_DATA_KEYS
+
+  const normalized: NotificationData = {}
+
+  for (const key of allowedKeys) {
+    const value = data[key]
+
+    if (typeof value === "string" && value.length > 0) {
+      normalized[key] = value
+    }
+  }
+
+  return normalized
+}
+
+export function buildNotificationReadModel(
+  row: NotificationRow,
+): Notification {
   const resolvedReadState = resolveNotificationReadState(row)
+  const presentation = getNotificationPresentation(row.type)
+  const data = normalizeNotificationData(row.data, row.type)
 
   return {
     id: row.id,
@@ -103,9 +153,43 @@ export function mapNotificationRow(row: NotificationRow): Notification {
     status: resolvedReadState.status,
     title: row.title,
     body: row.body,
-    data: row.data ?? {},
+    data,
     createdAt: row.created_at,
     readAt: resolvedReadState.readAt,
     isRead: resolvedReadState.isRead,
+    label: presentation.label,
+    tone: presentation.tone,
+  }
+}
+
+export function mapNotificationRow(row: NotificationRow): Notification {
+  return buildNotificationReadModel(row)
+}
+
+export function getUnreadNotificationCount(
+  notifications: readonly Pick<Notification, "isRead">[],
+): number {
+  return notifications.reduce((count, notification) => {
+    return notification.isRead ? count : count + 1
+  }, 0)
+}
+
+export function hasUnreadNotifications(
+  notifications: readonly Pick<Notification, "isRead">[],
+): boolean {
+  return getUnreadNotificationCount(notifications) > 0
+}
+
+export function getNotificationPresentation(
+  type: NotificationType,
+): {
+  label: string
+  tone: NotificationBadgeTone
+} {
+  const policy = getNotificationTypePolicy(type)
+
+  return {
+    label: policy.label,
+    tone: policy.tone,
   }
 }

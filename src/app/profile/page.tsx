@@ -2,11 +2,15 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 
 import { getSession } from "@/modules/auth/server/get-session"
+import {
+  buildPathWithNext,
+  SIGN_IN_PATH,
+} from "@/modules/auth/lib/redirect-handoff"
 import { getProfileByUserId } from "@/modules/profile/server/get-profile-by-user-id"
 import { getUserById } from "@/modules/user/server/get-user-by-id"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { ProfileContentTabs } from "@/modules/profile/ui/ProfileContentTabs"
-import { getCreatorDashboardSummary } from "@/modules/analytics/server/get-creator-dashboard-summary"
+import { getCreatorAnalyticsSummary } from "@/modules/analytics/server/get-creator-analytics"
 import { getCreatorFeed } from "@/modules/post/server/get-creator-feed"
 
 type ProfileData = {
@@ -110,11 +114,26 @@ function normalizeProfileData(
 }
 
 export default async function ProfilePage() {
+  const nextPath = "/profile"
   const session = await getSession()
-  if (!session) redirect("/login")
+  if (!session) {
+    redirect(
+      buildPathWithNext({
+        path: SIGN_IN_PATH,
+        next: nextPath,
+      })
+    )
+  }
 
   const userId = getSessionUserId(session)
-  if (!userId) redirect("/login")
+  if (!userId) {
+    redirect(
+      buildPathWithNext({
+        path: SIGN_IN_PATH,
+        next: nextPath,
+      })
+    )
+  }
 
   const creator = await getCreatorByUserId(userId)
   const creatorId = creator?.id
@@ -130,7 +149,7 @@ export default async function ProfilePage() {
         })
       : Promise.resolve([]),
     creatorId
-      ? getCreatorDashboardSummary(creatorId)
+      ? getCreatorAnalyticsSummary(creatorId)
       : Promise.resolve(null),
   ])
 
@@ -148,10 +167,14 @@ const posts = creatorFeedPosts.map((post) => {
     price: post.price,
     createdAt: post.createdAt,
     publishedAt: post.publishedAt ?? null,
+    renderInput: post.renderInput,
     media:
       post.media?.map((item) => ({
+        id: item.id,
         url: item.url,
         type: item.type,
+        mimeType: item.mimeType,
+        sortOrder: item.sortOrder,
       })) ?? [],
   }
 })
@@ -225,7 +248,7 @@ const posts = creatorFeedPosts.map((post) => {
 
                   <div>
                     <p className="text-lg font-semibold text-white md:text-xl">
-                      {summary?.subscriberCount ?? 0}
+                      {summary?.counts.subscriberCount ?? 0}
                     </p>
                     <p className="text-sm text-zinc-500">Subscribers</p>
                   </div>

@@ -1,41 +1,47 @@
 import { isPublicCreatorVisible } from "./is-public-creator-visible"
 import { isPublicProfileVisible } from "./is-public-profile-visible"
 
-type PublicCreatorProfileVisibilityInput = {
-  creator: {
-    status: string | null | undefined
-  } | null | undefined
-  profile: {
-    isDeactivated: boolean | null | undefined
-    isDeletePending: boolean | null | undefined
-    deletedAt: string | null | undefined
-    isBanned: boolean | null | undefined
-  } | null | undefined
+export type PublicCreatorVisibilityRecord = {
+  status: string | null | undefined
+}
+
+export type PublicProfileVisibilityRecord = {
+  isDeactivated: boolean | null | undefined
+  isDeletePending: boolean | null | undefined
+  deletedAt: string | null | undefined
+  isBanned: boolean | null | undefined
+}
+
+export type PublicCreatorProfileVisibilityInput = {
+  creator: PublicCreatorVisibilityRecord | null | undefined
+  profile: PublicProfileVisibilityRecord | null | undefined
 }
 
 export function isPublicCreatorProfileVisible(
   input: PublicCreatorProfileVisibilityInput
 ): boolean {
-  if (!input.creator || !input.profile) {
+  const { creator, profile } = input
+
+  if (!creator || !profile) {
     return false
   }
 
-  if (
-    !isPublicCreatorVisible({
-      status: input.creator.status,
-    })
-  ) {
+  const isVisibleCreator = isPublicCreatorVisible({
+    status: creator.status,
+  })
+
+  if (!isVisibleCreator) {
     return false
   }
 
-  if (
-    !isPublicProfileVisible({
-      isDeactivated: input.profile.isDeactivated,
-      isDeletePending: input.profile.isDeletePending,
-      deletedAt: input.profile.deletedAt,
-      isBanned: input.profile.isBanned,
-    })
-  ) {
+  const isVisibleProfile = isPublicProfileVisible({
+    isDeactivated: profile.isDeactivated,
+    isDeletePending: profile.isDeletePending,
+    deletedAt: profile.deletedAt,
+    isBanned: profile.isBanned,
+  })
+
+  if (!isVisibleProfile) {
     return false
   }
 

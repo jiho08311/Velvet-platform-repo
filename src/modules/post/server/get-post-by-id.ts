@@ -1,13 +1,20 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import type { PostBlock } from "../types"
+import type {
+  PostBlock,
+  PostPurchaseEligibility,
+  PostRenderInput,
+} from "../types"
+import type { LockedPreviewRenderableBlock } from "./locked-preview-policy"
 import { getPostBlocks } from "@/modules/post/server/get-post-blocks"
-import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
-import { getPostAccess } from "./get-post-access"
-import { getPostMedia } from "./get-post-media"
-import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
-import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
 import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
-import { mapItemsToPostRenderMedia } from "./post-render-read-model"
+import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+import { buildLockedPreviewPolicy } from "./locked-preview-policy"
+import { resolvePostAccessState } from "./resolve-post-access-state"
+import {
+  getPublicDiscoveryPostState,
+  isEligiblePublicDiscoveryCreator,
+} from "@/modules/post/lib/public-discovery-inclusion"
+import { normalizeLikeCount } from "@/shared/lib/like-interaction-result"
 
 type PostRow = {
   id: string
@@ -39,8 +46,14 @@ type CreatorRow = {
   } | null
 }
 
-type SubscriptionRow = {
+type MediaRow = {
   id: string
+  post_id: string
+  type: "image" | "video" | "audio" | "file"
+  storage_path: string
+  mime_type: string | null
+  sort_order: number
+  status: "processing" | "ready" | "failed"
 }
 
 export type PostDetail = {
@@ -60,6 +73,7 @@ export type PostDetail = {
   publishedAt: string | null
   isLocked: boolean
   lockReason: "none" | "subscription" | "purchase"
+  purchaseEligibility: PostPurchaseEligibility
   likesCount: number
   commentsCount: number
   media: {
@@ -71,6 +85,17 @@ export type PostDetail = {
     sortOrder: number
   }[]
   blocks?: PostBlock[]
+  renderInput: PostRenderInput
+}
+
+function sortBlocks(
+  blocks: LockedPreviewRenderableBlock[]
+): LockedPreviewRenderableBlock[] {
+  return [...blocks].sort((a, b) => a.sortOrder - b.sortOrder)
+}
+
+function sortMediaRows(rows: MediaRow[]): MediaRow[] {
+  return [...rows].sort((a, b) => a.sort_order - b.sort_order)
 }
 
 export async function getPostById(
@@ -135,31 +160,18 @@ export async function getPostById(
     resolvedViewerUserId !== null &&
     creator.user_id === resolvedViewerUserId
 
-  const publicState = getPostPublicState({
-    status: post.status,
-    visibility: post.visibility,
-    visibilityStatus: post.visibility_status,
-    moderationStatus: post.moderation_status,
-    publishedAt: post.published_at,
-    deletedAt: post.deleted_at ?? null,
-    now: new Date().toISOString(),
+  const now = new Date().toISOString()
+
+  const publicState = getPublicDiscoveryPostState(post, now)
+
+  const isVisibleCreator = isEligiblePublicDiscoveryCreator({
+    creator: {
+      status: creator.status,
+    },
+    profile: creator.profiles,
   })
 
   if (!isOwner) {
-    const isVisibleCreator = isPublicCreatorProfileVisible({
-      creator: {
-        status: creator.status,
-      },
-      profile: creator.profiles
-        ? {
-            isDeactivated: creator.profiles.is_deactivated,
-            isDeletePending: creator.profiles.is_delete_pending,
-            deletedAt: creator.profiles.deleted_at,
-            isBanned: creator.profiles.is_banned,
-          }
-        : null,
-    })
-
     if (!isVisibleCreator) {
       return null
     }
@@ -181,67 +193,114 @@ export async function getPostById(
       .is("deleted_at", null),
   ])
 
-  let isSubscribed = false
-  let hasPurchasedResult = false
+  const resolvedLikesCount = normalizeLikeCount(likesCount)
 
-  if (resolvedViewerUserId) {
-    const { data: subscriptionRow, error: subscriptionError } =
-      await supabaseAdmin
-        .from("subscriptions")
-        .select("id")
-        .eq("user_id", resolvedViewerUserId)
-        .eq("creator_id", post.creator_id)
-        .eq("status", "active")
-        .maybeSingle<SubscriptionRow>()
-
-    if (subscriptionError) {
-      throw subscriptionError
-    }
-
-    isSubscribed = Boolean(subscriptionRow)
-
-    if (post.visibility === "paid" && (post.price ?? 0) > 0) {
-      hasPurchasedResult = await hasPurchasedPost({
-        userId: resolvedViewerUserId,
-        postId: post.id,
-      })
-    }
-  }
-
-  const access = await getPostAccess({
+  const {
+    isSubscribed,
+    hasPurchased,
+    access,
+    purchaseEligibility,
+  } = await resolvePostAccessState({
     viewerUserId: resolvedViewerUserId,
+    creatorId: post.creator_id,
+    creatorUserId: creator.user_id,
     post: {
       id: post.id,
-      creatorId: post.creator_id,
-      content: post.content ?? undefined,
+      title: post.title,
+      content: post.content,
+      status: post.status,
       visibility: post.visibility,
       price: post.price ?? 0,
+      publishedAt: post.published_at,
       createdAt: post.created_at,
+      updatedAt: post.created_at,
     },
-    creator: {
-      userId: creator.user_id,
-    },
-    isSubscribedResult: isSubscribed,
-    hasPurchasedResult,
   })
 
-  const [media, rawBlocks] = access.canView
-    ? await Promise.all([getPostMedia(post.id), getPostBlocks(post.id)])
-    : [[], []]
+  const [allBlockRows, allMediaRows] = await Promise.all([
+    getPostBlocks(post.id),
+    supabaseAdmin
+      .from("media")
+      .select("id, post_id, type, storage_path, mime_type, sort_order, status")
+      .eq("post_id", post.id)
+      .in("status", ["processing", "ready"])
+      .order("sort_order", { ascending: true })
+      .returns<MediaRow[]>(),
+  ])
+
+  const sortedBlocks = sortBlocks(
+    allBlockRows.map((block): LockedPreviewRenderableBlock => ({
+      id: block.id,
+      postId: block.postId,
+      type: block.type === "carousel" ? "text" : block.type,
+      content: block.content,
+      mediaId: block.mediaId,
+      sortOrder: block.sortOrder,
+      createdAt: block.createdAt,
+      editorState: block.editorState ?? null,
+    }))
+  )
+
+  const sortedMediaRows = sortMediaRows(allMediaRows.data ?? [])
+
+  const previewPolicy = buildLockedPreviewPolicy({
+    access,
+    publicState,
+    text: post.content ?? "",
+    blocks: sortedBlocks,
+    media: sortedMediaRows.map((item) => ({
+      id: item.id,
+      url: "",
+      type: item.type,
+      mimeType: item.mime_type,
+      sortOrder: item.sort_order,
+    })),
+  })
+
+  const selectedMediaRows = access.canView
+    ? sortedMediaRows
+    : sortedMediaRows.filter((item) =>
+        previewPolicy.previewMedia.some((preview) => preview.id === item.id)
+      )
+
+  const selectedMedia = await Promise.all(
+    selectedMediaRows.map(async (item) => {
+      const url = await createMediaSignedUrl({
+        storagePath: item.storage_path,
+        viewerUserId: resolvedViewerUserId,
+        creatorUserId: creator.user_id,
+        visibility: post.visibility,
+        isSubscribed,
+        hasPurchased,
+        allowPreview: !access.canView && previewPolicy.allowPreviewMediaSigning,
+      })
+
+      return {
+        id: item.id,
+        postId: item.post_id,
+        type: item.type,
+        url,
+        mimeType: item.mime_type,
+        sortOrder: item.sort_order,
+      }
+    })
+  )
+
+  const selectedBlocks = access.canView
+    ? sortedBlocks
+    : previewPolicy.previewBlocks
 
   const renderInput = buildPostRenderInput({
-    text: access.canView ? (post.content ?? "") : "",
-    blocks: access.canView ? rawBlocks : [],
-    media: mapItemsToPostRenderMedia(media),
+    text: access.canView ? (post.content ?? "") : previewPolicy.renderTextSeed,
+    blocks: selectedBlocks,
+    media: selectedMedia.map((item) => ({
+      id: item.id,
+      url: item.url,
+      type: item.type,
+      mimeType: item.mimeType,
+      sortOrder: item.sortOrder,
+    })),
   })
-
-  const lockReason: "none" | "subscription" | "purchase" = access.canView
-    ? "none"
-    : post.visibility === "paid"
-      ? "purchase"
-      : post.visibility === "subscribers"
-        ? "subscription"
-        : "none"
 
   return {
     id: post.id,
@@ -252,17 +311,19 @@ export async function getPostById(
       displayName: creator.display_name,
     },
     title: post.title,
-        content: access.canView ? (renderInput.blockText || null) : null,
+    content: access.canView ? (renderInput.blockText || null) : null,
     visibility: post.visibility,
     price: post.price,
     status: post.status,
     createdAt: post.created_at,
     publishedAt: post.published_at,
-    isLocked: !access.canView,
-    lockReason,
-    likesCount: likesCount ?? 0,
+    isLocked: access.locked,
+    lockReason: access.lockReason,
+    purchaseEligibility,
+    likesCount: resolvedLikesCount,
     commentsCount: commentsCount ?? 0,
-    media,
-    blocks: access.canView ? rawBlocks : [],
+    media: access.canView ? selectedMedia : [],
+    blocks: access.canView ? selectedBlocks : [],
+    renderInput,
   }
 }

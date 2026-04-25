@@ -1,7 +1,10 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { getCreatorEarningsBalance } from "./get-creator-earnings-balance"
-import { resolvePayoutExecutionProjection } from "@/modules/payout/lib/resolve-payout-execution-projection"
-import type { PayoutExecutionLifecycleState } from "@/modules/payout/lib/resolve-payout-state"
+import {
+  buildPayoutExecutionReadModel,
+  type PayoutExecutionReadModel,
+  type PayoutExecutionRow,
+} from "@/modules/payout/server/build-payout-execution-read-model"
 
 /**
  * Canonical payout overview reader.
@@ -27,43 +30,12 @@ import type { PayoutExecutionLifecycleState } from "@/modules/payout/lib/resolve
  * - generic full payout list queries
  * - request-phase admin list views
  */
-type PayoutRow = {
-  id: string
-  amount: number | null
-  status: "pending" | "processing" | "paid" | "failed"
-  created_at: string
-}
-
 export type PayoutSummary = {
   creatorId: string
   currency: string
-  availableBalance: number
-  pendingAmount: number
-  recentPayouts: Array<{
-    id: string
-    amount: number
-    status: "pending" | "processing" | "paid" | "failed"
-    lifecycleState: PayoutExecutionLifecycleState
-    createdAt: string
-  }>
-}
-
-function toRecentPayout(row: PayoutRow): PayoutSummary["recentPayouts"][number] {
-  const projection = resolvePayoutExecutionProjection({
-    id: row.id,
-    amount: row.amount,
-    currency: "KRW",
-    status: row.status,
-    createdAt: row.created_at,
-  })
-
-  return {
-    id: projection.id,
-    amount: projection.amount,
-    status: projection.status,
-    lifecycleState: projection.lifecycleState,
-    createdAt: projection.createdAt,
-  }
+  requestableBalance: number
+  requestedPayoutAmount: number
+  recentPayouts: PayoutExecutionReadModel[]
 }
 
 export async function getPayoutSummary(
@@ -82,10 +54,10 @@ export async function getPayoutSummary(
 
   const { data: payouts, error: payoutsError } = await supabase
     .from("payouts")
-    .select("id, amount, status, created_at")
+    .select("id, amount, currency, status, created_at, paid_at, failure_reason")
     .eq("creator_id", safeCreatorId)
     .order("created_at", { ascending: false })
-    .returns<PayoutRow[]>()
+    .returns<PayoutExecutionRow[]>()
 
   if (payoutsError) {
     throw payoutsError
@@ -94,8 +66,8 @@ export async function getPayoutSummary(
   return {
     creatorId: safeCreatorId,
     currency: earningsBalance?.currency ?? "KRW",
-    availableBalance: earningsBalance?.requestableamount ?? 0,
-    pendingAmount: earningsBalance?.requestedamount ?? 0,
-    recentPayouts: (payouts ?? []).slice(0, 5).map(toRecentPayout),
+    requestableBalance: earningsBalance?.requestableamount ?? 0,
+    requestedPayoutAmount: earningsBalance?.requestedamount ?? 0,
+    recentPayouts: (payouts ?? []).slice(0, 5).map(buildPayoutExecutionReadModel),
   }
 }

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 
 import { SignInForm } from "@/modules/auth/ui/SignInForm"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
+import { resolveRedirectTarget } from "@/modules/auth/lib/redirect-handoff"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createClient } from "@/infrastructure/supabase/server"
 
@@ -13,7 +14,15 @@ type ProfileStatusRow = {
   deleted_at: string | null
 }
 
-export default async function SignInPage() {
+type SignInPageProps = {
+  searchParams: Promise<{
+    next?: string
+  }>
+}
+
+export default async function SignInPage({ searchParams }: SignInPageProps) {
+  const { next } = await searchParams
+  const resolvedNext = resolveRedirectTarget({ target: next })
   const user = await getCurrentUser()
 
   if (user) {
@@ -62,7 +71,7 @@ export default async function SignInPage() {
       redirect("/reactivate-account")
     }
 
-    redirect("/")
+    redirect(resolvedNext)
   }
 
   return (

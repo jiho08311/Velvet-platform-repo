@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server"
 import { requireUser } from "@/modules/auth/server/require-user"
 import { sendMessage } from "@/modules/message/server/send-message"
+import {
+  createSendMessageResult,
+  normalizeSendMessagePayload,
+} from "@/modules/message/types"
 
 type RouteContext = {
   params: Promise<{
@@ -14,15 +18,12 @@ export async function POST(request: Request, context: RouteContext) {
     const body = await request.json()
 
     const { conversationId } = await context.params
+    const payload = normalizeSendMessagePayload({
+      ...body,
+      conversationId,
+    })
 
-    const content = body?.content
-    const type = "text"
-
-    const mediaIds = Array.isArray(body?.mediaIds)
-      ? body.mediaIds
-      : []
-
-    if (!conversationId || (!content && mediaIds.length === 0)) {
+    if (!payload.conversationId || (!payload.content && payload.mediaIds.length === 0)) {
       return NextResponse.json(
         { error: "content or media is required" },
         { status: 400 }
@@ -30,15 +31,11 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const message = await sendMessage({
-      conversationId,
+      ...payload,
       senderId: user.id,
-      content: content ?? "",
-      type,
-      price: null,
-      mediaIds,
     })
 
-    return NextResponse.json({ message }, { status: 200 })
+    return NextResponse.json(createSendMessageResult(message), { status: 200 })
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to send message"

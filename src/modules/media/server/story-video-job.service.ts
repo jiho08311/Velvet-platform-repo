@@ -1,11 +1,33 @@
 import { createClient } from "@supabase/supabase-js"
-import type { StoryEditorState } from "@/modules/story/types"
-
-export type StoryVideoJobStatus =
-  | "pending"
-  | "processing"
-  | "completed"
-  | "failed"
+import type {
+  StoryEditorState,
+  StoryVideoJobPayload,
+  StoryVisibility,
+} from "@/modules/story/types"
+import {
+  buildProcessedStoryVideoCreateInput,
+  buildStoryVideoJobInsertValues,
+} from "@/modules/story/lib/story-create-payload"
+import { createStoryFromVideoProcessing } from "@/modules/story/server/create-story"
+import {
+  buildCompletedStoryVideoJobValues,
+  buildFailedStoryVideoJobValues,
+  buildStoryVideoJobPollResponse,
+  pickStoryVideoJobPollRow,
+  STORY_VIDEO_JOB_POLL_SELECT,
+  type StoryVideoJobStatus,
+} from "@/modules/media/lib/story-video-job-contract"
+import {
+  buildClaimedStoryVideoJob,
+  buildCompletedStoryVideoProcessing,
+  pickStoryVideoProcessorJobFact,
+  type StoryVideoProcessorInput,
+  type StoryVideoProcessorOutput,
+} from "@/modules/media/lib/story-video-processor-contract"
+import {
+  removeTempStoryVideo,
+  uploadTempStoryVideo,
+} from "@/modules/media/server/story-video-storage.service"
 
 export type StoryVideoJob = {
   id: string
@@ -13,7 +35,7 @@ export type StoryVideoJob = {
   temp_storage_path: string
   trimmed_storage_path: string | null
   story_id: string | null
-  visibility: string
+  visibility: StoryVisibility
   start_time: number
   expires_at: string
   editor_state: StoryEditorState | null
@@ -25,14 +47,12 @@ export type StoryVideoJob = {
   updated_at: string
 }
 
+export type ClaimedStoryVideoJob = {
+  processorInput: StoryVideoProcessorInput
+}
+
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const STORIES_BUCKET =
-  process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "media"
-
-const STORIES_TEMP_BUCKET =
-  process.env.STORIES_TEMP_BUCKET ?? "media-temp"
-
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error("Missing Supabase environment variables")
 }
@@ -46,14 +66,7 @@ function createAdminClient() {
   })
 }
 
-export async function enqueueStoryVideoJob(params: {
-  userId: string
-  file: File
-  visibility: string
-  startTime: number
-  expiresAt: string
-  editorState?: StoryEditorState | null
-}) {
+async function getCreatorIdByUserId(params: { userId: string }) {
   const admin = createAdminClient()
 
   const { data: creator, error: creatorError } = await admin
@@ -66,44 +79,38 @@ export async function enqueueStoryVideoJob(params: {
     throw new Error("Creator not found")
   }
 
-  const ext = getFileExtension(params.file.name, params.file.type)
-  const tempPath = `${creator.id}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${ext}`
-  const fileBuffer = Buffer.from(await params.file.arrayBuffer())
+  return creator.id
+}
 
-  const { error: uploadError } = await admin.storage
-    .from(STORIES_TEMP_BUCKET)
-    .upload(tempPath, fileBuffer, {
-      contentType: params.file.type || "video/mp4",
-      upsert: false,
-    })
+async function insertStoryVideoJob(params: {
+  creatorId: string
+  tempStoragePath: string
+  story: StoryVideoJobPayload
+  expiresAt: string
+}) {
+  const admin = createAdminClient()
 
-  if (uploadError) {
-    throw new Error(uploadError.message)
-  }
-
-  const { data: job, error: jobError } = await admin
+  const { data, error } = await admin
     .from("story_video_jobs")
-    .insert({
-      creator_id: creator.id,
-      temp_storage_path: tempPath,
-      visibility: params.visibility,
-      start_time: params.startTime,
-      expires_at: params.expiresAt,
-      editor_state: params.editorState ?? null,
-      status: "pending",
-    })
+    .insert(
+      buildStoryVideoJobInsertValues({
+        creatorId: params.creatorId,
+        tempStoragePath: params.tempStoragePath,
+        story: params.story,
+        expiresAt: params.expiresAt,
+      })
+    )
     .select("*")
     .single()
 
-  if (jobError || !job) {
-    await admin.storage.from(STORIES_TEMP_BUCKET).remove([tempPath])
-    throw new Error(jobError?.message || "Failed to create job")
+  if (error || !data) {
+    throw new Error(error?.message || "Failed to create job")
   }
 
-  return job as StoryVideoJob
+  return data as StoryVideoJob
 }
 
-export async function claimStoryVideoJob() {
+async function claimStoryVideoJobRow() {
   const admin = createAdminClient()
 
   const { data, error } = await admin.rpc("claim_story_video_job")
@@ -119,7 +126,7 @@ export async function claimStoryVideoJob() {
   return data as StoryVideoJob
 }
 
-export async function markStoryVideoJobCompleted(params: {
+async function updateStoryVideoJobCompleted(params: {
   jobId: string
   storyId: string
   trimmedStoragePath: string
@@ -128,14 +135,12 @@ export async function markStoryVideoJobCompleted(params: {
 
   const { error } = await admin
     .from("story_video_jobs")
-    .update({
-      status: "completed",
-      story_id: params.storyId,
-      trimmed_storage_path: params.trimmedStoragePath,
-      error_message: null,
-      locked_at: null,
-      updated_at: new Date().toISOString(),
-    })
+    .update(
+      buildCompletedStoryVideoJobValues({
+        storyId: params.storyId,
+        trimmedStoragePath: params.trimmedStoragePath,
+      })
+    )
     .eq("id", params.jobId)
 
   if (error) {
@@ -143,7 +148,7 @@ export async function markStoryVideoJobCompleted(params: {
   }
 }
 
-export async function markStoryVideoJobFailed(params: {
+async function updateStoryVideoJobFailed(params: {
   jobId: string
   errorMessage: string
 }) {
@@ -151,12 +156,11 @@ export async function markStoryVideoJobFailed(params: {
 
   const { error } = await admin
     .from("story_video_jobs")
-    .update({
-      status: "failed",
-      error_message: params.errorMessage,
-      locked_at: null,
-      updated_at: new Date().toISOString(),
-    })
+    .update(
+      buildFailedStoryVideoJobValues({
+        errorMessage: params.errorMessage,
+      })
+    )
     .eq("id", params.jobId)
 
   if (error) {
@@ -164,118 +168,140 @@ export async function markStoryVideoJobFailed(params: {
   }
 }
 
-export async function createStoryFromProcessedVideo(params: {
+async function getStoryVideoJobPollRowForCreator(params: {
+  jobId: string
   creatorId: string
-  storagePath: string
-  visibility: string
-  expiresAt: string
-  editorState?: StoryEditorState | null
 }) {
   const admin = createAdminClient()
 
   const { data, error } = await admin
-    .from("stories")
-    .insert({
-      creator_id: params.creatorId,
-      storage_path: params.storagePath,
-      visibility: params.visibility,
-      expires_at: params.expiresAt,
-      editor_state: params.editorState ?? null,
-      is_deleted: false,
-    })
-    .select("id")
+    .from("story_video_jobs")
+    .select(STORY_VIDEO_JOB_POLL_SELECT)
+    .eq("id", params.jobId)
+    .eq("creator_id", params.creatorId)
     .single()
 
   if (error || !data) {
-    throw new Error(error?.message || "Failed to create story")
+    throw new Error("Job not found")
   }
 
-  return data.id as string
+  return pickStoryVideoJobPollRow(data)
+}
+
+async function createFinalStoryFromProcessedVideo(params: {
+  processorInput: StoryVideoProcessorInput
+  result: StoryVideoProcessorOutput
+}) {
+  const storyCreationInput = buildProcessedStoryVideoCreateInput({
+    creatorId: params.processorInput.creatorId,
+    processedVideoStoragePath: params.result.processedVideoStoragePath,
+    story: params.processorInput.story,
+    expiresAt: params.processorInput.expiresAt,
+  })
+
+  return createStoryFromVideoProcessing(storyCreationInput)
+}
+
+async function persistCompletedStoryVideoJob(params: {
+  result: StoryVideoProcessorOutput
+  storyId: string
+}) {
+  const completed = buildCompletedStoryVideoProcessing({
+    storyId: params.storyId,
+    result: params.result,
+  })
+
+  await markStoryVideoJobCompleted({
+    jobId: params.result.jobId,
+    storyId: completed.storyId,
+    trimmedStoragePath: completed.trimmedStoragePath,
+  })
+
+  return completed
+}
+
+export async function enqueueStoryVideoJob(params: {
+  userId: string
+  file: File
+  story: StoryVideoJobPayload
+  expiresAt: string
+}) {
+  const creatorId = await getCreatorIdByUserId({
+    userId: params.userId,
+  })
+  const tempPath = await uploadTempStoryVideo({
+    creatorId,
+    file: params.file,
+  })
+
+  try {
+    return await insertStoryVideoJob({
+      creatorId,
+      tempStoragePath: tempPath,
+      story: params.story,
+      expiresAt: params.expiresAt,
+    })
+  } catch (error) {
+    await removeTempStoryVideo(tempPath)
+    throw error
+  }
+}
+
+export async function claimStoryVideoJob() {
+  return claimStoryVideoJobRow()
+}
+
+export async function claimStoryVideoJobForProcessing(): Promise<ClaimedStoryVideoJob | null> {
+  const job = await claimStoryVideoJob()
+
+  if (!job) {
+    return null
+  }
+
+  const processorJob = pickStoryVideoProcessorJobFact(job)
+  return buildClaimedStoryVideoJob(processorJob)
+}
+
+export async function markStoryVideoJobCompleted(params: {
+  jobId: string
+  storyId: string
+  trimmedStoragePath: string
+}) {
+  return updateStoryVideoJobCompleted(params)
+}
+
+export async function markStoryVideoJobFailed(params: {
+  jobId: string
+  errorMessage: string
+}) {
+  return updateStoryVideoJobFailed(params)
+}
+
+export async function completeStoryVideoJobFromProcessorResult(params: {
+  processorInput: StoryVideoProcessorInput
+  result: StoryVideoProcessorOutput
+}) {
+  const storyId = await createFinalStoryFromProcessedVideo({
+    processorInput: params.processorInput,
+    result: params.result,
+  })
+  return persistCompletedStoryVideoJob({
+    result: params.result,
+    storyId,
+  })
 }
 
 export async function getStoryVideoJobForUser(params: {
   jobId: string
   userId: string
 }) {
-  const admin = createAdminClient()
+  const creatorId = await getCreatorIdByUserId({
+    userId: params.userId,
+  })
+  const job = await getStoryVideoJobPollRowForCreator({
+    jobId: params.jobId,
+    creatorId,
+  })
 
-  const { data: creator, error: creatorError } = await admin
-    .from("creators")
-    .select("id")
-    .eq("user_id", params.userId)
-    .single()
-
-  if (creatorError || !creator) {
-    throw new Error("Creator not found")
-  }
-
-  const { data: job, error: jobError } = await admin
-    .from("story_video_jobs")
-    .select("id, status, error_message, story_id, created_at, updated_at")
-    .eq("id", params.jobId)
-    .eq("creator_id", creator.id)
-    .single()
-
-  if (jobError || !job) {
-    throw new Error("Job not found")
-  }
-
-  return job
-}
-
-export async function downloadTempStoryVideo(tempStoragePath: string) {
-  const admin = createAdminClient()
-
-  const { data, error } = await admin.storage
-    .from(STORIES_TEMP_BUCKET)
-    .download(tempStoragePath)
-
-  if (error || !data) {
-    throw new Error(error?.message || "Failed to download temp story video")
-  }
-
-  return Buffer.from(await data.arrayBuffer())
-}
-
-export async function uploadProcessedStoryVideo(params: {
-  creatorId: string
-  localFileBuffer: Buffer
-  contentType?: string
-}) {
-  const admin = createAdminClient()
-
-  const storagePath = `${params.creatorId}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.mp4`
-
-  const { error } = await admin.storage
-    .from(STORIES_BUCKET)
-    .upload(storagePath, params.localFileBuffer, {
-      contentType: params.contentType ?? "video/mp4",
-      upsert: false,
-    })
-
-  if (error) {
-    throw new Error(error.message)
-  }
-
-  return storagePath
-}
-
-export async function removeTempStoryVideo(tempStoragePath: string) {
-  const admin = createAdminClient()
-
-  await admin.storage.from(STORIES_TEMP_BUCKET).remove([tempStoragePath])
-}
-
-function getFileExtension(fileName: string, mimeType: string) {
-  const byName = fileName.split(".").pop()?.toLowerCase()
-
-  if (byName && byName.length <= 5) {
-    return byName
-  }
-
-  if (mimeType.includes("quicktime")) {
-    return "mov"
-  }
-
-  return "mp4"
+  return buildStoryVideoJobPollResponse(job)
 }

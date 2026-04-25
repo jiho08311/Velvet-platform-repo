@@ -1,23 +1,33 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { getPayoutAccountReadiness } from "./get-payout-account-readiness"
+import {
+  mapCreatePayoutRequestResult,
+  normalizeCreatePayoutRequestInput,
+  type CreatePayoutRequestInput,
+  type CreatePayoutRequestResult,
+} from "./payout-request-contract"
 
 import {
-  isRequestableEarning,
-  sumRequestableEarnings,
+  filterRequestableEarnings,
+  resolvePayoutBalanceTotals,
+  type EarningBalanceStatus,
 } from "@/modules/payout/lib/payout-balance-policy"
-
-type CreatePayoutRequestInput = { 
-  creatorId: string
-  amount?: number
-  currency?: string
-}
 
 type RequestableEarningRow = {
   id: string
   net_amount: number | null
-  status: "pending" | "available" | "requested" | "paid_out" | "reversed"
+  status: EarningBalanceStatus
   payout_request_id: string | null
   payout_id: string | null
+}
+
+type CreatedPayoutRequestRow = {
+  id: string
+  creator_id: string
+  amount: number
+  currency: string
+  status: "pending" | "approved" | "rejected"
+  created_at: string
 }
 
 function resolvePayoutRequestEligibility(input: {
@@ -52,12 +62,11 @@ function resolvePayoutRequestEligibility(input: {
   }
 }
 
-export async function createPayoutRequest(input: CreatePayoutRequestInput) {
-  const creatorId = input.creatorId.trim()
-
-  if (!creatorId) {
-    throw new Error("Creator id is required")
-  }
+export async function createPayoutRequest(
+  input: CreatePayoutRequestInput
+): Promise<CreatePayoutRequestResult> {
+  const normalizedInput = normalizeCreatePayoutRequestInput(input)
+  const { creatorId } = normalizedInput
 
   const accountReadiness = await getPayoutAccountReadiness({ creatorId })
 
@@ -65,9 +74,6 @@ export async function createPayoutRequest(input: CreatePayoutRequestInput) {
     .from("earnings")
     .select("id, net_amount, status, payout_request_id, payout_id")
     .eq("creator_id", creatorId)
-    .eq("status", "available")
-    .is("payout_request_id", null)
-    .is("payout_id", null)
     .order("created_at", { ascending: true })
     .returns<RequestableEarningRow[]>()
 
@@ -75,25 +81,22 @@ export async function createPayoutRequest(input: CreatePayoutRequestInput) {
     throw earningsError
   }
 
-  const requestableEarnings = (earnings ?? []).filter((earning) => {
-    if (!isRequestableEarning(earning)) {
-      return false
-    }
-
-    return (earning.net_amount ?? 0) > 0
-  })
-
-  const requestableAmount = sumRequestableEarnings(requestableEarnings)
+  const earningsSnapshot = earnings ?? []
+  const requestableEarnings = filterRequestableEarnings(earningsSnapshot)
+  const balanceTotals = resolvePayoutBalanceTotals(earningsSnapshot)
+  const requestableAmount = balanceTotals.requestableAmount
+  const requestedAmount =
+    normalizedInput.requestedAmount ?? requestableAmount
 
   const eligibility = resolvePayoutRequestEligibility({
     accountReadinessState: accountReadiness.state,
-    requestedAmount: requestableAmount,
+    requestedAmount,
     availableBalance: requestableAmount,
   })
 
   if (!eligibility.isEligible) {
     if (eligibility.state === "invalid_amount") {
-      throw new Error("Amount must be greater than 0")
+      throw new Error("PAYOUT_REQUEST_AMOUNT_INVALID")
     }
 
     if (eligibility.state === "account_required") {
@@ -107,24 +110,30 @@ export async function createPayoutRequest(input: CreatePayoutRequestInput) {
     throw new Error("PAYOUT_REQUEST_NOT_ELIGIBLE")
   }
 
+  if (
+    normalizedInput.requestedAmount !== null &&
+    normalizedInput.requestedAmount !== requestableAmount
+  ) {
+    throw new Error("PAYOUT_REQUEST_AMOUNT_MUST_MATCH_AVAILABLE_BALANCE")
+  }
+
   const selectedEarningIds = requestableEarnings.map((earning) => earning.id)
 
   if (selectedEarningIds.length === 0) {
     throw new Error("NOT_ENOUGH_EARNINGS")
   }
 
-  const currency = input.currency?.trim().toUpperCase() || "KRW"
-
   const { data: payoutRequest, error: payoutError } = await supabaseAdmin
     .from("payout_requests")
     .insert({
       creator_id: creatorId,
       amount: requestableAmount,
-      currency,
+      currency: normalizedInput.currency,
       status: "pending",
     })
-    .select()
+    .select("id, creator_id, amount, currency, status, created_at")
     .single()
+    .returns<CreatedPayoutRequestRow>()
 
   if (payoutError || !payoutRequest) {
     throw payoutError ?? new Error("FAILED_TO_CREATE_PAYOUT_REQUEST")
@@ -161,5 +170,5 @@ export async function createPayoutRequest(input: CreatePayoutRequestInput) {
     throw new Error("FAILED_TO_LOCK_EARNINGS_FOR_PAYOUT_REQUEST")
   }
 
-  return payoutRequest
+  return mapCreatePayoutRequestResult(payoutRequest)
 }

@@ -1,26 +1,25 @@
-import { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"
-import { resolveSubscriptionState } from "@/modules/subscription/lib/resolve-subscription-state"
+import { getViewerSubscription } from "@/modules/subscription/server/get-viewer-subscription"
+
+type CheckSubscriptionInput = {
+  userId: string
+  creatorId: string
+}
 
 export async function checkSubscription({
   userId,
   creatorId,
-}: {
-  userId: string
-  creatorId: string
-}): Promise<boolean> {
-  const subscription = await getActiveSubscription({
-    userId,
-    creatorId,
-  })
+}: CheckSubscriptionInput): Promise<boolean> {
+  const resolvedUserId = userId.trim()
+  const resolvedCreatorId = creatorId.trim()
 
-  if (!subscription) return false
+  if (!resolvedUserId || !resolvedCreatorId) {
+    return false
+  }
 
-  const resolved = resolveSubscriptionState({
-    status: subscription.status,
-    currentPeriodEndAt: subscription.currentPeriodEnd,
-    cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-    canceledAt: subscription.canceledAt,
-  })
+  const viewerSubscription = await getViewerSubscription(
+    resolvedUserId,
+    resolvedCreatorId
+  )
 
-  return resolved.hasAccess
+  return viewerSubscription.isActive
 }

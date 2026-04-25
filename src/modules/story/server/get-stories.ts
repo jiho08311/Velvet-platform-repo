@@ -2,9 +2,14 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
 import { checkSubscription } from "@/modules/subscription/server/check-subscription"
 import { getStoryAccessState } from "../lib/get-story-access-state"
-import { getStoryPublicState } from "../lib/get-story-public-state"
+import { getStorySurfaceEligibility } from "../lib/get-story-surface-eligibility"
 import { toStorySurfaceItem } from "../lib/to-story-surface-item"
-import type { Story, StoryEditorState } from "../types"
+import type {
+  Story,
+  StoryCreator,
+  StoryEditorState,
+  StorySurfaceEligibilityInput,
+} from "../types"
 
 type StoryProfileRow =
   | {
@@ -55,6 +60,38 @@ type StoryRow = {
   creators: StoryCreatorRow
 }
 
+type ResolvedStoryRow = {
+  row: StoryRow
+  creatorRow:
+    | {
+        id: string
+        user_id: string
+        username: string
+        display_name: string | null
+        status: string | null
+      }
+    | null
+  profileRow:
+    | {
+        avatar_url: string | null
+        is_deactivated: boolean | null
+        is_delete_pending: boolean | null
+        deleted_at: string | null
+        is_banned: boolean | null
+      }
+    | null
+  eligibilityInput: StorySurfaceEligibilityInput
+  creatorSurface: StoryCreator | null
+}
+
+function pickJoinedRow<T>(value: T | T[] | null): T | null {
+  if (Array.isArray(value)) {
+    return value[0] ?? null
+  }
+
+  return value
+}
+
 function resolveStoryMediaType(storagePath: string): "image" | "video" {
   const lower = storagePath.toLowerCase()
 
@@ -68,6 +105,56 @@ function resolveStoryMediaType(storagePath: string): "image" | "video" {
   }
 
   return "image"
+}
+
+function resolveStoryRow(
+  row: StoryRow,
+  now: string
+): ResolvedStoryRow {
+  const creator = pickJoinedRow(row.creators)
+  const profile = pickJoinedRow(creator?.profiles ?? null)
+
+  return {
+    row,
+    creatorRow: creator
+      ? {
+          id: creator.id,
+          user_id: creator.user_id,
+          username: creator.username,
+          display_name: creator.display_name,
+          status: creator.status,
+        }
+      : null,
+    profileRow: profile,
+    eligibilityInput: {
+      now,
+      story: {
+        isDeleted: row.is_deleted,
+        expiresAt: row.expires_at,
+      },
+      creator: creator
+        ? {
+            status: creator.status,
+          }
+        : null,
+      profile: profile
+        ? {
+            isDeactivated: profile.is_deactivated,
+            isDeletePending: profile.is_delete_pending,
+            deletedAt: profile.deleted_at,
+            isBanned: profile.is_banned,
+          }
+        : null,
+    },
+    creatorSurface: creator
+      ? {
+          id: creator.id,
+          username: creator.username,
+          displayName: creator.display_name,
+          avatarUrl: profile?.avatar_url ?? null,
+        }
+      : null,
+  }
 }
 
 export async function getStories(viewerUserId?: string | null): Promise<Story[]> {
@@ -113,48 +200,15 @@ export async function getStories(viewerUserId?: string | null): Promise<Story[]>
     throw error
   }
 
-  const visibleStories = (data ?? []).filter((story) => {
-    const creator = Array.isArray(story.creators)
-      ? story.creators[0] ?? null
-      : story.creators
-
-    const profile = Array.isArray(creator?.profiles)
-      ? creator?.profiles[0] ?? null
-      : creator?.profiles
-
-    const publicState = getStoryPublicState({
-      now,
-      story: {
-        isDeleted: story.is_deleted,
-        expiresAt: story.expires_at,
-      },
-      creator: creator
-        ? {
-            status: creator.status,
-          }
-        : null,
-      profile: profile
-        ? {
-            isDeactivated: profile.is_deactivated,
-            isDeletePending: profile.is_delete_pending,
-            deletedAt: profile.deleted_at,
-            isBanned: profile.is_banned,
-          }
-        : null,
-    })
-
-    return publicState === "visible"
-  })
+  const visibleStories = (data ?? [])
+    .map((story) => resolveStoryRow(story, now))
+    .filter(
+      (story) => getStorySurfaceEligibility(story.eligibilityInput) === "included"
+    )
 
   return Promise.all(
     visibleStories.map(async (story) => {
-      const creator = Array.isArray(story.creators)
-        ? story.creators[0] ?? null
-        : story.creators
-
-      const profile = Array.isArray(creator?.profiles)
-        ? creator?.profiles[0] ?? null
-        : creator?.profiles
+      const creator = story.creatorRow
 
       const isOwner =
         !!resolvedViewerUserId &&
@@ -162,7 +216,7 @@ export async function getStories(viewerUserId?: string | null): Promise<Story[]>
         resolvedViewerUserId === creator.user_id
 
       const hasSubscriptionAccess =
-        story.visibility === "subscribers" && !isOwner
+        story.row.visibility === "subscribers" && !isOwner
           ? resolvedViewerUserId && creator?.id
             ? await checkSubscription({
                 userId: resolvedViewerUserId,
@@ -172,7 +226,7 @@ export async function getStories(viewerUserId?: string | null): Promise<Story[]>
           : false
 
       const accessState = getStoryAccessState({
-        visibility: story.visibility,
+        visibility: story.row.visibility,
         isOwner,
         hasSubscriptionAccess,
       })
@@ -180,35 +234,28 @@ export async function getStories(viewerUserId?: string | null): Promise<Story[]>
       const mediaUrl =
         accessState === "visible_unlocked"
           ? await createMediaSignedUrl({
-              storagePath: story.storage_path,
+              storagePath: story.row.storage_path,
               viewerUserId: resolvedViewerUserId,
               creatorUserId: creator?.user_id ?? null,
-              visibility: story.visibility,
+              visibility: story.row.visibility,
               isSubscribed: isOwner ? true : hasSubscriptionAccess,
               hasPurchased: false,
             })
           : ""
 
       return toStorySurfaceItem({
-        id: story.id,
-        creatorId: story.creator_id,
+        id: story.row.id,
+        creatorId: story.row.creator_id,
         mediaUrl,
-        mediaType: resolveStoryMediaType(story.storage_path),
-        text: story.text,
-        visibility: story.visibility,
-        editorState: story.editor_state,
-        createdAt: story.created_at,
-        expiresAt: story.expires_at,
-        isDeleted: story.is_deleted,
+        mediaType: resolveStoryMediaType(story.row.storage_path),
+        text: story.row.text,
+        visibility: story.row.visibility,
+        editorState: story.row.editor_state,
+        createdAt: story.row.created_at,
+        expiresAt: story.row.expires_at,
+        isDeleted: story.row.is_deleted,
         accessState,
-        creator: creator
-          ? {
-              id: creator.id,
-              username: creator.username,
-              displayName: creator.display_name,
-              avatarUrl: profile?.avatar_url ?? null,
-            }
-          : null,
+        creator: story.creatorSurface,
       })
     })
   )

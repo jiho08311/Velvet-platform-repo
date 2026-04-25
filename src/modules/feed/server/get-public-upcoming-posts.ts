@@ -1,4 +1,9 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { buildCreatorIdentity } from "@/modules/creator/server/build-creator-identity"
+import {
+  filterPublicDiscoveryPostCandidates,
+  isEligiblePublicDiscoveryCreatorRow,
+} from "@/modules/post/lib/public-discovery-inclusion"
 
 export type PublicUpcomingFeedItem = {
   id: string
@@ -19,7 +24,12 @@ type PostRow = {
   creator_id: string
   title: string | null
   content: string | null
+  status: "draft" | "scheduled" | "published" | "archived"
+  visibility: "public" | "subscribers" | "paid"
+  visibility_status: "draft" | "published" | "processing" | "rejected" | null
+  moderation_status: "pending" | "approved" | "rejected" | "needs_review" | null
   published_at: string | null
+  deleted_at: string | null
 }
 
 type CreatorRow = {
@@ -27,11 +37,18 @@ type CreatorRow = {
   user_id: string
   username: string
   display_name: string | null
-}
-
-type ProfileRow = {
-  id: string
-  avatar_url: string | null
+  status: "active" | "pending" | "suspended" | "inactive"
+  profiles: {
+    id: string
+    username?: string | null
+    display_name?: string | null
+    avatar_url: string | null
+    bio?: string | null
+    is_deactivated: boolean | null
+    is_delete_pending: boolean | null
+    deleted_at: string | null
+    is_banned: boolean | null
+  } | null
 }
 
 export async function getPublicUpcomingPosts(
@@ -41,8 +58,10 @@ export async function getPublicUpcomingPosts(
 
   const { data: posts, error: postsError } = await supabaseAdmin
     .from("posts")
-    .select("id, creator_id, title, content, published_at")
-  .eq("status", "scheduled")
+    .select(
+      "id, creator_id, title, content, status, visibility, visibility_status, moderation_status, published_at, deleted_at"
+    )
+    .eq("status", "scheduled")
     .eq("visibility", "public")
     .gt("published_at", now)
     .is("deleted_at", null)
@@ -54,7 +73,9 @@ export async function getPublicUpcomingPosts(
     throw postsError
   }
 
-  const resolvedPosts = posts ?? []
+  const resolvedPosts = filterPublicDiscoveryPostCandidates(posts ?? [], now, [
+    "upcoming",
+  ]).map(({ post }) => post)
 
   if (resolvedPosts.length === 0) {
     return []
@@ -71,52 +92,39 @@ export async function getPublicUpcomingPosts(
       user_id,
       username,
       display_name,
-      profiles!inner (
+      status,
+      profiles (
         id,
         avatar_url,
         is_deactivated,
         is_delete_pending,
-        deleted_at
+        deleted_at,
+        is_banned
       )
     `)
     .in("id", creatorIds)
-    .eq("status", "active")
-    .eq("profiles.is_deactivated", false)
-    .eq("profiles.is_delete_pending", false)
-    .is("profiles.deleted_at", null)
     .returns<CreatorRow[]>()
 
   if (creatorsError) {
     throw creatorsError
   }
 
-  const creatorMap = new Map<string, CreatorRow>()
-  const creatorUserIds: string[] = []
+  const visibleCreatorMap = new Map<string, CreatorRow>()
 
   for (const creator of creators ?? []) {
-    creatorMap.set(creator.id, creator)
-    creatorUserIds.push(creator.user_id)
+    if (isEligiblePublicDiscoveryCreatorRow(creator)) {
+      visibleCreatorMap.set(creator.id, creator)
+    }
   }
-
-  const { data: profiles, error: profilesError } = await supabaseAdmin
-    .from("profiles")
-    .select("id, avatar_url")
-    .in("id", creatorUserIds)
-    .returns<ProfileRow[]>()
-
-  if (profilesError) {
-    throw profilesError
-  }
-
-  const profileMap = new Map(
-    (profiles ?? []).map((profile) => [profile.id, profile])
-  )
 
   return resolvedPosts
-    .filter((post) => creatorMap.has(post.creator_id))
+    .filter((post) => visibleCreatorMap.has(post.creator_id))
     .map((post) => {
-      const creator = creatorMap.get(post.creator_id)!
-      const profile = profileMap.get(creator.user_id)
+      const creator = visibleCreatorMap.get(post.creator_id)!
+      const identity = buildCreatorIdentity({
+        creator,
+        profile: creator.profiles,
+      })
 
       return {
         id: post.id,
@@ -126,9 +134,9 @@ export async function getPublicUpcomingPosts(
         previewText: post.content?.trim() || null,
         scheduledAt: post.published_at ?? "",
         creator: {
-          username: creator.username,
-          displayName: creator.display_name,
-          avatarUrl: profile?.avatar_url ?? null,
+          username: identity.username,
+          displayName: identity.displayName,
+          avatarUrl: identity.avatarUrl,
         },
       }
     })

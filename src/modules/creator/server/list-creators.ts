@@ -1,6 +1,8 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
 
+import { buildCreatorIdentity } from "./build-creator-identity"
+
 type CreatorRow = {
   id: string
   user_id: string
@@ -13,8 +15,8 @@ type CreatorRow = {
 
 type ProfileRow = {
   id: string
-  username: string
-  display_name: string
+  username: string | null
+  display_name: string | null
   avatar_url: string | null
   bio: string | null
   is_deactivated: boolean | null
@@ -35,7 +37,7 @@ export async function listCreators({
     userId: string
     username: string
     displayName: string
-    avatarUrl: string
+    avatarUrl: string | null
     bio: string
     status: "pending" | "active" | "suspended"
     subscriptionPrice: number
@@ -93,14 +95,18 @@ export async function listCreators({
     )
     .map((creator) => {
       const profile = profileMap.get(creator.user_id)!
+      const identity = buildCreatorIdentity({
+        creator,
+        profile,
+      })
 
       return {
-        id: creator.id,
-        userId: creator.user_id,
-        username: profile.username,
-        displayName: profile.display_name ?? "",
-        avatarUrl: profile.avatar_url ?? "",
-        bio: profile.bio ?? "",
+        id: identity.id,
+        userId: identity.userId,
+        username: identity.username,
+        displayName: identity.displayName,
+        avatarUrl: identity.avatarUrl,
+        bio: identity.bio,
         status: creator.status,
         subscriptionPrice: creator.subscription_price,
         subscriptionCurrency: creator.subscription_currency,

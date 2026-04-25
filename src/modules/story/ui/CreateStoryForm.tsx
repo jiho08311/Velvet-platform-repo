@@ -3,25 +3,22 @@
 import { FormEvent, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { StoryVideoTrimField } from "@/modules/media/ui/StoryVideoTrimField"
+import {
+  createEmptyStoryEditorState,
+  createEmptyStoryVideoTrim,
+  getStoryMediaTypeFromFile,
+  normalizeStoryEditorDraft,
+} from "../lib/story-editor-draft"
 import type {
+  StoryEditorDraft,
   StoryEditorState,
   StoryEditorUiState,
   StoryMusicSearchItem,
 } from "../types"
 
-type SubmitStoryInput = {
-  file: File | null
-  trim: {
-    duration: number
-    requiresTrim: boolean
-    startTime: number
-  }
-  editorState: StoryEditorState
-}
-
 type CreateStoryFormProps = {
   isSubmitting?: boolean
-  onNextStory: (input: SubmitStoryInput) => void
+  onNextStory: (input: StoryEditorDraft) => void
 }
 
 const FILTER_PRESETS = ["none", "warm", "cool", "mono", "vivid"] as const
@@ -62,12 +59,9 @@ export function CreateStoryForm({
   const [musicQuery, setMusicQuery] = useState("")
   const [musicResults, setMusicResults] = useState<StoryMusicSearchItem[]>([])
   const [isSearchingMusic, setIsSearchingMusic] = useState(false)
-  const [editorState, setEditorState] = useState<StoryEditorState>({
-    textOverlays: [],
-    overlays: [],
-    filter: null,
-    music: null,
-  })
+  const [editorState, setEditorState] = useState<StoryEditorState>(
+    createEmptyStoryEditorState()
+  )
   const [uiState, setUiState] = useState<StoryEditorUiState>({
     activeTool: null,
     selectedLayer: null,
@@ -76,11 +70,7 @@ export function CreateStoryForm({
     isToolSheetOpen: false,
   })
 
-  const [trim, setTrim] = useState({
-    duration: 0,
-    requiresTrim: false,
-    startTime: 0,
-  })
+  const [trim, setTrim] = useState(createEmptyStoryVideoTrim())
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const previewContainerRef = useRef<HTMLDivElement | null>(null)
@@ -807,18 +797,9 @@ function handleRemoveSelectedFile() {
   setFile(null)
   setPreviewUrl(null)
 
-  setTrim({
-    duration: 0,
-    requiresTrim: false,
-    startTime: 0,
-  })
+  setTrim(createEmptyStoryVideoTrim())
 
-  setEditorState({
-    textOverlays: [],
-    overlays: [],
-    filter: null,
-    music: null,
-  })
+  setEditorState(createEmptyStoryEditorState())
 
   setUiState({
     activeTool: null,
@@ -838,11 +819,16 @@ function handleRemoveSelectedFile() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    onNextStory({
-      file,
-      trim,
-      editorState,
-    })
+    onNextStory(
+      normalizeStoryEditorDraft({
+        media: {
+          type: getStoryMediaTypeFromFile(file),
+          file,
+          trim,
+        },
+        editorState,
+      })
+    )
   }
 
   return (
@@ -854,11 +840,7 @@ function handleRemoveSelectedFile() {
         onChange={(e) => {
           const nextFile = e.target.files?.[0] ?? null
           setFile(nextFile)
-          setTrim({
-            duration: 0,
-            requiresTrim: false,
-            startTime: 0,
-          })
+          setTrim(createEmptyStoryVideoTrim())
         }}
         className="hidden"
       />

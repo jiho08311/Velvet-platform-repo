@@ -1,7 +1,12 @@
 import { RestrictedFullCardShell } from "@/shared/ui/RestrictedFullCardShell"
+import type { PostRenderInput } from "@/modules/post/types"
 
 type LockedPostCardProps = {
-  previewText: string
+  renderInput?: Pick<
+    PostRenderInput,
+    "lockedPreviewText" | "primaryLockedPreviewMedia"
+  >
+  previewText?: string
   createdAt: string
   previewThumbnailUrl?: string | null
   price?: number
@@ -13,23 +18,65 @@ function formatPrice(amount: number) {
   return new Intl.NumberFormat("ko-KR").format(amount)
 }
 
+function normalizeText(value: string | null | undefined): string {
+  return value?.trim() ?? ""
+}
+
+function resolveLockedPreviewText(params: {
+  renderInput?: Pick<PostRenderInput, "lockedPreviewText">
+  previewText?: string
+}) {
+  const textFromRenderInput = normalizeText(params.renderInput?.lockedPreviewText)
+
+  if (textFromRenderInput.length > 0) {
+    return textFromRenderInput
+  }
+
+  return normalizeText(params.previewText)
+}
+
+function resolveLockedPreviewThumbnailUrl(params: {
+  renderInput?: Pick<PostRenderInput, "primaryLockedPreviewMedia">
+  previewThumbnailUrl?: string | null
+}) {
+  const mediaUrl = params.renderInput?.primaryLockedPreviewMedia?.url?.trim() ?? ""
+
+  if (mediaUrl.length > 0) {
+    return mediaUrl
+  }
+
+  const fallbackUrl = params.previewThumbnailUrl?.trim() ?? ""
+  return fallbackUrl.length > 0 ? fallbackUrl : null
+}
+
 export function LockedPostCard({
-  previewText,
+  renderInput,
+  previewText = "",
   createdAt,
   previewThumbnailUrl = null,
   price,
   lockReason,
   action,
 }: LockedPostCardProps) {
+  const resolvedPreviewText = resolveLockedPreviewText({
+    renderInput,
+    previewText,
+  })
+
+  const resolvedPreviewThumbnailUrl = resolveLockedPreviewThumbnailUrl({
+    renderInput,
+    previewThumbnailUrl,
+  })
+
   const isPaid =
     lockReason === "purchase" &&
     typeof price === "number" &&
     price > 0
 
-  const backdrop = previewThumbnailUrl ? (
+  const backdrop = resolvedPreviewThumbnailUrl ? (
     <div className="relative aspect-[4/5] overflow-hidden bg-zinc-950">
       <img
-        src={previewThumbnailUrl}
+        src={resolvedPreviewThumbnailUrl}
         alt="콘텐츠 미리보기"
         className="h-full w-full scale-[1.06] object-cover opacity-30 blur-md"
       />
@@ -70,7 +117,7 @@ export function LockedPostCard({
   const footer = (
     <>
       <p className="line-clamp-3 whitespace-pre-wrap text-sm leading-6 text-zinc-300">
-        {previewText.trim() || "프리미엄 콘텐츠"}
+        {resolvedPreviewText || "프리미엄 콘텐츠"}
       </p>
 
       <p className="mt-4 text-xs text-zinc-500">{createdAt}</p>

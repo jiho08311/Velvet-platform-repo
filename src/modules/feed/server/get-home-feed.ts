@@ -1,8 +1,15 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { buildCreatorIdentity } from "@/modules/creator/server/build-creator-identity"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
-import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
-import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
 import type { PostBlockEditorState } from "@/modules/post/types"
+import {
+  buildPostLikeCountMap,
+  readPostLikeCount,
+} from "@/shared/lib/post-like-count"
+import {
+  filterFeedPostCandidates,
+  isVisibleFeedCreator,
+} from "./feed-inclusion-policy"
 
 type MediaType = "image" | "video" | "audio" | "file"
 
@@ -64,6 +71,8 @@ type CreatorRow = {
   status: "active" | "pending" | "suspended" | "inactive"
   profiles: {
     id: string
+    username?: string | null
+    display_name?: string | null
     is_deactivated: boolean | null
     is_delete_pending: boolean | null
     deleted_at: string | null
@@ -73,7 +82,10 @@ type CreatorRow = {
 
 type ProfileRow = {
   id: string
+  username?: string | null
+  display_name?: string | null
   avatar_url: string | null
+  bio?: string | null
 }
 
 type PostRow = {
@@ -188,19 +200,11 @@ export async function getHomeFeed(
     throw publicPostsError
   }
 
-  const visiblePostCandidates = (publicPosts ?? []).filter((post) => {
-    const publicState = getPostPublicState({
-      status: post.status,
-      visibility: post.visibility,
-      visibilityStatus: post.visibility_status,
-      moderationStatus: post.moderation_status,
-      publishedAt: post.published_at,
-      deletedAt: post.deleted_at,
-      now,
-    })
-
-    return publicState === "published" || publicState === "upcoming"
-  })
+  const visiblePostCandidates = filterFeedPostCandidates(
+    publicPosts ?? [],
+    now,
+    ["published", "upcoming"]
+  )
 
   if (visiblePostCandidates.length === 0) {
     return {
@@ -210,7 +214,7 @@ export async function getHomeFeed(
   }
 
   const creatorIds = Array.from(
-    new Set(visiblePostCandidates.map((post) => post.creator_id))
+    new Set(visiblePostCandidates.map(({ post }) => post.creator_id))
   )
 
   const { data: creators, error: creatorsError } = await supabaseAdmin
@@ -239,21 +243,7 @@ export async function getHomeFeed(
   const creatorMap = new Map<string, CreatorRow>()
 
   for (const creator of creators ?? []) {
-    if (
-      isPublicCreatorProfileVisible({
-        creator: {
-          status: creator.status,
-        },
-        profile: creator.profiles
-          ? {
-              isDeactivated: creator.profiles.is_deactivated,
-              isDeletePending: creator.profiles.is_delete_pending,
-              deletedAt: creator.profiles.deleted_at,
-              isBanned: creator.profiles.is_banned,
-            }
-          : null,
-      })
-    ) {
+    if (isVisibleFeedCreator(creator)) {
       creatorMap.set(creator.id, creator)
     }
   }
@@ -266,7 +256,7 @@ export async function getHomeFeed(
   }
 
   const filteredPosts = visiblePostCandidates
-    .filter((post) => creatorMap.has(post.creator_id))
+    .filter(({ post }) => creatorMap.has(post.creator_id))
     .slice(0, safeLimit)
 
   if (filteredPosts.length === 0) {
@@ -279,7 +269,7 @@ export async function getHomeFeed(
   const creatorUserIds = Array.from(
     new Set(
       filteredPosts
-        .map((post) => creatorMap.get(post.creator_id)?.user_id ?? "")
+        .map(({ post }) => creatorMap.get(post.creator_id)?.user_id ?? "")
         .filter((value) => value.length > 0)
     )
   )
@@ -298,7 +288,7 @@ export async function getHomeFeed(
     (profiles ?? []).map((profile) => [profile.id, profile])
   )
 
-  const postIds = filteredPosts.map((post) => post.id)
+  const postIds = filteredPosts.map(({ post }) => post.id)
 
   const { data: likeRows, error: likeRowsError } = await supabaseAdmin
     .from("post_likes")
@@ -329,11 +319,7 @@ export async function getHomeFeed(
     throw myLikeRowsError
   }
 
-  const likeCountMap = new Map<string, number>()
-
-  for (const row of likeRows ?? []) {
-    likeCountMap.set(row.post_id, (likeCountMap.get(row.post_id) ?? 0) + 1)
-  }
+  const likeCountMap = buildPostLikeCountMap(likeRows)
 
   const myLikeSet = new Set((myLikeRows ?? []).map((row) => row.post_id))
 
@@ -358,20 +344,8 @@ export async function getHomeFeed(
   }
 
   const publishedPostIds = filteredPosts
-    .filter((post) => {
-      const publicState = getPostPublicState({
-        status: post.status,
-        visibility: post.visibility,
-        visibilityStatus: post.visibility_status,
-        moderationStatus: post.moderation_status,
-        publishedAt: post.published_at,
-        deletedAt: post.deleted_at,
-        now,
-      })
-
-      return publicState === "published"
-    })
-    .map((post) => post.id)
+    .filter(({ publicState }) => publicState === "published")
+    .map(({ post }) => post.id)
 
   const { data: mediaRows, error: mediaError } = await supabaseAdmin
     .from("media")
@@ -399,20 +373,17 @@ export async function getHomeFeed(
   }
 
   const items: HomeFeedItem[] = await Promise.all(
-    filteredPosts.map(async (post) => {
-      const publicState = getPostPublicState({
-        status: post.status,
-        visibility: post.visibility,
-        visibilityStatus: post.visibility_status,
-        moderationStatus: post.moderation_status,
-        publishedAt: post.published_at,
-        deletedAt: post.deleted_at,
-        now,
-      })
-
+    filteredPosts.map(async ({ post, publicState }) => {
       const creator = creatorMap.get(post.creator_id)
       const creatorUserId = creator?.user_id ?? ""
       const profile = profileMap.get(creatorUserId)
+      const identity =
+        creator != null
+          ? buildCreatorIdentity({
+              creator,
+              profile: profile ?? null,
+            })
+          : null
 
       if (publicState === "upcoming") {
         return {
@@ -433,9 +404,9 @@ export async function getHomeFeed(
           isLiked: false,
           commentsCount: 0,
           creator: {
-            username: creator?.username ?? "",
-            displayName: creator?.display_name ?? null,
-            avatarUrl: profile?.avatar_url ?? null,
+            username: identity?.username ?? "",
+            displayName: identity?.displayName ?? null,
+            avatarUrl: identity?.avatarUrl ?? null,
           },
         }
       }
@@ -482,13 +453,13 @@ export async function getHomeFeed(
         price: post.price ?? undefined,
         media,
         blocks: normalizedBlocks,
-        likesCount: likeCountMap.get(post.id) ?? 0,
+        likesCount: readPostLikeCount(likeCountMap, post.id),
         isLiked: myLikeSet.has(post.id),
         commentsCount: commentCountMap.get(post.id) ?? 0,
         creator: {
-          username: creator?.username ?? "",
-          displayName: creator?.display_name ?? null,
-          avatarUrl: profile?.avatar_url ?? null,
+          username: identity?.username ?? "",
+          displayName: identity?.displayName ?? null,
+          avatarUrl: identity?.avatarUrl ?? null,
         },
       }
     })

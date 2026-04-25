@@ -3,6 +3,12 @@ import { NextResponse } from "next/server"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { createNotification } from "@/modules/notification/server/create-notification"
+import { createInteractionNotificationInput } from "@/modules/notification/server/create-interaction-notification-input"
+import {
+  createCommentItem,
+  type CommentItemProfile,
+  type CommentRow,
+} from "@/modules/post/lib/comment-item"
 
 export const dynamic = "force-dynamic"
 
@@ -21,6 +27,10 @@ type CreatorRow = {
   id: string
   user_id: string
 }
+
+type ProfileRow = {
+  id: string
+} & CommentItemProfile
 
 export async function POST(
   request: Request,
@@ -80,11 +90,24 @@ export async function POST(
       content,
     })
     .select("id, post_id, user_id, content, created_at")
-    .single()
+    .single<CommentRow>()
 
   if (insertError) {
     return NextResponse.json(
       { error: insertError.message },
+      { status: 500 }
+    )
+  }
+
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select("id, username, avatar_url")
+    .eq("id", user.id)
+    .single<ProfileRow>()
+
+  if (profileError) {
+    return NextResponse.json(
+      { error: profileError.message },
       { status: 500 }
     )
   }
@@ -102,23 +125,31 @@ export async function POST(
       .eq("id", post.creator_id)
       .single<CreatorRow>()
 
-    if (creator?.user_id && creator.user_id !== user.id) {
-      await createNotification({
-        userId: creator.user_id,
+    if (creator?.user_id) {
+      const notificationInput = createInteractionNotificationInput({
         type: "comment_created",
-        title: "New comment",
-        body: "Someone commented on your post",
-        data: {
-          postId,
-          commentId: insertedComment.id,
-          creatorId: post.creator_id,
-        },
+        actorUserId: user.id,
+        recipientUserId: creator.user_id,
+        postId,
+        commentId: insertedComment.id,
+        creatorId: post.creator_id,
       })
+
+      if (notificationInput) {
+        await createNotification(notificationInput)
+      }
     }
   }
 
+  const item = createCommentItem({
+    comment: insertedComment,
+    profile,
+    likesCount: 0,
+    isLiked: false,
+  })
+
   return NextResponse.json({
     ok: true,
-    item: insertedComment,
+    item,
   })
 }

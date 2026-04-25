@@ -1,7 +1,10 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { requireUser } from "@/modules/auth/server/require-user"
-import { resolvePayoutExecutionProjection } from "@/modules/payout/lib/resolve-payout-execution-projection"
-import type { PayoutExecutionLifecycleState } from "@/modules/payout/lib/resolve-payout-state"
+import {
+  buildPayoutExecutionReadModel,
+  type PayoutExecutionReadModel,
+  type PayoutExecutionRow,
+} from "@/modules/payout/server/build-payout-execution-read-model"
 
 /**
  * Canonical authenticated reader for the current user's creator payout history.
@@ -23,51 +26,7 @@ import type { PayoutExecutionLifecycleState } from "@/modules/payout/lib/resolve
  * Do not treat this file as the generic creatorId-based payout list reader.
  * That role belongs to list-creator-payouts.ts.
  */
-type CreatorPayoutHistoryRow = {
-  id: string
-  amount: number | null
-  currency: string | null
-  status: "pending" | "processing" | "paid" | "failed"
-  paid_at: string | null
-  failure_reason: string | null
-  created_at: string
-}
-
-export type CreatorPayoutHistoryItem = {
-  id: string
-  amount: number
-  currency: string
-  status: "pending" | "processing" | "paid" | "failed"
-  lifecycleState: PayoutExecutionLifecycleState
-  paidAt: string | null
-  failureReason: string | null
-  createdAt: string
-}
-
-function toCreatorPayoutHistoryItem(
-  row: CreatorPayoutHistoryRow
-): CreatorPayoutHistoryItem {
-  const projection = resolvePayoutExecutionProjection({
-    id: row.id,
-    amount: row.amount,
-    currency: row.currency,
-    status: row.status,
-    createdAt: row.created_at,
-    paidAt: row.paid_at,
-    failureReason: row.failure_reason,
-  })
-
-  return {
-    id: projection.id,
-    amount: projection.amount,
-    currency: projection.currency,
-    status: projection.status,
-    lifecycleState: projection.lifecycleState,
-    paidAt: projection.paidAt,
-    failureReason: projection.failureReason,
-    createdAt: projection.createdAt,
-  }
-}
+export type CreatorPayoutHistoryItem = PayoutExecutionReadModel
 
 export async function getCreatorPayoutHistory(): Promise<
   CreatorPayoutHistoryItem[]
@@ -92,11 +51,11 @@ export async function getCreatorPayoutHistory(): Promise<
     .eq("creator_id", creator.id)
     .order("created_at", { ascending: false })
     .limit(20)
-    .returns<CreatorPayoutHistoryRow[]>()
+    .returns<PayoutExecutionRow[]>()
 
   if (payoutsError) {
     throw payoutsError
   }
 
-  return (payouts ?? []).map(toCreatorPayoutHistoryItem)
+  return (payouts ?? []).map(buildPayoutExecutionReadModel)
 }

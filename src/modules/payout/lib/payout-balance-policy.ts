@@ -1,11 +1,11 @@
-type EarningBalanceStatus =
+export type EarningBalanceStatus =
   | "pending"
   | "available"
   | "requested"
   | "paid_out"
   | "reversed"
 
-type EarningBalanceRow = {
+export type EarningBalanceRow = {
   net_amount: number | null
   status: EarningBalanceStatus
   payout_id?: string | null
@@ -29,6 +29,10 @@ function toSafeAmount(value: number | null | undefined): number {
   return Math.max(0, value ?? 0)
 }
 
+export function getEarningBalanceAmount(row: EarningBalanceRow): number {
+  return toSafeAmount(row.net_amount)
+}
+
 export function isRequestableEarning(row: EarningBalanceRow): boolean {
   return (
     row.status === "available" &&
@@ -37,13 +41,25 @@ export function isRequestableEarning(row: EarningBalanceRow): boolean {
   )
 }
 
+export function filterRequestableEarnings<T extends EarningBalanceRow>(
+  rows: T[]
+): T[] {
+  return rows.filter((row) => {
+    if (!isRequestableEarning(row)) {
+      return false
+    }
+
+    return getEarningBalanceAmount(row) > 0
+  })
+}
+
 export function sumRequestableEarnings(rows: EarningBalanceRow[]): number {
   return rows.reduce((sum, row) => {
     if (!isRequestableEarning(row)) {
       return sum
     }
 
-    return sum + toSafeAmount(row.net_amount)
+    return sum + getEarningBalanceAmount(row)
   }, 0)
 }
 
@@ -57,7 +73,7 @@ export function resolvePayoutBalanceTotals(
   let reversedAmount = 0
 
   for (const row of rows) {
-    const amount = toSafeAmount(row.net_amount)
+    const amount = getEarningBalanceAmount(row)
 
     if (row.status === "pending") {
       pendingAmount += amount

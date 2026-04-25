@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
+import type { ReportStatus } from "@/modules/report/types"
 
 type ResolveReportParams = {
   reportId: string
@@ -6,14 +7,14 @@ type ResolveReportParams = {
 
 type ReportRow = {
   id: string
-  status: string
-  resolved_at: string | null
+  status: ReportStatus
+  reviewed_at: string | null
 }
 
 export type ResolvedReport = {
   id: string
-  status: string
-  resolvedAt: string | null
+  status: ReportStatus
+  reviewedAt: string | null
 }
 
 export async function resolveReport({
@@ -27,10 +28,10 @@ export async function resolveReport({
     .from("reports")
     .update({
       status: "resolved",
-      resolved_at: resolvedAt,
+      reviewed_at: resolvedAt,
     })
     .eq("id", reportId)
-    .select("id, status, resolved_at")
+    .select("id, status, reviewed_at")
     .single<ReportRow>()
 
   if (error) {
@@ -40,6 +41,6 @@ export async function resolveReport({
   return {
     id: data.id,
     status: data.status,
-    resolvedAt: data.resolved_at,
+    reviewedAt: data.reviewed_at,
   }
 }

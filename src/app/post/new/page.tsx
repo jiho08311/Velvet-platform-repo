@@ -1,51 +1,27 @@
 import { redirect } from "next/navigation"
 
-import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
-import { readOnboardingReadiness } from "@/modules/auth/server/read-onboarding-readiness"
-import { getCurrentUser } from "@/modules/auth/server/get-current-user"
-import { readCreatorReadiness } from "@/modules/creator/server/read-creator-readiness"
+import {
+  assertPassVerified,
+  getPassVerificationRedirectPath,
+} from "@/modules/auth/server/assert-pass-verified"
+import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
 import { CreatePostComposer } from "@/modules/post/ui/CreatePostComposer"
 
 export default async function NewPostPage() {
-  const user = await getCurrentUser()
-
-  if (!user) {
-    redirect("/sign-in?next=/post/new")
-  }
-
-  const readiness = await readOnboardingReadiness({
-    userId: user.id,
+  const nextPath = "/post/new"
+  const { user, creator } = await requireCreatorReadyUser({
+    signInNext: nextPath,
   })
-
-  if (!readiness.ok) {
-    redirect("/onboarding")
-  }
 
   try {
     await assertPassVerified({ profileId: user.id })
   } catch {
-    redirect("/verify-pass")
+    redirect(getPassVerificationRedirectPath({ next: nextPath }))
   }
-
-  const creatorReadiness = await readCreatorReadiness({
-    userId: user.id,
-  })
-
-  if (!creatorReadiness.ok) {
-    return (
-      <main className="w-full px-0 py-8">
-        <div className="rounded-3xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-          Only creators can create posts.
-        </div>
-      </main>
-    )
-  }
-
-  const { creator } = creatorReadiness
 
   return (
     <main className="w-full px-0 py-8">
-      <div className="mb-6 space-y-2 px-0"> 
+      <div className="mb-6 space-y-2 px-0">
         <p className="text-xs font-medium uppercase tracking-[0.22em] text-pink-400">
           Create
         </p>

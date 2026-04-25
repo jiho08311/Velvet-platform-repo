@@ -1,4 +1,4 @@
-import { getConversationVisibility } from "@/modules/message/server/get-conversation-visibility"
+import { requireConversationAccess } from "@/modules/message/server/get-conversation-access"
 import { assertMessageSendEligibility } from "@/modules/message/server/assert-message-send-eligibility"
 
 type AssertCanSendMessageParams = {
@@ -7,23 +7,19 @@ type AssertCanSendMessageParams = {
 }
 
 export type SendMessagePermission = {
-  otherUserId: string | null
+  otherUserId: string
 }
 
 export async function assertCanSendMessage({
   conversationId,
   senderId,
 }: AssertCanSendMessageParams): Promise<SendMessagePermission> {
-  const visibility = await getConversationVisibility({
+  const access = await requireConversationAccess({
     conversationId,
     userId: senderId,
   })
 
-  if (!visibility.isVisible) {
-    throw new Error("Unauthorized")
-  }
-
-  const otherUserId = visibility.otherUserId
+  const otherUserId = access.otherUserId
 
   if (!otherUserId) {
     throw new Error("Unauthorized")

@@ -3,6 +3,8 @@ import { NextResponse } from "next/server"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { createNotification } from "@/modules/notification/server/create-notification"
+import { createInteractionNotificationInput } from "@/modules/notification/server/create-interaction-notification-input"
+import { createLikeInteractionResult } from "@/shared/lib/like-interaction-result"
 
 type RouteContext = {
   params: Promise<{
@@ -18,6 +20,19 @@ type PostOwnerRow = {
 type CreatorRow = {
   id: string
   user_id: string
+}
+
+async function getPostLikesCount(postId: string) {
+  const { count, error } = await supabaseAdmin
+    .from("post_likes")
+    .select("*", { count: "exact", head: true })
+    .eq("post_id", postId)
+
+  if (error) {
+    throw error
+  }
+
+  return count
 }
 
 export async function POST(
@@ -65,21 +80,31 @@ export async function POST(
       .eq("id", post.creator_id)
       .single<CreatorRow>()
 
-    if (creator?.user_id && creator.user_id !== user.id) {
-      await createNotification({
-        userId: creator.user_id,
+    if (creator?.user_id) {
+      const notificationInput = createInteractionNotificationInput({
         type: "post_liked",
-        title: "Post liked",
-        body: "Someone liked your post",
-        data: {
-          postId,
-          creatorId: post.creator_id,
-        },
+        actorUserId: user.id,
+        recipientUserId: creator.user_id,
+        postId,
+        creatorId: post.creator_id,
       })
+
+      if (notificationInput) {
+        await createNotification(notificationInput)
+      }
     }
   }
 
-  return NextResponse.json({ ok: true })
+  const likesCount = await getPostLikesCount(postId)
+
+  return NextResponse.json(
+    createLikeInteractionResult({
+      targetType: "post",
+      targetId: postId,
+      viewerHasLiked: true,
+      likesCount,
+    })
+  )
 }
 
 export async function DELETE(
@@ -113,5 +138,14 @@ export async function DELETE(
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ ok: true })
+  const likesCount = await getPostLikesCount(postId)
+
+  return NextResponse.json(
+    createLikeInteractionResult({
+      targetType: "post",
+      targetId: postId,
+      viewerHasLiked: false,
+      likesCount,
+    })
+  )
 }

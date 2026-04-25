@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { resolveCreatorStoryReadState } from "../lib/story-read-policy"
-import type { Story } from "../types"
+import type {
+  Story,
+  StoryReadStateApiResponse,
+  StoryReadStateMap,
+} from "../types"
 import { EditStoryModal } from "./EditStoryModal"
 import { StoryViewer } from "./StoryViewer"
-
-
 
 type StoryGroup = {
   creatorId: string
@@ -18,7 +20,7 @@ type StoryGroup = {
 
 type StoryListProps = {
   stories: Story[]
-  readStateMap?: Record<string, string>
+  readStateMap?: StoryReadStateMap
   currentCreatorId?: string
 }
 
@@ -26,6 +28,20 @@ function getInitial(value?: string | null) {
   const normalized = value?.trim() ?? ""
   if (!normalized) return "C"
   return normalized.slice(0, 1).toUpperCase()
+}
+
+function applyPersistedReadState(
+  readStateMap: StoryReadStateMap,
+  payload: StoryReadStateApiResponse
+): StoryReadStateMap {
+  if (!payload.ok) {
+    return readStateMap
+  }
+
+  return {
+    ...readStateMap,
+    [payload.creatorId]: payload.persistedStoryId,
+  }
 }
 
 export function StoryList({
@@ -39,7 +55,7 @@ export function StoryList({
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [editingStories, setEditingStories] = useState<Story[] | null>(null)
   const [localReadStateMap, setLocalReadStateMap] =
-    useState<Record<string, string>>(readStateMap)
+    useState<StoryReadStateMap>(readStateMap)
 
   useEffect(() => {
     setLocalReadStateMap(readStateMap)
@@ -89,9 +105,6 @@ export function StoryList({
 
         <div className="overflow-x-auto">
           <div className="flex gap-3 px-1 pb-2">
-
-
-
             <button
               type="button"
               onClick={() => router.push("/story/new")}
@@ -165,7 +178,7 @@ export function StoryList({
               </button>
             ) : null}
 
-                     {otherGroups.map((group) => {
+            {otherGroups.map((group) => {
               const readState = resolveCreatorStoryReadState({
                 creatorId: group.creatorId,
                 stories: group.stories,
@@ -173,6 +186,7 @@ export function StoryList({
               })
 
               const hasUnseenStory = readState.hasUnseenStory
+              const isRead = readState.isRead
 
               return (
                 <button
@@ -188,7 +202,9 @@ export function StoryList({
                     className={
                       hasUnseenStory
                         ? "rounded-full bg-gradient-to-br from-pink-500 via-fuchsia-500 to-orange-400 p-[2px] animate-[storyPulse_2.5s_ease-in-out_infinite]"
-                        : "rounded-full bg-zinc-700 p-[2px]"
+                        : isRead
+                          ? "rounded-full bg-zinc-700 p-[2px]"
+                          : "rounded-full bg-zinc-700 p-[2px]"
                     }
                   >
                     <div className="h-20 w-20 overflow-hidden rounded-full bg-zinc-950">
@@ -228,16 +244,34 @@ export function StoryList({
         open={selectedStories !== null}
         onClose={() => setSelectedStories(null)}
         onSeenStories={async ({ creatorId, storyId }) => {
-          await fetch("/api/story-read", {
+          const response = await fetch("/api/story-read", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ creatorId, storyId }),
           })
 
+          if (!response.ok) {
+            return {
+              ok: false as const,
+            }
+          }
+
+          const payload = (await response.json()) as StoryReadStateApiResponse
+
+          if (!payload.ok) {
+            return {
+              ok: false as const,
+            }
+          }
+
           setLocalReadStateMap((prev) => ({
-            ...prev,
-            [creatorId]: storyId,
+            ...applyPersistedReadState(prev, payload),
           }))
+
+          return {
+            ok: true as const,
+            persistedStoryId: payload.persistedStoryId,
+          }
         }}
       />
     </>

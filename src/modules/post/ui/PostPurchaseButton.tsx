@@ -48,6 +48,10 @@ export default function PostPurchaseButton({
           setError("콘텐츠를 찾을 수 없습니다")
         } else if (data.error === "Invalid price") {
           setError("콘텐츠 가격이 올바르지 않습니다")
+        } else if (data.error === "CANNOT_PURCHASE_OWN_POST") {
+          setError("내 콘텐츠는 구매할 수 없습니다")
+        } else if (data.error === "SUBSCRIBED_USER_ALREADY_HAS_ACCESS") {
+          setError("이미 구독으로 이용 가능한 콘텐츠입니다")
         } else {
           setError("콘텐츠 이용 처리에 실패했습니다")
         }

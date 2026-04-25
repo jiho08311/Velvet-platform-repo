@@ -6,28 +6,22 @@ import { updatePostStatus } from "@/modules/post/server/update-post-status"
 import { enqueueVideoModeration } from "@/modules/moderation/server/enqueue-video-moderation"
 import { createPostBlocks } from "@/modules/post/server/create-post-blocks"
 import {
+  extractCreatePostModerationFiles,
   projectCreatePostDraft,
-  resolveCreatePostBlocksForPersistence,
+  resolveCreatePostPersistenceFromProjection,
 } from "@/modules/post/server/create-post-draft-policy"
 
 import type {
   CreatePostDraftBlock,
+  CreatePostPersistedMediaMappingItem,
   CreatePostUploadedMediaInput,
 } from "@/modules/post/types"
-
-type MediaType = "image" | "video" | "audio" | "file"
-
-type CreatedMedia = {
-  id: string
-  type: MediaType
-  storagePath: string
-}
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
-function resolveUploadedMediaType(type: string): MediaType {
+function resolveUploadedMediaType(type: string): "image" | "video" | "audio" | "file" {
   if (type === "image") return "image"
   if (type === "video") return "video"
   if (type === "audio") return "audio"
@@ -141,7 +135,9 @@ export async function createPostWithMediaWorkflow({
   const projectedDraft = projectCreatePostDraft({ blocks })
 
   const resolvedContent = projectedDraft.content ?? content ?? null
-  const moderationFiles = projectedDraft.mediaToCreate.map((item) => item.uploaded)
+  const moderationFiles = extractCreatePostModerationFiles({
+    projection: projectedDraft,
+  })
 
   const hasVideo = moderationFiles.some(
     (file) => resolveUploadedMediaType(file.type) === "video"
@@ -162,8 +158,7 @@ export async function createPostWithMediaWorkflow({
   }
 
   // ✅ media 생성
-  const media: CreatedMedia[] = []
-  const mediaIdByProjectionKey = new Map<string, string>()
+  const persistedMedia: CreatePostPersistedMediaMappingItem[] = []
 
   for (const mediaItem of projectedDraft.mediaToCreate) {
     const mediaRow = await createPostAuthoringMedia({
@@ -172,22 +167,21 @@ export async function createPostWithMediaWorkflow({
       media: mediaItem,
     })
 
-    mediaIdByProjectionKey.set(mediaItem.projectionKey, mediaRow.id)
-
-    media.push({
-      id: mediaRow.id,
+    persistedMedia.push({
+      projectionKey: mediaItem.projectionKey,
+      mediaId: mediaRow.id,
       type: mediaRow.type,
       storagePath: mediaRow.storagePath,
     })
   }
 
-  // ✅ block 생성
-  const blocksToInsert = resolveCreatePostBlocksForPersistence({
-    persistenceItems: projectedDraft.persistenceItems,
-    mediaIdByProjectionKey,
+  const persistencePlan = resolveCreatePostPersistenceFromProjection({
+    projection: projectedDraft,
+    persistedMedia,
   })
 
-  await createPostBlocks(post.id, blocksToInsert)
+  await createPostBlocks(post.id, persistencePlan.blocksToInsert)
+  const media = persistencePlan.resolvedMedia
 
   if (hasVideo) {
     await enqueueVideoModeration({

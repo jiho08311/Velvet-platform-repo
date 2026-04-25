@@ -1,9 +1,11 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
-import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
-import { checkSubscription } from "@/modules/subscription/server/check-subscription"
-import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
+import {
+  isEligiblePublicDiscoveryCreator,
+  isEligiblePublicDiscoveryPost,
+} from "@/modules/post/lib/public-discovery-inclusion"
+import { resolvePostAccessState } from "./resolve-post-access-state"
 
 export type PostMediaItem = {
   id: string
@@ -39,6 +41,14 @@ type PostAccessRow = {
 type CreatorRow = {
   id: string
   user_id: string
+  status: "active" | "pending" | "suspended" | "inactive"
+  profiles: {
+    id: string
+    is_deactivated: boolean | null
+    is_delete_pending: boolean | null
+    deleted_at: string | null
+    is_banned: boolean | null
+  } | null
 }
 
 export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
@@ -70,7 +80,18 @@ export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
 
   const { data: creator, error: creatorError } = await supabaseAdmin
     .from("creators")
-    .select("id, user_id")
+    .select(`
+      id,
+      user_id,
+      status,
+      profiles!inner (
+        id,
+        is_deactivated,
+        is_delete_pending,
+        deleted_at,
+        is_banned
+      )
+    `)
     .eq("id", post.creator_id)
     .maybeSingle<CreatorRow>()
 
@@ -85,36 +106,44 @@ export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
     viewerUserId === creatorUserId
 
   if (!isOwner) {
-    const publicState = getPostPublicState({
-      status: post.status,
-      visibility: post.visibility,
-      visibilityStatus: post.visibility_status,
-      moderationStatus: post.moderation_status,
-      publishedAt: post.published_at,
-      deletedAt: post.deleted_at,
-      now,
+    const isVisibleCreator = isEligiblePublicDiscoveryCreator({
+      creator: {
+        status: creator?.status ?? null,
+      },
+      profile: creator?.profiles ?? null,
     })
 
-    if (publicState !== "published") {
+    if (!isVisibleCreator) {
+      return []
+    }
+
+    if (
+      !isEligiblePublicDiscoveryPost({
+        post,
+        now,
+        allowedStates: ["published"],
+      })
+    ) {
       return []
     }
   }
 
-  const isSubscribed =
-    viewerUserId && creatorUserId
-      ? await checkSubscription({
-          userId: viewerUserId,
-          creatorId: post.creator_id,
-        })
-      : false
-
-  const hasPurchased =
-    viewerUserId && post.visibility === "paid" && post.price > 0
-      ? await hasPurchasedPost({
-          userId: viewerUserId,
-          postId: post.id,
-        })
-      : false
+  const { isSubscribed, hasPurchased } = await resolvePostAccessState({
+    viewerUserId,
+    creatorId: post.creator_id,
+    creatorUserId: creatorUserId ?? "",
+    post: {
+      id: post.id,
+      title: null,
+      content: null,
+      status: post.status,
+      visibility: post.visibility,
+      price: post.price,
+      publishedAt: post.published_at,
+      createdAt: post.published_at ?? now,
+      updatedAt: post.published_at ?? now,
+    },
+  })
 
   const { data, error } = await supabaseAdmin
     .from("media")

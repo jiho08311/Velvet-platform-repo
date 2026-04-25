@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/client";
+import { resolveRedirectTarget } from "@/modules/auth/lib/redirect-handoff";
 
 function GoogleLogo() {
   return (
@@ -28,7 +29,9 @@ export function SignInForm() {
   const searchParams = useSearchParams();
   const supabase = createSupabaseBrowserClient();
 
-  const next = searchParams.get("next") || "/feed";
+  const next = resolveRedirectTarget({
+    target: searchParams.get("next"),
+  });
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

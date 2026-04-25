@@ -1,8 +1,23 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
-import { canViewPost } from "@/modules/post/server/can-view-post"
+import { buildPublicCreatorProfileVisibilityInput } from "@/modules/creator/lib/build-public-creator-profile-visibility-input"
+import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
+import {
+  filterPublicDiscoveryPostCandidates,
+  type PublicDiscoveryPostEligibilityInput,
+} from "@/modules/post/lib/public-discovery-inclusion"
+import { buildPostRenderReadModel } from "@/modules/post/server/post-render-read-model"
 import { checkSubscription } from "@/modules/subscription/server/check-subscription"
 import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
+import { getPostLockedPreviewPresentation } from "@/modules/post/lib/get-post-locked-preview-presentation"
+import type { PostBlockEditorState } from "@/modules/post/types"
+import { getPostAccess } from "@/modules/post/server/get-post-access"
+import {
+  buildPostLikeCountMap,
+  readPostLikeCount,
+} from "@/shared/lib/post-like-count"
+
+import { buildCreatorIdentity } from "./build-creator-identity"
 
 type GetCreatorPageInput = {
   username: string
@@ -11,6 +26,7 @@ type GetCreatorPageInput = {
 
 type ProfileRow = {
   id: string
+  username?: string | null
   display_name: string | null
   avatar_url: string | null
   bio: string | null
@@ -39,6 +55,57 @@ type PostRow = {
   published_at: string | null
   visibility_status: "draft" | "published" | "processing" | "rejected" | null
   moderation_status: "pending" | "approved" | "rejected" | null
+  deleted_at: string | null
+}
+
+type MediaRow = {
+  id: string
+  post_id: string
+  storage_path: string
+  type: "image" | "video" | "audio" | "file" | null
+  mime_type: string | null
+  status: "ready"
+  sort_order: number
+}
+
+type PostBlockRow = {
+  id: string
+  post_id: string
+  type: "text" | "image" | "video" | "audio" | "file"
+  content: string | null
+  media_id: string | null
+  sort_order: number
+  created_at: string
+  editor_state: PostBlockEditorState | null
+}
+
+function isCreatorPagePaidTeaser(post: PostRow): boolean {
+  return (
+    post.visibility === "paid" &&
+    post.status === "published" &&
+    post.visibility_status === "published" &&
+    post.moderation_status === "approved" &&
+    !post.deleted_at
+  )
+}
+
+function filterCreatorPageVisiblePosts(
+  posts: PostRow[],
+  now: string
+): PostRow[] {
+  const canonicalPosts = filterPublicDiscoveryPostCandidates(
+    posts,
+    now,
+    ["published", "upcoming"] satisfies PublicDiscoveryPostEligibilityInput["allowedStates"]
+  ).map(({ post }) => post)
+
+  const canonicalPostIds = new Set(canonicalPosts.map((post) => post.id))
+
+  const paidTeaserPosts = posts.filter(
+    (post) => !canonicalPostIds.has(post.id) && isCreatorPagePaidTeaser(post)
+  )
+
+  return [...canonicalPosts, ...paidTeaserPosts]
 }
 
 export async function getCreatorPage({
@@ -67,29 +134,27 @@ export async function getCreatorPage({
     .eq("id", creator.user_id)
     .maybeSingle<ProfileRow>()
 
-if (
-  !isPublicCreatorProfileVisible({
-    creator: {
-      status: creator.status,
-    },
-    profile: profile
-      ? {
-          isDeactivated: profile.is_deactivated,
-          isDeletePending: profile.is_delete_pending,
-          deletedAt: profile.deleted_at,
-          isBanned: profile.is_banned,
-        }
-      : null,
+  if (
+    !isPublicCreatorProfileVisible(
+      buildPublicCreatorProfileVisibilityInput({
+        creator: {
+          status: creator.status,
+        },
+        profile,
+      })
+    )
+  ) {
+    return null
+  }
+
+  if (!profile) {
+    return null
+  }
+
+  const identity = buildCreatorIdentity({
+    creator,
+    profile,
   })
-) {
-  return null
-}
-
-if (!profile) {
-  return null
-}
-
-const resolvedProfile = profile
 
   let isSubscribed = false
 
@@ -105,12 +170,9 @@ const resolvedProfile = profile
   const { data: posts, error: postsError } = await supabaseAdmin
     .from("posts")
     .select(
-      "id, creator_id, content, visibility, price, status, created_at, published_at, visibility_status, moderation_status"
+      "id, creator_id, content, visibility, price, status, created_at, published_at, visibility_status, moderation_status, deleted_at"
     )
     .eq("creator_id", creator.id)
-    .or(
-      `and(status.eq.published,visibility_status.eq.published,moderation_status.eq.approved),and(status.eq.scheduled,visibility.eq.public,moderation_status.eq.approved,published_at.gt.${now})`
-    )
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .returns<PostRow[]>()
@@ -119,19 +181,19 @@ const resolvedProfile = profile
     throw postsError
   }
 
-  const postList = posts ?? []
-  const postIds = postList.map((post) => post.id)
+  const postList = (posts ?? [])
+    .filter((post) => !post.deleted_at)
+
+  const visiblePosts = filterCreatorPageVisiblePosts(postList, now)
+
+  const postIds = visiblePosts.map((post) => post.id)
 
   const { data: likeRows } = await supabaseAdmin
     .from("post_likes")
     .select("post_id")
     .in("post_id", postIds)
 
-  const likeCountMap = new Map<string, number>()
-
-  for (const row of (likeRows ?? []) as PostLikeRow[]) {
-    likeCountMap.set(row.post_id, (likeCountMap.get(row.post_id) ?? 0) + 1)
-  }
+  const likeCountMap = buildPostLikeCountMap((likeRows ?? []) as PostLikeRow[])
 
   let myLikeSet = new Set<string>()
 
@@ -182,7 +244,7 @@ const resolvedProfile = profile
 
   const { data: mediaRows } = await supabaseAdmin
     .from("media")
-    .select("post_id, storage_path, type, mime_type, status, sort_order")
+    .select("id, post_id, storage_path, type, mime_type, status, sort_order")
     .in(
       "post_id",
       publishedPostIds.length > 0
@@ -191,8 +253,25 @@ const resolvedProfile = profile
     )
     .eq("status", "ready")
     .order("sort_order", { ascending: true })
+    .returns<MediaRow[]>()
 
-  const mediaMap = new Map<string, any[]>()
+  const { data: blockRows, error: blockRowsError } = await supabaseAdmin
+    .from("post_blocks")
+    .select("id, post_id, type, content, media_id, sort_order, created_at, editor_state")
+    .in(
+      "post_id",
+      postIds.length > 0
+        ? postIds
+        : ["00000000-0000-0000-0000-000000000000"]
+    )
+    .order("sort_order", { ascending: true })
+    .returns<PostBlockRow[]>()
+
+  if (blockRowsError) {
+    throw blockRowsError
+  }
+
+  const mediaMap = new Map<string, MediaRow[]>()
 
   for (const media of mediaRows ?? []) {
     const current = mediaMap.get(media.post_id) ?? []
@@ -200,98 +279,148 @@ const resolvedProfile = profile
     mediaMap.set(media.post_id, current)
   }
 
+  const blocksMap = new Map<string, PostBlockRow[]>()
+
+  for (const block of blockRows ?? []) {
+    const current = blocksMap.get(block.post_id) ?? []
+    current.push(block)
+    blocksMap.set(block.post_id, current)
+  }
+
   const items = await Promise.all(
-    postList.map(async (post) => {
+    visiblePosts.map(async (post) => {
       const isScheduled = post.status === "scheduled"
+
+      const renderReadModel = buildPostRenderReadModel({
+        blockRows: blocksMap.get(post.id) ?? [],
+        mediaItems: [],
+      })
+
+      const scheduledRenderInput = buildPostRenderInput({
+        text: post.content ?? "",
+        blocks: renderReadModel.blocks,
+        media: renderReadModel.media,
+      })
 
       if (isScheduled) {
         return {
           id: post.id,
-          text: post.content ?? "",
+          text: scheduledRenderInput.blockText || "",
           isLocked: false,
+          lockReason: "none" as const,
           price: post.price,
           media: [],
+          blocks: renderReadModel.blocks,
+          renderInput: scheduledRenderInput,
           createdAt: post.created_at,
           publishedAt: post.published_at,
           status: post.status,
+          visibility: post.visibility,
           likesCount: 0,
           isLiked: false,
           commentsCount: 0,
           creatorId: creator.id,
           creatorUserId: creator.user_id,
           currentUserId: viewerUserId ?? null,
-         creator: {
-  username: creator.username,
-  displayName: resolvedProfile.display_name ?? creator.username,
-  avatarUrl: resolvedProfile.avatar_url ?? null,
-},
+          creator: {
+            username: identity.username,
+            displayName: identity.displayName,
+            avatarUrl: identity.avatarUrl,
+          },
         }
       }
 
       const hasPurchased = purchasedSet.has(post.id)
-
-   const hasAccess = canViewPost({
-  viewerUserId: viewerUserId ?? "",
-  creatorUserId: creator.user_id,
-  visibility: post.visibility,
-  isSubscribed,
-  hasPurchased,
-})
+      const access = await getPostAccess({
+        viewerUserId: viewerUserId ?? null,
+        post: {
+          id: post.id,
+          creatorId: post.creator_id,
+          content: post.content ?? undefined,
+          visibility: post.visibility,
+          price: post.price,
+          createdAt: post.created_at,
+        },
+        creator: {
+          userId: creator.user_id,
+        },
+        isSubscribedResult: isSubscribed,
+        hasPurchasedResult: hasPurchased,
+      })
+      const lockedPreviewPresentation = getPostLockedPreviewPresentation(access)
 
       const allMediaRows = mediaMap.get(post.id) ?? []
 
-      const previewMediaRows = hasAccess
-        ? allMediaRows
-        : allMediaRows.slice(0, 1)
+      const previewMediaRows = lockedPreviewPresentation.isLockedPreview
+        ? allMediaRows.slice(0, 1)
+        : allMediaRows
 
       const media = await Promise.all(
         previewMediaRows.map(async (item) => ({
+          id: item.id,
           url: await createMediaSignedUrl({
             storagePath: item.storage_path,
             viewerUserId: viewerUserId ?? "",
             creatorUserId: creator.user_id,
             visibility: post.visibility,
             hasPurchased,
-            allowPreview: !hasAccess,
+            allowPreview: lockedPreviewPresentation.isLockedPreview,
           }),
           type: item.type ?? "image",
+          mimeType: item.mime_type,
+          sortOrder: item.sort_order,
         }))
       )
 
+      const publishedRenderReadModel = buildPostRenderReadModel({
+        blockRows: blocksMap.get(post.id) ?? [],
+        mediaItems: media,
+      })
+
+      const renderInput = buildPostRenderInput({
+        text: post.content ?? "",
+        blocks: publishedRenderReadModel.blocks,
+        media: publishedRenderReadModel.media,
+      })
+
       return {
         id: post.id,
-        text: hasAccess ? post.content ?? "" : "",
-        isLocked: !hasAccess,
+        text: access.canView ? (renderInput.blockText || "") : "",
+        isLocked: lockedPreviewPresentation.isLockedPreview,
+        lockReason: lockedPreviewPresentation.lockReason,
         price: post.price,
         media,
+        blocks: access.canView ? publishedRenderReadModel.blocks : [],
+        renderInput,
         createdAt: post.published_at ?? post.created_at,
         publishedAt: post.published_at,
         status: post.status,
-        likesCount: likeCountMap.get(post.id) ?? 0,
+        visibility: post.visibility,
+        likesCount: readPostLikeCount(likeCountMap, post.id),
         isLiked: myLikeSet.has(post.id),
         commentsCount: commentCountMap.get(post.id) ?? 0,
         creatorId: creator.id,
         creatorUserId: creator.user_id,
         currentUserId: viewerUserId ?? null,
-      creator: {
-  username: creator.username,
-  displayName: resolvedProfile.display_name ?? creator.username,
-  avatarUrl: resolvedProfile.avatar_url ?? null,
-},
+        creator: {
+          username: identity.username,
+          displayName: identity.displayName,
+          avatarUrl: identity.avatarUrl,
+        },
       }
     })
   )
 
   return {
-creator: {
-  id: creator.id,
-  userId: creator.user_id,
-  username: creator.username,
-  displayName: resolvedProfile.display_name ?? creator.username,
-  avatarUrl: resolvedProfile.avatar_url ?? null,
-  bio: resolvedProfile.bio ?? "",
-  isSubscribed,
-},
+    creator: {
+      id: identity.id,
+      userId: identity.userId,
+      username: identity.username,
+      displayName: identity.displayName,
+      avatarUrl: identity.avatarUrl,
+      bio: identity.bio,
+      isSubscribed,
+    },
     posts: items,
   }
 }

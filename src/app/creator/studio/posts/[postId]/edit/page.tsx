@@ -1,8 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
+import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
 import { getCreatorStudioPost } from "@/modules/post/server/get-creator-studio-post"
 import { EditPostComposer } from "@/modules/post/ui/EditPostComposer"
 
@@ -17,12 +16,9 @@ export default async function CreatorStudioEditPostPage({
 }: CreatorStudioEditPostPageProps) {
   const { postId } = await params
 
-  const user = await requireUser()
-  const creator = await getCreatorByUserId(user.id)
-
-  if (!creator) {
-    notFound()
-  }
+  const { creator } = await requireCreatorReadyUser({
+    signInNext: `/creator/studio/posts/${postId}/edit`,
+  })
 
   const post = await getCreatorStudioPost({
     postId,

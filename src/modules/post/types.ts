@@ -5,6 +5,39 @@ export type PostVisibility =
   | "subscribers"
   | "paid"
 
+export type PostAccessLockReason =
+  | "none"
+  | "subscription"
+  | "purchase"
+
+export type PostPurchaseBlockingReason =
+  | "not_paid_post"
+  | "invalid_price"
+  | "owner"
+  | "already_purchased"
+  | "subscribed"
+
+export type PostPurchaseEligibility =
+  | {
+      canPurchase: true
+      blockingReason: null
+    }
+  | {
+      canPurchase: false
+      blockingReason: PostPurchaseBlockingReason
+    }
+
+export type PostLockedPreviewVariant = Exclude<
+  PostAccessLockReason,
+  "none"
+>
+
+export type PostAccessResult = {
+  canView: boolean
+  locked: boolean
+  lockReason: PostAccessLockReason
+}
+
 export type PostBlockType =
   | "text"
   | "image"
@@ -307,6 +340,18 @@ export type NormalizedCreatePostDraftIntent = {
 export type CreatePostDraftProjectionKey = string
 
 /**
+ * Shared create-time persistence coordinates derived from the draft projection.
+ * These coordinates are the source of truth for both post_blocks.sort_order and
+ * media.sort_order derivation.
+ */
+export type CreatePostPersistenceCoordinates = {
+  blockSortOrder: number
+  mediaSortOrder: number | null
+  carouselGroupId: string | null
+  carouselItemIndex: number | null
+}
+
+/**
  * Post authoring media row contract for persistence creation.
  * This is the authoritative normalized mapping item for uploaded media
  * before it becomes a persisted media row.
@@ -317,6 +362,7 @@ export type CreatePostAuthoringMediaRowInput = {
   sortOrder: number
   uploaded: CreatePostUploadedMediaInput
   editorState?: PostBlockEditorState
+  coordinates: CreatePostPersistenceCoordinates
 }
 
 /**
@@ -335,28 +381,52 @@ export type CreatePostMediaCreationPlanItem =
   CreatePostUploadedMediaPersistencePlanItem
 
 /**
- * Projection-defined block persistence item.
- * Each item is already normalized for persistence and, when relevant,
- * carries the authoritative uploaded media linkage contract.
+ * Persisted uploaded media mapping returned from workflow media creation.
+ * The projection key remains attached so projection-defined linkage can be
+ * resolved without positional or index-based reconstruction in the workflow.
  */
-export type CreatePostPersistenceProjectionItem =
+export type CreatePostPersistedMediaMappingItem = {
+  projectionKey: CreatePostDraftProjectionKey
+  mediaId: string
+  type: Exclude<PostBlockType, "text" | "carousel">
+  storagePath: string
+}
+
+/**
+ * Projection-resolved persisted media output consumed by downstream handoff
+ * surfaces such as moderation and workflow return values.
+ */
+export type CreatePostResolvedMediaItem = {
+  id: string
+  type: Exclude<PostBlockType, "text" | "carousel">
+  storagePath: string
+}
+
+export type CreatePostBlockPersistenceMediaTarget =
   | {
-      kind: "text"
-      block: CreatePostPersistedBlockRowInput
-      uploadedMediaBinding: null
+      kind: "none"
     }
   | {
-      kind: "existing-media"
-      block: CreatePostPersistedBlockRowInput & {
-        mediaId: string
-      }
-      uploadedMediaBinding: null
+      kind: "existing"
+      mediaId: string
     }
   | {
-      kind: "uploaded-media"
-      block: CreatePostPersistedBlockRowInput
-      uploadedMediaBinding: CreatePostUploadedMediaBinding
+      kind: "uploaded"
+      binding: CreatePostUploadedMediaBinding
     }
+
+/**
+ * Projection-defined block persistence item.
+ * Each block carries its own persistence coordinates and explicit media
+ * linkage contract, so downstream workflow code does not need to reconstruct
+ * block-to-media mapping rules.
+ */
+export type CreatePostBlockPersistencePlanItem = {
+  kind: "text" | "existing-media" | "uploaded-media"
+  block: CreatePostPersistedBlockRowInput
+  media: CreatePostBlockPersistenceMediaTarget
+  coordinates: CreatePostPersistenceCoordinates
+}
 
 /**
  * Persistence-ready create mapping for post authoring.
@@ -364,11 +434,19 @@ export type CreatePostPersistenceProjectionItem =
  */
 export type CreatePostDraftProjection = {
   content: string | null
-  persistenceItems: CreatePostPersistenceProjectionItem[]
+  blocksToPersist: CreatePostBlockPersistencePlanItem[]
   mediaToCreate: CreatePostMediaCreationPlanItem[]
 }
 
-export type CreatePostPersistenceMapping = CreatePostDraftProjection
+/**
+ * Final persistence consumption derived from the authoritative projection
+ * and the persisted uploaded-media mapping produced by the workflow.
+ */
+export type CreatePostResolvedPersistencePlan = {
+  blocksToInsert: CreatePostPersistedBlockRowInput[]
+  persistedMedia: CreatePostPersistedMediaMappingItem[]
+  resolvedMedia: CreatePostResolvedMediaItem[]
+}
 
 /**
  * Post row contract for persistence creation.
@@ -419,11 +497,6 @@ export type PostRenderMediaItem = {
   sortOrder?: number
 }
 
-export type PostRenderTextGroup = {
-  type: "text"
-  block: PostBlock
-}
-
 export type PostRenderMediaEntry = {
   media: PostRenderMediaItem
   block?: PostBlock
@@ -445,32 +518,12 @@ export type PostNormalizedRenderGroup =
   | PostNormalizedRenderTextGroup
   | PostNormalizedRenderMediaGroup
 
-export type PostRenderMediaGroup = {
-  type: "media"
-  blocks: PostBlock[]
-  mediaItems: PostRenderMediaItem[]
-  mediaEntries: PostRenderMediaEntry[]
-}
-
-export type PostRenderCarouselGroup = {
-  type: "carousel"
-  blocks: PostBlock[]
-  mediaItems: PostRenderMediaItem[]
-  mediaEntries: PostRenderMediaEntry[]
-}
-
-export type PostRenderGroup =
-  | PostRenderTextGroup
-  | PostRenderMediaGroup
-  | PostRenderCarouselGroup
-
 export type PostRenderInput = {
   hasBlocks: boolean
   resolvedMedia: PostRenderMediaItem[]
   normalizedGroups: PostNormalizedRenderGroup[]
   blockText: string
   blockMedia: PostRenderMediaItem[]
-  groupedBlocks: PostRenderGroup[]
   resolvedMediaEntries: PostRenderMediaEntry[]
   lockedPreviewText: string
   primaryLockedPreviewMedia: PostRenderMediaItem | null
@@ -481,6 +534,7 @@ export type PostRenderSurfaceItem = {
   creatorId: string
   content: string | null
   createdAt: string
+  renderInput?: PostRenderInput
   media: Array<{
     id?: string
     url: string
@@ -491,6 +545,8 @@ export type PostRenderSurfaceItem = {
   blocks: PostBlock[]
   price: number
   isLocked: boolean
+  lockReason?: PostAccessLockReason
+  purchaseEligibility?: PostPurchaseEligibility
   isLiked: boolean
   likesCount: number
   commentsCount: number
@@ -507,6 +563,8 @@ export type PostRenderListItem = {
   visibility: PostVisibility
   price: number
   isLocked: boolean
+  lockReason?: PostAccessLockReason
+  purchaseEligibility?: PostPurchaseEligibility
   createdAt: string
   publishedAt: string | null
   media: Array<{

@@ -1,33 +1,15 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import {
-  resolvePayoutRequestLifecycleState,
-  type PayoutRequestLifecycleState,
-} from "@/modules/payout/lib/resolve-payout-state"
+  buildPayoutRequestReadModel,
+  type PayoutRequestReadModel,
+  type PayoutRequestRow,
+} from "@/modules/payout/server/build-payout-request-read-model"
 
 type GetPayoutRequestParams = {
   payoutRequestId: string
 }
 
-type PayoutRequestRow = {
-  id: string
-  creator_id: string
-  amount: number
-  currency: string
-  status: string
-  created_at: string
-  approved_at: string | null
-}
-
-export type PayoutRequest = {
-  id: string
-  creatorId: string
-  amount: number
-  currency: string
-  status: string
-  lifecycleState: PayoutRequestLifecycleState
-  createdAt: string
-  approvedAt: string | null
-}
+export type PayoutRequest = Omit<PayoutRequestReadModel, "rejectedAt">
 
 export async function getPayoutRequest({
   payoutRequestId,
@@ -50,16 +32,16 @@ export async function getPayoutRequest({
     return null
   }
 
+  const readModel = buildPayoutRequestReadModel(data)
+
   return {
-    id: data.id,
-    creatorId: data.creator_id,
-    amount: data.amount,
-    currency: data.currency,
-    status: data.status,
-    lifecycleState: resolvePayoutRequestLifecycleState({
-      payoutRequestStatus: data.status,
-    }).state,
-    createdAt: data.created_at,
-    approvedAt: data.approved_at,
+    id: readModel.id,
+    creatorId: readModel.creatorId,
+    amount: readModel.amount,
+    currency: readModel.currency,
+    status: readModel.status,
+    lifecycleState: readModel.lifecycleState,
+    createdAt: readModel.createdAt,
+    approvedAt: readModel.approvedAt,
   }
 }

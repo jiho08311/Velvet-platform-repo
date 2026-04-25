@@ -1,22 +1,16 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { resolveSubscriptionState } from "@/modules/subscription/lib/resolve-subscription-state"
+import {
+  findLatestAccessibleSubscriptionReadModel,
+  type SubscriptionReadModelRow,
+} from "@/modules/subscription/server/build-subscription-read-model"
 
 type SubscriptionStatus = "incomplete" | "active" | "canceled" | "expired"
 type SubscriptionProvider = "toss" | "mock"
 
-type SubscriptionRow = {
-  id: string
-  user_id: string
-  creator_id: string
-  status: SubscriptionStatus
+type SubscriptionRow = SubscriptionReadModelRow & {
   provider: SubscriptionProvider
   provider_subscription_id: string | null
-  current_period_start: string | null
-  current_period_end: string | null
-  canceled_at: string | null
   cancel_at_period_end: boolean
-  created_at: string
-  updated_at: string
 }
 
 type GetActiveSubscriptionInput = {
@@ -43,13 +37,20 @@ export async function getActiveSubscription({
   userId,
   creatorId,
 }: GetActiveSubscriptionInput): Promise<ActiveSubscription | null> {
+  const resolvedUserId = userId.trim()
+  const resolvedCreatorId = creatorId.trim()
+
+  if (!resolvedUserId || !resolvedCreatorId) {
+    return null
+  }
+
   const { data, error } = await supabaseAdmin
     .from("subscriptions")
     .select(
       "id, user_id, creator_id, status, provider, provider_subscription_id, cancel_at_period_end, current_period_start, current_period_end, canceled_at, created_at, updated_at"
     )
-    .eq("user_id", userId)
-    .eq("creator_id", creatorId)
+    .eq("user_id", resolvedUserId)
+    .eq("creator_id", resolvedCreatorId)
     .order("created_at", { ascending: false })
     .returns<SubscriptionRow[]>()
 
@@ -59,17 +60,13 @@ export async function getActiveSubscription({
 
   const rows = data ?? []
 
-  const activeRow =
-    rows.find((row) => {
-      const resolved = resolveSubscriptionState({
-        status: row.status,
-        currentPeriodEndAt: row.current_period_end,
-        cancelAtPeriodEnd: row.cancel_at_period_end,
-        canceledAt: row.canceled_at,
-      })
+  const activeReadModel = findLatestAccessibleSubscriptionReadModel(rows)
 
-      return resolved.hasAccess
-    }) ?? null
+  if (!activeReadModel) {
+    return null
+  }
+
+  const activeRow = rows.find((row) => row.id === activeReadModel.id) ?? null
 
   if (!activeRow) {
     return null
@@ -83,9 +80,9 @@ export async function getActiveSubscription({
     provider: activeRow.provider,
     providerSubscriptionId: activeRow.provider_subscription_id,
     cancelAtPeriodEnd: activeRow.cancel_at_period_end,
-    currentPeriodStart: activeRow.current_period_start,
-    currentPeriodEnd: activeRow.current_period_end,
-    canceledAt: activeRow.canceled_at,
+    currentPeriodStart: activeRow.current_period_start ?? null,
+    currentPeriodEnd: activeRow.current_period_end ?? null,
+    canceledAt: activeRow.canceled_at ?? null,
     createdAt: activeRow.created_at,
     updatedAt: activeRow.updated_at,
   }

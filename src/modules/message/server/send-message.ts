@@ -1,9 +1,19 @@
 import OpenAI from "openai"
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import {
+  createConversationMessageMediaMap,
+  type MessageMediaRow,
+} from "@/modules/message/server/create-conversation-message-media"
 
-import { createNotification } from "@/modules/notification/server/create-notification"
 import { assertMessageAttachmentEligibility } from "@/modules/message/server/assert-message-attachment-eligibility"
+import {
+  createSendMessageOutput,
+  createMessageSentEvent,
+  normalizeConversationMessageItem,
+  type SendMessagePayload,
+} from "@/modules/message/types"
+import { createMessageReceivedNotification } from "@/modules/notification/server/create-message-received-notification"
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -12,21 +22,18 @@ const openai = new OpenAI({
 const MEDIA_BUCKET =
   process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "media"
 
-type SendMessageInput = {
-  conversationId: string
+type SendMessageInput = SendMessagePayload & {
   senderId: string
-  content: string
-  type?: "text"
-  price?: null
-  mediaIds?: string[]
 }
 
 type MessageRow = {
   id: string
   conversation_id: string
   sender_id: string
-  content: string
+  content: string | null
   created_at: string
+  read_at: string | null
+  status: string | null
   type: string | null
   price: number | null
 }
@@ -146,25 +153,21 @@ export async function sendMessage(input: SendMessageInput) {
       type: "text",
       price: null,
     })
-    .select("id, created_at")
+    .select(
+      "id, conversation_id, sender_id, content, created_at, read_at, status, type, price"
+    )
     .single<MessageRow>()
 
   if (messageError) {
     throw messageError
   }
 
-  if (otherUserId) {
-    await createNotification({
-      userId: otherUserId,
-      type: "message_received",
-      title: "New message",
-      body: "새로운 메시지가 도착했어요",
-      data: {
-        conversationId: input.conversationId,
-        messageId: message.id,
-      },
-    })
-  }
+  const messageSentEvent = createMessageSentEvent({
+    messageId: message.id,
+    conversationId: input.conversationId,
+    senderId: input.senderId,
+    recipientUserId: otherUserId,
+  })
 
   if (validatedMediaIds.length > 0) {
     const { data: updatedMedia, error: mediaUpdateError } = await supabaseAdmin
@@ -194,8 +197,32 @@ export async function sendMessage(input: SendMessageInput) {
     })
     .eq("id", input.conversationId)
 
-  return {
-    id: message.id,
-    conversationId: input.conversationId,
+  const { data: mediaRowsData, error: mediaRowsError } = await supabaseAdmin
+    .from("media")
+    .select("id, message_id, storage_path, mime_type")
+    .eq("message_id", message.id)
+    .order("created_at", { ascending: true })
+
+  if (mediaRowsError) {
+    throw mediaRowsError
   }
+
+  const mediaRows = (mediaRowsData ?? []) as MessageMediaRow[]
+  const mediaMap = await createConversationMessageMediaMap({
+    mediaRows,
+    viewerUserId: input.senderId,
+    senderUserIdByMessageId: new Map([[message.id, message.sender_id]]),
+  })
+
+  const output = createSendMessageOutput({
+    message: normalizeConversationMessageItem(
+      message,
+      mediaMap.get(message.id) ?? []
+    ),
+    messageSentEvent,
+  })
+
+  await createMessageReceivedNotification(output.messageSentEvent)
+
+  return output.message
 }

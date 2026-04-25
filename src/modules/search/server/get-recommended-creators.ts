@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { buildCreatorIdentity } from "@/modules/creator/server/build-creator-identity"
 import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
 
 import type { CreatorSearchResult } from "../types"
@@ -18,9 +19,10 @@ type CreatorRow = {
 
 type ProfileRow = {
   id: string
-  username: string
+  username: string | null
   display_name: string | null
   avatar_url: string | null
+  bio?: string | null
   is_deactivated: boolean | null
   is_delete_pending: boolean | null
   deleted_at: string | null
@@ -115,13 +117,17 @@ export async function getRecommendedCreators({
     .slice(0, safeLimit)
     .map((creator) => {
       const profile = profileMap.get(creator.user_id)!
+      const identity = buildCreatorIdentity({
+        creator,
+        profile,
+      })
 
       return {
-        id: creator.id,
-        bio: null,
-        username: creator.username,
-        displayName: profile.display_name ?? profile.username,
-        avatarUrl: profile.avatar_url ?? null,
+        id: identity.id,
+        bio: identity.bio || null,
+        username: identity.username,
+        displayName: identity.displayName,
+        avatarUrl: identity.avatarUrl,
         isVerified: false,
       }
     })

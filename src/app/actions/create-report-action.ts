@@ -3,37 +3,14 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { createReport } from "@/modules/report/server/create-report"
-
-type ReportTargetType = "post" | "message" | "user" | "creator"
+import { parseReportFormData } from "@/modules/report/report-form"
 
 export async function createReportAction(formData: FormData) {
-  const targetType = String(formData.get("targetType")) as ReportTargetType
-  const targetId = String(formData.get("targetId"))
-  const reason = String(formData.get("reason"))
-  const description = String(formData.get("description") ?? "")
-  const pathname = String(formData.get("pathname") ?? "/")
+  const { payload, pathname } = parseReportFormData(formData)
 
-  if (!targetType) {
-    throw new Error("Target type is required")
-  }
-
-  if (!targetId) {
-    throw new Error("Target id is required")
-  }
-
-  if (!reason.trim()) {
-    throw new Error("Reason is required")
-  }
-
-  await createReport({
-    targetType,
-    targetId,
-    reason,
-    description,
-  })
+  await createReport(payload)
 
   revalidatePath(pathname)
 
-  // 🔥 핵심 추가
   redirect(pathname)
 }

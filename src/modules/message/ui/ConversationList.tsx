@@ -1,14 +1,9 @@
 // src/modules/message/ui/ConversationList.tsx
 
 import Link from "next/link"
+import type { ConversationSummary } from "@/modules/message/types"
 
-type ConversationListItem = {
-  id: string
-  participantName: string
-  participantAvatarUrl: string | null
-  lastMessage: string
-  lastMessageAt: string
-  participantUsername?: string
+type ConversationListItem = ConversationSummary & {
   isSelected?: boolean
 }
 
@@ -43,15 +38,17 @@ export function ConversationList({
             }`}
           >
             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10">
-              {conversation.participantAvatarUrl ? (
+              {conversation.participant?.avatarUrl ? (
                 <img
-                  src={conversation.participantAvatarUrl}
-                  alt={conversation.participantName}
+                  src={conversation.participant.avatarUrl}
+                  alt={conversation.participant.displayName}
                   className="h-full w-full object-cover"
                 />
               ) : (
                 <span className="text-sm font-semibold text-white/70">
-                  {conversation.participantName.slice(0, 1).toUpperCase()}
+                  {(conversation.participant?.displayName ?? "U")
+                    .slice(0, 1)
+                    .toUpperCase()}
                 </span>
               )}
             </div>
@@ -59,15 +56,15 @@ export function ConversationList({
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-3">
                 <p className="truncate text-sm font-medium text-white">
-                  {conversation.participantName}
+                  {conversation.participant?.displayName ?? "Unknown user"}
                 </p>
                 <span className="shrink-0 text-xs text-white/45">
-                  {conversation.lastMessageAt}
+                  {conversation.lastMessage?.createdAt ?? conversation.updatedAt}
                 </span>
               </div>
 
               <p className="mt-1 truncate text-sm text-white/60">
-                {conversation.lastMessage}
+                {conversation.lastMessage?.content ?? ""}
               </p>
             </div>
           </Link>

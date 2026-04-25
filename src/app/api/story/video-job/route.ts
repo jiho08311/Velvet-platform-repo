@@ -1,8 +1,15 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
+import {
+  buildStoryVideoJobPollResponse,
+  pickStoryVideoJobPollRow,
+} from "@/modules/media/lib/story-video-job-contract"
 import { enqueueStoryVideoJob } from "@/modules/media/server/story-video-job.service"
-import type { StoryEditorState } from "@/modules/story/types"
+import {
+  parseStoryVideoJobFormData,
+  StoryPayloadValidationError,
+} from "@/modules/story/lib/story-create-payload"
 
 export async function POST(request: Request) {
   try {
@@ -31,28 +38,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const formData = await request.formData()
-    const file = formData.get("file")
-    const visibility = String(formData.get("visibility") ?? "subscribers")
-    const startTime = Number(formData.get("startTime") ?? "0")
-    const expiresAt = String(
-      formData.get("expiresAt") ??
-        new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    const { file, expiresAt, story } = parseStoryVideoJobFormData(
+      await request.formData()
     )
-
-    const rawEditorState = formData.get("editorState")
-    let editorState: StoryEditorState | null = null
-
-    if (typeof rawEditorState === "string" && rawEditorState.trim()) {
-      try {
-        editorState = JSON.parse(rawEditorState) as StoryEditorState
-      } catch {
-        return NextResponse.json(
-          { error: "Invalid editorState" },
-          { status: 400 }
-        )
-      }
-    }
 
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "File is required" }, { status: 400 })
@@ -65,17 +53,18 @@ export async function POST(request: Request) {
     const job = await enqueueStoryVideoJob({
       userId: user.id,
       file,
-      visibility,
-      startTime,
+      story,
       expiresAt,
-      editorState,
     })
 
-    return NextResponse.json({
-      jobId: job.id,
-      status: job.status,
-    })
+    return NextResponse.json(
+      buildStoryVideoJobPollResponse(pickStoryVideoJobPollRow(job))
+    )
   } catch (error) {
+    if (error instanceof StoryPayloadValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
     const message =
       error instanceof Error ? error.message : "Failed to enqueue job"
 

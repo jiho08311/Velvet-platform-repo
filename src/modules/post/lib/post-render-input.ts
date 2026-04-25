@@ -1,7 +1,6 @@
 import type {
   PostBlock,
   PostNormalizedRenderGroup,
-  PostRenderGroup,
   PostRenderInput,
   PostRenderMediaItem,
 } from "../types"
@@ -123,47 +122,6 @@ function buildBlockMedia(params: {
   }
 
   return blockMedia
-}
-
-function buildGroupedBlocks(params: {
-  normalizedGroups: PostNormalizedRenderGroup[]
-}): PostRenderGroup[] {
-  const groupedBlocks: PostRenderGroup[] = []
-
-  for (const group of params.normalizedGroups) {
-    if (group.type === "text") {
-      groupedBlocks.push({
-        type: "text",
-        block: group.block,
-      })
-      continue
-    }
-
-    const mediaItems = group.mediaEntries.map((entry) => entry.media)
-
-    if (mediaItems.length === 0) {
-      continue
-    }
-
-    if (group.variant === "carousel") {
-      groupedBlocks.push({
-        type: "carousel",
-        blocks: group.blocks,
-        mediaItems,
-        mediaEntries: group.mediaEntries,
-      })
-      continue
-    }
-
-    groupedBlocks.push({
-      type: "media",
-      blocks: group.blocks,
-      mediaItems,
-      mediaEntries: group.mediaEntries,
-    })
-  }
-
-  return groupedBlocks
 }
 
 function buildNormalizedGroups(params: {
@@ -288,6 +246,40 @@ function buildNormalizedGroups(params: {
   return normalizedGroups
 }
 
+function buildLockedPreviewText(params: {
+  normalizedGroups: PostNormalizedRenderGroup[]
+  fallbackText: string
+}): string {
+  if (params.normalizedGroups.length === 0) {
+    return params.fallbackText
+  }
+
+  return params.normalizedGroups
+    .filter((group) => group.type === "text")
+    .map((group) => normalizeText(group.block.content))
+    .filter(Boolean)
+    .join("\n\n")
+}
+
+function buildPrimaryLockedPreviewMedia(params: {
+  normalizedGroups: PostNormalizedRenderGroup[]
+  fallbackMedia: PostRenderMediaItem[]
+}): PostRenderMediaItem | null {
+  for (const group of params.normalizedGroups) {
+    if (group.type !== "media") {
+      continue
+    }
+
+    const primaryMedia = group.mediaEntries[0]?.media
+
+    if (primaryMedia) {
+      return primaryMedia
+    }
+  }
+
+  return params.fallbackMedia[0] ?? null
+}
+
 export function buildPostRenderInput(
   params: BuildPostRenderInputParams
 ): PostRenderInput {
@@ -317,14 +309,15 @@ export function buildPostRenderInput(
     blockMedia,
   })
 
-  const groupedBlocks = buildGroupedBlocks({
+  const lockedPreviewText = buildLockedPreviewText({
     normalizedGroups,
+    fallbackText: blockText,
   })
 
-  const lockedPreviewText = blockText
-
-  const primaryLockedPreviewMedia =
-    blockMedia.length > 0 ? blockMedia[0] : null
+  const primaryLockedPreviewMedia = buildPrimaryLockedPreviewMedia({
+    normalizedGroups,
+    fallbackMedia: blockMedia,
+  })
 
   const mediaBlockMap = buildMediaEntryMap({
     blocks,
@@ -342,7 +335,6 @@ export function buildPostRenderInput(
     normalizedGroups,
     blockText,
     blockMedia,
-    groupedBlocks,
     resolvedMediaEntries,
     lockedPreviewText,
     primaryLockedPreviewMedia,

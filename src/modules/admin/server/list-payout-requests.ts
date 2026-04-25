@@ -1,18 +1,19 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import {
-  resolvePayoutExecutionLifecycleState,
-  type PayoutExecutionLifecycleState,
-} from "@/modules/payout/lib/resolve-payout-state"
+import type { PayoutExecutionLifecycleState } from "@/modules/payout/lib/resolve-payout-state"
 import {
   resolveAdminPayoutRequestRow,
   type AdminPayoutAction,
 } from "@/modules/admin/lib/payout-request-admin-policy"
-
-type PayoutRequestLifecycleState =
-  | "pending_request"
-  | "approved"
-  | "rejected"
-  | "inactive"
+import {
+  buildPayoutRequestReadModel,
+  type PayoutRequestReadModel,
+} from "@/modules/payout/server/build-payout-request-read-model"
+import {
+  buildPayoutExecutionReadModel,
+  type PayoutExecutionReadModel,
+  type PayoutExecutionRow,
+} from "@/modules/payout/server/build-payout-execution-read-model"
+import type { PayoutRequestLifecycleState } from "@/modules/payout/lib/resolve-payout-state"
 
 export type AdminPayoutBadgeTone =
   | "pending"
@@ -36,13 +37,11 @@ export type AdminPayoutRequestListItem = {
   creator_label: string
   amount: number
   currency: string
-  status: string
   created_at: string
   approved_at: string | null
   rejected_at: string | null
   rejection_reason: string | null
   payout_id: string | null
-  payout_status: "pending" | "processing" | "paid" | "failed" | null
   payout_paid_at: string | null
   payout_failure_reason: string | null
   request_lifecycle_state: PayoutRequestLifecycleState
@@ -52,12 +51,12 @@ export type AdminPayoutRequestListItem = {
   failure_message: string | null
 }
 
-type PayoutRow = {
-  id: string
+type PayoutRow = PayoutExecutionRow & {
   payout_request_id: string | null
-  status: "pending" | "processing" | "paid" | "failed"
-  paid_at: string | null
-  failure_reason: string | null
+}
+
+type AdminLinkedPayoutRow = PayoutRow & {
+  readModel: PayoutExecutionReadModel
 }
 
 type CreatorRow = {
@@ -66,36 +65,8 @@ type CreatorRow = {
   display_name: string | null
 }
 
-type PayoutRequestRow = {
-  id: string
-  creator_id: string
-  amount: number | null
-  currency: string | null
-  status: string
-  created_at: string
-  approved_at: string | null
-  rejected_at: string | null
+type PayoutRequestRow = Parameters<typeof buildPayoutRequestReadModel>[0] & {
   rejection_reason: string | null
-}
-
-function resolveRequestLifecycleState(input: {
-  payoutRequestStatus?: string | null
-}): PayoutRequestLifecycleState {
-  const payoutRequestStatus = input.payoutRequestStatus ?? null
-
-  if (payoutRequestStatus === "rejected") {
-    return "rejected"
-  }
-
-  if (payoutRequestStatus === "approved") {
-    return "approved"
-  }
-
-  if (payoutRequestStatus === "pending") {
-    return "pending_request"
-  }
-
-  return "inactive"
 }
 
 function normalizeText(value: string | null | undefined): string | null {
@@ -179,20 +150,15 @@ function resolveFailureMessage(input: {
 
 function toAdminPayoutRequestListItem(input: {
   requestRow: PayoutRequestRow
-  payout: PayoutRow | null
+  payout: AdminLinkedPayoutRow | null
   creator: CreatorRow | null
 }): AdminPayoutRequestListItem {
   const { requestRow, payout, creator } = input
 
-  const requestLifecycleState = resolveRequestLifecycleState({
-    payoutRequestStatus: requestRow.status,
-  })
-
-  const payoutExecutionState = payout
-    ? resolvePayoutExecutionLifecycleState({
-        payoutStatus: payout.status,
-      })
-    : null
+  const requestReadModel: PayoutRequestReadModel =
+    buildPayoutRequestReadModel(requestRow)
+  const requestLifecycleState = requestReadModel.lifecycleState
+  const payoutExecutionState = payout?.readModel.lifecycleState ?? null
 
   const creatorUsername = normalizeText(creator?.username)
   const creatorDisplayName = normalizeText(creator?.display_name)
@@ -219,21 +185,19 @@ function toAdminPayoutRequestListItem(input: {
   })
 
   return {
-    id: requestRow.id,
-    creator_id: requestRow.creator_id,
+    id: requestReadModel.id,
+    creator_id: requestReadModel.creatorId,
     creator_username: creatorUsername,
     creator_display_name: creatorDisplayName,
     creator_label: creatorLabel,
-    amount: Number(requestRow.amount ?? 0),
-    currency: requestRow.currency ?? "KRW",
-    status: requestRow.status,
-    created_at: requestRow.created_at,
-    approved_at: requestRow.approved_at ?? null,
-    rejected_at: requestRow.rejected_at ?? null,
+    amount: requestReadModel.amount,
+    currency: requestReadModel.currency,
+    created_at: requestReadModel.createdAt,
+    approved_at: requestReadModel.approvedAt,
+    rejected_at: requestReadModel.rejectedAt,
     rejection_reason: rejectionReason,
     payout_id: payout?.id ?? null,
-    payout_status: payout?.status ?? null,
-    payout_paid_at: payout?.paid_at ?? null,
+    payout_paid_at: payout?.readModel.paidAt ?? null,
     payout_failure_reason: payoutFailureReason,
     request_lifecycle_state: requestLifecycleState,
     payout_execution_state: payoutExecutionState,
@@ -269,7 +233,7 @@ export async function listPayoutRequests(): Promise<
   const requestIds = requestRows.map((row) => row.id)
   const creatorIds = [...new Set(requestRows.map((row) => row.creator_id))]
 
-  let payoutRows: PayoutRow[] = []
+  let payoutRows: AdminLinkedPayoutRow[] = []
 
   if (requestIds.length > 0) {
     const { data: payoutsData, error: payoutsError } = await supabaseAdmin
@@ -282,7 +246,10 @@ export async function listPayoutRequests(): Promise<
       throw new Error(payoutsError.message)
     }
 
-    payoutRows = payoutsData ?? []
+    payoutRows = (payoutsData ?? []).map((payout) => ({
+      ...payout,
+      readModel: buildPayoutExecutionReadModel(payout),
+    }))
   }
 
   let creatorRows: CreatorRow[] = []

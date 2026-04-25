@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation"
 
 import { getSession } from "@/modules/auth/server/get-session"
+import {
+  buildPathWithNext,
+  SIGN_IN_PATH,
+} from "@/modules/auth/lib/redirect-handoff"
 
 function getSessionUserId(session: unknown) {
   if (!session || typeof session !== "object") {
@@ -25,16 +29,27 @@ function getSessionUserId(session: unknown) {
 }
 
 export default async function CreatorMediaPage() {
+  const nextPath = "/creator/media"
   const session = await getSession()
 
   if (!session) {
-    redirect("/login")
+    redirect(
+      buildPathWithNext({
+        path: SIGN_IN_PATH,
+        next: nextPath,
+      })
+    )
   }
 
   const userId = getSessionUserId(session)
 
   if (!userId) {
-    redirect("/login")
+    redirect(
+      buildPathWithNext({
+        path: SIGN_IN_PATH,
+        next: nextPath,
+      })
+    )
   }
 
   const mediaItems: Array<{

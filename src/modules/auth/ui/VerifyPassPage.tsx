@@ -3,13 +3,20 @@
 
 type VerifyPassPageProps = {
   profileId: string
+  next?: string | null
 }
 
-export function VerifyPassPage({ profileId }: VerifyPassPageProps) {
+export function VerifyPassPage({ profileId, next }: VerifyPassPageProps) {
   function handleClick() {
-    window.location.href = `/api/auth/pass/start?profileId=${encodeURIComponent(
-      profileId
-    )}`
+    const searchParams = new URLSearchParams({
+      profileId,
+    })
+
+    if (next) {
+      searchParams.set("next", next)
+    }
+
+    window.location.href = `/api/auth/pass/start?${searchParams.toString()}`
   }
 
   return (

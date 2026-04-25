@@ -1,3 +1,5 @@
+import { isPostPublicBaseVisible } from "./is-post-public-base-visible"
+
 type PostPublishedVisibilityInput = {
   status: string | null | undefined
   visibility: string | null | undefined
@@ -6,34 +8,20 @@ type PostPublishedVisibilityInput = {
   deletedAt: string | null | undefined
 }
 
-function isSupportedPublicVisibility(
-  visibility: string | null | undefined
-): boolean {
-  return visibility === "public" || visibility === "subscribers"
-}
-
 export function isPostPublishedVisible(
   input: PostPublishedVisibilityInput
 ): boolean {
-  if (input.deletedAt) {
+  if (
+    !isPostPublicBaseVisible({
+      visibility: input.visibility,
+      moderationStatus: input.moderationStatus,
+      deletedAt: input.deletedAt,
+    })
+  ) {
     return false
   }
 
-  if (!isSupportedPublicVisibility(input.visibility)) {
-    return false
-  }
-
-  if (input.status !== "published") {
-    return false
-  }
-
-  if (input.visibilityStatus !== "published") {
-    return false
-  }
-
-  if (input.moderationStatus !== "approved") {
-    return false
-  }
-
-  return true
+  return (
+    input.status === "published" && input.visibilityStatus === "published"
+  )
 }

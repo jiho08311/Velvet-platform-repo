@@ -48,7 +48,7 @@ export default async function AdminDashboardPage() {
   const totalUsers = users.length
   const totalCreators = creators.length
   const pendingPayoutRequests = payoutRequests.filter(
-    (item) => item.status === "pending"
+    (item) => item.request_lifecycle_state === "pending_request"
   ).length
   const activeSubscriptions = activeSubscriptionsCountResult.count ?? 0
 
@@ -225,7 +225,7 @@ const monthlyRevenue = recentPayments.reduce((sum, payment) => {
         ) : (
           <div className="divide-y divide-zinc-800">
             {payoutRequests
-              .filter((item) => item.status === "pending")
+              .filter((item) => item.request_lifecycle_state === "pending_request")
               .slice(0, 5)
               .map((item) => (
                 <div

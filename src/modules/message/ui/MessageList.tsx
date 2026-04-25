@@ -1,25 +1,8 @@
+import type { ConversationMessageListItem } from "@/modules/message/types"
 import { MessageItem } from "./MessageItem"
 
-type MessageListItemMedia = {
-  id: string
-  url: string
-  type: "image" | "video"
-  mimeType?: string
-}
-
-type MessageListItem = {
-  id: string
-  content: string
-  createdAt: string
-  isOwn?: boolean
-  media?: MessageListItemMedia[]
-  type?: "text" | "ppv"
-  price?: number | null
-  isLocked?: boolean
-}
-
 type MessageListProps = {
-  messages: MessageListItem[]
+  messages: ConversationMessageListItem[]
   emptyMessage?: string
 }
 
@@ -44,10 +27,11 @@ export function MessageList({
           content={message.content}
           createdAt={message.createdAt}
           isOwn={message.isOwn}
-          media={message.media ?? []}
-          type={message.type ?? "text"}
-          price={message.price ?? null}
-          isLocked={message.isLocked ?? false}
+          media={message.media}
+          type={message.type}
+          price={message.price}
+          isLocked={message.isLocked}
+          reportPathname={message.reportPathname}
         />
       ))}
     </section>

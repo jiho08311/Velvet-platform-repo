@@ -1,7 +1,5 @@
-import { redirect } from "next/navigation"
-
-import { requireUser } from "@/modules/auth/server/require-user"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
+import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
+import { readCreatorOperationalReadiness } from "@/modules/creator/server/read-creator-operational-readiness"
 import { listCreatorPayments } from "@/modules/payment/server/list-creator-payments"
 
 import { Card } from "@/shared/ui/Card"
@@ -16,19 +14,29 @@ function formatPrice(amount: number) {
 }
 
 export default async function DashboardPaymentsPage() {
-  let user: Awaited<ReturnType<typeof requireUser>>
+  const { user } = await requireCreatorReadyUser({
+    signInNext: "/dashboard/payments",
+  })
+  const readiness = await readCreatorOperationalReadiness({
+    userId: user.id,
+  })
 
-  try {
-    user = await requireUser()
-  } catch {
-    redirect("/sign-in?next=/dashboard/payments")
+  if (!readiness.ok) {
+    return (
+      <main className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
+        <div className="max-w-md text-center">
+          <h1 className="text-2xl font-semibold text-white">
+            승인 대기중입니다
+          </h1>
+          <p className="mt-3 text-sm text-zinc-500">
+            현재 크리에이터 신청이 검토 중입니다. 승인 후 기능을 이용할 수 있습니다.
+          </p>
+        </div>
+      </main>
+    )
   }
 
-  const creator = await getCreatorByUserId(user.id)
-
-  if (!creator) {
-    redirect("/become-creator")
-  }
+  const { creator } = readiness
 
   const payments = await listCreatorPayments({
     creatorId: creator.id,

@@ -2,16 +2,11 @@
 
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
-type SearchCreatorItem = {
-  id: string
-  username: string
-  displayName: string | null
-  avatarUrl?: string | null
-}
+import type { CreatorSearchResult } from "../types"
 
 type SearchInfiniteListProps = {
   query: string
-  initialCreators: SearchCreatorItem[]
+  initialCreators: CreatorSearchResult[]
   initialCursor: string | null
 }
 

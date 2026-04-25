@@ -1,12 +1,15 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
-import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
-import { checkSubscription } from "@/modules/subscription/server/check-subscription"
-import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
-import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
+import type { PostPublicState } from "@/modules/post/lib/get-post-public-state"
+import {
+  filterPublicDiscoveryPostCandidates,
+  isEligiblePublicDiscoveryCreator,
+} from "@/modules/post/lib/public-discovery-inclusion"
 import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
 import type { PostBlockEditorState, PostRenderListItem } from "../types"
 import { buildPostRenderReadModel } from "./post-render-read-model"
+import { buildLockedPreviewPolicy } from "./locked-preview-policy"
+import { resolvePostAccessState } from "./resolve-post-access-state"
 
 type PostRow = {
   id: string
@@ -65,6 +68,11 @@ type ListCreatorPostsInput = {
   status?: "draft" | "published" | "archived"
 }
 
+type PostWithPublicState = {
+  post: PostRow
+  publicState: PostPublicState
+}
+
 export async function listCreatorPosts({
   creatorId,
   userId,
@@ -107,18 +115,11 @@ export async function listCreatorPosts({
   const isOwner = !!safeUserId && safeUserId === creator.user_id
 
   if (
-    !isPublicCreatorProfileVisible({
+    !isEligiblePublicDiscoveryCreator({
       creator: {
         status: creator.status,
       },
-      profile: creator.profiles
-        ? {
-            isDeactivated: creator.profiles.is_deactivated,
-            isDeletePending: creator.profiles.is_delete_pending,
-            deletedAt: creator.profiles.deleted_at,
-            isBanned: creator.profiles.is_banned,
-          }
-        : null,
+      profile: creator.profiles,
     })
   ) {
     return []
@@ -144,20 +145,9 @@ export async function listCreatorPosts({
     throw error
   }
 
-  const posts = (data ?? [])
-    .map((post) => ({
-      post,
-      publicState: getPostPublicState({
-        status: post.status,
-        visibility: post.visibility,
-        visibilityStatus: post.visibility_status,
-        moderationStatus: post.moderation_status,
-        publishedAt: post.published_at,
-        deletedAt: post.deleted_at,
-        now,
-      }),
-    }))
-    .filter(({ publicState }) => publicState === "published")
+  const posts = filterPublicDiscoveryPostCandidates(data ?? [], now, [
+    "published",
+  ])
     .map(({ post }) => post)
     .slice(0, safeLimit)
 
@@ -167,56 +157,45 @@ export async function listCreatorPosts({
 
   const filteredPosts: Array<
     PostRow & {
-      isLocked?: boolean
+      isLocked: boolean
+      lockReason: PostRenderListItem["lockReason"]
       isSubscribed: boolean
       hasPurchased: boolean
+      purchaseEligibility: PostRenderListItem["purchaseEligibility"]
+      access: Awaited<
+        ReturnType<typeof resolvePostAccessState>
+      >["access"]
+      publicState: "published"
     }
   > = []
 
   for (const post of posts) {
-    let isLocked = false
-    let isSubscribed = false
-    let hasPurchased = false
-
-    if (post.visibility === "subscribers") {
-      if (!safeUserId) {
-        isLocked = true
-      } else if (!isOwner) {
-        isSubscribed = await checkSubscription({
-          userId: safeUserId,
-          creatorId: post.creator_id,
-        })
-
-        if (!isSubscribed) {
-          isLocked = true
-        }
-      } else {
-        isSubscribed = true
-      }
-    }
-
-    if (post.visibility === "paid") {
-      if (!safeUserId) {
-        isLocked = true
-      } else if (!isOwner) {
-        hasPurchased = await hasPurchasedPost({
-          userId: safeUserId,
-          postId: post.id,
-        })
-
-        if (!hasPurchased) {
-          isLocked = true
-        }
-      } else {
-        hasPurchased = true
-      }
-    }
+    const resolvedAccessState = await resolvePostAccessState({
+      viewerUserId: safeUserId ?? null,
+      creatorId: post.creator_id,
+      creatorUserId: creator.user_id,
+      post: {
+        id: post.id,
+        title: post.title,
+        content: post.content,
+        status: post.status,
+        visibility: post.visibility,
+        price: post.price,
+        publishedAt: post.published_at,
+        createdAt: post.created_at,
+        updatedAt: post.updated_at,
+      },
+    })
 
     filteredPosts.push({
       ...post,
-      isLocked,
-      isSubscribed,
-      hasPurchased,
+      publicState: "published",
+      isLocked: resolvedAccessState.access.locked,
+      lockReason: resolvedAccessState.access.lockReason,
+      isSubscribed: resolvedAccessState.isSubscribed,
+      hasPurchased: resolvedAccessState.hasPurchased,
+      access: resolvedAccessState.access,
+      purchaseEligibility: resolvedAccessState.purchaseEligibility,
     })
   }
 
@@ -263,36 +242,88 @@ export async function listCreatorPosts({
 
   return Promise.all(
     filteredPosts.map(async (post) => {
-      const media = post.isLocked
-        ? []
-        : (mediaMap.get(post.id) ?? []).slice(0, 3)
+      const allBlocks = (blocksMap.get(post.id) ?? []).map((block) => ({
+        id: block.id,
+        postId: block.post_id,
+        type: block.type,
+        content: block.content,
+        mediaId: block.media_id,
+        sortOrder: block.sort_order,
+        createdAt: block.created_at,
+        editorState: block.editor_state ?? null,
+      }))
 
-      const mediaThumbnailUrls = await Promise.all(
-        media.map((item) =>
-          createMediaSignedUrl({
-            storagePath: item.storage_path,
-            viewerUserId: safeUserId,
-            creatorUserId: creator.user_id,
-            visibility: post.visibility,
-            isSubscribed: post.isSubscribed,
-            hasPurchased: post.hasPurchased,
-          })
-        )
-      )
+      const allMediaRows = mediaMap.get(post.id) ?? []
 
-      const renderReadModel = buildPostRenderReadModel({
-        blockRows: blocksMap.get(post.id) ?? [],
-        mediaItems: media.map((item, index) => ({
+      const previewPolicy = buildLockedPreviewPolicy({
+        access: post.access,
+        publicState: post.publicState,
+        text: post.content ?? "",
+        blocks: allBlocks,
+        media: allMediaRows.map((item) => ({
           id: item.id,
-          url: mediaThumbnailUrls[index] ?? "",
+          url: "",
           type: item.type,
           mimeType: item.mime_type,
           sortOrder: item.sort_order,
         })),
       })
 
+      const selectedMediaRows = post.access.canView
+        ? allMediaRows
+        : allMediaRows.filter((item) =>
+            previewPolicy.previewMedia.some((preview) => preview.id === item.id)
+          )
+
+      const selectedMedia = await Promise.all(
+        selectedMediaRows.map(async (item) => {
+          const url = await createMediaSignedUrl({
+            storagePath: item.storage_path,
+            viewerUserId: safeUserId,
+            creatorUserId: creator.user_id,
+            visibility: post.visibility,
+            isSubscribed: post.isSubscribed,
+            hasPurchased: post.hasPurchased,
+            allowPreview:
+              !post.access.canView && previewPolicy.allowPreviewMediaSigning,
+          })
+
+          return {
+            id: item.id,
+            url: url ?? "",
+            type: item.type,
+            mimeType: item.mime_type,
+            sortOrder: item.sort_order,
+          }
+        })
+      )
+
+      const selectedBlocks = post.access.canView
+        ? allBlocks
+        : previewPolicy.previewBlocks
+
+      const renderReadModel = buildPostRenderReadModel({
+        blockRows: selectedBlocks.map((block) => ({
+          id: block.id,
+          post_id: block.postId,
+          type: block.type,
+          content: block.content,
+          media_id: block.mediaId,
+          sort_order: block.sortOrder,
+          created_at: block.createdAt,
+          editor_state: block.editorState ?? null,
+        })),
+        mediaItems: selectedMedia.map((item) => ({
+          id: item.id,
+          url: item.url,
+          type: item.type,
+          mimeType: item.mimeType,
+          sortOrder: item.sortOrder,
+        })),
+      })
+
       const renderInput = buildPostRenderInput({
-        text: post.content ?? "",
+        text: post.access.canView ? (post.content ?? "") : previewPolicy.renderTextSeed,
         blocks: renderReadModel.blocks,
         media: renderReadModel.media,
       })
@@ -300,20 +331,23 @@ export async function listCreatorPosts({
       return {
         id: post.id,
         creatorId: post.creator_id,
-        content: post.isLocked ? null : (renderInput.blockText || null),
+        content: post.access.canView ? (renderInput.blockText || null) : null,
         status: post.status,
         visibility: post.visibility,
         price: post.price,
-        isLocked: Boolean(post.isLocked),
+        isLocked: post.isLocked,
+        lockReason: post.lockReason,
+        purchaseEligibility: post.purchaseEligibility,
         publishedAt: post.published_at ?? null,
         createdAt: post.created_at,
-        media: media.map((item, index) => ({
+        media: selectedMedia.map((item) => ({
           id: item.id,
-          url: mediaThumbnailUrls[index] ?? "",
+          url: item.url,
           type: item.type,
-          mimeType: item.mime_type,
-          sortOrder: item.sort_order,
+          mimeType: item.mimeType,
+          sortOrder: item.sortOrder,
         })),
+        renderInput,
       }
     })
   )

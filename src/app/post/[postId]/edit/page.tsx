@@ -1,8 +1,7 @@
 import Link from "next/link"
-import { notFound, redirect } from "next/navigation"
+import { notFound } from "next/navigation"
 
-import { getCurrentUser } from "@/modules/auth/server/get-current-user"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
+import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
 import { getCreatorStudioPost } from "@/modules/post/server/get-creator-studio-post"
 import { EditPostComposer } from "@/modules/post/ui/EditPostComposer"
 
@@ -14,17 +13,9 @@ type EditPostPageProps = {
 
 export default async function EditPostPage({ params }: EditPostPageProps) {
   const { postId } = await params
-  const user = await getCurrentUser()
-
-  if (!user) {
-    redirect(`/sign-in?next=/post/${postId}/edit`)
-  }
-
-  const creator = await getCreatorByUserId(user.id)
-
-  if (!creator) {
-    notFound()
-  }
+  const { creator } = await requireCreatorReadyUser({
+    signInNext: `/post/${postId}/edit`,
+  })
 
   const post = await getCreatorStudioPost({
     postId,

@@ -1,29 +1,29 @@
 import { requireActiveUser } from "@/modules/auth/server/require-active-user"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-
-type ReportTargetType = "post" | "message" | "user" | "creator" | "comment"
-
-type CreateReportParams = {
-  targetType: ReportTargetType
-  targetId: string
-  reason: string
-  description?: string
-}
+import {
+  isReportReason,
+  isReportTargetType,
+  type ReportCreationPayload,
+} from "@/modules/report/types"
 
 export async function createReport({
   targetType,
   targetId,
   reason,
   description,
-}: CreateReportParams) {
+}: ReportCreationPayload) {
   const user = await requireActiveUser()
+
+  if (!isReportTargetType(targetType)) {
+    throw new Error("Invalid target type")
+  }
 
   if (!targetId) {
     throw new Error("Target id is required")
   }
 
-  if (!reason.trim()) {
-    throw new Error("Reason is required")
+  if (!isReportReason(reason)) {
+    throw new Error("Invalid reason")
   }
 
   const { data, error } = await supabaseAdmin

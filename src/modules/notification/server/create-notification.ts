@@ -1,6 +1,9 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
-import type { CreateNotificationInput } from "../types"
+import {
+  normalizeNotificationData,
+  type CreateNotificationInput,
+} from "../types"
 
 export async function createNotification(
   input: CreateNotificationInput,
@@ -11,7 +14,7 @@ export async function createNotification(
     status: "unread",
     title: input.title,
     body: input.body,
-    data: input.data ?? {},
+    data: normalizeNotificationData(input.data, input.type),
     read_at: null,
   })
 

@@ -1,5 +1,5 @@
-import type { Post } from "../types"
-import { canViewPost } from "./can-view-post"
+import type { Post, PostAccessResult } from "../types"
+import { getPostAccess } from "./get-post-access"
 
 type EnforcePostVisibilityParams = {
   post: Post
@@ -9,18 +9,27 @@ type EnforcePostVisibilityParams = {
   hasPurchased: boolean
 }
 
-export function enforcePostVisibility({
+export async function enforcePostVisibility({
   post,
   creatorUserId,
   viewerUserId,
   isSubscribed,
   hasPurchased,
-}: EnforcePostVisibilityParams): boolean {
-  return canViewPost({
+}: EnforcePostVisibilityParams): Promise<PostAccessResult> {
+  return getPostAccess({
     viewerUserId: viewerUserId ?? null,
-    creatorUserId,
-    visibility: post.visibility,
-    isSubscribed,
-    hasPurchased,
+    post: {
+      id: post.id,
+      creatorId: post.creatorId,
+      content: post.content ?? undefined,
+      visibility: post.visibility,
+      price: post.price ?? 0,
+      createdAt: post.createdAt,
+    },
+    creator: {
+      userId: creatorUserId,
+    },
+    isSubscribedResult: isSubscribed,
+    hasPurchasedResult: hasPurchased,
   })
 }

@@ -3,13 +3,17 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createReportAction } from "@/app/actions/create-report-action"
-
-type ReportTargetType = "post" | "message" | "user" | "creator" | "comment"
+import {
+  reportFormFieldNames,
+  toReportFormHiddenFields,
+} from "@/modules/report/report-form"
+import {
+  reportReasons,
+  type ReportTriggerPayload,
+} from "@/modules/report/types"
 
 type ReportButtonProps = {
-  targetType: ReportTargetType
-  targetId: string
-  pathname: string
+  payload: ReportTriggerPayload
   currentUserId?: string
 
   defaultOpen?: boolean
@@ -17,26 +21,14 @@ type ReportButtonProps = {
   onClose?: () => void
 }
 
-const REASONS = [
-  "spam",
-  "harassment",
-  "nudity",
-  "violence",
-  "hate",
-  "impersonation",
-  "scam",
-  "other",
-]
-
 export function ReportButton({
-  targetType,
-  targetId,
-  pathname,
+  payload,
   currentUserId,
   defaultOpen = false,
   hideTrigger = false,
   onClose,
 }: ReportButtonProps) {
+  const { pathname } = payload
   const [open, setOpen] = useState(defaultOpen)
   const router = useRouter()
 
@@ -73,9 +65,14 @@ export function ReportButton({
           action={createReportAction}
           className="space-y-3 px-0 py-2"
         >
-          <input type="hidden" name="targetType" value={targetType} />
-          <input type="hidden" name="targetId" value={targetId} />
-          <input type="hidden" name="pathname" value={pathname} />
+          {toReportFormHiddenFields(payload).map((field) => (
+            <input
+              key={field.name}
+              type="hidden"
+              name={field.name}
+              value={field.value}
+            />
+          ))}
 
           <div className="flex justify-between items-center">
             <span className="text-sm text-white">Report</span>
@@ -91,7 +88,7 @@ export function ReportButton({
           <div className="space-y-1">
             <label className="text-xs text-zinc-400">Reason</label>
             <select
-              name="reason"
+              name={reportFormFieldNames.reason}
               required
               className="w-full border-b border-zinc-800 bg-black px-0 py-2 text-sm text-white outline-none"
               defaultValue=""
@@ -99,7 +96,7 @@ export function ReportButton({
               <option value="" disabled>
                 Select reason
               </option>
-              {REASONS.map((reason) => (
+              {reportReasons.map((reason) => (
                 <option key={reason} value={reason}>
                   {reason}
                 </option>
@@ -110,7 +107,7 @@ export function ReportButton({
           <div className="space-y-1">
             <label className="text-xs text-zinc-400">Description</label>
             <textarea
-              name="description"
+              name={reportFormFieldNames.description}
               rows={3}
               placeholder="Add details"
               className="w-full border-b border-zinc-800 bg-black px-0 py-2 text-sm text-white outline-none"

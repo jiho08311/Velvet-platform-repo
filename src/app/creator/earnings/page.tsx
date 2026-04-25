@@ -1,7 +1,12 @@
 import { redirect } from "next/navigation"
 
 import { getSession } from "@/modules/auth/server/get-session"
-import { getCreatorAnalytics } from "@/modules/analytics/server/get-creator-analytics"
+import {
+  buildPathWithNext,
+  SIGN_IN_PATH,
+} from "@/modules/auth/lib/redirect-handoff"
+import { getCreatorAnalyticsSummary } from "@/modules/analytics/server/get-creator-analytics"
+import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { listPayments } from "@/modules/payment/server/list-payments"
 
 type EarningHistoryItem = {
@@ -55,6 +60,18 @@ function getSessionUserId(session: unknown) {
   return null
 }
 
+function getStringValue(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key]
+
+    if (typeof value === "string" && value.length > 0) {
+      return value
+    }
+  }
+
+  return null
+}
+
 function getNumberValue(record: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
     const value = record[key]
@@ -73,51 +90,6 @@ function getNumberValue(record: Record<string, unknown>, keys: string[]) {
   }
 
   return null
-}
-
-function getStringValue(record: Record<string, unknown>, keys: string[]) {
-  for (const key of keys) {
-    const value = record[key]
-
-    if (typeof value === "string" && value.length > 0) {
-      return value
-    }
-  }
-
-  return null
-}
-
-function normalizeSummary(data: unknown): EarningsSummary {
-  if (!data || typeof data !== "object") {
-    return {
-      grossRevenue: formatCurrency(0),
-      netRevenue: formatCurrency(0),
-      fees: formatCurrency(0),
-    }
-  }
-
-  const source = data as Record<string, unknown>
-
-  const gross =
-    getNumberValue(source, [
-      "grossRevenueAmount",
-      "grossRevenue",
-      "revenueAmount",
-      "revenue",
-    ]) ?? 0
-
-  const net =
-    getNumberValue(source, ["netRevenueAmount", "netRevenue", "netAmount"]) ?? gross
-
-  const fees =
-    getNumberValue(source, ["feesAmount", "fees", "platformFeesAmount"]) ??
-    Math.max(gross - net, 0)
-
-  return {
-    grossRevenue: formatCurrency(gross),
-    netRevenue: formatCurrency(net),
-    fees: formatCurrency(fees),
-  }
 }
 
 function normalizeHistoryItem(item: unknown, index: number): EarningHistoryItem | null {
@@ -172,24 +144,50 @@ function normalizeHistory(data: unknown) {
 }
 
 export default async function CreatorEarningsPage() {
+  const nextPath = "/creator/earnings"
   const session = await getSession()
 
   if (!session) {
-    redirect("/login")
+    redirect(
+      buildPathWithNext({
+        path: SIGN_IN_PATH,
+        next: nextPath,
+      })
+    )
   }
 
   const userId = getSessionUserId(session)
 
   if (!userId) {
-    redirect("/login")
+    redirect(
+      buildPathWithNext({
+        path: SIGN_IN_PATH,
+        next: nextPath,
+      })
+    )
   }
 
-  const [analyticsData, paymentsData] = await Promise.all([
-  getCreatorAnalytics(userId),
-  listPayments(),
-])
+  const creator = await getCreatorByUserId(userId)
 
-  const summary = normalizeSummary(analyticsData)
+  if (!creator) {
+    redirect(
+      buildPathWithNext({
+        path: "/become-creator",
+        next: nextPath,
+      })
+    )
+  }
+
+  const [analytics, paymentsData] = await Promise.all([
+    getCreatorAnalyticsSummary(creator.id),
+    listPayments(),
+  ])
+
+  const summary: EarningsSummary = {
+    grossRevenue: formatCurrency(analytics.revenue.grossRevenue),
+    netRevenue: formatCurrency(analytics.revenue.netRevenue),
+    fees: formatCurrency(analytics.revenue.fees),
+  }
   const earnings = normalizeHistory(paymentsData)
 
   return (

@@ -18,7 +18,7 @@ type ExistingMediaRow = {
 }
 
 type AssertMessageAttachmentEligibilityResult = {
-  otherUserId: string | null
+  otherUserId: string
   mediaIds: string[]
 }
 

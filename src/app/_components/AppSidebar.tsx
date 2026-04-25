@@ -52,9 +52,12 @@ export function AppSidebar() {
         setIsAuthenticated(true)
 
         const data = await res.json()
-        const unread = Array.isArray(data?.notifications)
-          ? data.notifications.some((n: any) => n.isRead === false)
-          : false
+        const unread =
+          typeof data?.hasUnread === "boolean"
+            ? data.hasUnread
+            : typeof data?.unreadCount === "number"
+              ? data.unreadCount > 0
+              : false
 
         setHasUnread(unread)
       } catch {

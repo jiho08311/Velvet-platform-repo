@@ -1,7 +1,6 @@
 import { requireAdmin } from "@/modules/admin/server/require-admin"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-
-type ReportStatus = "pending" | "reviewing" | "resolved" | "rejected"
+import type { ReportStatus } from "@/modules/report/types"
 
 type UpdateReportStatusParams = {
   reportId: string

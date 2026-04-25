@@ -2,8 +2,14 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createEarning } from "@/modules/payout/server/create-earning"
 import { upsertSubscription } from "@/modules/subscription/server/upsert-subscription"
 import { createNotification } from "@/modules/notification/server/create-notification"
+import {
+  createPaymentSucceededNotificationInput,
+  createPpvMessagePurchasedNotificationInput,
+  createPpvPostPurchasedNotificationInput,
+} from "@/modules/notification/server/create-notification-inputs"
 
 import { getPaymentProvider } from "./payment-provider-factory"
+import { isSuccessfulPaymentStatus } from "./payment-result-state"
 
 type PaymentProvider = "toss" | "mock"
 type PaymentStatus = "pending" | "succeeded" | "failed" | "refunded"
@@ -108,7 +114,7 @@ export async function confirmPayment({
   if (existingPaymentError) throw existingPaymentError
   if (!existingPayment) return null
 
-  if (existingPayment.status === "succeeded") {
+  if (isSuccessfulPaymentStatus(existingPayment.status)) {
     if (existingPayment.type === "subscription") {
       await activateSubscriptionFromPayment(existingPayment)
     }
@@ -129,13 +135,12 @@ export async function confirmPayment({
     }
 
     try {
-      await createNotification({
-        userId: existingPayment.user_id,
-        type: "payment_succeeded",
-        title: "Payment successful",
-        body: "Your payment was completed successfully.",
-        data: { paymentId: existingPayment.id },
-      })
+      await createNotification(
+        createPaymentSucceededNotificationInput({
+          userId: existingPayment.user_id,
+          paymentId: existingPayment.id,
+        }),
+      )
 
       if (
         existingPayment.type === "ppv_message" &&
@@ -148,13 +153,12 @@ export async function confirmPayment({
           .maybeSingle()
 
         if (creator?.user_id) {
-          await createNotification({
-            userId: creator.user_id,
-            type: "ppv_message_purchased",
-            title: "PPV purchased",
-            body: "A user purchased your PPV message.",
-            data: { paymentId: existingPayment.id },
-          })
+          await createNotification(
+            createPpvMessagePurchasedNotificationInput({
+              userId: creator.user_id,
+              paymentId: existingPayment.id,
+            }),
+          )
         }
       }
 
@@ -166,13 +170,12 @@ export async function confirmPayment({
           .maybeSingle()
 
         if (creator?.user_id) {
-          await createNotification({
-            userId: creator.user_id,
-            type: "ppv_post_purchased",
-            title: "Post purchased",
-            body: "A user purchased your paid post.",
-            data: { paymentId: existingPayment.id },
-          })
+          await createNotification(
+            createPpvPostPurchasedNotificationInput({
+              userId: creator.user_id,
+              paymentId: existingPayment.id,
+            }),
+          )
         }
       }
     } catch (e) {
@@ -236,13 +239,12 @@ export async function confirmPayment({
   }
 
   try {
-    await createNotification({
-      userId: data.user_id,
-      type: "payment_succeeded",
-      title: "Payment successful",
-      body: "Your payment was completed successfully.",
-      data: { paymentId: data.id },
-    })
+    await createNotification(
+      createPaymentSucceededNotificationInput({
+        userId: data.user_id,
+        paymentId: data.id,
+      }),
+    )
 
     if (data.type === "ppv_message" && data.creator_id) {
       const { data: creator } = await supabaseAdmin
@@ -252,13 +254,12 @@ export async function confirmPayment({
         .maybeSingle()
 
       if (creator?.user_id) {
-        await createNotification({
-          userId: creator.user_id,
-          type: "ppv_message_purchased",
-          title: "PPV purchased",
-          body: "A user purchased your PPV message.",
-          data: { paymentId: data.id },
-        })
+        await createNotification(
+          createPpvMessagePurchasedNotificationInput({
+            userId: creator.user_id,
+            paymentId: data.id,
+          }),
+        )
       }
     }
 
@@ -270,13 +271,12 @@ export async function confirmPayment({
         .maybeSingle()
 
       if (creator?.user_id) {
-        await createNotification({
-          userId: creator.user_id,
-          type: "ppv_post_purchased",
-          title: "Post purchased",
-          body: "A user purchased your paid post.",
-          data: { paymentId: data.id },
-        })
+        await createNotification(
+          createPpvPostPurchasedNotificationInput({
+            userId: creator.user_id,
+            paymentId: data.id,
+          }),
+        )
       }
     }
   } catch (e) {

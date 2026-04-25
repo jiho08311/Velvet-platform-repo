@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import type { PostRenderInput } from "@/modules/post/types"
 import { StatusBadge } from "@/shared/ui/StatusBadge"
 import { EmptyState } from "@/shared/ui/EmptyState"
 import { RestrictedStateShell } from "@/shared/ui/RestrictedStateShell"
@@ -19,10 +20,13 @@ type CreatorContentTabPost = {
   id: string
   content: string | null
   createdAt: string
+  renderInput?: PostRenderInput
   media?: Array<{
     id?: string
     url: string
     type?: "image" | "video" | "audio" | "file"
+    mimeType?: string | null
+    sortOrder?: number
   }>
   isLocked?: boolean
   status?: string | null
@@ -97,7 +101,7 @@ function getUpdateSurfaceState(
     status: post.status,
     isLocked,
     isOwner,
-    content: post.content,
+    content: post.renderInput?.blockText ?? post.content,
   })
 
   const formattedDate = isUpcoming
@@ -139,7 +143,9 @@ function getPostTileState(post: CreatorContentTabPost, isOwner: boolean) {
     isLocked: !isOwner && Boolean(post.isLocked),
     isDraft: isOwner && post.status === "draft",
     extraMediaCount: Math.max((post.media?.length ?? 0) - 1, 0),
-    media: post.media?.[0],
+    media:
+      post.renderInput?.primaryLockedPreviewMedia ??
+      post.media?.[0],
   }
 }
 

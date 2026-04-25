@@ -15,9 +15,14 @@ type SubscribeButtonProps = {
   embedded?: boolean
 }
 
+type SubscriptionCheckState = "active" | "ending" | "expired" | "inactive"
+
 type SubscriptionCheckResponse = {
   subscribed?: boolean
   cancelAtPeriodEnd?: boolean
+  hasAccess?: boolean
+  state?: SubscriptionCheckState
+  isCancelScheduled?: boolean
 }
 
 type CheckoutResponse = {
@@ -50,6 +55,23 @@ function getSubscribeErrorMessage(message: string) {
   }
 
   return "구독 처리에 실패했습니다"
+}
+
+function resolveSubscriptionFlags(data: SubscriptionCheckResponse) {
+  const state = data.state
+
+  if (state) {
+    return {
+      subscribed: data.hasAccess ?? (state === "active" || state === "ending"),
+      cancelAtPeriodEnd:
+        data.isCancelScheduled ?? (state === "ending"),
+    }
+  }
+
+  return {
+    subscribed: Boolean(data.subscribed),
+    cancelAtPeriodEnd: Boolean(data.cancelAtPeriodEnd),
+  }
 }
 
 export default function SubscribeButton({
@@ -106,11 +128,12 @@ export default function SubscribeButton({
       }
 
       const data = (await res.json()) as SubscriptionCheckResponse
+      const flags = resolveSubscriptionFlags(data)
 
-      setSubscribed(Boolean(data.subscribed))
-      setCancelAtPeriodEnd(Boolean(data.cancelAtPeriodEnd))
+      setSubscribed(flags.subscribed)
+      setCancelAtPeriodEnd(flags.cancelAtPeriodEnd)
 
-      return Boolean(data.subscribed)
+      return flags.subscribed
     } catch {
       setSubscribed(false)
       setCancelAtPeriodEnd(false)

@@ -1,13 +1,25 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
-import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
-import { getPostPublicState } from "@/modules/post/lib/get-post-public-state"
+import { buildSubscriptionReadModel } from "@/modules/subscription/server/build-subscription-read-model"
+import {
+  filterFeedPostCandidates,
+  isVisibleFeedCreator,
+} from "@/modules/feed/server/feed-inclusion-policy"
 import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
 import type { PostBlockEditorState, PostRenderListItem } from "../types"
 import { buildPostRenderReadModel } from "./post-render-read-model"
 
 type SubscriptionRow = {
+  id: string
+  user_id: string
   creator_id: string
+  status: "incomplete" | "active" | "canceled" | "expired"
+  current_period_start: string | null
+  current_period_end: string | null
+  cancel_at_period_end: boolean | null
+  canceled_at: string | null
+  created_at: string
+  updated_at: string
 }
 
 type PostRow = {
@@ -90,23 +102,31 @@ export async function listFeedPosts({
   userId,
   limit = 20,
 }: ListFeedPostsInput): Promise<PostRenderListItem[]> {
+  const resolvedUserId = userId.trim()
   const safeLimit = Math.max(1, Math.min(limit, 100))
   const now = new Date().toISOString()
 
+  if (!resolvedUserId) {
+    return []
+  }
+
   const { data: subscriptions, error: subscriptionsError } = await supabaseAdmin
     .from("subscriptions")
-    .select("creator_id")
-    .eq("user_id", userId)
-    .eq("status", "active")
+    .select(
+      "id, user_id, creator_id, status, current_period_start, current_period_end, cancel_at_period_end, canceled_at, created_at, updated_at"
+    )
+    .eq("user_id", resolvedUserId)
     .returns<SubscriptionRow[]>()
 
   if (subscriptionsError) {
     throw subscriptionsError
   }
 
-  const creatorIds = (subscriptions ?? []).map(
-    (subscription) => subscription.creator_id
-  )
+  const creatorIds = (subscriptions ?? [])
+    .filter((subscription) =>
+      buildSubscriptionReadModel(subscription).hasAccess
+    )
+    .map((subscription) => subscription.creator_id)
 
   if (creatorIds.length === 0) {
     return []
@@ -135,21 +155,7 @@ export async function listFeedPosts({
 
   const visibleCreatorMap = new Map(
     (creatorRows ?? [])
-      .filter((creator) =>
-        isPublicCreatorProfileVisible({
-          creator: {
-            status: creator.status,
-          },
-          profile: creator.profiles
-            ? {
-                isDeactivated: creator.profiles.is_deactivated,
-                isDeletePending: creator.profiles.is_delete_pending,
-                deletedAt: creator.profiles.deleted_at,
-                isBanned: creator.profiles.is_banned,
-              }
-            : null,
-        })
-      )
+      .filter((creator) => isVisibleFeedCreator(creator))
       .map((creator) => [creator.id, creator])
   )
 
@@ -175,20 +181,9 @@ export async function listFeedPosts({
     throw postsError
   }
 
-  const resolvedPosts = (posts ?? [])
-    .map((post) => ({
-      post,
-      publicState: getPostPublicState({
-        status: post.status,
-        visibility: post.visibility,
-        visibilityStatus: post.visibility_status,
-        moderationStatus: post.moderation_status,
-        publishedAt: post.published_at,
-        deletedAt: post.deleted_at,
-        now,
-      }),
-    }))
-    .filter(({ publicState }) => publicState === "published")
+  const resolvedPosts = filterFeedPostCandidates(posts ?? [], now, [
+    "published",
+  ])
     .map(({ post }) => post)
     .slice(0, safeLimit)
 
@@ -248,7 +243,7 @@ export async function listFeedPosts({
         selectedMediaRows.map(async (item) => {
           const url = await createMediaSignedUrl({
             storagePath: item.storage_path,
-            viewerUserId: userId,
+            viewerUserId: resolvedUserId,
             creatorUserId,
             visibility: post.visibility,
             isSubscribed: true,

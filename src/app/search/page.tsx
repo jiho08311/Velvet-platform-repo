@@ -1,5 +1,8 @@
 import { requireActiveUser } from "@/modules/auth/server/require-active-user"
-import { assertPassVerified } from "@/modules/auth/server/assert-pass-verified"
+import {
+  assertPassVerified,
+  getPassVerificationRedirectPath,
+} from "@/modules/auth/server/assert-pass-verified"
 import { redirect } from "next/navigation"
 import { searchCreators } from "@/modules/search/server/search-creators"
 import { SearchInfiniteList } from "@/modules/search/ui/SearchInfiniteList"
@@ -9,62 +12,95 @@ import { getExploreCreators } from "@/modules/search/server/get-explore-creators
 import { ExplorePostGrid } from "@/modules/search/ui/ExplorePostGrid"
 import { ExploreCreatorGrid } from "@/modules/search/ui/ExploreCreatorGrid"
 import { SearchInput } from "@/modules/search/ui/SearchInput"
+import type {
+  CreatorSearchConnection,
+  DiscoveryCreatorLinkItem,
+  DiscoveryPostLinkItem,
+} from "@/modules/search/types"
 
 type SearchPageProps = {
   searchParams: Promise<{ q?: string }>
 }
 
+const EMPTY_SEARCH_RESULT: CreatorSearchConnection = {
+  items: [],
+  nextCursor: null,
+}
+
+const EMPTY_EXPLORE_POSTS: DiscoveryPostLinkItem[] = []
+const EMPTY_EXPLORE_CREATORS: DiscoveryCreatorLinkItem[] = []
+
+async function loadSearchResult(
+  query: string
+): Promise<CreatorSearchConnection> {
+  if (!query) {
+    return EMPTY_SEARCH_RESULT
+  }
+
+  try {
+    return await searchCreators({
+      query,
+      limit: 20,
+    })
+  } catch (error) {
+    console.error("[search/page] searchCreators failed:", error)
+    return EMPTY_SEARCH_RESULT
+  }
+}
+
+async function loadExploreData(): Promise<{
+  posts: DiscoveryPostLinkItem[]
+  creators: DiscoveryCreatorLinkItem[]
+}> {
+  const [posts, creators] = await Promise.all([
+    getExplorePosts(24).catch((error) => {
+      console.error("[search/page] getExplorePosts failed:", error)
+      return EMPTY_EXPLORE_POSTS
+    }),
+    getExploreCreators(6).catch((error) => {
+      console.error("[search/page] getExploreCreators failed:", error)
+      return EMPTY_EXPLORE_CREATORS
+    }),
+  ])
+
+  console.log("[search/page] explorePosts count:", posts.length)
+  console.log("[search/page] exploreCreators count:", creators.length)
+
+  return { posts, creators }
+}
+
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const user = await requireActiveUser()
+  const { q = "" } = await searchParams
+  const query = q.trim()
 
   try {
     await assertPassVerified({ profileId: user.id })
   } catch {
-    redirect("/verify-pass")
-  }
+    const nextSearchParams = new URLSearchParams()
 
-  const { q = "" } = await searchParams
-  const query = q.trim()
-
-  let searchResult: {
-    items: Awaited<ReturnType<typeof searchCreators>>["items"]
-    nextCursor: string | null
-  } = {
-    items: [],
-    nextCursor: null,
-  }
-
-  if (query) {
-    try {
-      searchResult = await searchCreators({
-        query,
-        limit: 20,
-      })
-    } catch (error) {
-      console.error("[search/page] searchCreators failed:", error)
+    if (query) {
+      nextSearchParams.set("q", query)
     }
+
+    const nextQuery = nextSearchParams.toString()
+
+    redirect(
+      getPassVerificationRedirectPath({
+        next: nextQuery ? `/search?${nextQuery}` : "/search",
+      })
+    )
   }
 
-  let explorePosts: Awaited<ReturnType<typeof getExplorePosts>> = []
-  let exploreCreators: Awaited<ReturnType<typeof getExploreCreators>> = []
+  const searchResult = await loadSearchResult(query)
+  let explorePosts: DiscoveryPostLinkItem[] = EMPTY_EXPLORE_POSTS
+  let exploreCreators: DiscoveryCreatorLinkItem[] = EMPTY_EXPLORE_CREATORS
 
-if (!query) {
-  try {
-    explorePosts = await getExplorePosts(24)
-    console.log("[search/page] explorePosts count:", explorePosts.length)
-  } catch (error) {
-    console.error("[search/page] getExplorePosts failed:", error)
-    explorePosts = []
+  if (!query) {
+    const exploreData = await loadExploreData()
+    explorePosts = exploreData.posts
+    exploreCreators = exploreData.creators
   }
-
-  try {
-    exploreCreators = await getExploreCreators(6)
-    console.log("[search/page] exploreCreators count:", exploreCreators.length)
-  } catch (error) {
-    console.error("[search/page] getExploreCreators failed:", error)
-    exploreCreators = []
-  }
-}
 
   return (
     <main className="w-full py-6">

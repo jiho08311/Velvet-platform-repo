@@ -2,7 +2,9 @@
 
 import type {
   PostBlock,
-  PostBlockEditorState,
+  PostNormalizedRenderGroup,
+  PostPurchaseEligibility,
+  PostRenderInput,
   PostRenderMediaItem,
 } from "@/modules/post/types"
 import { usePathname, useRouter } from "next/navigation"
@@ -16,29 +18,14 @@ import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid"
 import { formatInUserTimeZone } from "@/shared/lib/date-time"
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
+import { buildReportTriggerPayload } from "@/modules/report/report-trigger"
 import PostPurchaseButton from "./PostPurchaseButton"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
 import { LockedPostCard } from "./LockedPostCard"
 import { PostMoreMenu } from "./PostMoreMenu"
-
-type CommentItem = {
-  id: string
-  content: string
-  created_at?: string
-  user_id?: string
-  likes_count?: number
-  is_liked?: boolean
-  profiles?:
-    | {
-        username?: string | null
-        avatar_url?: string | null
-      }
-    | Array<{
-        username?: string | null
-        avatar_url?: string | null
-      }>
-    | null
-}
+import { getPostPurchaseCtaVisibility } from "@/modules/post/lib/get-post-purchase-cta-visibility"
+import { readLikeInteractionResult } from "@/shared/lib/like-interaction-result"
+import { isCommentItem, type CommentItem } from "@/modules/post/lib/comment-item"
 
 export type PostCardCreator = {
   username: string
@@ -53,8 +40,10 @@ export type PostCardSurfaceProps = {
   createdAt: string
   media?: PostRenderMediaItem[]
   blocks?: PostBlock[]
+  renderInput?: PostRenderInput
   isLocked?: boolean
   lockReason?: "none" | "subscription" | "purchase"
+  purchaseEligibility?: PostPurchaseEligibility
   price?: number
   creatorId: string
   creatorUserId?: string
@@ -63,6 +52,26 @@ export type PostCardSurfaceProps = {
   isLiked?: boolean
   creator: PostCardCreator
 }
+
+type PostCardRenderSection =
+  | {
+      kind: "text"
+      key: string
+      text: string
+      containerClassName: string
+      textClassName: string
+    }
+  | {
+      kind: "media"
+      key: string
+      items: PostRenderMediaItem[]
+      mediaEntries?: Array<{
+        media: PostRenderMediaItem
+        block?: PostBlock
+      }>
+      isCarousel: boolean
+      hasVideoBlock: boolean
+    }
 
 function formatPostDate(value: string) {
   return formatInUserTimeZone(value, { withTime: false })
@@ -89,8 +98,10 @@ export function PostCard({
   createdAt,
   media = [],
   blocks = [],
+  renderInput,
   isLocked = false,
   lockReason = "none",
+  purchaseEligibility,
   price,
   creatorId,
   creatorUserId,
@@ -114,32 +125,34 @@ export function PostCard({
   const [showComments, setShowComments] = useState(false)
   const [commentError, setCommentError] = useState<string | null>(null)
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null)
+  const [likingCommentId, setLikingCommentId] = useState<string | null>(null)
+  const [commentCount, setCommentCount] = useState(commentsCount)
   const [expandedComments, setExpandedComments] = useState(false)
 
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({})
   const [isVideoReady, setIsVideoReady] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
 
+  const resolvedRenderInput =
+    renderInput ??
+    buildPostRenderInput({
+      text: text ?? "",
+      media,
+      blocks,
+    })
+
   const {
     hasBlocks,
     blockText,
     blockMedia,
-    groupedBlocks,
+    normalizedGroups,
     resolvedMediaEntries,
     lockedPreviewText,
     primaryLockedPreviewMedia,
-  } = buildPostRenderInput({
-    text: text ?? "",
-    media,
-    blocks,
-  })
+  } = resolvedRenderInput
 
-  const hasNormalizedGroups = groupedBlocks.length > 0
+  const hasNormalizedGroups = normalizedGroups.length > 0
   const shouldRenderNormalizedGroups = hasBlocks && hasNormalizedGroups
-  const shouldRenderFallbackMedia =
-    !shouldRenderNormalizedGroups && blockMedia.length > 0
-  const shouldRenderFallbackText =
-    !shouldRenderNormalizedGroups && Boolean(blockText)
 
   async function handleLike(event: React.MouseEvent<HTMLButtonElement>) {
     event.stopPropagation()
@@ -157,8 +170,14 @@ export function PostCard({
         return
       }
 
-      setLiked((prev) => !prev)
-      setCount((prev) => (liked ? Math.max(0, prev - 1) : prev + 1))
+      const data = readLikeInteractionResult(await response.json().catch(() => null))
+
+      if (!data || data.targetType !== "post" || data.targetId !== postId) {
+        return
+      }
+
+      setLiked(data.viewerHasLiked)
+      setCount(data.likesCount)
     } catch {
       return
     } finally {
@@ -181,7 +200,9 @@ export function PostCard({
       }
 
       const data = await response.json()
-      setComments(data.items ?? [])
+      const items = Array.isArray(data?.items) ? data.items : []
+      setComments(items)
+      setCommentCount(items.length)
     } catch {
       return
     } finally {
@@ -215,9 +236,18 @@ export function PostCard({
         return
       }
 
+      const data = await response.json().catch(() => null)
+      const item = data?.item
+
+      if (isCommentItem(item)) {
+        setComments((prev) => [item, ...prev.filter((comment) => comment.id !== item.id)])
+        setCommentCount((prev) => prev + 1)
+      } else {
+        await loadComments()
+      }
+
       setCommentInput("")
       setCommentError(null)
-      await loadComments()
     } catch {
       return
     } finally {
@@ -244,7 +274,8 @@ export function PostCard({
         return
       }
 
-      await loadComments()
+      setComments((prev) => prev.filter((comment) => comment.id !== commentId))
+      setCommentCount((prev) => Math.max(0, prev - 1))
     } finally {
       setDeletingCommentId(null)
     }
@@ -257,15 +288,41 @@ export function PostCard({
   ) {
     event.stopPropagation()
 
-    const response = await fetch(`/api/comment/${commentId}/like`, {
-      method: likedByMe ? "DELETE" : "POST",
-    })
+    if (!commentId || likingCommentId) return
 
-    if (!response.ok) {
-      return
+    try {
+      setLikingCommentId(commentId)
+
+      const response = await fetch(`/api/comment/${commentId}/like`, {
+        method: likedByMe ? "DELETE" : "POST",
+      })
+
+      if (!response.ok) {
+        return
+      }
+
+      const data = readLikeInteractionResult(await response.json().catch(() => null))
+
+      if (!data || data.targetType !== "comment" || data.targetId !== commentId) {
+        return
+      }
+
+      setComments((prev) =>
+        prev.map((comment) => {
+          if (comment.id !== commentId) {
+            return comment
+          }
+
+          return {
+            ...comment,
+            is_liked: data.viewerHasLiked,
+            likes_count: data.likesCount,
+          }
+        })
+      )
+    } finally {
+      setLikingCommentId(null)
     }
-
-    await loadComments()
   }
 
   useEffect(() => {
@@ -273,6 +330,18 @@ export function PostCard({
       setExpandedComments(false)
     }
   }, [showComments])
+
+  useEffect(() => {
+    setLiked(isLiked)
+  }, [isLiked])
+
+  useEffect(() => {
+    setCount(likesCount)
+  }, [likesCount])
+
+  useEffect(() => {
+    setCommentCount(commentsCount)
+  }, [commentsCount])
 
   function handleCardClick() {
     return
@@ -481,7 +550,70 @@ export function PostCard({
     )
   }
 
+  function renderNormalizedGroup(
+    group: PostNormalizedRenderGroup,
+    index: number
+  ): PostCardRenderSection {
+    if (group.type === "text") {
+      return {
+        kind: "text",
+        key: group.block.id,
+        text: group.block.content ?? "",
+        containerClassName: "px-3 pt-3",
+        textClassName:
+          "whitespace-pre-wrap text-[15px] leading-7 text-white font-medium",
+      }
+    }
+
+    return {
+      kind: "media",
+      key: `media-group-${index}`,
+      items: group.mediaEntries.map((entry) => entry.media),
+      mediaEntries: group.mediaEntries,
+      isCarousel: group.variant === "carousel",
+      hasVideoBlock: group.blocks.some((block) => block.type === "video"),
+    }
+  }
+
+  function renderSection(section: PostCardRenderSection) {
+    if (section.kind === "text") {
+      return (
+        <div key={section.key} className={section.containerClassName}>
+          <p className={section.textClassName}>
+            {section.text}
+          </p>
+        </div>
+      )
+    }
+
+    const mediaItems = section.items
+    return (
+      <div key={section.key} className="overflow-hidden">
+        {mediaItems.length > 0 ? (
+          renderMedia(mediaItems, section.mediaEntries, section.isCarousel)
+        ) : (
+          <div className="mt-2 flex min-h-[220px] items-center justify-center bg-zinc-900 text-sm text-zinc-500">
+            {section.hasVideoBlock
+              ? "Video is processing..."
+              : "Media not available"}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   function renderLockedAction() {
+    const shouldShowPurchaseCta = purchaseEligibility
+      ? getPostPurchaseCtaVisibility({
+          isLocked,
+          purchaseEligibility,
+        })
+      : getPostPurchaseCtaVisibility({
+          canView: !isLocked,
+          locked: isLocked,
+          lockReason,
+        })
+
     if (lockReason === "subscription") {
       return (
         <div onClick={(event) => event.stopPropagation()}>
@@ -496,12 +628,7 @@ export function PostCard({
       )
     }
 
-    if (
-      lockReason === "purchase" &&
-      postId &&
-      typeof price === "number" &&
-      price > 0
-    ) {
+    if (shouldShowPurchaseCta && postId && typeof price === "number" && price > 0) {
       return (
         <div onClick={(event) => event.stopPropagation()}>
           <PostPurchaseButton
@@ -517,18 +644,39 @@ export function PostCard({
     return null
   }
 
-  const lockedPreviewThumbnailUrl = primaryLockedPreviewMedia?.url ?? null
-  const hasLockedPreviewText = Boolean(lockedPreviewText.trim())
-  const hasLockedPreviewThumbnail = Boolean(lockedPreviewThumbnailUrl)
-  const creatorName = creator.displayName ?? creator.username
+   const creatorName = creator.displayName ?? creator.username
+
   const creatorInitial = creatorName.slice(0, 1).toUpperCase()
   const visibleComments = expandedComments ? comments : comments.slice(0, 3)
+  const renderSections: PostCardRenderSection[] = shouldRenderNormalizedGroups
+    ? normalizedGroups.map(renderNormalizedGroup)
+    : [
+        ...(blockMedia.length > 0
+          ? [
+              {
+                kind: "media" as const,
+                key: "fallback-media",
+                items: blockMedia,
+                isCarousel: false,
+                hasVideoBlock: false,
+              },
+            ]
+          : []),
+        ...(blockText
+          ? [
+              {
+                kind: "text" as const,
+                key: "fallback-text",
+                text: blockText,
+                containerClassName: "px-0 pt-3",
+                textClassName:
+                  "whitespace-pre-wrap text-[16px] leading-7 text-white font-medium",
+              },
+            ]
+          : []),
+      ]
 
   function getCommentUsername(comment: CommentItem) {
-    if (Array.isArray(comment.profiles)) {
-      return comment.profiles[0]?.username ?? "user"
-    }
-
     return comment.profiles?.username ?? "user"
   }
 
@@ -578,11 +726,8 @@ export function PostCard({
       {isLocked ? (
         <div className="mt-2">
           <LockedPostCard
-            previewText={hasLockedPreviewText ? lockedPreviewText : ""}
+            renderInput={resolvedRenderInput}
             createdAt={createdAt}
-            previewThumbnailUrl={
-              hasLockedPreviewThumbnail ? lockedPreviewThumbnailUrl : null
-            }
             price={price}
             lockReason={lockReason === "none" ? undefined : lockReason}
             action={renderLockedAction()}
@@ -590,51 +735,7 @@ export function PostCard({
         </div>
       ) : (
         <>
-          {shouldRenderNormalizedGroups ? (
-            <>
-              {groupedBlocks.map((group, index) => {
-                if (group.type === "text") {
-                  return (
-                    <div key={group.block.id} className="px-3 pt-3">
-                      <p className="whitespace-pre-wrap text-[15px] leading-7 text-white font-medium">
-                        {group.block.content}
-                      </p>
-                    </div>
-                  )
-                }
-
-                return (
-                  <div key={`media-group-${index}`} className="overflow-hidden">
-                    {group.mediaItems.length > 0 ? (
-                      renderMedia(
-                        group.mediaItems,
-                        group.mediaEntries,
-                        group.type === "carousel"
-                      )
-                    ) : (
-                      <div className="mt-2 flex min-h-[220px] items-center justify-center bg-zinc-900 text-sm text-zinc-500">
-                        {group.blocks.some((block) => block.type === "video")
-                          ? "Video is processing..."
-                          : "Media not available"}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </>
-          ) : (
-            <>
-              {shouldRenderFallbackMedia ? renderMedia() : null}
-
-              {shouldRenderFallbackText ? (
-                <div className="px-0 pt-3">
-                  <p className="whitespace-pre-wrap text-[16px] leading-7 text-white font-medium">
-                    {blockText}
-                  </p>
-                </div>
-              ) : null}
-            </>
-          )}
+          {renderSections.map(renderSection)}
 
           <div className="flex items-center gap-4 px-0 pt-3">
             <button
@@ -667,7 +768,7 @@ export function PostCard({
             >
               <ChatBubbleOvalLeftIcon className="h-6 w-6 stroke-[2.5]" />
               <span className="text-[14px] font-semibold">
-                {commentsCount || comments.length}
+                {commentCount}
               </span>
             </button>
 
@@ -742,6 +843,7 @@ export function PostCard({
                                 Boolean(comment.is_liked)
                               )
                             }
+                            disabled={likingCommentId === comment.id}
                             className="inline-flex items-center gap-1.5 px-0 py-1 text-sm text-zinc-300 transition hover:text-white active:scale-95"
                           >
                             {comment.is_liked ? (
@@ -754,9 +856,11 @@ export function PostCard({
 
                           <div onClick={(event) => event.stopPropagation()}>
                             <ReportButton
-                              targetType="comment"
-                              targetId={comment.id}
-                              pathname={`/post/${postId}`}
+                              payload={buildReportTriggerPayload({
+                                targetType: "comment",
+                                targetId: comment.id,
+                                pathname,
+                              })}
                               currentUserId={currentUserId}
                             />
                           </div>

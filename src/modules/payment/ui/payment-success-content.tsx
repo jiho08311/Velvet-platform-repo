@@ -7,29 +7,100 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Card } from "@/shared/ui/Card"
 import { Skeleton } from "@/shared/ui/Skeleton"
 
+type ConfirmInput = {
+  paymentId: string
+  paymentKey?: string | null
+  orderId?: string | null
+  amount?: string | null
+}
+
+type SuccessDestination =
+  | {
+      type: "post"
+      href: string
+    }
+  | {
+      type: "message"
+      messageId: string
+    }
+  | {
+      type: "route"
+      href: string
+    }
+
+function resolveConfirmInput(
+  searchParams: URLSearchParams
+): ConfirmInput | null {
+  const paymentIdParam = searchParams.get("paymentId")
+  const orderId = searchParams.get("orderId")
+  const paymentId = paymentIdParam || orderId
+
+  if (!paymentId) {
+    return null
+  }
+
+  return {
+    paymentId,
+    paymentKey: searchParams.get("paymentKey"),
+    orderId,
+    amount: searchParams.get("amount"),
+  }
+}
+
+function resolveSuccessDestination(
+  searchParams: URLSearchParams
+): SuccessDestination {
+  const postId = searchParams.get("postId")
+  const creatorUsername = searchParams.get("creatorUsername")
+  const messageId = searchParams.get("messageId")
+
+  if (postId && creatorUsername) {
+    return {
+      type: "route",
+      href: `/creator/${creatorUsername}`,
+    }
+  }
+
+  if (postId) {
+    return {
+      type: "post",
+      href: `/post/${postId}`,
+    }
+  }
+
+  if (messageId) {
+    return {
+      type: "message",
+      messageId,
+    }
+  }
+
+  if (creatorUsername) {
+    return {
+      type: "route",
+      href: `/creator/${creatorUsername}`,
+    }
+  }
+
+  return {
+    type: "route",
+    href: "/feed",
+  }
+}
+
 export function PaymentSuccessContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
   useEffect(() => {
-    let paymentId = searchParams.get("paymentId")
+    const confirmInput = resolveConfirmInput(searchParams)
 
-    const paymentKey = searchParams.get("paymentKey")
-    const orderId = searchParams.get("orderId")
-    const amount = searchParams.get("amount")
-
-    const postId = searchParams.get("postId")
-    const creatorUsername = searchParams.get("creatorUsername")
-    const messageId = searchParams.get("messageId")
-
-    if (!paymentId && orderId) {
-      paymentId = orderId
-    }
-
-    if (!paymentId) {
+    if (!confirmInput) {
       router.replace("/payment/fail?reason=invalid_request")
       return
     }
+
+    const destination = resolveSuccessDestination(searchParams)
 
     const confirm = async () => {
       try {
@@ -38,12 +109,7 @@ export function PaymentSuccessContent() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            paymentId,
-            paymentKey,
-            orderId,
-            amount,
-          }),
+          body: JSON.stringify(confirmInput),
         })
 
         if (!res.ok) {
@@ -56,19 +122,14 @@ export function PaymentSuccessContent() {
           throw new Error("CONFIRM_FAILED")
         }
 
-        if (postId && creatorUsername) {
-          router.replace(`/creator/${creatorUsername}`)
+        if (destination.type === "post") {
+          router.replace(destination.href)
           return
         }
 
-        if (postId) {
-          router.replace(`/post/${postId}`)
-          return
-        }
-
-        if (messageId) {
+        if (destination.type === "message") {
           const conversationRes = await fetch(
-            `/api/message/conversation-by-message?messageId=${messageId}`,
+            `/api/message/conversation-by-message?messageId=${destination.messageId}`,
             {
               method: "GET",
               cache: "no-store",
@@ -89,12 +150,7 @@ export function PaymentSuccessContent() {
           return
         }
 
-        if (creatorUsername) {
-          router.replace(`/creator/${creatorUsername}`)
-          return
-        }
-
-        router.replace("/feed")
+        router.replace(destination.href)
       } catch (error) {
         console.error("confirm failed:", error)
         router.replace("/payment/fail?reason=verification_failed")
