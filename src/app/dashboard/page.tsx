@@ -1,4 +1,9 @@
 import Link from "next/link"
+import {
+  formatCreatorAnalyticsSummaryMetricValue,
+  getCreatorAnalyticsSummaryMetric,
+} from "@/modules/analytics/lib/creator-analytics-summary-metrics"
+import { getCreatorAnalyticsSummary } from "@/modules/analytics/server/get-creator-analytics"
 import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
 import { readCreatorOperationalReadiness } from "@/modules/creator/server/read-creator-operational-readiness"
 import { updateCreatorSettings } from "@/modules/creator/server/update-creator-settings"
@@ -105,8 +110,11 @@ export default async function PayoutsPage() {
 
   const { creator } = readiness
 
-  const summary = await getPayoutSummary(creator.id)
-  const payouts = await listCreatorPayouts({ creatorId: creator.id })
+  const [summary, payouts, analyticsSummary] = await Promise.all([
+    getPayoutSummary(creator.id),
+    listCreatorPayouts({ creatorId: creator.id }),
+    getCreatorAnalyticsSummary(creator.id),
+  ])
 
   if (!summary) {
     return <PayoutEmptyState />
@@ -114,6 +122,10 @@ export default async function PayoutsPage() {
 
   const requestableBalance = summary.requestableBalance
   const requestedPayoutAmount = summary.requestedPayoutAmount
+  const subscribersMetric = getCreatorAnalyticsSummaryMetric(
+    analyticsSummary,
+    "subscribers"
+  )
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -209,7 +221,7 @@ export default async function PayoutsPage() {
             >
               <p className="text-sm text-zinc-500">구독자 관리</p>
               <p className="mt-2 text-2xl font-semibold text-white">
-                Subscribers
+                {formatCreatorAnalyticsSummaryMetricValue(subscribersMetric)}
               </p>
               <p className="mt-1 text-sm text-zinc-500">
                 구독자 목록 확인 및 메시지 보내기
