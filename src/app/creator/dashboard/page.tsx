@@ -1,14 +1,16 @@
 import { getCreatorAnalyticsSummary } from "@/modules/analytics/server/get-creator-analytics"
 import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
 import { DashboardStats } from "@/modules/analytics/ui/DashboardStats"
+import {
+  formatCreatorAnalyticsSummaryMetricValue,
+  getCreatorAnalyticsSummaryMetrics,
+  type CreatorAnalyticsSummaryMetricKey,
+} from "@/modules/analytics/lib/creator-analytics-summary-metrics"
 
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "KRW",
-    maximumFractionDigits: 0,
-  }).format(value)
-}
+const CREATOR_DASHBOARD_EXTRA_METRICS: CreatorAnalyticsSummaryMetricKey[] = [
+  "posts",
+  "totalRevenue",
+]
 
 export default async function CreatorDashboardPage() {
   const { creator } = await requireCreatorReadyUser({
@@ -16,6 +18,10 @@ export default async function CreatorDashboardPage() {
   })
 
   const summary = await getCreatorAnalyticsSummary(creator.id)
+  const extraMetrics = getCreatorAnalyticsSummaryMetrics(
+    summary,
+    CREATOR_DASHBOARD_EXTRA_METRICS
+  )
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
@@ -29,19 +35,17 @@ export default async function CreatorDashboardPage() {
       <DashboardStats summary={summary} />
 
       <section className="grid gap-4 sm:grid-cols-2">
-        <article className="rounded-2xl border border-white/10 bg-neutral-950 p-5">
-          <p className="text-sm text-white/60">Total posts</p>
-          <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
-            {summary.counts.postCount}
-          </p>
-        </article>
-
-        <article className="rounded-2xl border border-white/10 bg-neutral-950 p-5">
-          <p className="text-sm text-white/60">Total revenue</p>
-          <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
-            {formatCurrency(summary.revenue.totalRevenue)}
-          </p>
-        </article>
+        {extraMetrics.map((metric) => (
+          <article
+            key={metric.id}
+            className="rounded-2xl border border-white/10 bg-neutral-950 p-5"
+          >
+            <p className="text-sm text-white/60">{metric.label}</p>
+            <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
+              {formatCreatorAnalyticsSummaryMetricValue(metric)}
+            </p>
+          </article>
+        ))}
       </section>
     </main>
   )

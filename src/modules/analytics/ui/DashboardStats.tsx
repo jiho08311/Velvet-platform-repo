@@ -1,7 +1,7 @@
 import type { CreatorAnalyticsSummary } from "@/modules/analytics/server/build-creator-analytics-summary"
 import {
+  formatCreatorAnalyticsSummaryMetricValue,
   getCreatorAnalyticsSummaryMetrics,
-  type CreatorAnalyticsSummaryMetric,
   type CreatorAnalyticsSummaryMetricKey,
 } from "@/modules/analytics/lib/creator-analytics-summary-metrics"
 
@@ -14,14 +14,6 @@ const DASHBOARD_STATS_METRICS: CreatorAnalyticsSummaryMetricKey[] = [
   "activeSubscriptions",
   "monthlyRevenue",
 ]
-
-function formatMetricValue(metric: CreatorAnalyticsSummaryMetric) {
-  if (metric.valueKind === "currency") {
-    return `₩${Number(metric.value).toLocaleString()}`
-  }
-
-  return String(metric.value)
-}
 
 export function DashboardStats({ summary }: DashboardStatsProps) {
   const metrics = getCreatorAnalyticsSummaryMetrics(
@@ -38,7 +30,7 @@ export function DashboardStats({ summary }: DashboardStatsProps) {
         >
           <p className="text-xs text-zinc-500">{metric.label}</p>
           <p className="mt-1 text-lg font-semibold text-zinc-900">
-            {formatMetricValue(metric)}
+            {formatCreatorAnalyticsSummaryMetricValue(metric)}
           </p>
         </div>
       ))}

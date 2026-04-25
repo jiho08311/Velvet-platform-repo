@@ -100,3 +100,13 @@ export function getCreatorAnalyticsSummaryMetrics(
 ) {
   return keys.map((key) => getCreatorAnalyticsSummaryMetric(summary, key))
 }
+
+export function formatCreatorAnalyticsSummaryMetricValue(
+  metric: CreatorAnalyticsSummaryMetric
+) {
+  if (metric.valueKind === "currency") {
+    return `₩${Number(metric.value).toLocaleString()}`
+  }
+
+  return String(metric.value)
+}
