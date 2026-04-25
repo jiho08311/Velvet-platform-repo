@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
-
+import { requireAdmin } from "@/modules/admin/server/require-admin"
 type ProfileRow = {
   id: string
   email: string | null
@@ -12,7 +12,9 @@ export type AdminUser = {
   createdAt: string
 }
 
-export async function getUser(userId: string): Promise<AdminUser | null> {
+export async function getUser(userId: string): Promise<AdminUser | null> 
+{
+  await requireAdmin()
   const supabase = await createSupabaseServerClient()
 
   const { data, error } = await supabase

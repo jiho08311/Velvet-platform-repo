@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server"
-import { requireUser } from "@/modules/auth/server/require-user"
 import { listCreators } from "@/modules/admin/server/list-creators"
 
 export async function GET() {
   try {
-    await requireUser()
-
     const creators = await listCreators()
 
     return NextResponse.json(

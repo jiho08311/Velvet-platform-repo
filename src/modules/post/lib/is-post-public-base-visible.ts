@@ -1,3 +1,5 @@
+import { isModerationApprovedForPublicConsumption } from "@/modules/moderation/lib/moderation-outcome-policy"
+
 type PostPublicBaseVisibilityInput = {
   visibility: string | null | undefined
   moderationStatus: string | null | undefined
@@ -21,7 +23,7 @@ export function isPostPublicBaseVisible(
     return false
   }
 
-  if (input.moderationStatus !== "approved") {
+  if (!isModerationApprovedForPublicConsumption(input.moderationStatus)) {
     return false
   }
 

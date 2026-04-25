@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
-import { requireUser } from "@/modules/auth/server/require-user"
-import { getReports } from "@/modules/admin/server/get-reports"
+import { getReportById } from "@/modules/report/server/get-report-by-id"
 
 type RouteParams = {
   params: Promise<{
@@ -13,11 +12,8 @@ export async function GET(
   { params }: RouteParams,
 ) {
   try {
-    await requireUser()
-
     const { reportId } = await params
-    const reports = await getReports()
-    const report = reports.items.find((item) => item.id === reportId)
+    const report = await getReportById(reportId)
 
     if (!report) {
       return NextResponse.json(

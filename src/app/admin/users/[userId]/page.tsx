@@ -36,9 +36,11 @@ export default async function AdminUserDetailPage({ params }: Props) {
           <p className="text-white">{profile.username}</p>
 
           <p className="text-sm text-zinc-500 mt-4">Status</p>
-          <StatusBadge
-            label={profile.is_deactivated ? "deactivated" : "active"}
-          />
+          <div className="space-y-1">
+            {profile.statusBadges.map((badge) => (
+              <StatusBadge key={badge.label} label={badge.label} />
+            ))}
+          </div>
         </div>
       </Card>
 

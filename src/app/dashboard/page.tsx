@@ -1,15 +1,12 @@
 import Link from "next/link"
 import {
   formatCreatorAnalyticsSummaryMetricValue,
-  getCreatorAnalyticsSummaryMetric,
 } from "@/modules/analytics/lib/creator-analytics-summary-metrics"
-import { getCreatorAnalyticsSummary } from "@/modules/analytics/server/get-creator-analytics"
+import { getDashboardPayoutOverviewReadModel } from "@/modules/analytics/server/get-dashboard-payout-overview-read-model"
 import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
 import { readCreatorOperationalReadiness } from "@/modules/creator/server/read-creator-operational-readiness"
 import { updateCreatorSettings } from "@/modules/creator/server/update-creator-settings"
 import { createPayoutRequest } from "@/modules/payout/server/create-payout-request"
-import { getPayoutSummary } from "@/modules/payout/server/get-payout-summary"
-import { listCreatorPayouts } from "@/modules/payout/server/list-creator-payouts"
 import { revalidatePayoutSurfaces } from "@/modules/payout/server/revalidate-payout-surfaces"
 import { SUBSCRIPTION_PRICES } from "@/modules/subscription/lib/subscription-price"
 
@@ -110,22 +107,15 @@ export default async function PayoutsPage() {
 
   const { creator } = readiness
 
-  const [summary, payouts, analyticsSummary] = await Promise.all([
-    getPayoutSummary(creator.id),
-    listCreatorPayouts({ creatorId: creator.id }),
-    getCreatorAnalyticsSummary(creator.id),
-  ])
+  const overview = await getDashboardPayoutOverviewReadModel(creator.id)
 
-  if (!summary) {
+  if (!overview) {
     return <PayoutEmptyState />
   }
 
+  const { payoutSummary: summary, payouts, subscribersMetric } = overview
   const requestableBalance = summary.requestableBalance
   const requestedPayoutAmount = summary.requestedPayoutAmount
-  const subscribersMetric = getCreatorAnalyticsSummaryMetric(
-    analyticsSummary,
-    "subscribers"
-  )
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">

@@ -14,7 +14,7 @@ import {
   type PayoutExecutionRow,
 } from "@/modules/payout/server/build-payout-execution-read-model"
 import type { PayoutRequestLifecycleState } from "@/modules/payout/lib/resolve-payout-state"
-
+import { requireAdmin } from "@/modules/admin/server/require-admin"
 export type AdminPayoutBadgeTone =
   | "pending"
   | "approved"
@@ -210,6 +210,7 @@ function toAdminPayoutRequestListItem(input: {
 export async function listPayoutRequests(): Promise<
   AdminPayoutRequestListItem[]
 > {
+    await requireAdmin()
   const { data, error } = await supabaseAdmin
     .from("payout_requests")
     .select(`

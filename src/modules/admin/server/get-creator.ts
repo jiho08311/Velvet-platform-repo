@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
-
+import { requireAdmin } from "@/modules/admin/server/require-admin"
 type CreatorRow = {
   id: string
   user_id: string
@@ -17,6 +17,7 @@ export type AdminCreator = {
 export async function getCreator(
   creatorId: string,
 ): Promise<AdminCreator | null> {
+  await requireAdmin()
   const supabase = await createSupabaseServerClient()
 
   const { data, error } = await supabase

@@ -1,8 +1,9 @@
-export type PostMutationModerationOutcome =
-  | "approved"
-  | "rejected"
-  | "needs_review"
-  | "pending"
+import {
+  resolveModerationOutcomeFromStatuses,
+  type ModerationOutcome,
+} from "@/modules/moderation/lib/moderation-outcome-policy"
+
+export type PostMutationModerationOutcome = ModerationOutcome
 
 type ResolvePostMutationModerationOutcomeInput = {
   statuses: Array<string | null>
@@ -18,25 +19,5 @@ type ResolvePostMutationModerationOutcomeInput = {
 export function resolvePostMutationModerationOutcome({
   statuses,
 }: ResolvePostMutationModerationOutcomeInput): PostMutationModerationOutcome {
-  if (statuses.length === 0) {
-    return "needs_review"
-  }
-
-  if (statuses.some((status) => status === "rejected")) {
-    return "rejected"
-  }
-
-  if (statuses.some((status) => status === "needs_review")) {
-    return "needs_review"
-  }
-
-  if (statuses.some((status) => status === "pending")) {
-    return "pending"
-  }
-
-  if (statuses.every((status) => status === "approved")) {
-    return "approved"
-  }
-
-  return "needs_review"
+  return resolveModerationOutcomeFromStatuses({ statuses })
 }

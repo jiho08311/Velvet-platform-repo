@@ -55,6 +55,49 @@ export type Report = {
   createdAt: string
 }
 
+export type ReportReviewListItem = {
+  id: ReportId
+  targetType: ReportTargetType
+  targetId: string
+  reason: ReportReason
+  description: string | null
+  status: ReportStatus
+  createdAt: string
+  reporter: {
+    id: string
+    email: string | null
+    username: string | null
+    displayName: string | null
+  } | null
+}
+
+
+export type ReportReviewDetailItem = {
+  id: ReportId
+  targetType: ReportTargetType
+  targetId: string
+  reason: ReportReason
+  description: string | null
+  status: ReportStatus
+  createdAt: string
+  updatedAt: string | null
+  reviewedAt: string | null
+  reporter: {
+    id: string
+    email: string | null
+    username: string | null
+    displayName: string | null
+    avatarUrl: string | null
+  } | null
+  targetReference: {
+    type: ReportTargetType
+    id: string
+    label: string | null
+    href: string | null
+    missing: boolean
+  }
+}
+
 export function isReportTargetType(value: string): value is ReportTargetType {
   return reportTargetTypes.includes(value as ReportTargetType)
 }

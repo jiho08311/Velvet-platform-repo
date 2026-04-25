@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+import { isModerationApprovedForPublicConsumption } from "@/modules/moderation/lib/moderation-outcome-policy"
 import { buildPublicCreatorProfileVisibilityInput } from "@/modules/creator/lib/build-public-creator-profile-visibility-input"
 import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
 import {
@@ -84,7 +85,7 @@ function isCreatorPagePaidTeaser(post: PostRow): boolean {
     post.visibility === "paid" &&
     post.status === "published" &&
     post.visibility_status === "published" &&
-    post.moderation_status === "approved" &&
+    isModerationApprovedForPublicConsumption(post.moderation_status) &&
     !post.deleted_at
   )
 }

@@ -1,3 +1,5 @@
+import { resolveModerationOutcomeFromStatuses } from "@/modules/moderation/lib/moderation-outcome-policy"
+
 type VideoModerationOutcome = "approved" | "rejected" | "needs_review"
 
 type ResolveVideoModerationOutcomeInput = {
@@ -7,13 +9,11 @@ type ResolveVideoModerationOutcomeInput = {
 export function resolveVideoModerationOutcome({
   statuses,
 }: ResolveVideoModerationOutcomeInput): VideoModerationOutcome {
-  if (statuses.some((status) => status === "rejected")) {
-    return "rejected"
-  }
+  const outcome = resolveModerationOutcomeFromStatuses({ statuses })
 
-  if (statuses.some((status) => status === "needs_review")) {
+  if (outcome === "pending") {
     return "needs_review"
   }
 
-  return "approved"
+  return outcome
 }

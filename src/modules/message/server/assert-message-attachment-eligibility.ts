@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { isModerationApproved } from "@/modules/moderation/lib/moderation-outcome-policy"
 import { assertCanSendMessage } from "@/modules/message/server/assert-can-send-message"
 
 type AssertMessageAttachmentEligibilityInput = {
@@ -98,7 +99,7 @@ export async function assertMessageAttachmentEligibility({
 
     if (
       media.moderation_status &&
-      media.moderation_status !== "approved"
+      !isModerationApproved(media.moderation_status)
     ) {
       throw new Error("Invalid message attachment")
     }

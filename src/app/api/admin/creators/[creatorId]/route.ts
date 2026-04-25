@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-import { requireUser } from "@/modules/auth/server/require-user"
 import { getCreator } from "@/modules/admin/server/get-creator"
 
 type RouteParams = {
@@ -13,8 +12,6 @@ export async function GET(
   { params }: RouteParams,
 ) {
   try {
-    await requireUser()
-
     const { creatorId } = await params
     const creator = await getCreator(creatorId)
 

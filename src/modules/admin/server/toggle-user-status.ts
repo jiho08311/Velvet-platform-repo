@@ -1,4 +1,5 @@
 import { requireAdmin } from "./require-admin"
+import { isAdminProfile } from "./admin-role-policy"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 type ToggleUserStatusParams = {
@@ -16,18 +17,9 @@ export async function toggleUserStatus({
     throw new Error("You cannot modify your own account")
   }
 
-  const { data: targetAdmin, error: adminCheckError } =
-    await supabaseAdmin
-      .from("admin_role_assignments")
-      .select("id")
-      .eq("profile_id", targetUserId)
-      .maybeSingle()
+  const targetIsAdmin = await isAdminProfile(targetUserId)
 
-  if (adminCheckError) {
-    throw adminCheckError
-  }
-
-  if (targetAdmin) {
+  if (targetIsAdmin) {
     throw new Error("Cannot deactivate admin user")
   }
 

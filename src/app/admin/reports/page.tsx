@@ -56,9 +56,7 @@ export default async function AdminReportsPage({ searchParams }: Props) {
 
             <tbody className="divide-y divide-zinc-800">
               {reports.map((report) => {
-                const reporter = Array.isArray(report.reporter)
-                  ? report.reporter[0]
-                  : report.reporter
+                const reporter = report.reporter
 
                 return (
                   <tr
@@ -67,7 +65,7 @@ export default async function AdminReportsPage({ searchParams }: Props) {
                   >
                     <td className="py-3">
                       <div className="font-medium text-white">
-                        {reporter?.display_name ||
+                        {reporter?.displayName ||
                           reporter?.username ||
                           "Unknown"}
                       </div>
@@ -77,9 +75,9 @@ export default async function AdminReportsPage({ searchParams }: Props) {
                     </td>
 
                     <td className="py-3 text-zinc-300">
-                      <div>{report.target_type}</div>
+                      <div>{report.targetType}</div>
                       <div className="text-xs text-zinc-500">
-                        {report.target_id.slice(0, 8)}
+                        {report.targetId.slice(0, 8)}
                       </div>
                     </td>
 
@@ -97,24 +95,48 @@ export default async function AdminReportsPage({ searchParams }: Props) {
                     <td className="py-3">
                       <div className="flex flex-wrap gap-2">
                         <form action={updateReportStatusAction}>
-                          <input type="hidden" name="reportId" value={report.id} />
-                          <input type="hidden" name="status" value="reviewing" />
+                          <input
+                            type="hidden"
+                            name="reportId"
+                            value={report.id}
+                          />
+                          <input
+                            type="hidden"
+                            name="status"
+                            value="reviewing"
+                          />
                           <button className="rounded-xl bg-yellow-600 px-3 py-1 text-xs font-semibold text-white">
                             Review
                           </button>
                         </form>
 
                         <form action={updateReportStatusAction}>
-                          <input type="hidden" name="reportId" value={report.id} />
-                          <input type="hidden" name="status" value="resolved" />
+                          <input
+                            type="hidden"
+                            name="reportId"
+                            value={report.id}
+                          />
+                          <input
+                            type="hidden"
+                            name="status"
+                            value="resolved"
+                          />
                           <button className="rounded-xl bg-green-600 px-3 py-1 text-xs font-semibold text-white">
                             Resolve
                           </button>
                         </form>
 
                         <form action={updateReportStatusAction}>
-                          <input type="hidden" name="reportId" value={report.id} />
-                          <input type="hidden" name="status" value="rejected" />
+                          <input
+                            type="hidden"
+                            name="reportId"
+                            value={report.id}
+                          />
+                          <input
+                            type="hidden"
+                            name="status"
+                            value="rejected"
+                          />
                           <button className="rounded-xl bg-red-600 px-3 py-1 text-xs font-semibold text-white">
                             Reject
                           </button>
@@ -123,7 +145,7 @@ export default async function AdminReportsPage({ searchParams }: Props) {
                     </td>
 
                     <td className="py-3 text-zinc-400">
-                      {new Date(report.created_at).toLocaleDateString()}
+                      {new Date(report.createdAt).toLocaleDateString()}
                     </td>
                   </tr>
                 )

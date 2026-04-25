@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireUser } from "@/modules/auth/server/require-user"
+import { requireAdmin } from "@/modules/admin/server/require-admin"
 import { resolveReport } from "@/modules/report/server/resolve-report"
 
 export async function POST(
@@ -7,7 +7,7 @@ export async function POST(
   context: { params: Promise<{ reportId: string }> }
 ) {
   try {
-    await requireUser()
+    await requireAdmin()
 
     const { reportId } = await context.params
 

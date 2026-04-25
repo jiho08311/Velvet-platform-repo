@@ -1,12 +1,24 @@
 import { requireAdmin } from "@/modules/admin/server/require-admin"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import type { ReportReviewListItem } from "@/modules/report/types"
+import {
+  buildReportReviewListItem,
+  type ReportReviewListRow,
+} from "@/modules/report/server/report-review-read-model"
 
 type ListReportsParams = {
   limit?: number
   cursor?: string
 }
 
-export async function listReports(params: ListReportsParams = {}) {
+type ListReportsResult = {
+  data: ReportReviewListItem[]
+  nextCursor: string | null
+}
+
+export async function listReports(
+  params: ListReportsParams = {}
+): Promise<ListReportsResult> {
   await requireAdmin()
 
   const limit = Math.min(params.limit ?? 50, 100)
@@ -32,24 +44,23 @@ export async function listReports(params: ListReportsParams = {}) {
     .limit(limit)
 
   if (params.cursor) {
-    // 🔥 cursor 안전 처리
     const safeCursor = decodeURIComponent(params.cursor).replace(" ", "+")
     query = query.lt("created_at", safeCursor)
   }
 
-  const { data, error } = await query
+  const { data, error } = await query.returns<ReportReviewListRow[]>()
 
   if (error) {
     throw error
   }
 
+  const rows = data ?? []
+
   const nextCursor =
-    data && data.length === limit
-      ? data[data.length - 1].created_at
-      : null
+    rows.length === limit ? rows[rows.length - 1].created_at : null
 
   return {
-    data: data ?? [],
+    data: rows.map(buildReportReviewListItem),
     nextCursor,
   }
 }

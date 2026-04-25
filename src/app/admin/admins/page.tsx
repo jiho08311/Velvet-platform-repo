@@ -168,7 +168,7 @@ const monthlyRevenue = recentPayments.reduce((sum, payment) => {
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-white">
-                      {user.display_name || user.username || "Unknown user"}
+                      {user.displayName || user.username || "Unknown user"}
                     </p>
                     <p className="truncate text-xs text-zinc-500">
                       {user.email || "@unknown"}
@@ -176,7 +176,7 @@ const monthlyRevenue = recentPayments.reduce((sum, payment) => {
                   </div>
 
                   <p className="shrink-0 text-xs text-zinc-500">
-                    {formatDate(user.created_at)}
+                    {formatDate(user.createdAt)}
                   </p>
                 </div>
               ))}

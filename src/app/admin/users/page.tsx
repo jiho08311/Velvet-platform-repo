@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { requireAdmin } from "@/modules/admin/server/require-admin"
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { getAdminUserIdSet } from "@/modules/admin/server/admin-role-policy"
+import { resolveAdminUserManagementState } from "@/modules/admin/lib/admin-user-operational-policy"
 import { listUsers } from "@/modules/admin/server/list-users"
 import { Card } from "@/shared/ui/Card"
 import { EmptyState } from "@/shared/ui/EmptyState"
@@ -8,28 +9,10 @@ import { StatusBadge } from "@/shared/ui/StatusBadge"
 import { toggleUserStatusAction } from "./actions"
 import { toggleUserBanAction } from "./actions"
 
-type AdminAssignmentRow = {
-  profile_id: string
-}
-
 export default async function AdminUsersPage() {
   const { user: currentAdmin } = await requireAdmin()
   const users = await listUsers()
-
-  const { data: adminAssignments, error: adminAssignmentsError } =
-    await supabaseAdmin
-      .from("admin_role_assignments")
-      .select("profile_id")
-
-  if (adminAssignmentsError) {
-    throw adminAssignmentsError
-  }
-
-  const adminUserIdSet = new Set(
-    (adminAssignments ?? []).map(
-      (assignment: AdminAssignmentRow) => assignment.profile_id
-    )
-  )
+  const adminUserIdSet = await getAdminUserIdSet()
 
   if (users.length === 0) {
     return (
@@ -65,11 +48,11 @@ export default async function AdminUsersPage() {
 
             <tbody className="divide-y divide-zinc-800">
               {users.map((user) => {
-                const isDeactivated = user.is_deactivated
-                const isBanned = user.is_banned
-                const isSelf = user.id === currentAdmin.id
-                const isAdminUser = adminUserIdSet.has(user.id)
-                const canManage = !isSelf && !isAdminUser
+                const managementState = resolveAdminUserManagementState({
+                  userId: user.id,
+                  currentAdminId: currentAdmin.id,
+                  adminUserIdSet,
+                })
 
                 return (
                   <tr
@@ -82,7 +65,7 @@ export default async function AdminUsersPage() {
                         className="block"
                       >
                         <div className="font-medium text-white hover:underline">
-                          {user.display_name || user.username}
+                          {user.displayName || user.username}
                         </div>
                         <div className="text-xs text-zinc-500">
                           {user.id.slice(0, 8)}
@@ -95,22 +78,16 @@ export default async function AdminUsersPage() {
                     </td>
 
                     <td className="py-3 space-y-1">
-                      <StatusBadge
-                        label={isDeactivated ? "deactivated" : "active"}
-                      />
-                      {isBanned && (
-                        <StatusBadge label="banned" />
-                      )}
-                      {isSelf && (
-                        <StatusBadge label="self" />
-                      )}
-                      {!isSelf && isAdminUser && (
-                        <StatusBadge label="admin" />
-                      )}
+                      {user.statusBadges.map((badge) => (
+                        <StatusBadge key={badge.label} label={badge.label} />
+                      ))}
+                      {managementState.managementBadges.map((badge) => (
+                        <StatusBadge key={badge.label} label={badge.label} />
+                      ))}
                     </td>
 
                     <td className="py-3 space-y-2">
-                      {canManage ? (
+                      {managementState.canManage ? (
                         <>
                           <form action={toggleUserStatusAction}>
                             <input
@@ -121,18 +98,18 @@ export default async function AdminUsersPage() {
                             <input
                               type="hidden"
                               name="deactivate"
-                              value={(!isDeactivated).toString()}
+                              value={(!user.isDeactivated).toString()}
                             />
 
                             <button
                               type="submit"
                               className={
-                                isDeactivated
+                                user.isDeactivated
                                   ? "rounded-xl bg-green-600 px-3 py-1 text-xs font-semibold text-white"
                                   : "rounded-xl bg-red-600 px-3 py-1 text-xs font-semibold text-white"
                               }
                             >
-                              {isDeactivated ? "Activate" : "Deactivate"}
+                              {user.isDeactivated ? "Activate" : "Deactivate"}
                             </button>
                           </form>
 
@@ -145,18 +122,18 @@ export default async function AdminUsersPage() {
                             <input
                               type="hidden"
                               name="ban"
-                              value={(!isBanned).toString()}
+                              value={(!user.isBanned).toString()}
                             />
 
                             <button
                               type="submit"
                               className={
-                                isBanned
+                                user.isBanned
                                   ? "rounded-xl bg-green-600 px-3 py-1 text-xs font-semibold text-white"
                                   : "rounded-xl bg-red-600 px-3 py-1 text-xs font-semibold text-white"
                               }
                             >
-                              {isBanned ? "Unban" : "Ban"}
+                              {user.isBanned ? "Unban" : "Ban"}
                             </button>
                           </form>
                         </>

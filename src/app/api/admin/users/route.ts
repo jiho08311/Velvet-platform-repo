@@ -1,15 +1,22 @@
 import { NextResponse } from "next/server"
-import { requireUser } from "@/modules/auth/server/require-user"
 import { listUsers } from "@/modules/admin/server/list-users"
 
 export async function GET() {
   try {
-    await requireUser()
-
     const users = await listUsers()
 
     return NextResponse.json(
-      { users },
+      {
+        users: users.map((user) => ({
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          display_name: user.displayName,
+          is_deactivated: user.isDeactivated,
+          is_banned: user.isBanned,
+          created_at: user.createdAt,
+        })),
+      },
       { status: 200 }
     )
   } catch (error) {

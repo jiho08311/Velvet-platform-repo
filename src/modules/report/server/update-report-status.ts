@@ -7,10 +7,22 @@ type UpdateReportStatusParams = {
   status: ReportStatus
 }
 
+type ReportRow = {
+  id: string
+  status: ReportStatus
+  reviewed_at: string | null
+}
+
+export type UpdatedReportStatus = {
+  id: string
+  status: ReportStatus
+  reviewedAt: string | null
+}
+
 export async function updateReportStatus({
   reportId,
   status,
-}: UpdateReportStatusParams) {
+}: UpdateReportStatusParams): Promise<UpdatedReportStatus> {
   const { user } = await requireAdmin()
 
   if (!reportId) {
@@ -22,7 +34,7 @@ export async function updateReportStatus({
       ? new Date().toISOString()
       : null
 
-  const { error } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from("reports")
     .update({
       status,
@@ -30,12 +42,16 @@ export async function updateReportStatus({
       reviewed_at: reviewedAt,
     })
     .eq("id", reportId)
+    .select("id, status, reviewed_at")
+    .single<ReportRow>()
 
   if (error) {
     throw error
   }
 
   return {
-    success: true,
+    id: data.id,
+    status: data.status,
+    reviewedAt: data.reviewed_at,
   }
 }

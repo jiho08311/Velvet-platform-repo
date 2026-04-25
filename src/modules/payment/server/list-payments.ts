@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
-
+import { requireAdmin } from "@/modules/admin/server/require-admin"
 type PaymentRow = {
   id: string
   amount: number | null
@@ -42,6 +42,7 @@ export type AdminPaymentItem = {
 }
 
 export async function listPayments(): Promise<AdminPaymentItem[]> {
+  await requireAdmin()
   const supabase = await createSupabaseServerClient()
 
   const { data: payments, error: paymentsError } = await supabase

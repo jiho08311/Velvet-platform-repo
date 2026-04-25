@@ -1,37 +1,51 @@
-import type { ReportStatus, ReportTargetType } from "@/modules/report/types"
-
-export type AdminReportDetail = {
-  id: string
-  targetType: ReportTargetType
-  reason: string
-  status: ReportStatus
-  createdAt: string
-  reporter: {
-    username: string
-    displayName: string
-    email: string
-  } | null
-}
+import { requireAdmin } from "@/modules/admin/server/require-admin"
+import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import type { ReportReviewDetailItem } from "@/modules/report/types"
+import {
+  buildReportReviewDetailItem,
+  type ReportReviewDetailRow,
+} from "@/modules/report/server/report-review-read-model"
 
 export async function getReportById(
   reportId: string
-): Promise<AdminReportDetail | null> {
-  // TODO: replace with real database query
+): Promise<ReportReviewDetailItem | null> {
+  await requireAdmin()
 
   if (!reportId) {
     return null
   }
 
-  return {
-    id: reportId,
-    targetType: "post",
-    reason: "Reported for possible harassment and policy-violating language.",
-    status: "pending",
-    createdAt: new Date().toISOString(),
-    reporter: {
-      username: "alex",
-      displayName: "Alex Kim",
-      email: "alex@example.com",
-    },
+  const { data, error } = await supabaseAdmin
+    .from("reports")
+    .select(`
+      id,
+      target_type,
+      target_id,
+      reason,
+      description,
+      status,
+      created_at,
+      updated_at,
+      reviewed_at,
+      reporter:profiles!reports_reporter_id_fkey (
+        id,
+        email,
+        username,
+        display_name,
+        avatar_url
+      )
+    `)
+    .eq("id", reportId)
+    .maybeSingle()
+    .returns<ReportReviewDetailRow | null>()
+
+  if (error) {
+    throw error
   }
+
+  if (!data) {
+    return null
+  }
+
+  return buildReportReviewDetailItem(data)
 }
