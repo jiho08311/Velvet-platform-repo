@@ -30,6 +30,7 @@ type FeedInfiniteListPost = {
     createdAt: string
     editorState: PostBlockEditorState
   }>
+  canView?: boolean
   isLocked?: boolean
   lockReason?: "none" | "subscription" | "purchase"
   likesCount?: number
@@ -59,6 +60,7 @@ type FeedApiItem = {
   currentUserId?: string
   text: string
   createdAt: string
+  canView?: boolean
   isLocked: boolean
   status?: "draft" | "scheduled" | "published" | "archived"
   publishedAt?: string | null
@@ -105,6 +107,7 @@ function normalizePosts(
     publishedAt: item.publishedAt ?? null,
     media: item.media ?? [],
     blocks: item.blocks ?? [],
+    canView: item.canView,
     isLocked: item.isLocked,
     lockReason: item.lockReason,
     price: item.price,

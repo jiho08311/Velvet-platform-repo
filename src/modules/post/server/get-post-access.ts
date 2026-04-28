@@ -43,6 +43,7 @@ export async function getPostAccess({
 
   return {
     canView,
+    isLocked: !canView,
     locked: !canView,
     lockReason,
   }

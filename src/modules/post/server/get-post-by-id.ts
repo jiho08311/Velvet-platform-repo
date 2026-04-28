@@ -71,6 +71,7 @@ export type PostDetail = {
   status: "draft" | "scheduled" | "published" | "archived"
   createdAt: string
   publishedAt: string | null
+  canView: boolean
   isLocked: boolean
   lockReason: "none" | "subscription" | "purchase"
   purchaseEligibility: PostPurchaseEligibility
@@ -317,7 +318,8 @@ export async function getPostById(
     status: post.status,
     createdAt: post.created_at,
     publishedAt: post.published_at,
-    isLocked: access.locked,
+    canView: access.canView,
+    isLocked: access.isLocked,
     lockReason: access.lockReason,
     purchaseEligibility,
     likesCount: resolvedLikesCount,

@@ -51,6 +51,7 @@ export default async function PostDetailPage({
     )
   }
 
+  const canView = post.canView
   const isLocked = post.isLocked
   const isOwner = myCreator?.id === post.creatorId
   const shouldAutoReloadOnce = !isLocked && post.media.length === 0
@@ -63,8 +64,8 @@ export default async function PostDetailPage({
     })
 
   const lockedPreviewPresentation = getPostLockedPreviewPresentation({
-    canView: !isLocked,
-    locked: isLocked,
+    canView,
+    isLocked,
     lockReason: post.lockReason,
   })
 
@@ -173,6 +174,7 @@ export default async function PostDetailPage({
               media={post.media}
               blocks={post.blocks ?? []}
               renderInput={renderInput}
+              canView={canView}
               isLocked={false}
               lockReason="none"
               purchaseEligibility={post.purchaseEligibility}

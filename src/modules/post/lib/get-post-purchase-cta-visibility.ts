@@ -8,7 +8,7 @@ type GetPostPurchaseCtaVisibilityInput =
       isLocked: boolean
       purchaseEligibility: PostPurchaseEligibility
     }
-  | Pick<PostAccessResult, "canView" | "locked" | "lockReason">
+  | Pick<PostAccessResult, "canView" | "isLocked" | "lockReason">
 
 export function getPostPurchaseCtaVisibility(
   input: GetPostPurchaseCtaVisibilityInput
@@ -25,7 +25,7 @@ export function getPostPurchaseCtaVisibility(
     return false
   }
 
-  if (!input.locked) {
+  if (!input.isLocked) {
     return false
   }
 

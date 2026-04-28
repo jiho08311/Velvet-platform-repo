@@ -32,6 +32,15 @@ export type ModerationQueueItem = {
   createdDateTimeLabel: string
 }
 
+function buildModerationQueueTargetReference(
+  row: Pick<ModerationQueueRow, "target_type" | "target_id">
+): ModerationQueueTargetReference {
+  return {
+    type: row.target_type,
+    id: row.target_id,
+  }
+}
+
 function formatCreatedDateTimeLabel(value: string): string {
   return new Intl.DateTimeFormat("ko-KR", {
     dateStyle: "medium",
@@ -42,10 +51,7 @@ function formatCreatedDateTimeLabel(value: string): string {
 export function buildModerationQueueItem(
   row: ModerationQueueRow
 ): ModerationQueueItem {
-  const targetReference = {
-    type: row.target_type,
-    id: row.target_id,
-  }
+  const targetReference = buildModerationQueueTargetReference(row)
 
   return {
     id: row.id,

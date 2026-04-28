@@ -34,6 +34,7 @@ export type PostLockedPreviewVariant = Exclude<
 
 export type PostAccessResult = {
   canView: boolean
+  isLocked: boolean
   locked: boolean
   lockReason: PostAccessLockReason
 }
@@ -544,6 +545,7 @@ export type PostRenderSurfaceItem = {
   }>
   blocks: PostBlock[]
   price: number
+  canView?: boolean
   isLocked: boolean
   lockReason?: PostAccessLockReason
   purchaseEligibility?: PostPurchaseEligibility
@@ -562,6 +564,7 @@ export type PostRenderListItem = {
   status: PostStatus
   visibility: PostVisibility
   price: number
+  canView?: boolean
   isLocked: boolean
   lockReason?: PostAccessLockReason
   purchaseEligibility?: PostPurchaseEligibility

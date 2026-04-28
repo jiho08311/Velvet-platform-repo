@@ -2,6 +2,7 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { buildCreatorIdentity } from "@/modules/creator/server/build-creator-identity"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
 import type { PostBlockEditorState } from "@/modules/post/types"
+import { getPostAccess } from "@/modules/post/server/get-post-access"
 import {
   buildPostLikeCountMap,
   readPostLikeCount,
@@ -22,6 +23,7 @@ export type HomeFeedItem = {
   currentUserId?: string
   text: string
   createdAt: string
+  canView: boolean
   isLocked: boolean
   status?: "draft" | "scheduled" | "published" | "archived"
   publishedAt?: string | null
@@ -386,6 +388,23 @@ export async function getHomeFeed(
           : null
 
       if (publicState === "upcoming") {
+        const access = await getPostAccess({
+          viewerUserId: viewerUserId || null,
+          post: {
+            id: post.id,
+            creatorId: post.creator_id,
+            content: post.content ?? undefined,
+            visibility: post.visibility,
+            price: post.price ?? 0,
+            createdAt: post.created_at,
+          },
+          creator: {
+            userId: creatorUserId,
+          },
+          isSubscribedResult: false,
+          hasPurchasedResult: false,
+        })
+
         return {
           id: post.id,
           creatorId: post.creator_id,
@@ -395,8 +414,9 @@ export async function getHomeFeed(
           currentUserId: viewerUserId || undefined,
           text: post.content ?? post.title ?? "",
           createdAt: post.created_at,
-          isLocked: false,
-          lockReason: "none",
+          canView: access.canView,
+          isLocked: access.isLocked,
+          lockReason: access.lockReason,
           price: post.price ?? undefined,
           media: [],
           blocks: [],
@@ -412,6 +432,22 @@ export async function getHomeFeed(
       }
 
       const selectedMediaRows = (mediaMap.get(post.id) ?? []).slice(0, 3)
+      const access = await getPostAccess({
+        viewerUserId: viewerUserId || null,
+        post: {
+          id: post.id,
+          creatorId: post.creator_id,
+          content: post.content ?? undefined,
+          visibility: post.visibility,
+          price: post.price ?? 0,
+          createdAt: post.created_at,
+        },
+        creator: {
+          userId: creatorUserId,
+        },
+        isSubscribedResult: false,
+        hasPurchasedResult: false,
+      })
 
       const media = await Promise.all(
         selectedMediaRows.map(async (item) => ({
@@ -448,8 +484,9 @@ export async function getHomeFeed(
         currentUserId: viewerUserId || undefined,
         text: post.content ?? post.title ?? "",
         createdAt: post.published_at ?? post.created_at,
-        isLocked: false,
-        lockReason: "none",
+        canView: access.canView,
+        isLocked: access.isLocked,
+        lockReason: access.lockReason,
         price: post.price ?? undefined,
         media,
         blocks: normalizedBlocks,

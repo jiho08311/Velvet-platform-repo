@@ -7,6 +7,7 @@ type CreatorPostListItem = {
   id: string
   content: string | null
   createdAt: string
+  canView?: boolean
   isLocked: boolean
   previewText?: string
   mediaThumbnailUrls?: string[]
@@ -56,6 +57,7 @@ export function CreatorPostList({
             postId={post.id}
             text={post.content ?? ""}
             createdAt={post.createdAt}
+            canView={post.canView}
             isLocked={post.isLocked}
             creatorId={post.creatorId ?? ""}
             creatorUserId={post.creatorUserId}

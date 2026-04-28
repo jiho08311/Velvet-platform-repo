@@ -307,6 +307,7 @@ export async function getCreatorPage({
         return {
           id: post.id,
           text: scheduledRenderInput.blockText || "",
+          canView: true,
           isLocked: false,
           lockReason: "none" as const,
           price: post.price,
@@ -387,7 +388,8 @@ export async function getCreatorPage({
       return {
         id: post.id,
         text: access.canView ? (renderInput.blockText || "") : "",
-        isLocked: lockedPreviewPresentation.isLockedPreview,
+        canView: access.canView,
+        isLocked: access.isLocked,
         lockReason: lockedPreviewPresentation.lockReason,
         price: post.price,
         media,

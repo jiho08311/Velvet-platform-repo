@@ -31,6 +31,9 @@ export type ResolvedPostAccessState = {
   isOwner: boolean
   isSubscribed: boolean
   hasPurchased: boolean
+  canView: boolean
+  isLocked: boolean
+  lockReason: PostAccessResult["lockReason"]
   access: PostAccessResult
   purchaseEligibility: PostPurchaseEligibility
 }
@@ -93,6 +96,9 @@ export async function resolvePostAccessState({
     isOwner,
     isSubscribed,
     hasPurchased,
+    canView: access.canView,
+    isLocked: access.isLocked,
+    lockReason: access.lockReason,
     access,
     purchaseEligibility: getPostPurchaseEligibility({
       post: {

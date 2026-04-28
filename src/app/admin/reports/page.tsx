@@ -70,9 +70,9 @@ export default async function AdminReportsPage({ searchParams }: Props) {
                     </td>
 
                     <td className="py-3 text-zinc-300">
-                      <div>{report.targetType}</div>
+                      <div>{report.targetReference.type}</div>
                       <div className="text-xs text-zinc-500">
-                        {report.targetShortId}
+                        {report.targetReference.id.slice(0, 8)}
                       </div>
                     </td>
 

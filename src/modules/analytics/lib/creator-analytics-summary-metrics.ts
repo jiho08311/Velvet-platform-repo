@@ -1,4 +1,5 @@
 import type { CreatorAnalyticsSummary } from "@/modules/analytics/server/build-creator-analytics-summary"
+import { CREATOR_ANALYTICS_PERIOD } from "@/modules/analytics/lib/creator-analytics-period"
 
 type CreatorAnalyticsSummaryMetricValue = number | string
 
@@ -28,7 +29,7 @@ export const CREATOR_ANALYTICS_SUMMARY_METRICS = {
   },
   monthlyRevenue: {
     id: "monthly-revenue",
-    label: "Monthly Revenue",
+    label: CREATOR_ANALYTICS_PERIOD.revenueMetricLabel,
     valueKind: "currency",
     getValue: (summary) => summary.revenue.monthlyRevenue,
   },

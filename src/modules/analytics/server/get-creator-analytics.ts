@@ -6,6 +6,7 @@ import {
   type CreatorAnalyticsSummary,
   sumCreatorAnalyticsAmounts,
 } from "@/modules/analytics/server/build-creator-analytics-summary"
+import { getCreatorAnalyticsPeriodStart } from "@/modules/analytics/lib/creator-analytics-period"
 
 type CreatorAnalyticsPaymentAmountRow = {
   amount: number | string | null
@@ -15,14 +16,6 @@ type CreatorAnalyticsPaymentRow = CreatorAnalyticsPaymentAmountRow & {
   id: string
   type: string | null
   created_at: string | null
-}
-
-function getStartOfCurrentMonth() {
-  const date = new Date()
-  date.setDate(1)
-  date.setHours(0, 0, 0, 0)
-
-  return date.toISOString()
 }
 
 function isCreatorAnalyticsPaymentType(
@@ -66,7 +59,7 @@ export async function getCreatorAnalyticsSummary(
   creatorId: string
 ): Promise<CreatorAnalyticsSummary> {
   const supabase = await createSupabaseServerClient()
-  const startOfMonth = getStartOfCurrentMonth()
+  const periodStart = getCreatorAnalyticsPeriodStart()
 
   const [
     { count: postCount, error: postCountError },
@@ -104,7 +97,7 @@ export async function getCreatorAnalyticsSummary(
         .select("id, amount, type, created_at")
         .eq("creator_id", creatorId)
         .eq("status", "succeeded")
-        .gte("created_at", startOfMonth)
+        .gte("created_at", periodStart)
         .order("created_at", { ascending: false })
         .returns<CreatorAnalyticsPaymentRow[]>(),
     ])

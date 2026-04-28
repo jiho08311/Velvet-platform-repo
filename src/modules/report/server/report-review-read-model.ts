@@ -3,6 +3,7 @@ import type {
   ReportReviewDetailItem,
   ReportReviewListItem,
   ReportStatus,
+  ReportTargetReference,
   ReportTargetType,
 } from "@/modules/report/types"
 
@@ -128,10 +129,10 @@ function buildDetailReporter(
   }
 }
 
-function buildMissingTargetReference(input: {
+function buildReportTargetReference(input: {
   type: ReportTargetType
   id: string
-}): ReportReviewDetailItem["targetReference"] {
+}): ReportTargetReference {
   return {
     type: input.type,
     id: input.id,
@@ -148,6 +149,10 @@ export function buildReportReviewListItem(
     id: row.id,
     targetType: row.target_type,
     targetId: row.target_id,
+    targetReference: buildReportTargetReference({
+      type: row.target_type,
+      id: row.target_id,
+    }),
     reason: row.reason,
     description: row.description,
     status: row.status,
@@ -178,7 +183,7 @@ export function buildReportReviewDetailItem(
     updatedAt: row.updated_at,
     reviewedAt: row.reviewed_at,
     reporter: buildDetailReporter(row.reporter),
-    targetReference: buildMissingTargetReference({
+    targetReference: buildReportTargetReference({
       type: row.target_type,
       id: row.target_id,
     }),

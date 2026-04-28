@@ -59,6 +59,7 @@ export type ReportReviewListItem = {
   id: ReportId
   targetType: ReportTargetType
   targetId: string
+  targetReference: ReportTargetReference
   reason: ReportReason
   description: string | null
   status: ReportStatus
@@ -71,6 +72,14 @@ export type ReportReviewListItem = {
   } | null
 }
 
+
+export type ReportTargetReference = {
+  type: ReportTargetType
+  id: string
+  label: string | null
+  href: string | null
+  missing: boolean
+}
 
 export type ReportReviewDetailItem = {
   id: ReportId
@@ -89,13 +98,7 @@ export type ReportReviewDetailItem = {
     displayName: string | null
     avatarUrl: string | null
   } | null
-  targetReference: {
-    type: ReportTargetType
-    id: string
-    label: string | null
-    href: string | null
-    missing: boolean
-  }
+  targetReference: ReportTargetReference
 }
 
 export function isReportTargetType(value: string): value is ReportTargetType {

@@ -207,6 +207,7 @@ export default async function FeedPage() {
               "editorState" in block ? block.editorState ?? null : null,
           }))
         : [],
+    canView: item.canView,
     isLocked: item.isLocked,
     lockReason: item.lockReason,
     price: normalizePrice(item),

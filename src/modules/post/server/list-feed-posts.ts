@@ -8,6 +8,7 @@ import {
 import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
 import type { PostBlockEditorState, PostRenderListItem } from "../types"
 import { buildPostRenderReadModel } from "./post-render-read-model"
+import { getPostAccess } from "./get-post-access"
 
 type SubscriptionRow = {
   id: string
@@ -236,6 +237,22 @@ export async function listFeedPosts({
     resolvedPosts.map(async (post) => {
       const creator = visibleCreatorMap.get(post.creator_id)
       const creatorUserId = creator?.user_id ?? ""
+      const access = await getPostAccess({
+        viewerUserId: resolvedUserId,
+        post: {
+          id: post.id,
+          creatorId: post.creator_id,
+          content: post.content ?? undefined,
+          visibility: post.visibility,
+          price: post.price,
+          createdAt: post.created_at,
+        },
+        creator: {
+          userId: creatorUserId,
+        },
+        isSubscribedResult: true,
+        hasPurchasedResult: false,
+      })
 
       const selectedMediaRows = (mediaMap.get(post.id) ?? []).slice(0, 3)
 
@@ -278,7 +295,9 @@ export async function listFeedPosts({
         status: post.status,
         visibility: post.visibility,
         price: post.price,
-        isLocked: false,
+        canView: access.canView,
+        isLocked: access.isLocked,
+        lockReason: access.lockReason,
         publishedAt: post.published_at ?? null,
         createdAt: post.created_at,
         media: media.map((item) => ({

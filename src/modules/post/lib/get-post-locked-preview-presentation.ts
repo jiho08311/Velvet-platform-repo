@@ -10,9 +10,9 @@ export type PostLockedPreviewPresentation = {
 }
 
 export function getPostLockedPreviewPresentation(
-  access: Pick<PostAccessResult, "canView" | "locked" | "lockReason">
+  access: Pick<PostAccessResult, "canView" | "isLocked" | "lockReason">
 ): PostLockedPreviewPresentation {
-  if (access.canView || !access.locked || access.lockReason === "none") {
+  if (access.canView || !access.isLocked || access.lockReason === "none") {
     return {
       isLockedPreview: false,
       previewVariant: "none",

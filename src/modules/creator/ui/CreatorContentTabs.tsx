@@ -28,6 +28,7 @@ type CreatorContentTabPost = {
     mimeType?: string | null
     sortOrder?: number
   }>
+  canView?: boolean
   isLocked?: boolean
   status?: string | null
   visibility?: string | null
@@ -95,7 +96,7 @@ function getUpdateSurfaceState(
 ): UpdateSurfaceState {
   const isUpcoming = post.status === "scheduled"
   const isDraft = post.status === "draft"
-  const isLocked = !isOwner && Boolean(post.isLocked)
+  const isLocked = Boolean(post.isLocked)
   const headerBadge = getCreatorUpdateHeaderBadge(post.status)
   const previewText = getCreatorUpdatePreviewText({
     status: post.status,
@@ -140,7 +141,7 @@ function getUpdateSurfaceState(
 
 function getPostTileState(post: CreatorContentTabPost, isOwner: boolean) {
   return {
-    isLocked: !isOwner && Boolean(post.isLocked),
+    isLocked: Boolean(post.isLocked),
     isDraft: isOwner && post.status === "draft",
     extraMediaCount: Math.max((post.media?.length ?? 0) - 1, 0),
     media:

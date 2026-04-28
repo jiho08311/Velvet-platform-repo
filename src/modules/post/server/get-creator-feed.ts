@@ -8,7 +8,6 @@ import {
   filterFeedPostCandidates,
   isVisibleFeedCreator,
 } from "@/modules/feed/server/feed-inclusion-policy"
-import { getPostLockedPreviewPresentation } from "@/modules/post/lib/get-post-locked-preview-presentation"
 import type {
   PostBlockEditorState,
   PostRenderSurfaceItem,
@@ -185,19 +184,15 @@ export async function getCreatorFeed({
         },
       })
 
-      const lockedPreviewPresentation = getPostLockedPreviewPresentation(
-        resolvedAccessState.access
-      )
-      const isLocked = lockedPreviewPresentation.isLockedPreview
-
       return {
         ...post,
         publicState,
         price: post.price,
         hasPurchased: resolvedAccessState.hasPurchased,
         isSubscribed: resolvedAccessState.isSubscribed,
-        isLocked,
-        lockReason: lockedPreviewPresentation.lockReason,
+        canView: resolvedAccessState.canView,
+        isLocked: resolvedAccessState.isLocked,
+        lockReason: resolvedAccessState.lockReason,
         purchaseEligibility: resolvedAccessState.purchaseEligibility,
         access: resolvedAccessState.access,
       }
@@ -262,6 +257,7 @@ export async function getCreatorFeed({
       price: post.price,
       isLocked: post.isLocked,
       lockReason: post.lockReason,
+      canView: post.canView,
       purchaseEligibility: post.purchaseEligibility,
       likesCount: 0,
       isLiked: false,
@@ -406,6 +402,7 @@ export async function getCreatorFeed({
         media,
         blocks: post.access.canView ? renderReadModel.blocks : [],
         price: post.price,
+        canView: post.canView,
         isLocked: post.isLocked,
         lockReason: post.lockReason,
         purchaseEligibility: post.purchaseEligibility,

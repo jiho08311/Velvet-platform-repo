@@ -190,8 +190,8 @@ export async function listCreatorPosts({
     filteredPosts.push({
       ...post,
       publicState: "published",
-      isLocked: resolvedAccessState.access.locked,
-      lockReason: resolvedAccessState.access.lockReason,
+      isLocked: resolvedAccessState.isLocked,
+      lockReason: resolvedAccessState.lockReason,
       isSubscribed: resolvedAccessState.isSubscribed,
       hasPurchased: resolvedAccessState.hasPurchased,
       access: resolvedAccessState.access,
@@ -335,6 +335,7 @@ export async function listCreatorPosts({
         status: post.status,
         visibility: post.visibility,
         price: post.price,
+        canView: post.access.canView,
         isLocked: post.isLocked,
         lockReason: post.lockReason,
         purchaseEligibility: post.purchaseEligibility,

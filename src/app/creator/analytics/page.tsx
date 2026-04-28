@@ -6,6 +6,7 @@ import {
   getCreatorAnalyticsSummaryMetrics,
   type CreatorAnalyticsSummaryMetricKey,
 } from "@/modules/analytics/lib/creator-analytics-summary-metrics"
+import { CREATOR_ANALYTICS_PERIOD } from "@/modules/analytics/lib/creator-analytics-period"
 import { getCreatorAnalyticsSummary } from "@/modules/analytics/server/get-creator-analytics"
 import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
 import { readCreatorOperationalReadiness } from "@/modules/creator/server/read-creator-operational-readiness"
@@ -57,7 +58,7 @@ export default async function CreatorAnalyticsPage() {
 
           <div className="flex items-center gap-3">
             <div className="rounded-full border border-zinc-800 bg-zinc-900/70 px-4 py-2 text-sm text-zinc-300">
-              Last 30 days
+              {CREATOR_ANALYTICS_PERIOD.label}
             </div>
             <button
               type="button"

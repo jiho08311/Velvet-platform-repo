@@ -4,6 +4,7 @@ import type { PostBlockEditorState, PostRenderMediaItem } from "../types"
 
 export type LockedPreviewPolicyAccess = {
   canView: boolean
+  isLocked: boolean
   locked: boolean
   lockReason: "none" | "subscription" | "purchase"
 }
@@ -94,7 +95,7 @@ function pickLockedPreviewMedia(
 function resolvePreviewVariant(
   access: LockedPreviewPolicyAccess
 ): LockedPreviewPolicyResult["previewVariant"] {
-  if (access.canView || !access.locked || access.lockReason === "none") {
+  if (access.canView || !access.isLocked || access.lockReason === "none") {
     return "none"
   }
 
@@ -108,7 +109,7 @@ export function buildLockedPreviewPolicy(
   const media = input.media ?? []
   const previewVariant = resolvePreviewVariant(input.access)
 
-  if (input.access.canView && !input.access.locked) {
+  if (input.access.canView && !input.access.isLocked) {
     return {
       canViewFullContent: true,
       shouldHideFullContent: false,

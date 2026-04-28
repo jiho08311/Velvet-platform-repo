@@ -41,6 +41,7 @@ export type PostCardSurfaceProps = {
   media?: PostRenderMediaItem[]
   blocks?: PostBlock[]
   renderInput?: PostRenderInput
+  canView?: boolean
   isLocked?: boolean
   lockReason?: "none" | "subscription" | "purchase"
   purchaseEligibility?: PostPurchaseEligibility
@@ -99,6 +100,7 @@ export function PostCard({
   media = [],
   blocks = [],
   renderInput,
+  canView,
   isLocked = false,
   lockReason = "none",
   purchaseEligibility,
@@ -603,14 +605,15 @@ export function PostCard({
   }
 
   function renderLockedAction() {
+    const resolvedCanView = canView ?? !isLocked
     const shouldShowPurchaseCta = purchaseEligibility
       ? getPostPurchaseCtaVisibility({
           isLocked,
           purchaseEligibility,
         })
       : getPostPurchaseCtaVisibility({
-          canView: !isLocked,
-          locked: isLocked,
+          canView: resolvedCanView,
+          isLocked,
           lockReason,
         })
 
