@@ -271,6 +271,7 @@ export async function getPostById(
         viewerUserId: resolvedViewerUserId,
         creatorUserId: creator.user_id,
         visibility: post.visibility,
+        canView: access.canView,
         isSubscribed,
         hasPurchased,
         allowPreview: !access.canView && previewPolicy.allowPreviewMediaSigning,

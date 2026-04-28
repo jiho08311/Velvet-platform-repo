@@ -457,6 +457,7 @@ export async function getHomeFeed(
             viewerUserId,
             creatorUserId,
             visibility: post.visibility,
+            canView: access.canView,
             isSubscribed: false,
             hasPurchased: false,
           }),

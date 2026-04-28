@@ -351,6 +351,7 @@ export async function getCreatorFeed({
             viewerUserId: safeUserId,
             creatorUserId: resolvedCreatorUserId,
             visibility: post.visibility,
+            canView: post.access.canView,
             isSubscribed: post.isSubscribed,
             hasPurchased: post.hasPurchased,
             allowPreview:

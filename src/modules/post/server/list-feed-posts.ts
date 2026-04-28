@@ -263,6 +263,7 @@ export async function listFeedPosts({
             viewerUserId: resolvedUserId,
             creatorUserId,
             visibility: post.visibility,
+            canView: access.canView,
             isSubscribed: true,
             hasPurchased: false,
           })

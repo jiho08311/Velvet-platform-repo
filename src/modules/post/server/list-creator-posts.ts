@@ -282,6 +282,7 @@ export async function listCreatorPosts({
             viewerUserId: safeUserId,
             creatorUserId: creator.user_id,
             visibility: post.visibility,
+            canView: post.access.canView,
             isSubscribed: post.isSubscribed,
             hasPurchased: post.hasPurchased,
             allowPreview:

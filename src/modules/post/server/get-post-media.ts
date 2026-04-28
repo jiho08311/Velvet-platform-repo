@@ -128,7 +128,11 @@ export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
     }
   }
 
-  const { isSubscribed, hasPurchased } = await resolvePostAccessState({
+  const {
+    canView,
+    isSubscribed,
+    hasPurchased,
+  } = await resolvePostAccessState({
     viewerUserId,
     creatorId: post.creator_id,
     creatorUserId: creatorUserId ?? "",
@@ -166,6 +170,7 @@ export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
         viewerUserId,
         creatorUserId,
         visibility: post.visibility,
+        canView,
         isSubscribed,
         hasPurchased,
       })

@@ -5,7 +5,6 @@ import type { PostBlockEditorState, PostRenderMediaItem } from "../types"
 export type LockedPreviewPolicyAccess = {
   canView: boolean
   isLocked: boolean
-  locked: boolean
   lockReason: "none" | "subscription" | "purchase"
 }
 

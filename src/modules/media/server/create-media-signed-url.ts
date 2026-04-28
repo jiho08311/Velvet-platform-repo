@@ -6,6 +6,7 @@ type CreateMediaSignedUrlInput = {
   viewerUserId?: string | null
   creatorUserId?: string | null
   visibility: "public" | "subscribers" | "paid"
+  canView?: boolean
   isSubscribed?: boolean
   hasPurchased?: boolean
   expiresIn?: number
@@ -20,6 +21,7 @@ export async function createMediaSignedUrl({
   viewerUserId,
   creatorUserId,
   visibility,
+  canView,
   isSubscribed = false,
   hasPurchased = false,
   expiresIn = 60 * 60,
@@ -33,25 +35,26 @@ export async function createMediaSignedUrl({
     return ""
   }
 
-  // ✅ 최소 수정: creator 본인은 무조건 접근 허용
   const isOwner =
     resolvedViewerUserId.length > 0 &&
     resolvedCreatorUserId.length > 0 &&
     resolvedViewerUserId === resolvedCreatorUserId
 
-  const hasAccess = isOwner
+  const hasAccess = typeof canView === "boolean"
+    ? canView
+    : isOwner
     ? true
     : canViewPost({
         viewerUserId: resolvedViewerUserId,
-  creatorUserId: resolvedCreatorUserId,
+        creatorUserId: resolvedCreatorUserId,
         visibility,
         isSubscribed,
         hasPurchased,
       })
 
-if (!hasAccess && !allowPreview) {
-  return ""
-}
+  if (!hasAccess && !allowPreview) {
+    return ""
+  }
 
   const { data, error } = await supabaseAdmin.storage
     .from(MEDIA_BUCKET)

@@ -51,7 +51,7 @@ export async function getSecurePostMedia({
         viewerUserId: viewerUserId ?? "",
         creatorUserId: post.creatorUserId,
         visibility: post.visibility,
-        hasPurchased: !post.isLocked,
+        canView: post.canView,
       })
 
       return {

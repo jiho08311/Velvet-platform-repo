@@ -365,6 +365,7 @@ export async function getCreatorPage({
             viewerUserId: viewerUserId ?? "",
             creatorUserId: creator.user_id,
             visibility: post.visibility,
+            canView: access.canView,
             hasPurchased,
             allowPreview: lockedPreviewPresentation.isLockedPreview,
           }),
