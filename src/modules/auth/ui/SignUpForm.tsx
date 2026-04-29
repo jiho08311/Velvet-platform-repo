@@ -8,6 +8,29 @@ import {
   resolveRedirectTarget,
   VERIFY_PASS_PATH,
 } from "@/modules/auth/lib/redirect-handoff";
+import { AuthFormInput } from "@/modules/auth/ui/AuthFormField";
+
+const errorNoticeClassName =
+  "rounded-2xl border border-red-300 bg-red-50 px-4 py-3";
+const errorNoticeTextClassName = "text-sm text-red-600";
+const signUpButtonBaseClassName =
+  "w-full rounded-2xl px-5 py-4 text-base transition disabled:opacity-60";
+const oAuthButtonBaseClassName = [
+  signUpButtonBaseClassName,
+  "flex items-center justify-center gap-3 font-medium",
+].join(" ");
+const googleButtonClassName = [
+  oAuthButtonBaseClassName,
+  "border border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-50",
+].join(" ");
+const kakaoButtonClassName = [
+  oAuthButtonBaseClassName,
+  "bg-[#FEE500] text-[#191919] hover:brightness-95",
+].join(" ");
+const emailSubmitButtonClassName = [
+  signUpButtonBaseClassName,
+  "bg-[#C2185B] font-semibold text-white hover:bg-[#D81B60] disabled:cursor-not-allowed",
+].join(" ");
 
 function GoogleLogo() {
   return (
@@ -43,15 +66,17 @@ export function SignUpForm() {
   const [password, setPassword] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [emailLoading, setEmailLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   async function handleGoogleSignUp() {
     if (!agreed) {
-      alert("약관에 동의해주세요.");
+      setErrorMessage("약관에 동의해주세요.");
       return;
     }
 
     if (googleLoading || kakaoLoading) return;
     setGoogleLoading(true);
+    setErrorMessage("");
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -61,7 +86,7 @@ export function SignUpForm() {
         },
       });
 
-      if (error) alert(error.message || "Google sign up failed");
+      if (error) setErrorMessage(error.message || "Google sign up failed");
     } finally {
       setGoogleLoading(false);
     }
@@ -69,12 +94,13 @@ export function SignUpForm() {
 
   async function handleKakaoSignUp() {
     if (!agreed) {
-      alert("약관에 동의해주세요.");
+      setErrorMessage("약관에 동의해주세요.");
       return;
     }
 
     if (googleLoading || kakaoLoading) return;
     setKakaoLoading(true);
+    setErrorMessage("");
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -84,7 +110,7 @@ export function SignUpForm() {
         },
       });
 
-      if (error) alert(error.message || "Kakao sign up failed");
+      if (error) setErrorMessage(error.message || "Kakao sign up failed");
     } finally {
       setKakaoLoading(false);
     }
@@ -93,16 +119,17 @@ export function SignUpForm() {
   // ✅ 이메일 회원가입 (추가만)
   async function handleEmailSignUp() {
     if (!agreed) {
-      alert("약관에 동의해주세요.");
+      setErrorMessage("약관에 동의해주세요.");
       return;
     }
 
     if (!email || !password || !birthDate) {
-      alert("모든 값을 입력해주세요.");
+      setErrorMessage("모든 값을 입력해주세요.");
       return;
     }
 
     setEmailLoading(true);
+    setErrorMessage("");
 
     try {
       const res = await fetch("/api/auth/sign-up", {
@@ -120,7 +147,7 @@ export function SignUpForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "회원가입 실패");
+        setErrorMessage(data.error || "회원가입 실패");
         return;
       }
 
@@ -129,14 +156,20 @@ export function SignUpForm() {
         next,
       });
     } catch (e) {
-      alert("에러 발생");
+      setErrorMessage("에러 발생");
     } finally {
       setEmailLoading(false);
     }
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {errorMessage ? (
+        <div className={errorNoticeClassName}>
+          <p className={errorNoticeTextClassName}>{errorMessage}</p>
+        </div>
+      ) : null}
+
       {/* 약관 동의 */}
       <label className="flex items-start gap-2 text-sm text-zinc-600">
         <input
@@ -154,35 +187,33 @@ export function SignUpForm() {
       </label>
 
       {/* ✅ 이메일 회원가입 UI (추가) */}
-      <div className="space-y-2">
-        <input
+      <div className="space-y-4">
+        <AuthFormInput
           type="email"
           placeholder="이메일"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-         className="w-full rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/10"
         />
 
-        <input
+        <AuthFormInput
           type="password"
           placeholder="비밀번호"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-         className="w-full rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/10"
         />
 
-       <input
-  type="date"
-  max={new Date().toISOString().split("T")[0]}
-  value={birthDate}
-  onChange={(e) => setBirthDate(e.target.value)}
-  className="w-full rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base text-zinc-900 outline-none transition focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/10"
-  style={{ colorScheme: "light" }}
-/>
+        <AuthFormInput
+          type="date"
+          max={new Date().toISOString().split("T")[0]}
+          value={birthDate}
+          onChange={(e) => setBirthDate(e.target.value)}
+          style={{ colorScheme: "light" }}
+        />
         <button
           type="button"
           onClick={handleEmailSignUp}
-          className="w-full rounded-full bg-black text-white py-3"
+          disabled={emailLoading}
+          className={emailSubmitButtonClassName}
         >
           {emailLoading ? "처리중..." : "이메일로 회원가입"}
         </button>
@@ -193,7 +224,7 @@ export function SignUpForm() {
         type="button"
         onClick={handleGoogleSignUp}
         disabled={googleLoading || kakaoLoading}
-        className="flex w-full items-center justify-center gap-3 rounded-full border border-zinc-300 bg-white px-4 py-3 text-sm font-medium text-zinc-900 hover:bg-zinc-50 disabled:opacity-50"
+        className={googleButtonClassName}
       >
         <GoogleLogo />
         {googleLoading ? "Connecting..." : "Continue with Google"}
@@ -204,7 +235,7 @@ export function SignUpForm() {
         type="button"
         onClick={handleKakaoSignUp}
         disabled={googleLoading || kakaoLoading}
-        className="flex w-full items-center justify-center gap-3 rounded-full bg-[#FEE500] px-4 py-3 text-sm font-medium text-[#191919] hover:brightness-95 disabled:opacity-50"
+        className={kakaoButtonClassName}
       >
         <KakaoLogo />
         {kakaoLoading ? "Connecting..." : "Continue with Kakao"}

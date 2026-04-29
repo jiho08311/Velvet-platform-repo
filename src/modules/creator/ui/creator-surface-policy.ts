@@ -55,6 +55,53 @@ export function getCreatorUpdateHeaderBadge(status?: string | null) {
   }
 }
 
+export type CreatorUpdateSurfaceVariant =
+  | "locked"
+  | "upcoming"
+  | "draft"
+  | "default"
+
+export const CREATOR_UPDATE_SURFACE_CLASS_NAMES = {
+  card: {
+    locked:
+      "group rounded-3xl border border-zinc-700 bg-zinc-950/90 p-5 transition-all hover:border-zinc-600 hover:bg-zinc-900",
+    upcoming:
+      "group rounded-3xl border border-[#C2185B]/25 bg-zinc-950/85 p-5 transition-all hover:border-[#C2185B]/40 hover:bg-zinc-900/95",
+    draft:
+      "group rounded-3xl border border-zinc-700/80 bg-zinc-950/80 p-5 transition-all hover:border-zinc-600 hover:bg-zinc-900/90",
+    default:
+      "group rounded-3xl border border-zinc-800 bg-zinc-950/70 p-5 transition-all hover:border-zinc-700 hover:bg-zinc-900/90",
+  },
+  footerDot: {
+    locked: "bg-zinc-500",
+    upcoming: "bg-[#C2185B]",
+    draft: "bg-zinc-500",
+    default: "bg-zinc-600",
+  },
+} satisfies {
+  card: Record<CreatorUpdateSurfaceVariant, string>
+  footerDot: Record<CreatorUpdateSurfaceVariant, string>
+}
+
+export function getCreatorUpdateSurfaceVariant(input: {
+  status?: string | null
+  isLocked: boolean
+}): CreatorUpdateSurfaceVariant {
+  if (input.isLocked) {
+    return "locked"
+  }
+
+  if (input.status === "scheduled") {
+    return "upcoming"
+  }
+
+  if (input.status === "draft") {
+    return "draft"
+  }
+
+  return "default"
+}
+
 export function getCreatorUpdatePreviewText(input: {
   status?: string | null
   isLocked: boolean

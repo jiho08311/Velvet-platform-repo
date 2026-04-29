@@ -3,16 +3,75 @@
 import { useState } from "react"
 import type { MyPostListItem } from "@/modules/post/server/get-my-posts"
 
+type ProfileContentTab = "posts" | "updates"
+type PreviewMediaItem = {
+  url: string
+  type: string
+}
+
 type Props = {
   mediaPosts: MyPostListItem[]
   updatePosts: MyPostListItem[]
+}
+
+const tabButtonBaseClass = "flex items-center justify-center py-3 border-b-2"
+const activeTabClass = "border-white text-white"
+const inactiveTabClass = "border-transparent text-zinc-500"
+const tabLabelClass = "text-sm font-semibold"
+const emptyStateClass = "p-10 text-center text-sm text-zinc-500"
+const mediaCountBadgeClass =
+  "absolute right-2 top-2 rounded-full bg-black/70 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur"
+const mediaImageClass = "h-full w-full object-cover"
+const updatePillClass =
+  "rounded-full px-2.5 py-1 text-[11px] font-semibold"
+
+function getTabButtonClass(isActive: boolean) {
+  return `${tabButtonBaseClass} ${isActive ? activeTabClass : inactiveTabClass}`
+}
+
+function MediaCountBadge({ count }: { count: number }) {
+  if (count <= 0) {
+    return null
+  }
+
+  return <div className={mediaCountBadgeClass}>+{count}</div>
+}
+
+function PreviewMedia({
+  media,
+  variant,
+}: {
+  media: PreviewMediaItem
+  variant: "grid" | "update"
+}) {
+  if (media.type === "video") {
+    return (
+      <video
+        src={media.url}
+        autoPlay={variant === "grid"}
+        muted
+        loop={variant === "grid"}
+        playsInline
+        preload="metadata"
+        className={mediaImageClass}
+      />
+    )
+  }
+
+  return (
+    <img
+      src={media.url}
+      alt=""
+      className={variant === "grid" ? `${mediaImageClass} hover:opacity-90` : mediaImageClass}
+    />
+  )
 }
 
 export function ProfileContentTabs({
   mediaPosts,
   updatePosts,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<"posts" | "updates">("posts")
+  const [activeTab, setActiveTab] = useState<ProfileContentTab>("posts")
 
   function getPreviewMedia(post: MyPostListItem) {
     return post.renderInput.primaryLockedPreviewMedia ?? post.media?.[0]
@@ -33,24 +92,16 @@ export function ProfileContentTabs({
         <div className="grid grid-cols-2">
           <button
             onClick={() => setActiveTab("posts")}
-            className={`flex items-center justify-center py-3 border-b-2 ${
-              activeTab === "posts"
-                ? "border-white text-white"
-                : "border-transparent text-zinc-500"
-            }`}
+            className={getTabButtonClass(activeTab === "posts")}
           >
-            <span className="text-sm font-semibold">Posts</span>
+            <span className={tabLabelClass}>Posts</span>
           </button>
 
           <button
             onClick={() => setActiveTab("updates")}
-            className={`flex items-center justify-center py-3 border-b-2 ${
-              activeTab === "updates"
-                ? "border-white text-white"
-                : "border-transparent text-zinc-500"
-            }`}
+            className={getTabButtonClass(activeTab === "updates")}
           >
-            <span className="text-sm font-semibold">Updates</span>
+            <span className={tabLabelClass}>Updates</span>
           </button>
         </div>
       </div>
@@ -71,34 +122,14 @@ export function ProfileContentTabs({
                   className="relative aspect-square overflow-hidden bg-zinc-800"
                 >
                   {media?.url ? (
-                    media.type === "video" ? (
-                      <video
-                        src={media.url}
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        preload="metadata"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <img
-                        src={media.url}
-                        alt=""
-                        className="h-full w-full object-cover hover:opacity-90"
-                      />
-                    )
+                    <PreviewMedia media={media} variant="grid" />
                   ) : (
                     <div className="flex h-full items-center justify-center text-xs text-zinc-500">
                       No media
                     </div>
                   )}
 
-                  {extraMediaCount > 0 && (
-                    <div className="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
-                      +{extraMediaCount}
-                    </div>
-                  )}
+                  <MediaCountBadge count={extraMediaCount} />
 
                   {post.status === "draft" && (
                     <div className="absolute left-2 top-2 rounded-full bg-zinc-900/80 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
@@ -110,9 +141,7 @@ export function ProfileContentTabs({
             })}
           </div>
         ) : (
-          <div className="p-10 text-center text-sm text-zinc-500">
-            No posts yet
-          </div>
+          <div className={emptyStateClass}>No posts yet</div>
         )
       ) : updatePosts.length > 0 ? (
         <div className="mt-4 flex flex-col gap-3">
@@ -148,15 +177,15 @@ export function ProfileContentTabs({
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-wrap items-center gap-2">
                     {post.status === "scheduled" ? (
-                      <span className="rounded-full bg-pink-600/90 px-2.5 py-1 text-[11px] font-semibold text-white">
+                      <span className={`${updatePillClass} bg-pink-600/90 text-white`}>
                         {statusLabel}
                       </span>
                     ) : post.status === "draft" ? (
-                      <span className="rounded-full bg-zinc-800 px-2.5 py-1 text-[11px] font-semibold text-white">
+                      <span className={`${updatePillClass} bg-zinc-800 text-white`}>
                         {statusLabel}
                       </span>
                     ) : (
-                      <span className="rounded-full bg-zinc-900 px-2.5 py-1 text-[11px] font-semibold text-zinc-300">
+                      <span className={`${updatePillClass} bg-zinc-900 text-zinc-300`}>
                         {statusLabel}
                       </span>
                     )}
@@ -176,36 +205,15 @@ export function ProfileContentTabs({
                     {getPreviewText(post)}
                   </p>
                 </div>
+                {previewMedia?.url ? (
+                  <div className="mt-4 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
+                    <div className="relative aspect-[16/10] w-full overflow-hidden">
+                      <PreviewMedia media={previewMedia} variant="update" />
 
-
-{previewMedia?.url ? (
-  <div className="mt-4 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
-    <div className="relative aspect-[16/10] w-full overflow-hidden">
-      {previewMedia.type === "video" ? (
-        <video
-          src={previewMedia.url}
-          muted
-          playsInline
-          preload="metadata"
-          className="h-full w-full object-cover"
-        />
-      ) : (
-        <img
-          src={previewMedia.url}
-          alt=""
-          className="h-full w-full object-cover"
-        />
-      )}
-
-      {extraMediaCount > 0 ? (
-        <div className="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
-          +{extraMediaCount}
-        </div>
-      ) : null}
-    </div>
-  </div>
-) : null}
-
+                      <MediaCountBadge count={extraMediaCount} />
+                    </div>
+                  </div>
+                ) : null}
 
                 <div className="mt-4 flex items-center justify-between border-t border-zinc-800 pt-3">
                   <p className="text-xs text-zinc-500">{metaDate}</p>
@@ -220,9 +228,7 @@ export function ProfileContentTabs({
           })}
         </div>
       ) : (
-        <div className="p-10 text-center text-sm text-zinc-500">
-          No updates yet
-        </div>
+        <div className={emptyStateClass}>No updates yet</div>
       )}
     </div>
   )

@@ -1,24 +1,14 @@
 // src/modules/auth/ui/VerifyPassPage.tsx
 "use client"
 
+import { PassVerificationButton } from "./PassVerificationButton"
+
 type VerifyPassPageProps = {
   profileId: string
   next?: string | null
 }
 
 export function VerifyPassPage({ profileId, next }: VerifyPassPageProps) {
-  function handleClick() {
-    const searchParams = new URLSearchParams({
-      profileId,
-    })
-
-    if (next) {
-      searchParams.set("next", next)
-    }
-
-    window.location.href = `/api/auth/pass/start?${searchParams.toString()}`
-  }
-
   return (
     <main className="min-h-screen bg-white">
       <div className="flex min-h-screen items-center justify-center px-6 py-16">
@@ -32,12 +22,13 @@ export function VerifyPassPage({ profileId, next }: VerifyPassPageProps) {
             </p>
           </div>
 
-          <button
-            onClick={handleClick}
-            className="w-full rounded-2xl bg-[#C2185B] px-5 py-4 text-base font-semibold text-white transition hover:bg-[#D81B60]"
+          <PassVerificationButton
+            profileId={profileId}
+            next={next}
+            loadingLabel="PASS 인증하기"
           >
             PASS 인증하기
-          </button>
+          </PassVerificationButton>
         </div>
       </div>
     </main>

@@ -1,9 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import Link from "next/link"
-import { buildCreatorRoutePath } from "@/modules/creator/lib/creator-identity"
 import type { CreatorSearchResult } from "../creator-search-contract"
+import { SearchResultCreatorCard } from "./SearchResultList"
 
 type SearchInfiniteListProps = {
   query: string
@@ -83,26 +82,7 @@ export function SearchInfiniteList({
     <>
       <div className="grid gap-2">
         {creators.map((creator) => (
-      <Link
-  key={creator.id}
-  href={buildCreatorRoutePath({ username: creator.username })}
-  className="group flex items-center gap-3 rounded-2xl bg-zinc-900 px-4 py-3 transition hover:bg-zinc-800"
->
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-700 text-sm font-semibold text-white">
-              {(creator.displayName ?? creator.username)
-                .slice(0, 1)
-                .toUpperCase()}
-            </div>
-
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-white">
-                {creator.displayName ?? creator.username}
-              </p>
-              <p className="truncate text-xs text-zinc-400">
-                @{creator.username}
-              </p>
-            </div>
-        </Link>
+          <SearchResultCreatorCard key={creator.id} creator={creator} />
         ))}
       </div>
 
@@ -110,8 +90,8 @@ export function SearchInfiniteList({
 
       {isLoading ? (
         <div className="mt-3 grid gap-2">
-  <div className="h-[72px] animate-pulse rounded-2xl bg-zinc-900" />
-<div className="h-[72px] animate-pulse rounded-2xl bg-zinc-900" />
+          <div className="h-16 animate-pulse rounded-2xl bg-zinc-900" />
+          <div className="h-16 animate-pulse rounded-2xl bg-zinc-900" />
         </div>
       ) : null}
     </>

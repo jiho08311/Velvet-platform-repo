@@ -3,6 +3,12 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/client"
+import {
+  AuthFormField,
+  AuthFormInput,
+  AuthFormNotice,
+  AuthFormSubmitButton,
+} from "@/modules/auth/ui/AuthFormField"
 
 export function ResetPasswordForm() {
   const router = useRouter()
@@ -65,65 +71,44 @@ export function ResetPasswordForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-2">
-        <label
-          htmlFor="password"
-          className="block text-sm font-medium text-zinc-700"
-        >
-          New password
-        </label>
-
-        <input
+      <AuthFormField htmlFor="password" label="New password">
+        <AuthFormInput
           id="password"
           type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Enter new password"
-          className="w-full rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/10"
           disabled={isPending}
           required
         />
-      </div>
+      </AuthFormField>
 
-      <div className="space-y-2">
-        <label
-          htmlFor="confirmPassword"
-          className="block text-sm font-medium text-zinc-700"
-        >
-          Confirm password
-        </label>
-
-        <input
+      <AuthFormField htmlFor="confirmPassword" label="Confirm password">
+        <AuthFormInput
           id="confirmPassword"
           type="password"
           value={confirmPassword}
           onChange={(event) => setConfirmPassword(event.target.value)}
           placeholder="Confirm new password"
-          className="w-full rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/10"
           disabled={isPending}
           required
         />
-      </div>
+      </AuthFormField>
 
       {errorMessage ? (
-        <div className="rounded-2xl border border-red-300 bg-red-50 px-4 py-3">
-          <p className="text-sm text-red-600">{errorMessage}</p>
-        </div>
+        <AuthFormNotice tone="error">{errorMessage}</AuthFormNotice>
       ) : null}
 
       {successMessage ? (
-        <div className="rounded-2xl border border-green-300 bg-green-50 px-4 py-3">
-          <p className="text-sm text-green-700">{successMessage}</p>
-        </div>
+        <AuthFormNotice tone="success">{successMessage}</AuthFormNotice>
       ) : null}
 
-      <button
+      <AuthFormSubmitButton
         type="submit"
         disabled={isPending}
-        className="w-full rounded-2xl bg-[#C2185B] px-5 py-4 text-base font-semibold text-white transition hover:bg-[#D81B60] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isPending ? "Updating..." : "Update password"}
-      </button>
+      </AuthFormSubmitButton>
     </form>
   )
 }

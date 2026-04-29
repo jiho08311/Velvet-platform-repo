@@ -4,6 +4,29 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/client";
 import { resolveRedirectTarget } from "@/modules/auth/lib/redirect-handoff";
+import { AuthFormField, AuthFormInput } from "@/modules/auth/ui/AuthFormField";
+
+const errorNoticeClassName =
+  "rounded-2xl border border-red-300 bg-red-50 px-4 py-3";
+const errorNoticeTextClassName = "text-sm text-red-600";
+const signInButtonBaseClassName =
+  "w-full rounded-2xl px-5 py-4 text-base transition disabled:opacity-60";
+const oAuthButtonBaseClassName = [
+  signInButtonBaseClassName,
+  "flex items-center justify-center gap-3 font-medium",
+].join(" ");
+const googleButtonClassName = [
+  oAuthButtonBaseClassName,
+  "border border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-50",
+].join(" ");
+const kakaoButtonClassName = [
+  oAuthButtonBaseClassName,
+  "bg-[#FEE500] text-[#191919] hover:brightness-95",
+].join(" ");
+const emailSubmitButtonClassName = [
+  signInButtonBaseClassName,
+  "bg-[#C2185B] font-semibold text-white hover:bg-[#D81B60] disabled:cursor-not-allowed",
+].join(" ");
 
 function GoogleLogo() {
   return (
@@ -104,8 +127,8 @@ export function SignInForm() {
   return (
     <div className="space-y-6">
       {errorMessage ? (
-        <div className="rounded-2xl border border-red-300 bg-red-50 px-4 py-3">
-          <p className="text-sm text-red-600">{errorMessage}</p>
+        <div className={errorNoticeClassName}>
+          <p className={errorNoticeTextClassName}>{errorMessage}</p>
         </div>
       ) : null}
 
@@ -114,7 +137,7 @@ export function SignInForm() {
           type="button"
           onClick={() => handleOAuth("google")}
           disabled={isPending}
-          className="flex w-full items-center justify-center gap-3 rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base font-medium text-zinc-900 transition hover:bg-zinc-50 disabled:opacity-60"
+          className={googleButtonClassName}
         >
           <GoogleLogo />
           Continue with Google
@@ -124,7 +147,7 @@ export function SignInForm() {
           type="button"
           onClick={() => handleOAuth("kakao")}
           disabled={isPending}
-          className="flex w-full items-center justify-center gap-3 rounded-2xl bg-[#FEE500] px-5 py-4 text-base font-medium text-[#191919] transition hover:brightness-95 disabled:opacity-60"
+          className={kakaoButtonClassName}
         >
           <KakaoLogo />
           Continue with Kakao
@@ -138,50 +161,34 @@ export function SignInForm() {
       </div>
 
       <form onSubmit={handleEmailSignIn} className="space-y-4">
-        <div className="space-y-2">
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-zinc-700"
-          >
-            이메일
-          </label>
-
-          <input
+        <AuthFormField htmlFor="email" label="이메일">
+          <AuthFormInput
             id="email"
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="you@example.com"
-            className="w-full rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/10"
             disabled={isPending}
             required
           />
-        </div>
+        </AuthFormField>
 
-        <div className="space-y-2">
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-zinc-700"
-          >
-            비밀번호
-          </label>
-
-          <input
+        <AuthFormField htmlFor="password" label="비밀번호">
+          <AuthFormInput
             id="password"
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             placeholder="비밀번호를 입력하세요"
-            className="w-full rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#C2185B] focus:ring-2 focus:ring-[#C2185B]/10"
             disabled={isPending}
             required
           />
-        </div>
+        </AuthFormField>
 
         <button
           type="submit"
           disabled={isPending}
-          className="w-full rounded-2xl bg-[#C2185B] px-5 py-4 text-base font-semibold text-white transition hover:bg-[#D81B60] disabled:cursor-not-allowed disabled:opacity-60"
+          className={emailSubmitButtonClassName}
         >
           {isPending ? "Signing in..." : "이메일로 로그인"}
         </button>
