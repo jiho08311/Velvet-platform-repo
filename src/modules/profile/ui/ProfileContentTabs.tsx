@@ -14,6 +14,18 @@ export function ProfileContentTabs({
 }: Props) {
   const [activeTab, setActiveTab] = useState<"posts" | "updates">("posts")
 
+  function getPreviewMedia(post: MyPostListItem) {
+    return post.renderInput?.primaryLockedPreviewMedia ?? post.media?.[0]
+  }
+
+  function getMediaCount(post: MyPostListItem) {
+    return post.renderInput?.blockMedia.length ?? post.media?.length ?? 0
+  }
+
+  function getPreviewText(post: MyPostListItem) {
+    return post.renderInput?.blockText || post.content || "No content"
+  }
+
   return (
     <div className="flex flex-col">
       {/* Tabs */}
@@ -48,8 +60,8 @@ export function ProfileContentTabs({
         mediaPosts.length > 0 ? (
           <div className="mt-4 -mx-4 grid grid-cols-3 gap-[2px] md:-mx-0 md:grid-cols-3">
             {mediaPosts.map((post) => {
-              const media = post.media?.[0]
-              const mediaCount = post.media?.length ?? 0
+              const media = getPreviewMedia(post)
+              const mediaCount = getMediaCount(post)
               const extraMediaCount = mediaCount > 1 ? mediaCount - 1 : 0
 
               return (
@@ -123,8 +135,10 @@ export function ProfileContentTabs({
               post.status === "scheduled" && post.publishedAt
                 ? `Scheduled · ${new Date(post.publishedAt).toLocaleDateString()}`
                 : `Created · ${new Date(post.createdAt).toLocaleDateString()}`
-const previewMedia = post.media?.[0]
-const extraMediaCount = (post.media?.length ?? 0) > 1 ? (post.media?.length ?? 0) - 1 : 0
+            const previewMedia = getPreviewMedia(post)
+            const mediaCount = getMediaCount(post)
+            const extraMediaCount = mediaCount > 1 ? mediaCount - 1 : 0
+
             return (
               <a
                 key={post.id}
@@ -159,7 +173,7 @@ const extraMediaCount = (post.media?.length ?? 0) > 1 ? (post.media?.length ?? 0
 
                 <div className="mt-4 min-h-[72px]">
                   <p className="line-clamp-4 whitespace-pre-wrap text-[15px] font-medium leading-6 text-zinc-100">
-                    {post.content || "No content"}
+                    {getPreviewText(post)}
                   </p>
                 </div>
 
