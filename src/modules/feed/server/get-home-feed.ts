@@ -1,9 +1,15 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { buildCreatorIdentity } from "@/modules/creator/server/build-creator-identity"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
-import type { PostBlockEditorState, PostCommerceState } from "@/modules/post/types"
+import type {
+  PostBlock,
+  PostBlockEditorState,
+  PostCommerceState,
+  PostRenderInput,
+} from "@/modules/post/types"
 import { getPostAccess } from "@/modules/post/server/get-post-access"
 import { getBlockedPostCommerceState } from "@/modules/post/lib/post-commerce-policy"
+import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
 import {
   buildPostLikeCountMap,
   readPostLikeCount,
@@ -24,6 +30,7 @@ export type HomeFeedItem = {
   currentUserId?: string
   text: string
   createdAt: string
+  renderInput: PostRenderInput
   canView: boolean
   isLocked: boolean
   status?: "draft" | "scheduled" | "published" | "archived"
@@ -36,16 +43,7 @@ export type HomeFeedItem = {
     url: string
     type: MediaType
   }>
-  blocks?: Array<{
-    id: string
-    postId: string
-    type: PostBlockType
-    content: string | null
-    mediaId: string | null
-    sortOrder: number
-    createdAt: string
-    editorState: PostBlockEditorState | null
-  }>
+  blocks?: PostBlock[]
   likesCount: number
   isLiked: boolean
   commentsCount: number
@@ -160,6 +158,21 @@ function getPublicFeedCommerceState(): PostCommerceState {
     hasPurchased: false,
     isSubscribed: false,
   })
+}
+
+function mapPostBlocksForRender(post: PostRow): PostBlock[] {
+  return [...(post.post_blocks ?? [])]
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((block) => ({
+      id: block.id,
+      postId: block.post_id,
+      type: block.type,
+      content: block.content,
+      mediaId: block.media_id,
+      sortOrder: block.sort_order,
+      createdAt: block.created_at,
+      editorState: block.editor_state ?? null,
+    }))
 }
 
 export async function getHomeFeed(
@@ -389,6 +402,7 @@ export async function getHomeFeed(
       const creator = creatorMap.get(post.creator_id)
       const creatorUserId = creator?.user_id ?? ""
       const profile = profileMap.get(creatorUserId)
+      const normalizedBlocks = mapPostBlocksForRender(post)
       const identity =
         creator != null
           ? buildCreatorIdentity({
@@ -414,6 +428,11 @@ export async function getHomeFeed(
           isSubscribedResult: false,
           hasPurchasedResult: false,
         })
+        const renderInput = buildPostRenderInput({
+          text: post.content ?? post.title ?? "",
+          blocks: normalizedBlocks,
+          media: [],
+        })
 
         return {
           id: post.id,
@@ -422,8 +441,9 @@ export async function getHomeFeed(
           publishedAt: post.published_at ?? null,
           creatorUserId,
           currentUserId: viewerUserId || undefined,
-          text: post.content ?? post.title ?? "",
+          text: renderInput.blockText || post.content || post.title || "",
           createdAt: post.created_at,
+          renderInput,
           canView: access.canView,
           isLocked: access.isLocked,
           lockReason: access.lockReason,
@@ -473,20 +493,16 @@ export async function getHomeFeed(
             hasPurchased: false,
           }),
           type: resolveMediaType(item),
+          mimeType: item.mime_type,
+          sortOrder: item.sort_order,
         }))
       )
-      const normalizedBlocks = [...(post.post_blocks ?? [])]
-        .sort((a, b) => a.sort_order - b.sort_order)
-        .map((block) => ({
-          id: block.id,
-          postId: block.post_id,
-          type: block.type,
-          content: block.content,
-          mediaId: block.media_id,
-          sortOrder: block.sort_order,
-          createdAt: block.created_at,
-          editorState: block.editor_state ?? null,
-        }))
+      const renderInput = buildPostRenderInput({
+        text: post.content ?? post.title ?? "",
+        blocks: normalizedBlocks,
+        media,
+      })
+
       return {
         id: post.id,
         creatorId: post.creator_id,
@@ -494,8 +510,9 @@ export async function getHomeFeed(
         publishedAt: post.published_at ?? null,
         creatorUserId,
         currentUserId: viewerUserId || undefined,
-        text: post.content ?? post.title ?? "",
+        text: renderInput.blockText || post.content || post.title || "",
         createdAt: post.published_at ?? post.created_at,
+        renderInput,
         canView: access.canView,
         isLocked: access.isLocked,
         lockReason: access.lockReason,

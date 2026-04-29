@@ -190,6 +190,7 @@ export default async function FeedPage() {
     currentUserId: session?.userId ?? undefined,
     text: item.text,
     createdAt: item.createdAt,
+    renderInput: item.renderInput,
     status: item.status,
     publishedAt: item.publishedAt ?? null,
     media: normalizeMedia(item),

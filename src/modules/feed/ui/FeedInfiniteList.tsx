@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react"
 import { FeedList } from "./FeedList"
 import { FeedListSkeleton } from "./FeedListSkeleton"
 import type {
-  PostBlockEditorState,
+  PostBlock,
   PostCommerceState,
+  PostRenderInput,
 } from "@/modules/post/types"
 import { FEED_LOADING_STATE } from "./feed-surface-policy"
 
@@ -18,21 +19,13 @@ type FeedInfiniteListPost = {
   currentUserId?: string
   text: string
   createdAt: string
+  renderInput?: PostRenderInput
   media?: Array<{
     id: string
     url: string
     type: "image" | "video" | "audio" | "file"
   }>
-  blocks?: Array<{
-    id: string
-    postId: string
-    type: "text" | "image" | "video" | "audio" | "file"
-    content: string | null
-    mediaId: string | null
-    sortOrder: number
-    createdAt: string
-    editorState: PostBlockEditorState
-  }>
+  blocks?: PostBlock[]
   canView: boolean
   isLocked: boolean
   lockReason?: "none" | "subscription" | "purchase"
@@ -64,6 +57,7 @@ type FeedApiItem = {
   currentUserId?: string
   text: string
   createdAt: string
+  renderInput?: PostRenderInput
   canView: boolean
   isLocked: boolean
   status?: "draft" | "scheduled" | "published" | "archived"
@@ -76,16 +70,7 @@ type FeedApiItem = {
     url: string
     type: "image" | "video" | "audio" | "file"
   }>
-  blocks?: Array<{
-    id: string
-    postId: string
-    type: "text" | "image" | "video" | "audio" | "file"
-    content: string | null
-    mediaId: string | null
-    sortOrder: number
-    createdAt: string
-    editorState: PostBlockEditorState
-  }>
+  blocks?: PostBlock[]
   likesCount: number
   isLiked: boolean
   commentsCount: number
@@ -108,6 +93,7 @@ function normalizePosts(
     currentUserId: currentUserId ?? item.currentUserId,
     text: item.text,
     createdAt: item.createdAt,
+    renderInput: item.renderInput,
     status: item.status,
     publishedAt: item.publishedAt ?? null,
     media: item.media ?? [],
