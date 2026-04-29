@@ -161,7 +161,9 @@ export async function listCreatorPosts({
       lockReason: PostRenderListItem["lockReason"]
       isSubscribed: boolean
       hasPurchased: boolean
-      purchaseEligibility: PostRenderListItem["purchaseEligibility"]
+      commerce: Awaited<
+        ReturnType<typeof resolvePostAccessState>
+      >["commerce"]
       access: Awaited<
         ReturnType<typeof resolvePostAccessState>
       >["access"]
@@ -194,8 +196,8 @@ export async function listCreatorPosts({
       lockReason: resolvedAccessState.lockReason,
       isSubscribed: resolvedAccessState.isSubscribed,
       hasPurchased: resolvedAccessState.hasPurchased,
+      commerce: resolvedAccessState.commerce,
       access: resolvedAccessState.access,
-      purchaseEligibility: resolvedAccessState.purchaseEligibility,
     })
   }
 
@@ -339,7 +341,7 @@ export async function listCreatorPosts({
         canView: post.access.canView,
         isLocked: post.isLocked,
         lockReason: post.lockReason,
-        purchaseEligibility: post.purchaseEligibility,
+        commerce: post.commerce,
         publishedAt: post.published_at ?? null,
         createdAt: post.created_at,
         media: selectedMedia.map((item) => ({

@@ -280,6 +280,7 @@ export async function getExplorePosts(
             viewerUserId: creator.user_id,
             creatorUserId: creator.user_id,
             visibility: "public",
+            canView: true,
             hasPurchased: true,
           })
 

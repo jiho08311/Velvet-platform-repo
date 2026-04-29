@@ -28,7 +28,7 @@ type CreatorContentTabPost = {
     mimeType?: string | null
     sortOrder?: number
   }>
-  canView?: boolean
+  canView: boolean
   isLocked?: boolean
   status?: string | null
   visibility?: string | null

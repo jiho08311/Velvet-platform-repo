@@ -165,6 +165,7 @@ const posts = creatorFeedPosts.map((post) => {
     visibility: post.visibility,
     canView: post.canView,
     isLocked: post.isLocked,
+    commerce: post.commerce,
     price: post.price,
     createdAt: post.createdAt,
     publishedAt: post.publishedAt ?? null,

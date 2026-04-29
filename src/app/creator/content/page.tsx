@@ -49,7 +49,9 @@ export default async function CreatorContentPage() {
           id: post.id,
           content: post.content,
           createdAt: post.publishedAt ?? post.createdAt,
-          isLocked: post.visibility !== "public",
+          canView: true,
+          isLocked: false,
+          commerce: post.commerce,
           previewText: post.content ?? "",
         }))}
         isSubscribed

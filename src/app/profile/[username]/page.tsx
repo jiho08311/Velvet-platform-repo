@@ -5,7 +5,7 @@ import { getCreatorByUsername } from "@/modules/creator/server/get-creator-by-us
 import { getCreatorFeed } from "@/modules/post/server/get-creator-feed"
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 import { CreatePostComposer } from "@/modules/post/ui/CreatePostComposer"
-import { getPostPurchaseCtaVisibility } from "@/modules/post/lib/get-post-purchase-cta-visibility"
+import { getPostCommerceCtaDecision } from "@/modules/post/lib/post-commerce-policy"
 
 type CreatorPageProps = {
   params: Promise<{
@@ -72,14 +72,11 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
             <div className="grid gap-4">
               {posts.map((post) => (
                 (() => {
-                  const shouldShowPurchaseCta = getPostPurchaseCtaVisibility({
+                  const shouldShowPurchaseCta = getPostCommerceCtaDecision({
                     isLocked: post.isLocked,
-                    purchaseEligibility:
-                      post.purchaseEligibility ?? {
-                        canPurchase: false,
-                        blockingReason: "not_paid_post",
-                      },
-                  })
+                    lockReason: post.lockReason,
+                    commerce: post.commerce,
+                  }).showPurchaseCta
 
                   return (
                     <article

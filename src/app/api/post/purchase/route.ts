@@ -61,9 +61,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Post not found" }, { status: 404 })
   }
 
-  if (!post.purchaseEligibility.canPurchase) {
+  const purchaseEligibility = post.commerce.purchaseEligibility
+
+  if (!purchaseEligibility.canPurchase) {
     const purchaseBlockingError = getPurchaseBlockingError(
-      post.purchaseEligibility.blockingReason
+      purchaseEligibility.blockingReason
     )
 
     return NextResponse.json(

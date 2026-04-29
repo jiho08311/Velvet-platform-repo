@@ -193,7 +193,7 @@ export async function getCreatorFeed({
         canView: resolvedAccessState.canView,
         isLocked: resolvedAccessState.isLocked,
         lockReason: resolvedAccessState.lockReason,
-        purchaseEligibility: resolvedAccessState.purchaseEligibility,
+        commerce: resolvedAccessState.commerce,
         access: resolvedAccessState.access,
       }
     })
@@ -257,8 +257,8 @@ export async function getCreatorFeed({
       price: post.price,
       isLocked: post.isLocked,
       lockReason: post.lockReason,
+      commerce: post.commerce,
       canView: post.canView,
-      purchaseEligibility: post.purchaseEligibility,
       likesCount: 0,
       isLiked: false,
       visibility: post.visibility,
@@ -406,7 +406,7 @@ export async function getCreatorFeed({
         canView: post.canView,
         isLocked: post.isLocked,
         lockReason: post.lockReason,
-        purchaseEligibility: post.purchaseEligibility,
+        commerce: post.commerce,
         likesCount: readPostLikeCount(likeCountMap, post.id),
         isLiked: myLikeSet.has(post.id),
         visibility: post.visibility,

@@ -3,7 +3,10 @@
 import { useEffect, useRef, useState } from "react"
 import { FeedList } from "./FeedList"
 import { FeedListSkeleton } from "./FeedListSkeleton"
-import type { PostBlockEditorState } from "@/modules/post/types"
+import type {
+  PostBlockEditorState,
+  PostCommerceState,
+} from "@/modules/post/types"
 import { FEED_LOADING_STATE } from "./feed-surface-policy"
 
 type FeedInfiniteListPost = {
@@ -30,9 +33,10 @@ type FeedInfiniteListPost = {
     createdAt: string
     editorState: PostBlockEditorState
   }>
-  canView?: boolean
-  isLocked?: boolean
+  canView: boolean
+  isLocked: boolean
   lockReason?: "none" | "subscription" | "purchase"
+  commerce: PostCommerceState
   likesCount?: number
   isLiked?: boolean
   status?: "draft" | "scheduled" | "published" | "archived"
@@ -60,11 +64,12 @@ type FeedApiItem = {
   currentUserId?: string
   text: string
   createdAt: string
-  canView?: boolean
+  canView: boolean
   isLocked: boolean
   status?: "draft" | "scheduled" | "published" | "archived"
   publishedAt?: string | null
   lockReason?: "none" | "subscription" | "purchase"
+  commerce: PostCommerceState
   price?: number
   media?: Array<{
     id: string
@@ -110,6 +115,7 @@ function normalizePosts(
     canView: item.canView,
     isLocked: item.isLocked,
     lockReason: item.lockReason,
+    commerce: item.commerce,
     price: item.price,
     commentsCount: item.commentsCount,
     likesCount: item.likesCount,

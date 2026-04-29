@@ -1,10 +1,13 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
 import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
-import type { PostRenderListItem } from "../types"
+import type { PostCommerceState, PostRenderListItem } from "../types"
 import { buildPostRenderReadModel } from "./post-render-read-model"
+import { getBlockedPostCommerceState } from "@/modules/post/lib/post-commerce-policy"
 
-export type MyPostListItem = PostRenderListItem
+export type MyPostListItem = PostRenderListItem & {
+  commerce: PostCommerceState
+}
 
 export type GetMyPostsInput = {
   creatorId: string
@@ -71,6 +74,18 @@ function resolveMediaType(row: MediaRow): "image" | "video" | "audio" | "file" {
   }
 
   return "file"
+}
+
+function getOwnedPostCommerceState(
+  visibility: PostRow["visibility"]
+): PostCommerceState {
+  const isPaidPost = visibility === "paid"
+
+  return getBlockedPostCommerceState({
+    blockingReason: isPaidPost ? "owner" : "not_paid_post",
+    hasPurchased: isPaidPost,
+    isSubscribed: true,
+  })
 }
 
 export async function getMyPosts(
@@ -182,6 +197,7 @@ export async function getMyPosts(
             viewerUserId: creator.user_id,
             creatorUserId: creator.user_id,
             visibility: post.visibility,
+            canView: true,
             isSubscribed: true,
             hasPurchased: true,
           })
@@ -214,7 +230,10 @@ export async function getMyPosts(
         status: post.status,
         visibility: post.visibility,
         price: 0,
+        canView: true,
         isLocked: false,
+        lockReason: "none" as const,
+        commerce: getOwnedPostCommerceState(post.visibility),
         createdAt: post.created_at,
         publishedAt: post.published_at,
         media: media.map((item) => ({

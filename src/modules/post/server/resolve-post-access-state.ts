@@ -1,9 +1,10 @@
 import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 import { getPostPurchaseEligibility } from "@/modules/post/lib/can-purchase-post"
+import { getPostCommerceState } from "@/modules/post/lib/post-commerce-policy"
 import { getViewerSubscription } from "@/modules/subscription/server/get-viewer-subscription"
 import type {
   PostAccessResult,
-  PostPurchaseEligibility,
+  PostCommerceState,
   PostStatus,
   PostVisibility,
 } from "../types"
@@ -35,7 +36,7 @@ export type ResolvedPostAccessState = {
   isLocked: boolean
   lockReason: PostAccessResult["lockReason"]
   access: PostAccessResult
-  purchaseEligibility: PostPurchaseEligibility
+  commerce: PostCommerceState
 }
 
 export async function resolvePostAccessState({
@@ -91,6 +92,24 @@ export async function resolvePostAccessState({
     hasPurchasedResult: hasPurchased,
   })
 
+  const purchaseEligibility = getPostPurchaseEligibility({
+    post: {
+      id: post.id,
+      creatorId,
+      title: post.title,
+      content: post.content,
+      status: post.status,
+      visibility: post.visibility,
+      price: post.price,
+      publishedAt: post.publishedAt,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+    },
+    isOwner,
+    hasPurchased,
+    isSubscribed,
+  })
+
   return {
     viewerUserId: resolvedViewerUserId,
     isOwner,
@@ -100,20 +119,8 @@ export async function resolvePostAccessState({
     isLocked: access.isLocked,
     lockReason: access.lockReason,
     access,
-    purchaseEligibility: getPostPurchaseEligibility({
-      post: {
-        id: post.id,
-        creatorId,
-        title: post.title,
-        content: post.content,
-        status: post.status,
-        visibility: post.visibility,
-        price: post.price,
-        publishedAt: post.publishedAt,
-        createdAt: post.createdAt,
-        updatedAt: post.updatedAt,
-      },
-      isOwner,
+    commerce: getPostCommerceState({
+      purchaseEligibility,
       hasPurchased,
       isSubscribed,
     }),

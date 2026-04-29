@@ -9,7 +9,7 @@ import { deletePostAction } from "@/modules/post/server/delete-post-action"
 import PostPurchaseButton from "@/modules/post/ui/PostPurchaseButton"
 import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
 import { getPostLockedPreviewPresentation } from "@/modules/post/lib/get-post-locked-preview-presentation"
-import { getPostPurchaseCtaVisibility } from "@/modules/post/lib/get-post-purchase-cta-visibility"
+import { getPostCommerceCtaDecision } from "@/modules/post/lib/post-commerce-policy"
 import { EmptyState } from "@/shared/ui/EmptyState"
 
 type PostDetailPageProps = {
@@ -69,16 +69,10 @@ export default async function PostDetailPage({
     lockReason: post.lockReason,
   })
 
-  const shouldShowSubscribeCta =
-    isLocked && lockedPreviewPresentation.previewVariant === "subscription"
-
-  const shouldShowPurchaseCta = getPostPurchaseCtaVisibility({
+  const ctaDecision = getPostCommerceCtaDecision({
     isLocked,
-    purchaseEligibility:
-      post.purchaseEligibility ?? {
-        canPurchase: false,
-        blockingReason: "not_paid_post",
-      },
+    lockReason: post.lockReason,
+    commerce: post.commerce,
   })
 
   const detailCreator = {
@@ -151,13 +145,13 @@ export default async function PostDetailPage({
                   : undefined
               }
               action={
-                shouldShowSubscribeCta && user ? (
+                ctaDecision.showSubscribeCta && user ? (
                   <SubscribeButton
                     creatorId={post.creatorId}
                     creatorUserId={post.creatorUserId}
                     currentUserId={user.id}
                   />
-                ) : shouldShowPurchaseCta ? (
+                ) : ctaDecision.showPurchaseCta ? (
                   <PostPurchaseButton
                     postId={post.id}
                     price={post.price ?? undefined}
@@ -177,7 +171,7 @@ export default async function PostDetailPage({
               canView={canView}
               isLocked={false}
               lockReason="none"
-              purchaseEligibility={post.purchaseEligibility}
+              commerce={post.commerce}
               price={post.price ?? undefined}
               creator={detailCreator}
               creatorId={post.creatorId}

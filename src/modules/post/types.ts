@@ -27,6 +27,12 @@ export type PostPurchaseEligibility =
       blockingReason: PostPurchaseBlockingReason
     }
 
+export type PostCommerceState = {
+  purchaseEligibility: PostPurchaseEligibility
+  hasPurchased: boolean
+  isSubscribed: boolean
+}
+
 export type PostLockedPreviewVariant = Exclude<
   PostAccessLockReason,
   "none"
@@ -35,7 +41,6 @@ export type PostLockedPreviewVariant = Exclude<
 export type PostAccessResult = {
   canView: boolean
   isLocked: boolean
-  locked: boolean
   lockReason: PostAccessLockReason
 }
 
@@ -545,10 +550,10 @@ export type PostRenderSurfaceItem = {
   }>
   blocks: PostBlock[]
   price: number
-  canView?: boolean
+  canView: boolean
   isLocked: boolean
   lockReason?: PostAccessLockReason
-  purchaseEligibility?: PostPurchaseEligibility
+  commerce: PostCommerceState
   isLiked: boolean
   likesCount: number
   commentsCount: number
@@ -564,10 +569,10 @@ export type PostRenderListItem = {
   status: PostStatus
   visibility: PostVisibility
   price: number
-  canView?: boolean
+  canView: boolean
   isLocked: boolean
   lockReason?: PostAccessLockReason
-  purchaseEligibility?: PostPurchaseEligibility
+  commerce: PostCommerceState
   createdAt: string
   publishedAt: string | null
   media: Array<{

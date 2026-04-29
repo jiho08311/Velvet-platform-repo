@@ -1,7 +1,7 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import type {
   PostBlock,
-  PostPurchaseEligibility,
+  PostCommerceState,
   PostRenderInput,
 } from "../types"
 import type { LockedPreviewRenderableBlock } from "./locked-preview-policy"
@@ -74,7 +74,7 @@ export type PostDetail = {
   canView: boolean
   isLocked: boolean
   lockReason: "none" | "subscription" | "purchase"
-  purchaseEligibility: PostPurchaseEligibility
+  commerce: PostCommerceState
   likesCount: number
   commentsCount: number
   media: {
@@ -200,7 +200,7 @@ export async function getPostById(
     isSubscribed,
     hasPurchased,
     access,
-    purchaseEligibility,
+    commerce,
   } = await resolvePostAccessState({
     viewerUserId: resolvedViewerUserId,
     creatorId: post.creator_id,
@@ -322,7 +322,7 @@ export async function getPostById(
     canView: access.canView,
     isLocked: access.isLocked,
     lockReason: access.lockReason,
-    purchaseEligibility,
+    commerce,
     likesCount: resolvedLikesCount,
     commentsCount: commentsCount ?? 0,
     media: access.canView ? selectedMedia : [],

@@ -1,8 +1,9 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { buildCreatorIdentity } from "@/modules/creator/server/build-creator-identity"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
-import type { PostBlockEditorState } from "@/modules/post/types"
+import type { PostBlockEditorState, PostCommerceState } from "@/modules/post/types"
 import { getPostAccess } from "@/modules/post/server/get-post-access"
+import { getBlockedPostCommerceState } from "@/modules/post/lib/post-commerce-policy"
 import {
   buildPostLikeCountMap,
   readPostLikeCount,
@@ -28,6 +29,7 @@ export type HomeFeedItem = {
   status?: "draft" | "scheduled" | "published" | "archived"
   publishedAt?: string | null
   lockReason?: "none" | "subscription" | "purchase"
+  commerce: PostCommerceState
   price?: number
   media?: Array<{
     id: string
@@ -150,6 +152,14 @@ function resolveMediaType(row: MediaRow): MediaType {
   }
 
   return "file"
+}
+
+function getPublicFeedCommerceState(): PostCommerceState {
+  return getBlockedPostCommerceState({
+    blockingReason: "not_paid_post",
+    hasPurchased: false,
+    isSubscribed: false,
+  })
 }
 
 export async function getHomeFeed(
@@ -417,6 +427,7 @@ export async function getHomeFeed(
           canView: access.canView,
           isLocked: access.isLocked,
           lockReason: access.lockReason,
+          commerce: getPublicFeedCommerceState(),
           price: post.price ?? undefined,
           media: [],
           blocks: [],
@@ -488,6 +499,7 @@ export async function getHomeFeed(
         canView: access.canView,
         isLocked: access.isLocked,
         lockReason: access.lockReason,
+        commerce: getPublicFeedCommerceState(),
         price: post.price ?? undefined,
         media,
         blocks: normalizedBlocks,

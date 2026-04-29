@@ -6,7 +6,12 @@ import {
   isVisibleFeedCreator,
 } from "@/modules/feed/server/feed-inclusion-policy"
 import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
-import type { PostBlockEditorState, PostRenderListItem } from "../types"
+import type {
+  PostBlockEditorState,
+  PostCommerceState,
+  PostRenderListItem,
+} from "../types"
+import { getBlockedPostCommerceState } from "@/modules/post/lib/post-commerce-policy"
 import { buildPostRenderReadModel } from "./post-render-read-model"
 import { getPostAccess } from "./get-post-access"
 
@@ -97,6 +102,14 @@ function resolveMediaType(row: MediaRow): MediaType {
   }
 
   return "file"
+}
+
+function getSubscribedFeedCommerceState(): PostCommerceState {
+  return getBlockedPostCommerceState({
+    blockingReason: "not_paid_post",
+    hasPurchased: false,
+    isSubscribed: true,
+  })
 }
 
 export async function listFeedPosts({
@@ -299,6 +312,7 @@ export async function listFeedPosts({
         canView: access.canView,
         isLocked: access.isLocked,
         lockReason: access.lockReason,
+        commerce: getSubscribedFeedCommerceState(),
         publishedAt: post.published_at ?? null,
         createdAt: post.created_at,
         media: media.map((item) => ({

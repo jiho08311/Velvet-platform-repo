@@ -2,8 +2,8 @@
 
 import type {
   PostBlock,
+  PostCommerceState,
   PostNormalizedRenderGroup,
-  PostPurchaseEligibility,
   PostRenderInput,
   PostRenderMediaItem,
 } from "@/modules/post/types"
@@ -14,7 +14,7 @@ import {
   ChatBubbleOvalLeftIcon,
 } from "@heroicons/react/24/outline"
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline"
-import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
+import { resolvePostRenderInputForCompatibility } from "@/modules/post/lib/post-render-compat"
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid"
 import { formatInUserTimeZone } from "@/shared/lib/date-time"
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
@@ -23,7 +23,7 @@ import PostPurchaseButton from "./PostPurchaseButton"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
 import { LockedPostCard } from "./LockedPostCard"
 import { PostMoreMenu } from "./PostMoreMenu"
-import { getPostPurchaseCtaVisibility } from "@/modules/post/lib/get-post-purchase-cta-visibility"
+import { getPostCommerceCtaDecision } from "@/modules/post/lib/post-commerce-policy"
 import { readLikeInteractionResult } from "@/shared/lib/like-interaction-result"
 import { isCommentItem, type CommentItem } from "@/modules/post/lib/comment-item"
 
@@ -41,10 +41,10 @@ export type PostCardSurfaceProps = {
   media?: PostRenderMediaItem[]
   blocks?: PostBlock[]
   renderInput?: PostRenderInput
-  canView?: boolean
-  isLocked?: boolean
+  canView: boolean
+  isLocked: boolean
   lockReason?: "none" | "subscription" | "purchase"
-  purchaseEligibility?: PostPurchaseEligibility
+  commerce: PostCommerceState
   price?: number
   creatorId: string
   creatorUserId?: string
@@ -101,9 +101,9 @@ export function PostCard({
   blocks = [],
   renderInput,
   canView,
-  isLocked = false,
+  isLocked,
   lockReason = "none",
-  purchaseEligibility,
+  commerce,
   price,
   creatorId,
   creatorUserId,
@@ -135,13 +135,12 @@ export function PostCard({
   const [isVideoReady, setIsVideoReady] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
 
-  const resolvedRenderInput =
-    renderInput ??
-    buildPostRenderInput({
-      text: text ?? "",
-      media,
-      blocks,
-    })
+  const resolvedRenderInput = resolvePostRenderInputForCompatibility({
+    renderInput,
+    text,
+    media,
+    blocks,
+  })
 
   const {
     hasBlocks,
@@ -605,19 +604,13 @@ export function PostCard({
   }
 
   function renderLockedAction() {
-    const resolvedCanView = canView ?? !isLocked
-    const shouldShowPurchaseCta = purchaseEligibility
-      ? getPostPurchaseCtaVisibility({
-          isLocked,
-          purchaseEligibility,
-        })
-      : getPostPurchaseCtaVisibility({
-          canView: resolvedCanView,
-          isLocked,
-          lockReason,
-        })
+    const ctaDecision = getPostCommerceCtaDecision({
+      isLocked,
+      lockReason,
+      commerce,
+    })
 
-    if (lockReason === "subscription") {
+    if (ctaDecision.showSubscribeCta) {
       return (
         <div onClick={(event) => event.stopPropagation()}>
           <SubscribeButton
@@ -631,7 +624,7 @@ export function PostCard({
       )
     }
 
-    if (shouldShowPurchaseCta && postId && typeof price === "number" && price > 0) {
+    if (ctaDecision.showPurchaseCta && postId) {
       return (
         <div onClick={(event) => event.stopPropagation()}>
           <PostPurchaseButton

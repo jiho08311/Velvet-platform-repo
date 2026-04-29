@@ -210,6 +210,7 @@ export default async function FeedPage() {
     canView: item.canView,
     isLocked: item.isLocked,
     lockReason: item.lockReason,
+    commerce: item.commerce,
     price: normalizePrice(item),
     commentsCount: item.commentsCount,
     likesCount: item.likesCount,
