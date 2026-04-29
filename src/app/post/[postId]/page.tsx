@@ -7,7 +7,6 @@ import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 import { getPostById } from "@/modules/post/server/get-post-by-id"
 import { deletePostAction } from "@/modules/post/server/delete-post-action"
 import PostPurchaseButton from "@/modules/post/ui/PostPurchaseButton"
-import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
 import { getPostLockedPreviewPresentation } from "@/modules/post/lib/get-post-locked-preview-presentation"
 import { getPostCommerceCtaDecision } from "@/modules/post/lib/post-commerce-policy"
 import { EmptyState } from "@/shared/ui/EmptyState"
@@ -55,13 +54,7 @@ export default async function PostDetailPage({
   const isLocked = post.isLocked
   const isOwner = myCreator?.id === post.creatorId
   const shouldAutoReloadOnce = !isLocked && post.media.length === 0
-  const renderInput =
-    post.renderInput ??
-    buildPostRenderInput({
-      text: post.content ?? "",
-      media: post.media,
-      blocks: post.blocks ?? [],
-    })
+  const renderInput = post.renderInput
 
   const lockedPreviewPresentation = getPostLockedPreviewPresentation({
     canView,
@@ -132,11 +125,7 @@ export default async function PostDetailPage({
           {isLocked ? (
             <LockedPostCard
               renderInput={renderInput}
-              previewText={renderInput.lockedPreviewText}
               createdAt={formatDate(post.publishedAt ?? post.createdAt)}
-              previewThumbnailUrl={
-                renderInput.primaryLockedPreviewMedia?.url ?? null
-              }
               price={post.price ?? undefined}
               lockReason={
                 lockedPreviewPresentation.previewVariant === "subscription" ||
@@ -163,10 +152,7 @@ export default async function PostDetailPage({
           ) : (
             <PostCard
               postId={post.id}
-              text={post.content ?? ""}
               createdAt={post.publishedAt ?? post.createdAt}
-              media={post.media}
-              blocks={post.blocks ?? []}
               renderInput={renderInput}
               canView={canView}
               isLocked={false}
