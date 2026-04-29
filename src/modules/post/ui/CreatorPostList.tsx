@@ -2,11 +2,12 @@ import { EmptyState } from "@/shared/ui/EmptyState"
 import { CREATOR_SURFACE_EMPTY_STATE } from "@/modules/creator/ui/creator-surface-policy"
 import { PostCard } from "./PostCard"
 import type { PostCardCreator } from "./PostCard"
-import type { PostCommerceState } from "../types"
+import type { PostCommerceState, PostRenderInput } from "../types"
 
 type CreatorPostListItem = {
   id: string
   content: string | null
+  renderInput?: PostRenderInput
   createdAt: string
   canView: boolean
   isLocked: boolean
@@ -58,6 +59,7 @@ export function CreatorPostList({
             key={post.id}
             postId={post.id}
             text={post.content ?? ""}
+            renderInput={post.renderInput}
             createdAt={post.createdAt}
             canView={post.canView}
             isLocked={post.isLocked}

@@ -566,6 +566,7 @@ export type PostRenderListItem = {
   id: string
   creatorId: string
   content: string | null
+  renderInput?: PostRenderInput
   status: PostStatus
   visibility: PostVisibility
   price: number

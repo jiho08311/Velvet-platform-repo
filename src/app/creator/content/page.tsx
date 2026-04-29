@@ -48,6 +48,7 @@ export default async function CreatorContentPage() {
         posts={result.items.map((post) => ({
           id: post.id,
           content: post.content,
+          renderInput: post.renderInput,
           createdAt: post.publishedAt ?? post.createdAt,
           canView: true,
           isLocked: false,

@@ -227,6 +227,7 @@ export async function getMyPosts(
         id: post.id,
         creatorId: post.creator_id,
         content: renderInput.blockText || null,
+        renderInput,
         status: post.status,
         visibility: post.visibility,
         price: 0,
