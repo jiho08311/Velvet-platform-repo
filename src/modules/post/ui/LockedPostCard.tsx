@@ -2,13 +2,11 @@ import { RestrictedFullCardShell } from "@/shared/ui/RestrictedFullCardShell"
 import type { PostRenderInput } from "@/modules/post/types"
 
 type LockedPostCardProps = {
-  renderInput?: Pick<
+  renderInput: Pick<
     PostRenderInput,
     "lockedPreviewText" | "primaryLockedPreviewMedia"
   >
-  previewText?: string
   createdAt: string
-  previewThumbnailUrl?: string | null
   price?: number
   lockReason?: "subscription" | "purchase"
   action?: React.ReactNode
@@ -18,55 +16,16 @@ function formatPrice(amount: number) {
   return new Intl.NumberFormat("ko-KR").format(amount)
 }
 
-function normalizeText(value: string | null | undefined): string {
-  return value?.trim() ?? ""
-}
-
-function resolveLockedPreviewText(params: {
-  renderInput?: Pick<PostRenderInput, "lockedPreviewText">
-  previewText?: string
-}) {
-  const textFromRenderInput = normalizeText(params.renderInput?.lockedPreviewText)
-
-  if (textFromRenderInput.length > 0) {
-    return textFromRenderInput
-  }
-
-  return normalizeText(params.previewText)
-}
-
-function resolveLockedPreviewThumbnailUrl(params: {
-  renderInput?: Pick<PostRenderInput, "primaryLockedPreviewMedia">
-  previewThumbnailUrl?: string | null
-}) {
-  const mediaUrl = params.renderInput?.primaryLockedPreviewMedia?.url?.trim() ?? ""
-
-  if (mediaUrl.length > 0) {
-    return mediaUrl
-  }
-
-  const fallbackUrl = params.previewThumbnailUrl?.trim() ?? ""
-  return fallbackUrl.length > 0 ? fallbackUrl : null
-}
-
 export function LockedPostCard({
   renderInput,
-  previewText = "",
   createdAt,
-  previewThumbnailUrl = null,
   price,
   lockReason,
   action,
 }: LockedPostCardProps) {
-  const resolvedPreviewText = resolveLockedPreviewText({
-    renderInput,
-    previewText,
-  })
-
-  const resolvedPreviewThumbnailUrl = resolveLockedPreviewThumbnailUrl({
-    renderInput,
-    previewThumbnailUrl,
-  })
+  const resolvedPreviewText = renderInput.lockedPreviewText.trim()
+  const resolvedPreviewThumbnailUrl =
+    renderInput.primaryLockedPreviewMedia?.url?.trim() || null
 
   const isPaid =
     lockReason === "purchase" &&
