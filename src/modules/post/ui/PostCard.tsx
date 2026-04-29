@@ -27,7 +27,11 @@ import { ReportButton } from "@/modules/report/ui/ReportButton"
 import { LockedPostCard } from "./LockedPostCard"
 import { PostMoreMenu } from "./PostMoreMenu"
 import { getPostCommerceCtaDecision } from "@/modules/post/lib/post-commerce-policy"
-import { readLikeInteractionResult } from "@/shared/lib/like-interaction-result"
+import {
+  createCommentLikeCompatibilityFields,
+  readLikeInteractionResult,
+  readViewerHasLikedFromCompatibility,
+} from "@/shared/lib/like-interaction-result"
 import { isCommentItem, type CommentItem } from "@/modules/post/lib/comment-item"
 
 export type PostCardCreator = {
@@ -50,6 +54,7 @@ export type PostCardSurfaceProps = {
   creatorUserId?: string
   currentUserId?: string
   likesCount?: number
+  viewerHasLiked?: boolean
   isLiked?: boolean
   creator: PostCardCreator
 }
@@ -106,6 +111,7 @@ export function PostCard({
   creatorUserId,
   currentUserId,
   likesCount = 0,
+  viewerHasLiked,
   commentsCount = 0,
   isLiked = false,
   creator,
@@ -113,8 +119,10 @@ export function PostCard({
   const router = useRouter()
   const pathname = usePathname()
 
-  const [liked, setLiked] = useState(isLiked)
-  const [count, setCount] = useState(likesCount)
+  const [currentViewerHasLiked, setCurrentViewerHasLiked] = useState(
+    readViewerHasLikedFromCompatibility({ viewerHasLiked, isLiked })
+  )
+  const [currentLikesCount, setCurrentLikesCount] = useState(likesCount)
   const [isLikeLoading, setIsLikeLoading] = useState(false)
 
   const [comments, setComments] = useState<CommentItem[]>([])
@@ -156,7 +164,7 @@ export function PostCard({
       setIsLikeLoading(true)
 
       const response = await fetch(`/api/post/${postId}/like`, {
-        method: liked ? "DELETE" : "POST",
+        method: currentViewerHasLiked ? "DELETE" : "POST",
       })
 
       if (!response.ok) {
@@ -169,8 +177,8 @@ export function PostCard({
         return
       }
 
-      setLiked(data.viewerHasLiked)
-      setCount(data.likesCount)
+      setCurrentViewerHasLiked(data.viewerHasLiked)
+      setCurrentLikesCount(data.likesCount)
     } catch {
       return
     } finally {
@@ -308,8 +316,7 @@ export function PostCard({
 
           return {
             ...comment,
-            is_liked: data.viewerHasLiked,
-            likes_count: data.likesCount,
+            ...createCommentLikeCompatibilityFields(data),
           }
         })
       )
@@ -325,11 +332,13 @@ export function PostCard({
   }, [showComments])
 
   useEffect(() => {
-    setLiked(isLiked)
-  }, [isLiked])
+    setCurrentViewerHasLiked(
+      readViewerHasLikedFromCompatibility({ viewerHasLiked, isLiked })
+    )
+  }, [viewerHasLiked, isLiked])
 
   useEffect(() => {
-    setCount(likesCount)
+    setCurrentLikesCount(likesCount)
   }, [likesCount])
 
   useEffect(() => {
@@ -732,12 +741,14 @@ export function PostCard({
               disabled={isLikeLoading}
               className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
             >
-              {liked ? (
+              {currentViewerHasLiked ? (
                 <HeartSolid className="h-6 w-6 text-pink-500" />
               ) : (
                 <HeartOutline className="h-6 w-6 stroke-[2.5]" />
               )}
-              <span className="text-[14px] font-semibold">{count}</span>
+              <span className="text-[14px] font-semibold">
+                {currentLikesCount}
+              </span>
             </button>
 
             <button

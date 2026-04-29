@@ -1,4 +1,7 @@
-import { normalizeLikeCount } from "@/shared/lib/like-interaction-result"
+import {
+  createCommentLikeCompatibilityFields,
+  readViewerHasLikedFromCompatibility,
+} from "@/shared/lib/like-interaction-result"
 
 export type CommentItemProfile = {
   username: string | null
@@ -28,16 +31,21 @@ export function createCommentItem(input: {
   comment: CommentRow
   profile?: Partial<CommentItemProfile> | null
   likesCount?: number | null
+  viewerHasLiked?: boolean | null
   isLiked?: boolean | null
 }): CommentItem {
+  const likeCompatibilityFields = createCommentLikeCompatibilityFields({
+    likesCount: input.likesCount,
+    viewerHasLiked: readViewerHasLikedFromCompatibility(input),
+  })
+
   return {
     id: input.comment.id,
     post_id: input.comment.post_id,
     user_id: input.comment.user_id,
     content: input.comment.content,
     created_at: input.comment.created_at,
-    likes_count: normalizeLikeCount(input.likesCount),
-    is_liked: input.isLiked ?? false,
+    ...likeCompatibilityFields,
     profiles: {
       username: input.profile?.username ?? null,
       avatar_url: input.profile?.avatar_url ?? null,

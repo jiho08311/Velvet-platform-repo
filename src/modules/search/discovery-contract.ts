@@ -47,8 +47,8 @@ export type DiscoveryPostRenderState = {
 export type DiscoveryPostEngagementState = {
   likesCount: number
   commentsCount: number
-  isLiked?: boolean
   viewerHasLiked?: boolean
+  isLiked?: boolean
 }
 
 export type DiscoveryPostLinkItem = DiscoveryPostIdentity &

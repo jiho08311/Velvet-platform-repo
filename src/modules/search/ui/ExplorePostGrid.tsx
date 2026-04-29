@@ -11,11 +11,22 @@ import {
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid"
 import { SearchExploreCommentsDrawer } from "./SearchExploreCommentsDrawer"
 import type { DiscoveryPostLinkItem } from "../discovery-contract"
-import { readLikeInteractionResult } from "@/shared/lib/like-interaction-result"
+import {
+  createPostLikeCompatibilityFields,
+  readLikeInteractionResult,
+  readViewerHasLikedFromCompatibility,
+} from "@/shared/lib/like-interaction-result"
 import { buildCreatorMessageHref } from "@/modules/creator/lib/creator-identity"
 
 type ExplorePostGridProps = {
   posts: DiscoveryPostLinkItem[]
+}
+
+function readDiscoveryPostViewerHasLiked(post: DiscoveryPostLinkItem): boolean {
+  return readViewerHasLikedFromCompatibility({
+    viewerHasLiked: post.viewerHasLiked,
+    isLiked: post.isLiked,
+  })
 }
 
 type ViewerBlock =
@@ -149,7 +160,11 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
   async function handleLike(postId: string, initialLikesCount: number) {
     if (isLikeLoading) return
 
-    const liked = likedPostIds[postId] ?? false
+    const liked =
+      likedPostIds[postId] ??
+      (selected?.postId === postId
+        ? readDiscoveryPostViewerHasLiked(selected)
+        : false)
     const currentCount = likeCounts[postId] ?? initialLikesCount
 
     try {
@@ -187,7 +202,8 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
         return {
           ...prev,
           likesCount: data.likesCount,
-          isLiked: data.viewerHasLiked,
+          viewerHasLiked: data.viewerHasLiked,
+          ...createPostLikeCompatibilityFields(data),
         }
       })
     } finally {
@@ -346,7 +362,8 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
                     disabled={isLikeLoading}
                     className="flex items-center gap-1.5"
                   >
-                    {likedPostIds[selected.postId] ? (
+                    {(likedPostIds[selected.postId] ??
+                      readDiscoveryPostViewerHasLiked(selected)) ? (
                       <HeartSolid className="h-6 w-6 text-pink-500" />
                     ) : (
                       <HeartOutline className="h-6 w-6 stroke-[2.2]" />

@@ -7,6 +7,20 @@ export type LikeInteractionResult = {
   likesCount: number
 }
 
+export type CanonicalLikeState = Pick<
+  LikeInteractionResult,
+  "likesCount" | "viewerHasLiked"
+>
+
+export type PostLikeCompatibilityFields = {
+  isLiked: boolean
+}
+
+export type CommentLikeCompatibilityFields = {
+  likes_count: number
+  is_liked: boolean
+}
+
 export function isLikeInteractionTargetType(
   value: unknown
 ): value is LikeInteractionTargetType {
@@ -47,6 +61,33 @@ export function createLikeInteractionResult(input: {
     viewerHasLiked: input.viewerHasLiked,
     likesCount: normalizeLikeCount(input.likesCount),
   }
+}
+
+export function createPostLikeCompatibilityFields(
+  likeState: CanonicalLikeState
+): PostLikeCompatibilityFields {
+  return {
+    isLiked: likeState.viewerHasLiked,
+  }
+}
+
+export function createCommentLikeCompatibilityFields(
+  likeState: {
+    likesCount: number | null | undefined
+    viewerHasLiked: boolean
+  }
+): CommentLikeCompatibilityFields {
+  return {
+    likes_count: normalizeLikeCount(likeState.likesCount),
+    is_liked: likeState.viewerHasLiked,
+  }
+}
+
+export function readViewerHasLikedFromCompatibility(input: {
+  viewerHasLiked?: boolean | null
+  isLiked?: boolean | null
+}): boolean {
+  return input.viewerHasLiked ?? input.isLiked ?? false
 }
 
 export function readLikeInteractionResult(

@@ -2,20 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { XMarkIcon } from "@heroicons/react/24/outline"
-
-type CommentItem = {
-  id: string
-  post_id: string
-  user_id: string
-  content: string
-  created_at: string
-  likes_count: number
-  is_liked: boolean
-  profiles: {
-    username: string | null
-    avatar_url: string | null
-  }
-}
+import {
+  isCommentItem,
+  type CommentItem,
+} from "@/modules/post/lib/comment-item"
 
 type SearchExploreCommentsDrawerProps = {
   postId: string | null
@@ -58,7 +48,9 @@ export function SearchExploreCommentsDrawer({
         return
       }
 
-      setComments(Array.isArray(data?.items) ? data.items : [])
+      setComments(
+        Array.isArray(data?.items) ? data.items.filter(isCommentItem) : []
+      )
     } catch {
       setError("Failed to load comments")
       setComments([])

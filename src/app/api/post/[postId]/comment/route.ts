@@ -145,7 +145,7 @@ export async function POST(
     comment: insertedComment,
     profile,
     likesCount: 0,
-    isLiked: false,
+    viewerHasLiked: false,
   })
 
   return NextResponse.json({

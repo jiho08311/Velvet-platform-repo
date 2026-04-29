@@ -119,7 +119,7 @@ export async function GET(
       comment,
       profile,
       likesCount: readLikeCountFromMap(likeCountMap, comment.id),
-      isLiked: likedCommentIdSet.has(comment.id),
+      viewerHasLiked: likedCommentIdSet.has(comment.id),
     })
   })
 
