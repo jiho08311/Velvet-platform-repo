@@ -1,5 +1,6 @@
 import { Card } from "@/shared/ui/Card"
 import { getAnalytics } from "@/modules/payment/server/get-analytics"
+import { AdminStatCard } from "@/modules/admin/ui/AdminStatCard"
 
 function formatMoney(amount: number) {
   return new Intl.NumberFormat("ko-KR", {
@@ -25,47 +26,42 @@ export default async function AdminAnalyticsPage() {
 
       {/* KPI */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <p className="text-sm text-zinc-500">Total revenue</p>
-          <p className="mt-2 text-2xl font-semibold text-white">
-           formatMoney(analytics.totalNetRevenue)
-          </p>
-        </Card>
-
-        <Card>
-          <p className="text-sm text-zinc-500">Available</p>
-          <p className="mt-2 text-2xl font-semibold text-white">
-         formatMoney(analytics.availableRevenue)
-          </p>
-        </Card>
-
-        <Card>
-          <p className="text-sm text-zinc-500">Paid out</p>
-          <p className="mt-2 text-2xl font-semibold text-white">
-          formatMoney(analytics.paidOutRevenue)
-          </p>
-        </Card>
-
-        <Card>
-          <p className="text-sm text-zinc-500">Active subs</p>
-          <p className="mt-2 text-2xl font-semibold text-white">
-            {analytics.activeSubscriptionsCount}
-          </p>
-        </Card>
-
-        <Card>
-          <p className="text-sm text-zinc-500">Total subs</p>
-          <p className="mt-2 text-2xl font-semibold text-white">
-            {analytics.totalSubscriptionsCount}
-          </p>
-        </Card>
-
-        <Card>
-          <p className="text-sm text-zinc-500">Payments</p>
-          <p className="mt-2 text-2xl font-semibold text-white">
-            {analytics.successfulPaymentsCount}
-          </p>
-        </Card>
+        <AdminStatCard
+          label="Total revenue"
+          labelTone="muted"
+          size="compact"
+          value={formatMoney(analytics.totalNetrevenue)}
+        />
+        <AdminStatCard
+          label="Available"
+          labelTone="muted"
+          size="compact"
+          value={formatMoney(analytics.availablerevenue)}
+        />
+        <AdminStatCard
+          label="Paid out"
+          labelTone="muted"
+          size="compact"
+          value={formatMoney(analytics.paidOutrevenue)}
+        />
+        <AdminStatCard
+          label="Active subs"
+          labelTone="muted"
+          size="compact"
+          value={analytics.activeSubscriptionsCount}
+        />
+        <AdminStatCard
+          label="Total subs"
+          labelTone="muted"
+          size="compact"
+          value={analytics.totalSubscriptionsCount}
+        />
+        <AdminStatCard
+          label="Payments"
+          labelTone="muted"
+          size="compact"
+          value={analytics.successfulPaymentsCount}
+        />
       </div>
 
       {/* Recent payments */}

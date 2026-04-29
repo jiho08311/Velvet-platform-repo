@@ -11,24 +11,37 @@ type Props = {
   }>
 }
 
+type ReportActionStatus = Extract<ReportStatus, "reviewing" | "resolved" | "rejected">
+
+const reportActionButtonBaseClass =
+  "rounded-xl px-3 py-1 text-xs font-semibold text-white"
+
+const reportActionButtonToneClass: Record<ReportActionStatus, string> = {
+  reviewing: "bg-yellow-600",
+  resolved: "bg-green-600",
+  rejected: "bg-red-600",
+}
+
+function getReportActionButtonClass(status: ReportActionStatus) {
+  return `${reportActionButtonBaseClass} ${reportActionButtonToneClass[status]}`
+}
+
 type ReportActionButtonProps = {
   reportId: string
-  status: Extract<ReportStatus, "reviewing" | "resolved" | "rejected">
+  status: ReportActionStatus
   label: string
-  className: string
 }
 
 function ReportActionButton({
   reportId,
   status,
   label,
-  className,
 }: ReportActionButtonProps) {
   return (
     <form action={updateReportStatusAction}>
       <input type="hidden" name="reportId" value={reportId} />
       <input type="hidden" name="status" value={status} />
-      <button className={className}>{label}</button>
+      <button className={getReportActionButtonClass(status)}>{label}</button>
     </form>
   )
 }
@@ -118,7 +131,6 @@ export default async function AdminReportsPage({ searchParams }: Props) {
                             reportId={report.id}
                             status="reviewing"
                             label="Review"
-                            className="rounded-xl bg-yellow-600 px-3 py-1 text-xs font-semibold text-white"
                           />
                         )}
 
@@ -127,7 +139,6 @@ export default async function AdminReportsPage({ searchParams }: Props) {
                             reportId={report.id}
                             status="resolved"
                             label="Resolve"
-                            className="rounded-xl bg-green-600 px-3 py-1 text-xs font-semibold text-white"
                           />
                         )}
 
@@ -136,7 +147,6 @@ export default async function AdminReportsPage({ searchParams }: Props) {
                             reportId={report.id}
                             status="rejected"
                             label="Reject"
-                            className="rounded-xl bg-red-600 px-3 py-1 text-xs font-semibold text-white"
                           />
                         )}
                       </div>
