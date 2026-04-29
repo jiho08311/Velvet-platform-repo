@@ -9,6 +9,7 @@ import {
   type CommentItemProfile,
   type CommentRow,
 } from "@/modules/post/lib/comment-item"
+import { canDeleteComment } from "@/modules/post/lib/comment-permissions"
 
 export const dynamic = "force-dynamic"
 
@@ -146,7 +147,10 @@ export async function POST(
     profile,
     likesCount: 0,
     viewerHasLiked: false,
-    canDelete: insertedComment.user_id === user.id,
+    canDelete: canDeleteComment({
+      currentUserId: user.id,
+      commentUserId: insertedComment.user_id,
+    }),
   })
 
   return NextResponse.json({
