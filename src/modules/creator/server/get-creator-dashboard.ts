@@ -12,6 +12,23 @@ export type CreatorDashboard = {
   }
 }
 
+/**
+ * Legacy creator dashboard read model.
+ *
+ * This is not the canonical contract for /dashboard or /creator/dashboard.
+ *
+ * Current canonical boundaries:
+ * - /dashboard operational data uses getDashboardMainReadModel()
+ * - /creator/dashboard analytics data uses getCreatorAnalyticsSummary()
+ *
+ * Do not expand this read model for new dashboard surfaces without first
+ * confirming the route contract. Keep this file behavior-compatible until all
+ * consumers are audited.
+ */
+
+
+
+
 type SubscriptionRow = {
   status: "incomplete" | "active" | "canceled" | "expired"
   current_period_end: string | null

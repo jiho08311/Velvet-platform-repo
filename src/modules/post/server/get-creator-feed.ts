@@ -4,6 +4,7 @@ import {
   buildPostLikeCountMap,
   readPostLikeCount,
 } from "@/shared/lib/post-like-count"
+import { createPostLikeCompatibilityFields } from "@/shared/lib/like-interaction-result"
 import {
   filterFeedPostCandidates,
   isVisibleFeedCreator,
@@ -242,30 +243,37 @@ export async function getCreatorFeed({
   }
 
   if (postIds.length === 0) {
-    return resolvedPosts.map((post) => ({
-      id: post.id,
-      creatorId: post.creator_id,
-      content: null,
-      createdAt: post.created_at,
-      renderInput: buildPostRenderInput({
-        text: "",
-        blocks: [],
+    return resolvedPosts.map((post) => {
+      const likeState = {
+        likesCount: 0,
+        viewerHasLiked: false,
+      }
+
+      return {
+        id: post.id,
+        creatorId: post.creator_id,
+        content: null,
+        createdAt: post.created_at,
+        renderInput: buildPostRenderInput({
+          text: "",
+          blocks: [],
+          media: [],
+        }),
         media: [],
-      }),
-      media: [],
-      blocks: [],
-      price: post.price,
-      isLocked: post.isLocked,
-      lockReason: post.lockReason,
-      commerce: post.commerce,
-      canView: post.canView,
-      likesCount: 0,
-      isLiked: false,
-      visibility: post.visibility,
-      commentsCount: 0,
-      status: post.status as PostRenderSurfaceItem["status"],
-      publishedAt: post.published_at ?? null,
-    }))
+        blocks: [],
+        price: post.price,
+        isLocked: post.isLocked,
+        lockReason: post.lockReason,
+        commerce: post.commerce,
+        canView: post.canView,
+        ...likeState,
+        ...createPostLikeCompatibilityFields(likeState),
+        visibility: post.visibility,
+        commentsCount: 0,
+        status: post.status as PostRenderSurfaceItem["status"],
+        publishedAt: post.published_at ?? null,
+      }
+    })
   }
 
   const { data: blockRows, error: blockRowsError } = await supabaseAdmin
@@ -392,6 +400,11 @@ export async function getCreatorFeed({
         media: renderReadModel.media,
       })
 
+      const likeState = {
+        likesCount: readPostLikeCount(likeCountMap, post.id),
+        viewerHasLiked: myLikeSet.has(post.id),
+      }
+
       return {
         id: post.id,
         creatorId: post.creator_id,
@@ -407,8 +420,8 @@ export async function getCreatorFeed({
         isLocked: post.isLocked,
         lockReason: post.lockReason,
         commerce: post.commerce,
-        likesCount: readPostLikeCount(likeCountMap, post.id),
-        isLiked: myLikeSet.has(post.id),
+        ...likeState,
+        ...createPostLikeCompatibilityFields(likeState),
         visibility: post.visibility,
         commentsCount: commentCountMap.get(post.id) ?? 0,
         status: post.status as PostRenderSurfaceItem["status"],

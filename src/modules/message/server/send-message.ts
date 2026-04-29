@@ -189,13 +189,16 @@ export async function sendMessage(input: SendMessageInput) {
     }
   }
 
-  await supabase
-    .from("conversations")
-    .update({
-      updated_at: new Date().toISOString(),
-      last_message_at: message.created_at,
-    })
-    .eq("id", input.conversationId)
+await supabase
+  .from("conversations")
+  .update({
+    updated_at: new Date().toISOString(),
+
+    // Conversation list ordering source of truth.
+    // Keep this tied to the persisted message timestamp, not a new client/server now.
+    last_message_at: message.created_at,
+  })
+  .eq("id", input.conversationId)
 
   const { data: mediaRowsData, error: mediaRowsError } = await supabaseAdmin
     .from("media")

@@ -79,7 +79,17 @@ export type Notification = {
   tone: NotificationBadgeTone
 }
 
-export type NotificationListItem = Notification
+export type NotificationListItem = Pick<
+  Notification,
+  "id" | "body" | "label" | "tone" | "isRead" | "createdAt"
+>
+
+export type NotificationItemViewModel = NotificationListItem
+
+export type NotificationBadgeSummaryViewModel = {
+  unreadCount: number
+  hasUnread: boolean
+}
 
 export type CreateNotificationInput = {
   userId: string
@@ -94,6 +104,27 @@ export type MarkNotificationReadResult = {
   userId: string
   status: "read"
   readAt: string
+}
+
+export type NotificationListRow = Pick<
+  NotificationRow,
+  "id" | "type" | "status" | "body" | "created_at" | "read_at"
+>
+
+export function mapNotificationListRow(
+  row: NotificationListRow,
+): NotificationListItem {
+  const resolvedReadState = resolveNotificationReadState(row)
+  const presentation = getNotificationPresentation(row.type)
+
+  return {
+    id: row.id,
+    body: row.body,
+    label: presentation.label,
+    tone: presentation.tone,
+    isRead: resolvedReadState.isRead,
+    createdAt: row.created_at,
+  }
 }
 
 export function isNotificationType(
@@ -166,6 +197,19 @@ export function mapNotificationRow(row: NotificationRow): Notification {
   return buildNotificationReadModel(row)
 }
 
+export function toNotificationItemViewModel(
+  notification: Notification,
+): NotificationItemViewModel {
+  return {
+    id: notification.id,
+    body: notification.body,
+    label: notification.label,
+    tone: notification.tone,
+    isRead: notification.isRead,
+    createdAt: notification.createdAt,
+  }
+}
+
 export function getUnreadNotificationCount(
   notifications: readonly Pick<Notification, "isRead">[],
 ): number {
@@ -178,6 +222,17 @@ export function hasUnreadNotifications(
   notifications: readonly Pick<Notification, "isRead">[],
 ): boolean {
   return getUnreadNotificationCount(notifications) > 0
+}
+
+export function buildNotificationBadgeSummary(
+  notifications: readonly Pick<Notification, "isRead">[],
+): NotificationBadgeSummaryViewModel {
+  const unreadCount = getUnreadNotificationCount(notifications)
+
+  return {
+    unreadCount,
+    hasUnread: unreadCount > 0,
+  }
 }
 
 export function getNotificationPresentation(

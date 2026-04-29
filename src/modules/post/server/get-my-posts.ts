@@ -4,7 +4,10 @@ import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
 import type { PostCommerceState, PostRenderListItem } from "../types"
 import { buildPostRenderReadModel } from "./post-render-read-model"
 import { getBlockedPostCommerceState } from "@/modules/post/lib/post-commerce-policy"
-
+import {
+  createPostLikeCompatibilityFields,
+  normalizeLikeCount,
+} from "@/shared/lib/like-interaction-result"
 export type MyPostListItem = PostRenderListItem & {
   commerce: PostCommerceState
 }
@@ -23,6 +26,11 @@ export type GetMyPostsResult = {
 
 type CreatorRow = {
   id: string
+  user_id: string
+}
+
+type PostLikeRow = {
+  post_id: string
   user_id: string
 }
 
@@ -147,6 +155,34 @@ export async function getMyPosts(
     }
   }
 
+
+  const { data: likeRows, error: likeRowsError } = await supabaseAdmin
+    .from("post_likes")
+    .select("post_id, user_id")
+    .in("post_id", postIds)
+    .returns<PostLikeRow[]>()
+
+  if (likeRowsError) {
+    throw likeRowsError
+  }
+
+  const likeCountMap = new Map<string, number>()
+
+  for (const row of likeRows ?? []) {
+    likeCountMap.set(
+      row.post_id,
+      normalizeLikeCount(likeCountMap.get(row.post_id)) + 1
+    )
+  }
+
+  const likedPostIdSet = new Set(
+    (likeRows ?? [])
+      .filter((row) => row.user_id === creator.user_id)
+      .map((row) => row.post_id)
+  )
+
+
+
   const { data: mediaRows, error: mediaError } = await supabaseAdmin
     .from("media")
     .select("id, post_id, storage_path, type, mime_type, sort_order, status")
@@ -202,6 +238,9 @@ export async function getMyPosts(
             hasPurchased: true,
           })
 
+
+  
+
           return {
             id: item.id,
             url,
@@ -223,6 +262,11 @@ export async function getMyPosts(
         media: renderReadModel.media,
       })
 
+            const likeState = {
+        likesCount: normalizeLikeCount(likeCountMap.get(post.id)),
+        viewerHasLiked: likedPostIdSet.has(post.id),
+      }
+
       return {
         id: post.id,
         creatorId: post.creator_id,
@@ -235,6 +279,8 @@ export async function getMyPosts(
         isLocked: false,
         lockReason: "none" as const,
         commerce: getOwnedPostCommerceState(post.visibility),
+                ...likeState,
+        ...createPostLikeCompatibilityFields(likeState),
         createdAt: post.created_at,
         publishedAt: post.published_at,
         media: media.map((item) => ({

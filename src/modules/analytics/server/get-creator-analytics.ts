@@ -54,7 +54,24 @@ function toRecentPayments(
     ]
   })
 }
-
+/**
+ * Canonical creator analytics dashboard summary reader.
+ *
+ * Use this reader for /creator/dashboard analytics surfaces that need:
+ * - post count
+ * - subscriber counts
+ * - active subscription count
+ * - total/current-period revenue
+ * - recent payment analytics
+ *
+ * This reader owns analytics calculations only. It must not become the
+ * operational dashboard contract for payout balance, payout history, payout
+ * request eligibility, or creator subscription settings display.
+ *
+ * /dashboard operational surfaces should use getDashboardMainReadModel().
+ * /creator/dashboard analytics surfaces should use this reader directly unless
+ * the route contract is explicitly changed.
+ */
 export async function getCreatorAnalyticsSummary(
   creatorId: string
 ): Promise<CreatorAnalyticsSummary> {

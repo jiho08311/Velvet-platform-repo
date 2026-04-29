@@ -1,5 +1,5 @@
 export type ReportId = string
-
+import type { ReportReviewActionEligibility } from "@/modules/report/report-review-action-eligibility"
 export const reportReasons = [
   "spam",
   "harassment",
@@ -55,23 +55,6 @@ export type Report = {
   createdAt: string
 }
 
-export type ReportReviewListItem = {
-  id: ReportId
-  targetType: ReportTargetType
-  targetId: string
-  targetReference: ReportTargetReference
-  reason: ReportReason
-  description: string | null
-  status: ReportStatus
-  createdAt: string
-  reporter: {
-    id: string
-    email: string | null
-    username: string | null
-    displayName: string | null
-  } | null
-}
-
 
 export type ReportTargetReference = {
   type: ReportTargetType
@@ -80,7 +63,6 @@ export type ReportTargetReference = {
   href: string | null
   missing: boolean
 }
-
 export type ReportReviewDetailItem = {
   id: ReportId
   targetType: ReportTargetType
@@ -88,6 +70,7 @@ export type ReportReviewDetailItem = {
   reason: ReportReason
   description: string | null
   status: ReportStatus
+  actionEligibility: ReportReviewActionEligibility
   createdAt: string
   updatedAt: string | null
   reviewedAt: string | null
@@ -99,6 +82,23 @@ export type ReportReviewDetailItem = {
     avatarUrl: string | null
   } | null
   targetReference: ReportTargetReference
+}
+export type ReportReviewListItem = {
+  id: ReportId
+  targetType: ReportTargetType
+  targetId: string
+  targetReference: ReportTargetReference
+  reason: ReportReason
+  description: string | null
+  status: ReportStatus
+  actionEligibility: ReportReviewActionEligibility
+  createdAt: string
+  reporter: {
+    id: string
+    email: string | null
+    username: string | null
+    displayName: string | null
+  } | null
 }
 
 export function isReportTargetType(value: string): value is ReportTargetType {

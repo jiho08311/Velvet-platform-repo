@@ -14,7 +14,15 @@ import type {
 import { getBlockedPostCommerceState } from "@/modules/post/lib/post-commerce-policy"
 import { buildPostRenderReadModel } from "./post-render-read-model"
 import { getPostAccess } from "./get-post-access"
+import {
+  createPostLikeCompatibilityFields,
+  normalizeLikeCount,
+} from "@/shared/lib/like-interaction-result"
 
+type PostLikeRow = {
+  post_id: string
+  user_id: string
+}
 type SubscriptionRow = {
   id: string
   user_id: string
@@ -207,6 +215,32 @@ export async function listFeedPosts({
     return []
   }
 
+  const { data: likeRows, error: likeRowsError } = await supabaseAdmin
+    .from("post_likes")
+    .select("post_id, user_id")
+    .in("post_id", postIds)
+    .returns<PostLikeRow[]>()
+
+  if (likeRowsError) {
+    throw likeRowsError
+  }
+
+  const likeCountMap = new Map<string, number>()
+
+  for (const row of likeRows ?? []) {
+    likeCountMap.set(
+      row.post_id,
+      normalizeLikeCount(likeCountMap.get(row.post_id)) + 1
+    )
+  }
+
+  const likedPostIdSet = new Set(
+    (likeRows ?? [])
+      .filter((row) => row.user_id === resolvedUserId)
+      .map((row) => row.post_id)
+  )
+
+
   const { data: mediaRows, error: mediaError } = await supabaseAdmin
     .from("media")
     .select("id, post_id, storage_path, type, mime_type, status, sort_order")
@@ -281,6 +315,8 @@ export async function listFeedPosts({
             hasPurchased: false,
           })
 
+        
+
           return {
             id: item.id,
             url,
@@ -302,6 +338,11 @@ export async function listFeedPosts({
         media: renderReadModel.media,
       })
 
+            const likeState = {
+        likesCount: normalizeLikeCount(likeCountMap.get(post.id)),
+        viewerHasLiked: likedPostIdSet.has(post.id),
+      }
+
       return {
         id: post.id,
         creatorId: post.creator_id,
@@ -313,6 +354,8 @@ export async function listFeedPosts({
         isLocked: access.isLocked,
         lockReason: access.lockReason,
         commerce: getSubscribedFeedCommerceState(),
+                ...likeState,
+        ...createPostLikeCompatibilityFields(likeState),
         publishedAt: post.published_at ?? null,
         createdAt: post.created_at,
         renderInput,

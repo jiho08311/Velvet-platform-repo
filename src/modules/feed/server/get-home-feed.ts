@@ -14,6 +14,7 @@ import {
   buildPostLikeCountMap,
   readPostLikeCount,
 } from "@/shared/lib/post-like-count"
+import { createPostLikeCompatibilityFields } from "@/shared/lib/like-interaction-result"
 import {
   filterFeedPostCandidates,
   isVisibleFeedCreator,
@@ -45,6 +46,7 @@ export type HomeFeedItem = {
   }>
   blocks?: PostBlock[]
   likesCount: number
+  viewerHasLiked: boolean
   isLiked: boolean
   commentsCount: number
   creator: {
@@ -434,6 +436,11 @@ export async function getHomeFeed(
           media: [],
         })
 
+        const likeState = {
+          likesCount: 0,
+          viewerHasLiked: false,
+        }
+
         return {
           id: post.id,
           creatorId: post.creator_id,
@@ -451,8 +458,8 @@ export async function getHomeFeed(
           price: post.price ?? undefined,
           media: [],
           blocks: [],
-          likesCount: 0,
-          isLiked: false,
+          ...likeState,
+          ...createPostLikeCompatibilityFields(likeState),
           commentsCount: 0,
           creator: {
             username: identity?.username ?? "",
@@ -503,6 +510,11 @@ export async function getHomeFeed(
         media,
       })
 
+      const likeState = {
+        likesCount: readPostLikeCount(likeCountMap, post.id),
+        viewerHasLiked: myLikeSet.has(post.id),
+      }
+
       return {
         id: post.id,
         creatorId: post.creator_id,
@@ -520,8 +532,8 @@ export async function getHomeFeed(
         price: post.price ?? undefined,
         media,
         blocks: normalizedBlocks,
-        likesCount: readPostLikeCount(likeCountMap, post.id),
-        isLiked: myLikeSet.has(post.id),
+        ...likeState,
+        ...createPostLikeCompatibilityFields(likeState),
         commentsCount: commentCountMap.get(post.id) ?? 0,
         creator: {
           username: identity?.username ?? "",

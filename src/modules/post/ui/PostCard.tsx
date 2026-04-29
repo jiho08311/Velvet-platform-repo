@@ -125,7 +125,13 @@ export function PostCard({
   const [currentLikesCount, setCurrentLikesCount] = useState(likesCount)
   const [isLikeLoading, setIsLikeLoading] = useState(false)
 
-  const [comments, setComments] = useState<CommentItem[]>([])
+
+// CommentItem is the shared render contract for comment consumers.
+// Do not redefine a local post comment shape here.
+const [comments, setComments] = useState<CommentItem[]>([])
+
+
+
   const [commentInput, setCommentInput] = useState("")
   const [isCommentsLoading, setIsCommentsLoading] = useState(false)
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false)
@@ -133,10 +139,11 @@ export function PostCard({
   const [commentError, setCommentError] = useState<string | null>(null)
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null)
   const [likingCommentId, setLikingCommentId] = useState<string | null>(null)
-  const [commentCount, setCommentCount] = useState(commentsCount)
+  const [optimisticCommentCountDelta, setOptimisticCommentCountDelta] = useState(0)
   const [expandedComments, setExpandedComments] = useState(false)
 
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({})
+  const previousServerCommentsCountRef = useRef(commentsCount)
   const [isVideoReady, setIsVideoReady] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
 
@@ -154,6 +161,7 @@ export function PostCard({
 
   const hasNormalizedGroups = normalizedGroups.length > 0
   const shouldRenderNormalizedGroups = hasBlocks && hasNormalizedGroups
+  const displayCommentCount = Math.max(0, commentsCount + optimisticCommentCountDelta)
 
   async function handleLike(event: React.MouseEvent<HTMLButtonElement>) {
     event.stopPropagation()
@@ -203,7 +211,6 @@ export function PostCard({
       const data = await response.json()
       const items = Array.isArray(data?.items) ? data.items : []
       setComments(items)
-      setCommentCount(items.length)
     } catch {
       return
     } finally {
@@ -242,7 +249,7 @@ export function PostCard({
 
       if (isCommentItem(item)) {
         setComments((prev) => [item, ...prev.filter((comment) => comment.id !== item.id)])
-        setCommentCount((prev) => prev + 1)
+        setOptimisticCommentCountDelta((prev) => prev + 1)
       } else {
         await loadComments()
       }
@@ -276,7 +283,7 @@ export function PostCard({
       }
 
       setComments((prev) => prev.filter((comment) => comment.id !== commentId))
-      setCommentCount((prev) => Math.max(0, prev - 1))
+      setOptimisticCommentCountDelta((prev) => prev - 1)
     } finally {
       setDeletingCommentId(null)
     }
@@ -341,9 +348,16 @@ export function PostCard({
     setCurrentLikesCount(likesCount)
   }, [likesCount])
 
-  useEffect(() => {
-    setCommentCount(commentsCount)
-  }, [commentsCount])
+
+useEffect(() => {
+  if (previousServerCommentsCountRef.current === commentsCount) {
+    return
+  }
+
+  previousServerCommentsCountRef.current = commentsCount
+  setOptimisticCommentCountDelta(0)
+}, [commentsCount])
+
 
   function handleCardClick() {
     return
@@ -767,7 +781,7 @@ export function PostCard({
             >
               <ChatBubbleOvalLeftIcon className="h-6 w-6 stroke-[2.5]" />
               <span className="text-[14px] font-semibold">
-                {commentCount}
+                {displayCommentCount}
               </span>
             </button>
 
@@ -822,8 +836,11 @@ export function PostCard({
                 <p className="text-xs text-zinc-500">No comments yet.</p>
               ) : (
                 <div className="space-y-2">
-                  {visibleComments.map((comment) => (
-                    <div key={comment.id} className="bg-black px-1 py-2">
+{visibleComments.map((comment) => {
+  const canShowDeleteButton = comment.canDelete === true
+
+  return (
+    <div key={comment.id} className="bg-black px-1 py-2">
                       <div className="flex items-start justify-between gap-3">
                         <p className="min-w-0 text-sm leading-6 text-zinc-300">
                           <span className="mr-2 text-sm font-semibold text-white">
@@ -864,7 +881,7 @@ export function PostCard({
                             />
                           </div>
 
-                          {currentUserId && comment.user_id === currentUserId ? (
+                   {canShowDeleteButton ? (
                             <button
                               type="button"
                               onClick={(event) =>
@@ -880,9 +897,9 @@ export function PostCard({
                           ) : null}
                         </div>
                       </div>
-                    </div>
-                  ))}
-
+                                   </div>
+                  )
+                })}
                   {comments.length > 3 ? (
                     <button
                       type="button"

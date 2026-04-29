@@ -1,4 +1,5 @@
 import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
+import { formatPayoutAmountWithCurrencyCode } from "@/modules/payout/lib/payout-display-format"
 import { createPayoutRequest } from "@/modules/payout/server/create-payout-request"
 import {
   getPayoutSummary,
@@ -47,9 +48,13 @@ export default async function CreatorPayoutPage() {
   const summary: PayoutSummary | null = summaryResult
   const payouts: CreatorPayout[] = payoutsResult
 
-  const currency = summary?.currency?.toUpperCase() ?? "KRW"
-  const requestableBalance = summary?.requestableBalance ?? 0
-  const requestedPayoutAmount = summary?.requestedPayoutAmount ?? 0
+const currency = summary?.currency?.toUpperCase() ?? "KRW"
+const requestableBalance = summary?.requestableBalance ?? 0
+const requestedPayoutAmount = summary?.requestedPayoutAmount ?? 0
+const requestEligibility = summary?.requestEligibility ?? {
+  isEligible: false,
+  state: "invalid_amount",
+}
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
@@ -64,14 +69,17 @@ export default async function CreatorPayoutPage() {
         <div className="rounded-2xl border border-white/10 bg-neutral-950 p-5 text-white">
           <p className="text-sm text-white/50">Available balance</p>
           <p className="mt-2 text-2xl font-semibold">
-            {requestableBalance.toLocaleString()} {currency}
+            {formatPayoutAmountWithCurrencyCode(requestableBalance, currency)}
           </p>
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-neutral-950 p-5 text-white">
           <p className="text-sm text-white/50">Pending requests</p>
           <p className="mt-2 text-2xl font-semibold">
-            {requestedPayoutAmount.toLocaleString()} {currency}
+            {formatPayoutAmountWithCurrencyCode(
+              requestedPayoutAmount,
+              currency
+            )}
           </p>
         </div>
 
@@ -79,13 +87,13 @@ export default async function CreatorPayoutPage() {
           <p className="text-sm text-white/50">Request payout</p>
           <form action={requestPayoutAction} className="mt-3">
             <input type="hidden" name="currency" value={currency} />
-            <button
-              type="submit"
-              disabled={requestableBalance === 0}
-              className="inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-medium text-black transition hover:bg-white/90"
-            >
-              Request payout
-            </button>
+<button
+  type="submit"
+  disabled={!requestEligibility.isEligible}
+  className="inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:bg-white/40 disabled:text-black/40"
+>
+  Request payout
+</button>
           </form>
         </div>
       </section>

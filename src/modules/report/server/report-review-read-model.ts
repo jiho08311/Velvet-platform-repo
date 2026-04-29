@@ -6,6 +6,7 @@ import type {
   ReportTargetReference,
   ReportTargetType,
 } from "@/modules/report/types"
+import { getReportReviewActionEligibility } from "@/modules/report/report-review-action-eligibility"
 
 type ReportListReporterRow = {
   id: string
@@ -20,14 +21,14 @@ type ReportDetailReporterRow = ReportListReporterRow & {
 
 type RelationRow<T> = T | T[] | null
 
-export type ReportReviewListAdminItem = ReportReviewListItem & {
+type ReportReviewListDisplayFields = {
   reporterLabel: string
   reporterEmailLabel: string
   targetShortId: string
   createdDateLabel: string
 }
 
-export type ReportReviewDetailAdminItem = ReportReviewDetailItem & {
+type ReportReviewDetailDisplayFields = {
   reporterLabel: string
   reporterEmailLabel: string
   reporterUsernameLabel: string
@@ -36,6 +37,12 @@ export type ReportReviewDetailAdminItem = ReportReviewDetailItem & {
   updatedDateTimeLabel: string
   reviewedDateTimeLabel: string
 }
+
+export type ReportReviewListAdminItem =
+  ReportReviewListItem & ReportReviewListDisplayFields
+
+export type ReportReviewDetailAdminItem =
+  ReportReviewDetailItem & ReportReviewDetailDisplayFields
 
 export type ReportReviewListRow = {
   id: string
@@ -142,6 +149,31 @@ function buildReportTargetReference(input: {
   }
 }
 
+function buildReportReviewListDisplayFields(
+  item: ReportReviewListItem
+): ReportReviewListDisplayFields {
+  return {
+    reporterLabel: buildReporterLabel(item.reporter, "Unknown"),
+    reporterEmailLabel: buildReporterEmailLabel(item.reporter),
+    targetShortId: item.targetReference.id.slice(0, 8),
+    createdDateLabel: formatDateLabel(item.createdAt),
+  }
+}
+
+function buildReportReviewDetailDisplayFields(
+  item: ReportReviewDetailItem
+): ReportReviewDetailDisplayFields {
+  return {
+    reporterLabel: buildReporterLabel(item.reporter, "Unknown reporter"),
+    reporterEmailLabel: buildReporterEmailLabel(item.reporter),
+    reporterUsernameLabel: item.reporter?.username || "-",
+    reporterIdLabel: item.reporter?.id || "-",
+    createdDateTimeLabel: formatNullableDateTimeLabel(item.createdAt),
+    updatedDateTimeLabel: formatNullableDateTimeLabel(item.updatedAt),
+    reviewedDateTimeLabel: formatNullableDateTimeLabel(item.reviewedAt),
+  }
+}
+
 export function buildReportReviewListItem(
   row: ReportReviewListRow
 ): ReportReviewListAdminItem {
@@ -156,16 +188,14 @@ export function buildReportReviewListItem(
     reason: row.reason,
     description: row.description,
     status: row.status,
+    actionEligibility: getReportReviewActionEligibility(row.status),
     createdAt: row.created_at,
     reporter: buildListReporter(row.reporter),
   }
 
   return {
     ...item,
-    reporterLabel: buildReporterLabel(item.reporter, "Unknown"),
-    reporterEmailLabel: buildReporterEmailLabel(item.reporter),
-    targetShortId: item.targetId.slice(0, 8),
-    createdDateLabel: formatDateLabel(item.createdAt),
+    ...buildReportReviewListDisplayFields(item),
   }
 }
 
@@ -179,6 +209,7 @@ export function buildReportReviewDetailItem(
     reason: row.reason,
     description: row.description,
     status: row.status,
+    actionEligibility: getReportReviewActionEligibility(row.status),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     reviewedAt: row.reviewed_at,
@@ -191,12 +222,6 @@ export function buildReportReviewDetailItem(
 
   return {
     ...item,
-    reporterLabel: buildReporterLabel(item.reporter, "Unknown reporter"),
-    reporterEmailLabel: buildReporterEmailLabel(item.reporter),
-    reporterUsernameLabel: item.reporter?.username || "-",
-    reporterIdLabel: item.reporter?.id || "-",
-    createdDateTimeLabel: formatNullableDateTimeLabel(item.createdAt),
-    updatedDateTimeLabel: formatNullableDateTimeLabel(item.updatedAt),
-    reviewedDateTimeLabel: formatNullableDateTimeLabel(item.reviewedAt),
+    ...buildReportReviewDetailDisplayFields(item),
   }
 }

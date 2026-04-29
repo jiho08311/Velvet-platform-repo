@@ -146,6 +146,7 @@ export async function POST(
     profile,
     likesCount: 0,
     viewerHasLiked: false,
+    canDelete: insertedComment.user_id === user.id,
   })
 
   return NextResponse.json({

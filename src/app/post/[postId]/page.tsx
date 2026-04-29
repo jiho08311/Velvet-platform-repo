@@ -165,7 +165,8 @@ export default async function PostDetailPage({
               currentUserId={user?.id}
               likesCount={post.likesCount}
               commentsCount={post.commentsCount}
-              isLiked={false}
+              viewerHasLiked={post.viewerHasLiked}
+              isLiked={post.isLiked}
             />
           )}
         </article>

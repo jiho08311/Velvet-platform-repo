@@ -5,13 +5,36 @@ import {
   getDashboardPayoutOverviewReadModel,
   type DashboardPayoutOverviewReadModel,
 } from "@/modules/analytics/server/get-dashboard-payout-overview-read-model"
+import { formatPayoutCurrencyAmount } from "@/modules/payout/lib/payout-display-format"
 
 type DashboardMainCreator = {
   id: string
   username: string
   subscriptionPrice: number
 }
-
+/**
+ * Canonical creator operational dashboard read model.
+ *
+ * Use this read model for /dashboard surfaces that need the creator's
+ * operational dashboard contract:
+ * - creator subscription settings display
+ * - payout balance summary
+ * - creator-facing payout history
+ * - dashboard subscriber metric
+ *
+ * This is not the canonical analytics dashboard read model for
+ * /creator/dashboard. Analytics dashboard surfaces should continue to use
+ * getCreatorAnalyticsSummary() directly unless the route contract is
+ * explicitly changed.
+ *
+ * Source-of-truth boundary:
+ * - payout summary comes from getDashboardPayoutOverviewReadModel()
+ * - payout history must remain sourced from listCreatorPayouts()
+ * - subscriber metric is projected from getCreatorAnalyticsSummary()
+ *
+ * Do not add route access policy here. Route access/readiness policy belongs
+ * to the app route or creator readiness helpers.
+ */
 export type DashboardMainReadModel = {
   creator: DashboardMainCreator & {
     displaySubscriptionPrice: string
@@ -24,13 +47,6 @@ export type DashboardMainReadModel = {
   subscribersMetric: DashboardPayoutOverviewReadModel["subscribersMetric"] & {
     displayValue: string
   }
-}
-
-function formatPrice(amount: number, currency = "KRW") {
-  return new Intl.NumberFormat("ko-KR", {
-    style: "currency",
-    currency,
-  }).format(amount)
 }
 
 export async function getDashboardMainReadModel(
@@ -47,15 +63,17 @@ export async function getDashboardMainReadModel(
   return {
     creator: {
       ...creator,
-      displaySubscriptionPrice: formatPrice(creator.subscriptionPrice),
+      displaySubscriptionPrice: formatPayoutCurrencyAmount(
+        creator.subscriptionPrice
+      ),
     },
     payoutSummary: {
       ...payoutSummary,
-      displayRequestableBalance: formatPrice(
+      displayRequestableBalance: formatPayoutCurrencyAmount(
         payoutSummary.requestableBalance,
         payoutSummary.currency
       ),
-      displayRequestedPayoutAmount: formatPrice(
+      displayRequestedPayoutAmount: formatPayoutCurrencyAmount(
         payoutSummary.requestedPayoutAmount,
         payoutSummary.currency
       ),

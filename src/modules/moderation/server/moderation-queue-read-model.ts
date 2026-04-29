@@ -20,17 +20,23 @@ export type ModerationQueueTargetReference = {
   id: string
 }
 
-export type ModerationQueueItem = {
+type ModerationQueueSourceItem = {
   id: string
   targetType: ModerationQueueTargetType
   targetId: string
   targetReference: ModerationQueueTargetReference
   reason: string
   status: ModerationQueueStatus
-  statusBadge: ModerationQueueStatusBadge
   createdAt: string
+}
+
+type ModerationQueueDisplayFields = {
+  statusBadge: ModerationQueueStatusBadge
   createdDateTimeLabel: string
 }
+
+export type ModerationQueueItem =
+  ModerationQueueSourceItem & ModerationQueueDisplayFields
 
 function buildModerationQueueTargetReference(
   row: Pick<ModerationQueueRow, "target_type" | "target_id">
@@ -48,20 +54,32 @@ function formatCreatedDateTimeLabel(value: string): string {
   }).format(new Date(value))
 }
 
+function buildModerationQueueDisplayFields(
+  item: ModerationQueueSourceItem
+): ModerationQueueDisplayFields {
+  return {
+    statusBadge: getModerationQueueStatusBadge(item.status),
+    createdDateTimeLabel: formatCreatedDateTimeLabel(item.createdAt),
+  }
+}
+
 export function buildModerationQueueItem(
   row: ModerationQueueRow
 ): ModerationQueueItem {
   const targetReference = buildModerationQueueTargetReference(row)
 
-  return {
+  const item: ModerationQueueSourceItem = {
     id: row.id,
     targetType: targetReference.type,
     targetId: targetReference.id,
     targetReference,
     reason: row.reason,
     status: row.status,
-    statusBadge: getModerationQueueStatusBadge(row.status),
     createdAt: row.created_at,
-    createdDateTimeLabel: formatCreatedDateTimeLabel(row.created_at),
+  }
+
+  return {
+    ...item,
+    ...buildModerationQueueDisplayFields(item),
   }
 }

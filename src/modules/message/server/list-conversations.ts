@@ -3,7 +3,7 @@ import { getConversationAccess } from "@/modules/message/server/get-conversation
 import { getConversationParticipantIdentity } from "@/modules/message/server/get-conversation-participant-identity"
 import {
   normalizeConversationSummaryLastMessage,
-  type ConversationSummary,
+  type ConversationSummaryViewModel,
 } from "@/modules/message/types"
 
 type ConversationRow = {
@@ -28,7 +28,7 @@ type ListConversationsParams = {
 
 export async function listConversations({
   userId,
-}: ListConversationsParams): Promise<ConversationSummary[]> {
+}: ListConversationsParams): Promise<ConversationSummaryViewModel[]> {
   const supabase = await createSupabaseServerClient()
 
   const { data: participantRows, error: participantError } = await supabase
@@ -66,16 +66,24 @@ export async function listConversations({
     return []
   }
 
-  const { data: conversations, error: conversationsError } = await supabase
-    .from("conversations")
-    .select("id, created_at, updated_at, last_message_at")
-    .in("id", visibleConversationIds)
-    .order("last_message_at", { ascending: false })
+const { data: conversations, error: conversationsError } = await supabase
+  .from("conversations")
+  .select("id, created_at, updated_at, last_message_at")
+  .in("id", visibleConversationIds)
+  // Conversation list ordering source of truth.
+  // Display timestamp is handled separately in ConversationList.
+  .order("last_message_at", { ascending: false })
 
   if (conversationsError) {
     throw conversationsError
   }
-
+  /**
+   * Conversation summary preview source.
+   *
+   * This query is only for building ConversationSummary.lastMessage preview.
+   * It must not be used as message thread source of truth, and it must not
+   * derive unread badge/count or read-state persistence.
+   */
   const { data: messages, error: messagesError } = await supabase
     .from("messages")
     .select("id, conversation_id, sender_id, content, created_at, type")
@@ -110,6 +118,15 @@ export async function listConversations({
         updatedAt: row.updated_at,
         lastMessageAt: row.last_message_at,
         participant,
+
+
+  /**
+         * List preview only.
+         *
+         * Summary unread-state is intentionally not represented here.
+         */
+
+
         lastMessage: lastMessage
           ? normalizeConversationSummaryLastMessage(lastMessage)
           : null,

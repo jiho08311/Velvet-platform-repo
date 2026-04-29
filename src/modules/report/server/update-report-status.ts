@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/modules/admin/server/require-admin"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import type { ReportStatus } from "@/modules/report/types"
+import { getReportReviewActionEligibility } from "@/modules/report/report-review-action-eligibility"
 
 type UpdateReportStatusParams = {
   reportId: string
@@ -27,6 +28,29 @@ export async function updateReportStatus({
 
   if (!reportId) {
     throw new Error("Report id is required")
+  }
+
+  // 🔥 현재 상태 조회 (추가)
+  const { data: current, error: currentError } = await supabaseAdmin
+    .from("reports")
+    .select("id, status")
+    .eq("id", reportId)
+    .single<{ id: string; status: ReportStatus }>()
+
+  if (currentError || !current) {
+    throw new Error("Report not found")
+  }
+
+  // 🔥 eligibility 기반 검증 (추가)
+  const eligibility = getReportReviewActionEligibility(current.status)
+
+  const isAllowed =
+    (status === "reviewing" && eligibility.canMarkReviewing) ||
+    (status === "resolved" && eligibility.canResolve) ||
+    (status === "rejected" && eligibility.canReject)
+
+  if (!isAllowed) {
+    throw new Error("Invalid report status transition")
   }
 
   const reviewedAt =

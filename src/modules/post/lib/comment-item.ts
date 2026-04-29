@@ -8,7 +8,40 @@ export type CommentItemProfile = {
   avatar_url: string | null
 }
 
-export type CommentItem = {
+
+/**
+ * Current comment item render contract for comment consumers.
+ *
+ * This compatibility shape is consumed by PostCard and
+ * SearchExploreCommentsDrawer. Keep legacy snake_case fields until all
+ * comment consumers are explicitly migrated to a new view model.
+ *
+ * Legacy compatibility fields intentionally kept:
+ * - post_id
+ * - user_id
+ * - created_at
+ * - likes_count
+ * - is_liked
+ * - profiles.avatar_url
+ */
+
+
+/**
+ * Current comment item render contract for comment consumers.
+ *
+ * This compatibility shape is consumed by PostCard and
+ * SearchExploreCommentsDrawer. Keep legacy snake_case fields until all
+ * comment consumers are explicitly migrated to the CommentItemViewModel name.
+ *
+ * Legacy compatibility fields intentionally kept:
+ * - post_id
+ * - user_id
+ * - created_at
+ * - likes_count
+ * - is_liked
+ * - profiles.avatar_url
+ */
+export type CommentItemViewModel = {
   id: string
   post_id: string
   user_id: string
@@ -16,8 +49,16 @@ export type CommentItem = {
   created_at: string
   likes_count: number
   is_liked: boolean
+  canDelete?: boolean
   profiles: CommentItemProfile
 }
+
+/**
+ * Backward-compatible alias for existing comment consumers.
+ * Do not remove until PostCard and SearchExploreCommentsDrawer imports are migrated.
+ */
+export type CommentItem = CommentItemViewModel
+
 
 export type CommentRow = {
   id: string
@@ -33,6 +74,7 @@ export function createCommentItem(input: {
   likesCount?: number | null
   viewerHasLiked?: boolean | null
   isLiked?: boolean | null
+  canDelete?: boolean | null
 }): CommentItem {
   const likeCompatibilityFields = createCommentLikeCompatibilityFields({
     likesCount: input.likesCount,
@@ -41,6 +83,7 @@ export function createCommentItem(input: {
 
   return {
     id: input.comment.id,
+    canDelete: input.canDelete === true,
     post_id: input.comment.post_id,
     user_id: input.comment.user_id,
     content: input.comment.content,

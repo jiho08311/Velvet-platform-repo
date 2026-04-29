@@ -1,3 +1,4 @@
+import type { ReportStatus } from "@/modules/report/types"
 import { listReports } from "@/modules/report/server/list-reports"
 import { Card } from "@/shared/ui/Card"
 import { EmptyState } from "@/shared/ui/EmptyState"
@@ -8,6 +9,28 @@ type Props = {
   searchParams: Promise<{
     cursor?: string
   }>
+}
+
+type ReportActionButtonProps = {
+  reportId: string
+  status: Extract<ReportStatus, "reviewing" | "resolved" | "rejected">
+  label: string
+  className: string
+}
+
+function ReportActionButton({
+  reportId,
+  status,
+  label,
+  className,
+}: ReportActionButtonProps) {
+  return (
+    <form action={updateReportStatusAction}>
+      <input type="hidden" name="reportId" value={reportId} />
+      <input type="hidden" name="status" value={status} />
+      <button className={className}>{label}</button>
+    </form>
+  )
 }
 
 export default async function AdminReportsPage({ searchParams }: Props) {
@@ -32,9 +55,7 @@ export default async function AdminReportsPage({ searchParams }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-white">
-          Reports
-        </h1>
+        <h1 className="text-2xl font-semibold text-white">Reports</h1>
         <p className="text-sm text-zinc-500">
           Review and moderate reported content
         </p>
@@ -55,7 +76,10 @@ export default async function AdminReportsPage({ searchParams }: Props) {
             </thead>
 
             <tbody className="divide-y divide-zinc-800">
-              {reports.map((report) => (
+              {reports.map((report) => {
+                const actionEligibility = report.actionEligibility
+
+                return (
                   <tr
                     key={report.id}
                     className="hover:bg-zinc-900/50 transition"
@@ -72,7 +96,7 @@ export default async function AdminReportsPage({ searchParams }: Props) {
                     <td className="py-3 text-zinc-300">
                       <div>{report.targetReference.type}</div>
                       <div className="text-xs text-zinc-500">
-                        {report.targetReference.id.slice(0, 8)}
+                        {report.targetShortId}
                       </div>
                     </td>
 
@@ -89,53 +113,32 @@ export default async function AdminReportsPage({ searchParams }: Props) {
 
                     <td className="py-3">
                       <div className="flex flex-wrap gap-2">
-                        <form action={updateReportStatusAction}>
-                          <input
-                            type="hidden"
-                            name="reportId"
-                            value={report.id}
+                        {actionEligibility.canMarkReviewing && (
+                          <ReportActionButton
+                            reportId={report.id}
+                            status="reviewing"
+                            label="Review"
+                            className="rounded-xl bg-yellow-600 px-3 py-1 text-xs font-semibold text-white"
                           />
-                          <input
-                            type="hidden"
-                            name="status"
-                            value="reviewing"
-                          />
-                          <button className="rounded-xl bg-yellow-600 px-3 py-1 text-xs font-semibold text-white">
-                            Review
-                          </button>
-                        </form>
+                        )}
 
-                        <form action={updateReportStatusAction}>
-                          <input
-                            type="hidden"
-                            name="reportId"
-                            value={report.id}
+                        {actionEligibility.canResolve && (
+                          <ReportActionButton
+                            reportId={report.id}
+                            status="resolved"
+                            label="Resolve"
+                            className="rounded-xl bg-green-600 px-3 py-1 text-xs font-semibold text-white"
                           />
-                          <input
-                            type="hidden"
-                            name="status"
-                            value="resolved"
-                          />
-                          <button className="rounded-xl bg-green-600 px-3 py-1 text-xs font-semibold text-white">
-                            Resolve
-                          </button>
-                        </form>
+                        )}
 
-                        <form action={updateReportStatusAction}>
-                          <input
-                            type="hidden"
-                            name="reportId"
-                            value={report.id}
+                        {actionEligibility.canReject && (
+                          <ReportActionButton
+                            reportId={report.id}
+                            status="rejected"
+                            label="Reject"
+                            className="rounded-xl bg-red-600 px-3 py-1 text-xs font-semibold text-white"
                           />
-                          <input
-                            type="hidden"
-                            name="status"
-                            value="rejected"
-                          />
-                          <button className="rounded-xl bg-red-600 px-3 py-1 text-xs font-semibold text-white">
-                            Reject
-                          </button>
-                        </form>
+                        )}
                       </div>
                     </td>
 
@@ -143,7 +146,8 @@ export default async function AdminReportsPage({ searchParams }: Props) {
                       {report.createdDateLabel}
                     </td>
                   </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </div>

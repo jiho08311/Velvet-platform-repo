@@ -1,3 +1,15 @@
+/**
+ * PPV display candidate only.
+ *
+ * This component must not be treated as the source of truth for PPV purchase,
+ * unlock, paid access, or media authorization.
+ *
+ * Do not connect this component to the message thread render path until the
+ * PPV message purchase/unlock source of truth is confirmed.
+ */
+
+
+
 type PpvMessageStateProps = {
   isLocked: boolean
   price?: number | null

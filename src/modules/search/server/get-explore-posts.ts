@@ -4,6 +4,7 @@ import {
   buildPostLikeCountMap,
   readPostLikeCount,
 } from "@/shared/lib/post-like-count"
+import { createPostLikeCompatibilityFields } from "@/shared/lib/like-interaction-result"
 import {
   filterPublicDiscoveryPostCandidates,
   isEligiblePublicDiscoveryCreator,
@@ -327,6 +328,11 @@ export async function getExplorePosts(
               })),
             ]
 
+      const likeState = {
+        likesCount: readPostLikeCount(likeCountMap, post.id),
+        viewerHasLiked: false,
+      }
+
       return {
         id: `${post.id}:${media.storage_path}`,
         postId: post.id,
@@ -339,7 +345,8 @@ export async function getExplorePosts(
         mediaType: signedMedia[0]?.type === "video" ? "video" : "image",
         createdAt: post.published_at ?? post.created_at,
         text: post.content ?? null,
-        likesCount: readPostLikeCount(likeCountMap, post.id),
+        ...likeState,
+        ...createPostLikeCompatibilityFields(likeState),
         commentsCount: commentCountMap.get(post.id) ?? 0,
         media: signedMedia,
         blocks: fallbackBlocks,

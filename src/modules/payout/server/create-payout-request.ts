@@ -12,7 +12,7 @@ import {
   resolvePayoutBalanceTotals,
   type EarningBalanceStatus,
 } from "@/modules/payout/lib/payout-balance-policy"
-
+import { resolvePayoutRequestEligibility } from "./resolve-payout-request-eligibility"
 type RequestableEarningRow = {
   id: string
   net_amount: number | null
@@ -30,37 +30,6 @@ type CreatedPayoutRequestRow = {
   created_at: string
 }
 
-function resolvePayoutRequestEligibility(input: {
-  accountReadinessState: string
-  requestedAmount: number
-  availableBalance: number
-}) {
-  if (input.requestedAmount <= 0) {
-    return {
-      isEligible: false,
-      state: "invalid_amount" as const,
-    }
-  }
-
-  if (input.accountReadinessState !== "ready") {
-    return {
-      isEligible: false,
-      state: "account_required" as const,
-    }
-  }
-
-  if (input.requestedAmount > input.availableBalance) {
-    return {
-      isEligible: false,
-      state: "insufficient_balance" as const,
-    }
-  }
-
-  return {
-    isEligible: true,
-    state: "eligible" as const,
-  }
-}
 
 export async function createPayoutRequest(
   input: CreatePayoutRequestInput

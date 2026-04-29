@@ -14,6 +14,17 @@ type MessageThreadSectionProps = {
   conversationId: string
   currentUserId: string
   reportPathname: string
+
+  /**
+   * Thread rendering source of truth.
+   *
+   * This is independent from ConversationSummary.lastMessage and any
+   * conversation summary unread-state. The thread UI must render only the
+   * messages provided by the detail page.
+   *
+   * readAt may exist on each message item, but this component does not decide
+   * persistence or introduce unread badge/count behavior.
+   */
   initialMessages: ConversationMessageListItem[]
 }
 
@@ -24,6 +35,15 @@ export function MessageThreadSection({
   initialMessages,
 }: MessageThreadSectionProps) {
   const [messages, setMessages] = useState(initialMessages)
+
+
+/**
+   * Local append after sending.
+   *
+   * This only updates the currently visible thread state. It does not update
+   * conversation summary unread-state or read persistence.
+   */
+
 
   function handleMessageSent(message: ConversationMessageItem) {
     const nextMessage = toConversationMessageListItem({

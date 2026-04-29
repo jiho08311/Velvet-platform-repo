@@ -1,26 +1,19 @@
 import { NextResponse } from "next/server"
 
 import { requireUser } from "@/modules/auth/server/require-user"
-import { listNotifications } from "@/modules/notification/server/list-notifications"
-import {
-  getUnreadNotificationCount,
-  hasUnreadNotifications,
-} from "@/modules/notification/types"
+import { listNotificationItems } from "@/modules/notification/server/list-notifications"
 
 export async function GET() {
   try {
     const user = await requireUser()
 
-    const notifications = await listNotifications({
+    const notificationItems = await listNotificationItems({
       userId: user.id,
     })
-    const unreadCount = getUnreadNotificationCount(notifications)
 
     return NextResponse.json(
       {
-        notifications,
-        unreadCount,
-        hasUnread: hasUnreadNotifications(notifications),
+        notifications: notificationItems,
       },
       { status: 200 },
     )

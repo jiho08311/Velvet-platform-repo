@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-
+import { canDeleteComment } from "@/modules/post/lib/comment-permissions"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 
@@ -41,7 +41,12 @@ export async function DELETE(
     return NextResponse.json({ error: "Comment not found" }, { status: 404 })
   }
 
-  if (comment.user_id !== user.id) {
+  if (
+    !canDeleteComment({
+      currentUserId: user.id,
+      commentUserId: comment.user_id,
+    })
+  ) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 

@@ -36,7 +36,7 @@ export function AppHeader({
   useEffect(() => {
     async function fetchAuth() {
       try {
-        const res = await fetch("/api/notifications", {
+        const res = await fetch("/api/auth/me", {
           method: "HEAD",
           cache: "no-store",
         })

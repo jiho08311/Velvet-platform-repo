@@ -54,6 +54,14 @@ export async function getConversationById({
     updatedAt: conversation.updated_at,
     lastMessageAt: conversation.last_message_at,
     participant,
+
+    /**
+     * Legacy/detail compatibility.
+     *
+     * Detail pages must load thread content through listMessages().
+     * This field remains null here to preserve getConversationById()
+     * behavior and avoid mixing list preview shape with detail header shape.
+     */
     lastMessage: null,
   }
 }

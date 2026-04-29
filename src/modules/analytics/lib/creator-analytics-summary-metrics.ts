@@ -1,5 +1,6 @@
 import type { CreatorAnalyticsSummary } from "@/modules/analytics/server/build-creator-analytics-summary"
 import { CREATOR_ANALYTICS_PERIOD } from "@/modules/analytics/lib/creator-analytics-period"
+import { SUBSCRIBER_COUNT_SURFACE_POLICY } from "@/modules/analytics/lib/subscriber-count-policy"
 
 type CreatorAnalyticsSummaryMetricValue = number | string
 
@@ -14,18 +15,31 @@ type CreatorAnalyticsSummaryMetricDefinition = {
   ) => CreatorAnalyticsSummaryMetricValue
 }
 
+function getSubscriberMetricValue(summary: CreatorAnalyticsSummary) {
+  const field = SUBSCRIBER_COUNT_SURFACE_POLICY.creatorAnalyticsSubscribersMetric
+
+  return summary.counts[field]
+}
+
+function getActiveSubscriptionsMetricValue(summary: CreatorAnalyticsSummary) {
+  const field =
+    SUBSCRIBER_COUNT_SURFACE_POLICY.creatorAnalyticsActiveSubscriptionsMetric
+
+  return summary.counts[field]
+}
+
 export const CREATOR_ANALYTICS_SUMMARY_METRICS = {
   subscribers: {
     id: "subscribers",
     label: "Subscribers",
     valueKind: "count",
-    getValue: (summary) => summary.counts.subscriberCount,
+    getValue: getSubscriberMetricValue,
   },
   activeSubscriptions: {
     id: "active-subscriptions",
     label: "Active Subscriptions",
     valueKind: "count",
-    getValue: (summary) => summary.counts.activeSubscriptionCount,
+    getValue: getActiveSubscriptionsMetricValue,
   },
   monthlyRevenue: {
     id: "monthly-revenue",

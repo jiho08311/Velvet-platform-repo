@@ -95,6 +95,16 @@ export default async function PayoutsPage() {
     )
   }
 
+  /**
+   * /dashboard is the creator operational dashboard surface.
+   *
+   * Keep this route on getDashboardMainReadModel(), which is the canonical
+   * operational dashboard contract for payout summary, payout history, and
+   * subscriber metric output.
+   *
+   * Do not replace this with getCreatorAnalyticsSummary(); /creator/dashboard
+   * owns the analytics dashboard contract.
+   */
   const dashboard = await getDashboardMainReadModel(readiness.creator)
 
   if (!dashboard) {
@@ -104,11 +114,12 @@ export default async function PayoutsPage() {
   const {
     creator,
     payoutSummary: summary,
-    payouts,
+    payouts: payoutHistory,
     subscribersMetric,
   } = dashboard
-  const requestableBalance = summary.requestableBalance
-  const requestedPayoutAmount = summary.requestedPayoutAmount
+const requestableBalance = summary.requestableBalance
+const requestedPayoutAmount = summary.requestedPayoutAmount
+const requestEligibility = summary.requestEligibility
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -176,13 +187,13 @@ export default async function PayoutsPage() {
 
             <form action={requestPayoutAction} className="mt-4">
               <input type="hidden" name="currency" value={summary.currency} />
-              <button
-                type="submit"
-                disabled={requestableBalance === 0}
-                className="w-full rounded-2xl bg-[#C2185B] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#D81B60] active:bg-[#AD1457] disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500"
-              >
-                전액 출금 요청
-              </button>
+            <button
+  type="submit"
+  disabled={!requestEligibility.isEligible}
+  className="w-full rounded-2xl bg-[#C2185B] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#D81B60] active:bg-[#AD1457] disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500"
+>
+  전액 출금 요청
+</button>
             </form>
           </Card>
         </div>
@@ -221,10 +232,10 @@ export default async function PayoutsPage() {
             </p>
           </div>
 
-          {payouts.length === 0 ? (
+                {payoutHistory.length === 0 ? (
             <PayoutEmptyState />
           ) : (
-            <PayoutList payouts={payouts} />
+            <PayoutList payouts={payoutHistory} />
           )}
         </Card>
       </div>

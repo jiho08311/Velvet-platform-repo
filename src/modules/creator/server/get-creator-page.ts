@@ -17,6 +17,7 @@ import {
   buildPostLikeCountMap,
   readPostLikeCount,
 } from "@/shared/lib/post-like-count"
+import { createPostLikeCompatibilityFields } from "@/shared/lib/like-interaction-result"
 
 import { buildCreatorIdentity } from "./build-creator-identity"
 
@@ -304,6 +305,11 @@ export async function getCreatorPage({
       })
 
       if (isScheduled) {
+        const likeState = {
+          likesCount: 0,
+          viewerHasLiked: false,
+        }
+
         return {
           id: post.id,
           text: scheduledRenderInput.blockText || "",
@@ -318,8 +324,8 @@ export async function getCreatorPage({
           publishedAt: post.published_at,
           status: post.status,
           visibility: post.visibility,
-          likesCount: 0,
-          isLiked: false,
+          ...likeState,
+          ...createPostLikeCompatibilityFields(likeState),
           commentsCount: 0,
           creatorId: creator.id,
           creatorUserId: creator.user_id,
@@ -386,6 +392,11 @@ export async function getCreatorPage({
         media: publishedRenderReadModel.media,
       })
 
+      const likeState = {
+        likesCount: readPostLikeCount(likeCountMap, post.id),
+        viewerHasLiked: myLikeSet.has(post.id),
+      }
+
       return {
         id: post.id,
         text: access.canView ? (renderInput.blockText || "") : "",
@@ -400,8 +411,8 @@ export async function getCreatorPage({
         publishedAt: post.published_at,
         status: post.status,
         visibility: post.visibility,
-        likesCount: readPostLikeCount(likeCountMap, post.id),
-        isLiked: myLikeSet.has(post.id),
+        ...likeState,
+        ...createPostLikeCompatibilityFields(likeState),
         commentsCount: commentCountMap.get(post.id) ?? 0,
         creatorId: creator.id,
         creatorUserId: creator.user_id,

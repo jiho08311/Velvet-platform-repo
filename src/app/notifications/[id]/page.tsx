@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 
 import { getNotificationById } from "@/modules/notification/server/get-notification-by-id"
-import { listNotifications } from "@/modules/notification/server/list-notifications"
+import { listNotificationItems } from "@/modules/notification/server/list-notifications"
 import { requireNotificationPageAccess } from "@/modules/notification/server/require-notification-page-access"
 import { getUnreadNotificationCount } from "@/modules/notification/types"
 import { NotificationListSurface } from "@/modules/notification/ui/NotificationListSurface"
@@ -23,17 +23,17 @@ export default async function NotificationsPage({
     userId: user.id,
   })
 
-  const notifications = await listNotifications({
+  const notificationItems = await listNotificationItems({
     userId: user.id,
   })
 
-  const unreadCount = getUnreadNotificationCount(notifications)
+  const unreadCount = getUnreadNotificationCount(notificationItems)
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
         <NotificationListSurface
-          notifications={notifications}
+          notifications={notificationItems}
           unreadCount={unreadCount}
           selectedNotificationId={selectedNotification?.id ?? null}
         />

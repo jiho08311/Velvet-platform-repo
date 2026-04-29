@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-
+import { canDeleteComment } from "@/modules/post/lib/comment-permissions"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import {
@@ -26,6 +26,8 @@ type CommentLikeRow = {
   comment_id: string
   user_id: string
 }
+
+
 
 export async function GET(
   request: Request,
@@ -116,11 +118,15 @@ export async function GET(
     const profile = profileMap.get(comment.user_id)
 
     return createCommentItem({
-      comment,
-      profile,
-      likesCount: readLikeCountFromMap(likeCountMap, comment.id),
-      viewerHasLiked: likedCommentIdSet.has(comment.id),
-    })
+  comment,
+  profile,
+  likesCount: readLikeCountFromMap(likeCountMap, comment.id),
+  viewerHasLiked: likedCommentIdSet.has(comment.id),
+canDelete: canCurrentUserDeleteComment({
+  currentUserId,
+  commentUserId: comment.user_id,
+}),
+})
   })
 
   return NextResponse.json({ items })

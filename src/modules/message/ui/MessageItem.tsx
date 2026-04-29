@@ -13,9 +13,18 @@ type MessageItemProps = {
   createdAt: string
   isOwn?: boolean
   media?: MessageItemMedia[]
+
+  /**
+   * Commerce/render contract fields only.
+   *
+   * MessageItem currently renders server-provided content and media as-is.
+   * It must not use these fields to decide purchase state, unlock state,
+   * media access, or signed URL authorization.
+   */
   type?: "text" | "ppv"
   price?: number | null
   isLocked?: boolean
+
   reportPathname?: string
 }
 
@@ -46,6 +55,16 @@ export function MessageItem({
               </p>
             ) : null}
 
+            {/**
+             * Render-only media boundary.
+             *
+             * MessageItem must render the server-provided media URLs as-is.
+             * Media signed URL generation and message media access policy stay
+             * outside of this UI component.
+             *
+             * Do not derive locked/purchased/paid media behavior here.
+             * Final message media access policy: unknown.
+             */}
             {media.length > 0 ? (
               <div className="space-y-3">
                 {media.map((item) =>

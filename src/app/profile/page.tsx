@@ -253,9 +253,9 @@ const posts = creatorFeedPosts.map((post) => {
                   </div>
 
                   <div>
-                    <p className="text-lg font-semibold text-white md:text-xl">
-                      {summary?.counts.subscriberCount ?? 0}
-                    </p>
+              <p className="text-lg font-semibold text-white md:text-xl">
+  {summary?.counts.subscriberCount ?? 0}
+</p>
                     <p className="text-sm text-zinc-500">Subscribers</p>
                   </div>
                 </div>

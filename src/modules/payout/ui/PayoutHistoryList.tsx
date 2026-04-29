@@ -1,5 +1,7 @@
 import { EmptyState } from "@/shared/ui/EmptyState"
 import { StatusBadge } from "@/shared/ui/StatusBadge"
+import { formatPayoutHistoryAmount } from "@/modules/payout/lib/payout-display-format"
+import { getPayoutExecutionLabel } from "@/modules/payout/lib/get-payout-execution-label"
 import type { PayoutExecutionLifecycleState } from "@/modules/payout/lib/resolve-payout-state"
 
 type PayoutHistoryListItem = {
@@ -18,30 +20,8 @@ type PayoutHistoryListProps = {
   emptyDescription?: string
 }
 
-function formatPrice(amount: number, currency = "KRW") {
-  return new Intl.NumberFormat("ko-KR", {
-    style: "currency",
-    currency: currency.toUpperCase(),
-    maximumFractionDigits: 2,
-  }).format(amount)
-}
-
 function formatDate(value: string) {
   return new Date(value).toLocaleString()
-}
-
-function getPayoutExecutionLabel(
-  lifecycleState: PayoutExecutionLifecycleState
-): string {
-  if (lifecycleState === "paid") {
-    return "지급 완료"
-  }
-
-  if (lifecycleState === "failed") {
-    return "지급 실패"
-  }
-
-  return "처리 중"
 }
 
 function renderPayoutMeta(payout: PayoutHistoryListItem) {
@@ -100,7 +80,10 @@ export function PayoutHistoryList({
                 금액
               </p>
               <p className="mt-1 text-sm font-semibold text-zinc-900 sm:mt-0">
-                {formatPrice(payout.amount, payout.currency ?? "KRW")}
+                {formatPayoutHistoryAmount(
+                  payout.amount,
+                  payout.currency ?? "KRW"
+                )}
               </p>
             </div>
 

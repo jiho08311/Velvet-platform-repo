@@ -217,6 +217,8 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
         return prev
       }
 
+      // Post preview count only:
+      // keep this separate from SearchExploreCommentsDrawer's loaded list count.
       return {
         ...prev,
         commentsCount: prev.commentsCount + 1,

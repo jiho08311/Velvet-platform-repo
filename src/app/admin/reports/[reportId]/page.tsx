@@ -17,6 +17,10 @@ export default async function AdminReportDetailPage({ params }: Props) {
     notFound()
   }
 
+  // action eligibility 연결만 유지 (현재 정책 unknown)
+  const actionEligibility = report.actionEligibility
+  void actionEligibility
+
   return (
     <div className="space-y-6">
       <div>

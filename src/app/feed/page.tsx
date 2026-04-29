@@ -216,6 +216,7 @@ export default async function FeedPage() {
     price: normalizePrice(item),
     commentsCount: item.commentsCount,
     likesCount: item.likesCount,
+    viewerHasLiked: item.viewerHasLiked,
     isLiked: item.isLiked,
     creator: item.creator,
   }))

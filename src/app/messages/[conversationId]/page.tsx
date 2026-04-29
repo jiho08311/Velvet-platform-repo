@@ -80,10 +80,17 @@ export default async function ConversationDetailPage({
     notFound()
   }
 
-  const messages = await listMessages({
+   const messages = await listMessages({
     conversationId,
     userId: user.id,
   })
+
+  /**
+   * Detail thread source of truth.
+   *
+   * ConversationSummary.lastMessage is not used for detail rendering.
+   * Thread UI must be built from listMessages().
+   */
   const messageListItems = messages.map((message) =>
     toConversationMessageListItem({
       message,

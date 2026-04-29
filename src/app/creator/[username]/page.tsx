@@ -280,11 +280,11 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
             </div>
           ) : null}
 
-          <CreatorStatsSection
-            mediaPostCount={mediaPosts.length}
-            updatePostCount={updatePosts.length}
-            subscriberCount={summary.counts.subscriberCount}
-          />
+       <CreatorStatsSection
+  mediaPostCount={mediaPosts.length}
+  updatePostCount={updatePosts.length}
+  subscriberCount={summary.counts.subscriberCount}
+/>
 
           <div className="mt-8">
             {isOwner ? <CreatePostComposer creatorId={creator.id} /> : null}

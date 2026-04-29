@@ -17,6 +17,17 @@ export default async function CreatorDashboardPage() {
     signInNext: "/creator/dashboard",
   })
 
+  /**
+   * /creator/dashboard is the creator analytics dashboard surface.
+   *
+   * Keep this route on getCreatorAnalyticsSummary(), which is the canonical
+   * analytics contract for post count, subscriber counts, subscription count,
+   * revenue metrics, and recent payment analytics.
+   *
+   * Do not replace this with getDashboardMainReadModel(); /dashboard owns the
+   * operational dashboard contract for payout summary, payout history, and
+   * creator subscription settings display.
+   */
   const summary = await getCreatorAnalyticsSummary(creator.id)
   const extraMetrics = getCreatorAnalyticsSummaryMetrics(
     summary,

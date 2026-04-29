@@ -45,9 +45,20 @@ export type DiscoveryPostRenderState = {
 }
 
 export type DiscoveryPostEngagementState = {
+
+
+
+
+
   likesCount: number
+
+
+   /**
+   * Post-level server-derived comment count.
+   * This must not be mixed with a loaded comments list length.
+   */
   commentsCount: number
-  viewerHasLiked?: boolean
+  viewerHasLiked: boolean
   isLiked?: boolean
 }
 

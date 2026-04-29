@@ -21,6 +21,19 @@ export async function createConversationMessageMedia(
 ): Promise<ConversationMessageMedia> {
   return {
     id: media.id,
+
+    /**
+     * Message media URL generation boundary.
+     *
+     * The message UI must receive and render only server-generated signed URLs.
+     * Do not generate media URLs in client/UI code.
+     *
+     * The current "paid" + hasPurchased=true inputs are preserved only as the
+     * existing signed URL generation behavior for message media.
+     * They must not be treated as the final message media access policy.
+     *
+     * Final paid/purchased/locked media access policy: unknown.
+     */
     url: await createMediaSignedUrl({
       storagePath: media.storage_path,
       viewerUserId: input.viewerUserId,
@@ -33,6 +46,14 @@ export async function createConversationMessageMedia(
   }
 }
 
+/**
+ * Message media URL source of truth.
+ *
+ * This function builds the server-generated signed URL map consumed by message
+ * thread rendering paths. Callers should pass persisted media rows and message
+ * sender ownership context, then render the returned ConversationMessageMedia.url
+ * without deriving access policy in UI code.
+ */
 export async function createConversationMessageMediaMap({
   mediaRows,
   viewerUserId,

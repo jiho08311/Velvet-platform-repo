@@ -15,6 +15,11 @@ import {
   Sparkles,
 } from "lucide-react"
 
+type NotificationBadgeResponse = {
+  hasUnread?: boolean
+  unreadCount?: number
+}
+
 const navigationItems = [
   { href: "/feed", label: "Home", icon: Home },
   { href: "/messages", label: "Messages", icon: Mail },
@@ -24,6 +29,18 @@ const navigationItems = [
   { href: "/profile", label: "Profile", icon: User },
   { href: "/settings", label: "Settings", icon: Settings },
 ]
+
+function resolveHasUnreadNotificationBadge(data: NotificationBadgeResponse) {
+  if (typeof data.hasUnread === "boolean") {
+    return data.hasUnread
+  }
+
+  if (typeof data.unreadCount === "number") {
+    return data.unreadCount > 0
+  }
+
+  return false
+}
 
 export function AppSidebar() {
   const pathname = usePathname()
@@ -41,7 +58,9 @@ export function AppSidebar() {
   useEffect(() => {
     async function fetchAuthAndUnread() {
       try {
-        const res = await fetch("/api/notifications", { cache: "no-store" })
+        const res = await fetch("/api/notifications/badge", {
+          cache: "no-store",
+        })
 
         if (!res.ok) {
           setIsAuthenticated(false)
@@ -51,13 +70,8 @@ export function AppSidebar() {
 
         setIsAuthenticated(true)
 
-        const data = await res.json()
-        const unread =
-          typeof data?.hasUnread === "boolean"
-            ? data.hasUnread
-            : typeof data?.unreadCount === "number"
-              ? data.unreadCount > 0
-              : false
+        const data = (await res.json()) as NotificationBadgeResponse
+        const unread = resolveHasUnreadNotificationBadge(data)
 
         setHasUnread(unread)
       } catch {

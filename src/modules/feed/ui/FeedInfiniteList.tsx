@@ -31,6 +31,7 @@ type FeedInfiniteListPost = {
   lockReason?: "none" | "subscription" | "purchase"
   commerce: PostCommerceState
   likesCount?: number
+  viewerHasLiked?: boolean
   isLiked?: boolean
   status?: "draft" | "scheduled" | "published" | "archived"
   publishedAt?: string | null
@@ -72,6 +73,7 @@ type FeedApiItem = {
   }>
   blocks?: PostBlock[]
   likesCount: number
+  viewerHasLiked: boolean
   isLiked: boolean
   commentsCount: number
   creator: {
@@ -105,6 +107,7 @@ function normalizePosts(
     price: item.price,
     commentsCount: item.commentsCount,
     likesCount: item.likesCount,
+    viewerHasLiked: item.viewerHasLiked,
     isLiked: item.isLiked,
     creator: item.creator,
   }))

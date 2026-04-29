@@ -28,9 +28,37 @@ export type ConversationMessageItem = {
   createdAt: string
   readAt: string | null
   status: string | null
+
+  /**
+   * Message render category only.
+   *
+   * This field tells the message UI whether the message should be treated as a
+   * normal text message or a PPV-shaped message for display purposes.
+   *
+   * Do not treat this as the purchase state, unlock state, or media access
+   * source of truth.
+   */
   type: "text" | "ppv"
+
+  /**
+   * Commerce display/input field only.
+   *
+   * This value may describe the intended PPV price, but it does not prove that
+   * the message is purchasable, purchased, unlocked, or accessible.
+   */
   price: number | null
+
+  /**
+   * Current display-only lock hint.
+   *
+   * Existing behavior derives this from the message row shape. It must not be
+   * expanded into the final PPV unlock, purchase, paid access, or signed URL
+   * authorization source of truth.
+   *
+   * PPV message unlock / purchase source of truth: unknown / unsupported.
+   */
   isLocked: boolean
+
   media: ConversationMessageMedia[]
 }
 
@@ -103,7 +131,20 @@ export function normalizeConversationMessageItem(
     status: row.status,
     type: row.type === "ppv" ? "ppv" : "text",
     price: row.price,
+
+    /**
+     * Row-derived display state only.
+     *
+     * This preserves the existing assumption that ppv messages are represented
+     * as locked in the message view model.
+     *
+     * Do not treat this as the final media access policy, purchase state, or
+     * signed URL authorization source of truth.
+     *
+     * Final paid/purchased/locked media access policy: unknown.
+     */
     isLocked: row.type === "ppv",
+
     media,
   }
 }
@@ -231,14 +272,48 @@ export function normalizeConversationSummaryLastMessage(
     type: row.type === "ppv" ? "ppv" : "text",
   }
 }
-
 export type ConversationSummary = {
   id: string
   createdAt: string
+
+  /**
+   * Conversation row update timestamp.
+   *
+   * Used only as the display fallback when the conversation has no
+   * preview lastMessage.
+   */
   updatedAt: string
+
+  /**
+   * List ordering timestamp.
+   *
+   * This is the source of truth for conversation list sorting.
+   * Do not use this for rendering the visible timestamp.
+   */
   lastMessageAt: string | null
+
   participant: ConversationParticipantIdentity | null
+
+  /**
+   * List preview only.
+   *
+   * listConversations() may populate this for /messages preview.
+   * Use lastMessage.createdAt as the primary display timestamp.
+   * If this is null, fall back to ConversationSummary.updatedAt.
+   *
+   * getConversationById() currently returns null for detail compatibility.
+   * Do not use this as the source of truth for message thread content.
+   */
   lastMessage: ConversationSummaryLastMessage | null
+}
+
+export type ConversationSummaryViewModel = ConversationSummary
+
+export type MessageThreadViewModel = {
+  conversationId: string
+  currentUserId: string
+  reportPathname: string
+  messages: ConversationMessageListItem[]
 }
 
 type ConversationParticipantProfile = {

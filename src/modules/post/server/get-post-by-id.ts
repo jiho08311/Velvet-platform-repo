@@ -15,7 +15,10 @@ import {
   getPublicDiscoveryPostState,
   isEligiblePublicDiscoveryCreator,
 } from "@/modules/post/lib/public-discovery-inclusion"
-import { normalizeLikeCount } from "@/shared/lib/like-interaction-result"
+import {
+  createPostLikeCompatibilityFields,
+  normalizeLikeCount,
+} from "@/shared/lib/like-interaction-result"
 
 type PostRow = {
   id: string
@@ -77,6 +80,8 @@ export type PostDetail = {
   lockReason: "none" | "subscription" | "purchase"
   commerce: PostCommerceState
   likesCount: number
+  viewerHasLiked: boolean
+  isLiked: boolean
   commentsCount: number
   media: {
     id: string
@@ -197,6 +202,26 @@ export async function getPostById(
   ])
 
   const resolvedLikesCount = normalizeLikeCount(likesCount)
+
+  const viewerHasLiked = resolvedViewerUserId
+    ? await supabaseAdmin
+        .from("post_likes")
+        .select("*", { count: "exact", head: true })
+        .eq("post_id", post.id)
+        .eq("user_id", resolvedViewerUserId)
+        .then(({ count, error }) => {
+          if (error) {
+            throw error
+          }
+
+          return normalizeLikeCount(count) > 0
+        })
+    : false
+
+  const likeState = {
+    likesCount: resolvedLikesCount,
+    viewerHasLiked,
+  }
 
   const {
     isSubscribed,
@@ -325,7 +350,8 @@ export async function getPostById(
     isLocked: access.isLocked,
     lockReason: access.lockReason,
     commerce,
-    likesCount: resolvedLikesCount,
+    ...likeState,
+    ...createPostLikeCompatibilityFields(likeState),
     commentsCount: commentsCount ?? 0,
     media: access.canView ? selectedMedia : [],
     blocks: access.canView ? selectedBlocks : [],

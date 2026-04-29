@@ -554,8 +554,15 @@ export type PostRenderSurfaceItem = {
   isLocked: boolean
   lockReason?: PostAccessLockReason
   commerce: PostCommerceState
+  viewerHasLiked: boolean
   isLiked: boolean
   likesCount: number
+
+
+   /**
+   * Post-level server-derived comment count.
+   * Loaded comment list length must stay UI-local.
+   */
   commentsCount: number
   visibility: PostVisibility
   status: PostStatus

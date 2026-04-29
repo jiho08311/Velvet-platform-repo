@@ -20,7 +20,13 @@ export function SearchExploreCommentsDrawer({
   onClose,
   onCommentCreated,
 }: SearchExploreCommentsDrawerProps) {
-  const [comments, setComments] = useState<CommentItem[]>([])
+ 
+  
+// CommentItem is the shared render contract for comment consumers.
+// Keep drawer rendering aligned with PostCard.
+const [comments, setComments] = useState<CommentItem[]>([])
+
+
   const [content, setContent] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -48,6 +54,8 @@ export function SearchExploreCommentsDrawer({
         return
       }
 
+      // Drawer-local loaded list only.
+      // Do not treat comments.length as the post-level commentsCount SoT.
       setComments(
         Array.isArray(data?.items) ? data.items.filter(isCommentItem) : []
       )

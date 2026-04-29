@@ -2,7 +2,17 @@
 
 import { useState } from "react"
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk"
-
+/**
+ * PPV purchase candidate only.
+ *
+ * Do not connect this button to MessageItem or message thread rendering until
+ * the PPV message purchase API, payment target mapping, and unlock source of
+ * truth are fully confirmed.
+ *
+ * Current known state:
+ * - /api/message/purchase is unavailable
+ * - ppv_message access verification is unsupported
+ */
 type MessagePurchaseButtonProps = {
   messageId: string
 }
