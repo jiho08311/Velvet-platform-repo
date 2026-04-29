@@ -14,10 +14,13 @@ import {
   ChatBubbleOvalLeftIcon,
 } from "@heroicons/react/24/outline"
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline"
-import { resolvePostRenderInputForCompatibility } from "@/modules/post/lib/post-render-compat"
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid"
 import { formatInUserTimeZone } from "@/shared/lib/date-time"
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
+import {
+  buildCreatorMessageHref,
+  buildCreatorRoutePath,
+} from "@/modules/creator/lib/creator-identity"
 import { buildReportTriggerPayload } from "@/modules/report/report-trigger"
 import PostPurchaseButton from "./PostPurchaseButton"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
@@ -36,11 +39,8 @@ export type PostCardCreator = {
 export type PostCardSurfaceProps = {
   commentsCount?: number
   postId?: string
-  text?: string
   createdAt: string
-  media?: PostRenderMediaItem[]
-  blocks?: PostBlock[]
-  renderInput?: PostRenderInput
+  renderInput: PostRenderInput
   canView: boolean
   isLocked: boolean
   lockReason?: "none" | "subscription" | "purchase"
@@ -95,10 +95,7 @@ function getFilterStyle(filter?: string) {
 
 export function PostCard({
   postId,
-  text,
   createdAt,
-  media = [],
-  blocks = [],
   renderInput,
   canView,
   isLocked,
@@ -135,12 +132,7 @@ export function PostCard({
   const [isVideoReady, setIsVideoReady] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
 
-  const resolvedRenderInput = resolvePostRenderInputForCompatibility({
-    renderInput,
-    text,
-    media,
-    blocks,
-  })
+  const resolvedRenderInput = renderInput
 
   const {
     hasBlocks,
@@ -678,7 +670,7 @@ export function PostCard({
 
   function handleCreatorClick(event: React.MouseEvent) {
     event.stopPropagation()
-    router.push(`/creator/${creator.username}`)
+    router.push(buildCreatorRoutePath({ username: creator.username }))
   }
 
   return (
@@ -775,7 +767,7 @@ export function PostCard({
 
                 if (!creatorUserId) return
 
-                router.push(`/messages?creatorId=${creatorUserId}`)
+                router.push(buildCreatorMessageHref({ creatorUserId }))
               }}
               className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
             >

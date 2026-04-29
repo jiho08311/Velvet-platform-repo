@@ -2,7 +2,7 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { buildCreatorIdentity } from "@/modules/creator/server/build-creator-identity"
 import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
 
-import type { CreatorSearchResult } from "../types"
+import type { DiscoveryCreatorLinkItem } from "../discovery-contract"
 
 type GetRecommendedCreatorsInput = {
   viewerUserId: string
@@ -36,7 +36,7 @@ type SubscriptionRow = {
 export async function getRecommendedCreators({
   viewerUserId,
   limit = 3,
-}: GetRecommendedCreatorsInput): Promise<CreatorSearchResult[]> {
+}: GetRecommendedCreatorsInput): Promise<DiscoveryCreatorLinkItem[]> {
   const safeLimit = Math.max(1, Math.min(limit, 12))
 
   if (!viewerUserId) {
@@ -124,11 +124,9 @@ export async function getRecommendedCreators({
 
       return {
         id: identity.id,
-        bio: identity.bio || null,
         username: identity.username,
         displayName: identity.displayName,
         avatarUrl: identity.avatarUrl,
-        isVerified: false,
       }
     })
 }

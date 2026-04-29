@@ -20,7 +20,7 @@ type CreatorContentTabPost = {
   id: string
   content: string | null
   createdAt: string
-  renderInput?: PostRenderInput
+  renderInput: PostRenderInput
   media?: Array<{
     id?: string
     url: string
@@ -102,7 +102,7 @@ function getUpdateSurfaceState(
     status: post.status,
     isLocked,
     isOwner,
-    content: post.renderInput?.blockText ?? post.content,
+    content: post.renderInput.blockText || post.content,
   })
 
   const formattedDate = isUpcoming
@@ -140,14 +140,14 @@ function getUpdateSurfaceState(
 
 
 function getPostTileState(post: CreatorContentTabPost, isOwner: boolean) {
-  const mediaCount = post.renderInput?.blockMedia.length ?? post.media?.length ?? 0
+  const mediaCount = post.renderInput.blockMedia.length || post.media?.length || 0
 
   return {
     isLocked: Boolean(post.isLocked),
     isDraft: isOwner && post.status === "draft",
     extraMediaCount: Math.max(mediaCount - 1, 0),
     media:
-      post.renderInput?.primaryLockedPreviewMedia ??
+      post.renderInput.primaryLockedPreviewMedia ??
       post.media?.[0],
   }
 }

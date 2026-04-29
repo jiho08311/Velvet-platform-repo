@@ -19,7 +19,7 @@ type FeedInfiniteListPost = {
   currentUserId?: string
   text: string
   createdAt: string
-  renderInput?: PostRenderInput
+  renderInput: PostRenderInput
   media?: Array<{
     id: string
     url: string
@@ -57,7 +57,7 @@ type FeedApiItem = {
   currentUserId?: string
   text: string
   createdAt: string
-  renderInput?: PostRenderInput
+  renderInput: PostRenderInput
   canView: boolean
   isLocked: boolean
   status?: "draft" | "scheduled" | "published" | "archived"

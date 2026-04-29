@@ -30,11 +30,14 @@ type ProfileRow = {
 export default async function MessagesPage({
   searchParams,
 }: MessagesPageProps) {
-  const { creatorId, userId } = await searchParams
+  const {
+    creatorId: legacyCreatorMessageTargetUserId,
+    userId,
+  } = await searchParams
   const nextSearchParams = new URLSearchParams()
 
-  if (creatorId) {
-    nextSearchParams.set("creatorId", creatorId)
+  if (legacyCreatorMessageTargetUserId) {
+    nextSearchParams.set("creatorId", legacyCreatorMessageTargetUserId)
   }
 
   if (userId) {
@@ -94,8 +97,8 @@ export default async function MessagesPage({
     redirect(`/messages/${conversation.id}`)
   }
 
-  if (creatorId) {
-    const creator = await getCreatorByUserId(creatorId)
+  if (legacyCreatorMessageTargetUserId) {
+    const creator = await getCreatorByUserId(legacyCreatorMessageTargetUserId)
 
     if (creator) {
       const conversation = await getOrCreateConversation({

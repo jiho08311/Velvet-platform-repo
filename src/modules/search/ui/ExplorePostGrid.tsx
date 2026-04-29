@@ -10,8 +10,9 @@ import {
 } from "@heroicons/react/24/outline"
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid"
 import { SearchExploreCommentsDrawer } from "./SearchExploreCommentsDrawer"
-import type { DiscoveryPostLinkItem } from "../types"
+import type { DiscoveryPostLinkItem } from "../discovery-contract"
 import { readLikeInteractionResult } from "@/shared/lib/like-interaction-result"
+import { buildCreatorMessageHref } from "@/modules/creator/lib/creator-identity"
 
 type ExplorePostGridProps = {
   posts: DiscoveryPostLinkItem[]
@@ -369,7 +370,11 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
                   <button
                     type="button"
                     onClick={() =>
-                      router.push(`/messages?creatorId=${selected.creatorUserId}`)
+                      router.push(
+                        buildCreatorMessageHref({
+                          creatorUserId: selected.creatorUserId,
+                        })
+                      )
                     }
                     className="flex items-center gap-1.5"
                   >

@@ -1,8 +1,8 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { buildCreatorIdentity } from "@/modules/creator/server/build-creator-identity"
-import { isEligiblePublicDiscoveryCreator } from "@/modules/post/lib/public-discovery-inclusion"
+import { isEligiblePublicDiscoveryCreator } from "./discovery-eligibility-contract"
 
-import type { DiscoveryCreatorLinkItem } from "../types"
+import type { DiscoveryCreatorLinkItem } from "../discovery-contract"
 
 type CreatorRow = {
   id: string

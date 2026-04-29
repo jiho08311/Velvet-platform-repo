@@ -2,7 +2,7 @@ import Link from "next/link"
 import { PostCard } from "@/modules/post/ui/PostCard"
 import { LockedPostCard } from "@/modules/post/ui/LockedPostCard"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
+import { isCreatorOwner } from "@/modules/creator/lib/creator-identity"
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 import { getPostById } from "@/modules/post/server/get-post-by-id"
 import { deletePostAction } from "@/modules/post/server/delete-post-action"
@@ -30,10 +30,7 @@ export default async function PostDetailPage({
   const { postId } = await params
   const user = await getCurrentUser()
 
-  const [post, myCreator] = await Promise.all([
-    getPostById(postId, user?.id ?? null),
-    user ? getCreatorByUserId(user.id) : Promise.resolve(null),
-  ])
+  const post = await getPostById(postId, user?.id ?? null)
 
   if (!post) {
     return (
@@ -52,7 +49,10 @@ export default async function PostDetailPage({
 
   const canView = post.canView
   const isLocked = post.isLocked
-  const isOwner = myCreator?.id === post.creatorId
+  const isOwner = isCreatorOwner({
+    viewerUserId: user?.id,
+    creatorUserId: post.creatorUserId,
+  })
   const shouldAutoReloadOnce = !isLocked && post.media.length === 0
   const renderInput = post.renderInput
 

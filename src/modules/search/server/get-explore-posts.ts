@@ -8,8 +8,8 @@ import {
   filterPublicDiscoveryPostCandidates,
   isEligiblePublicDiscoveryCreator,
   type PublicDiscoveryPostEligibilityInput,
-} from "@/modules/post/lib/public-discovery-inclusion"
-import type { DiscoveryPostLinkItem } from "../types"
+} from "./discovery-eligibility-contract"
+import type { DiscoveryPostLinkItem } from "../discovery-contract"
 
 type PostRow = {
   id: string

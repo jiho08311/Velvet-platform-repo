@@ -1,5 +1,6 @@
 import Link from "next/link"
-import type { DiscoveryCreatorLinkItem } from "../types"
+import { buildCreatorRoutePath } from "@/modules/creator/lib/creator-identity"
+import type { DiscoveryCreatorLinkItem } from "../discovery-contract"
 
 type ExploreCreatorGridProps = {
   creators: DiscoveryCreatorLinkItem[]
@@ -13,7 +14,7 @@ export function ExploreCreatorGrid({
       {creators.map((creator) => (
         <Link
           key={creator.id}
-          href={`/creator/${creator.username}`}
+          href={buildCreatorRoutePath({ username: creator.username })}
           className="snap-start shrink-0 rounded-2xl bg-zinc-900 px-4 py-3 transition hover:bg-zinc-800"
         >
           <div className="flex items-center gap-3">

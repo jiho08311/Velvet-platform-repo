@@ -1,11 +1,9 @@
-type SearchResultItem = {
-  id: string
-  label: string
-  type: "creator" | "post"
-}
+import Link from "next/link"
+import { buildCreatorRoutePath } from "@/modules/creator/lib/creator-identity"
+import type { CreatorSearchResult } from "../creator-search-contract"
 
 type SearchResultListProps = {
-  results: SearchResultItem[]
+  results: CreatorSearchResult[]
   emptyMessage?: string
 }
 
@@ -24,12 +22,17 @@ export function SearchResultList({
   return (
     <section className="overflow-hidden rounded-md border border-zinc-200 bg-white">
       <ul className="divide-y divide-zinc-200">
-        {results.map((item) => (
-          <li key={item.id} className="px-4 py-3 hover:bg-zinc-50">
-            <p className="text-sm font-medium text-zinc-900">
-              {item.label}
-            </p>
-            <p className="text-xs text-zinc-500 capitalize">{item.type}</p>
+        {results.map((creator) => (
+          <li key={creator.id} className="hover:bg-zinc-50">
+            <Link
+              href={buildCreatorRoutePath({ username: creator.username })}
+              className="block px-4 py-3"
+            >
+              <p className="text-sm font-medium text-zinc-900">
+                {creator.displayName ?? creator.username}
+              </p>
+              <p className="text-xs text-zinc-500">@{creator.username}</p>
+            </Link>
           </li>
         ))}
       </ul>

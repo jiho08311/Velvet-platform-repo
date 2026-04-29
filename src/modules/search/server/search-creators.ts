@@ -2,7 +2,10 @@ import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { buildCreatorIdentity } from "@/modules/creator/server/build-creator-identity"
 import { isEligiblePublicDiscoveryCreator } from "@/modules/post/lib/public-discovery-inclusion"
 
-import type { CreatorSearchConnection, CreatorSearchResult } from "../types"
+import type {
+  CreatorSearchConnection,
+  CreatorSearchResult,
+} from "../creator-search-contract"
 
 export type SearchCreatorsInput = {
   query: string

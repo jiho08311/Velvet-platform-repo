@@ -182,7 +182,7 @@ const posts = creatorFeedPosts.map((post) => {
 })
 
   function getPostRenderMediaCount(post: (typeof posts)[number]) {
-    return post.renderInput?.blockMedia.length ?? post.media?.length ?? 0
+    return post.renderInput.blockMedia.length || post.media?.length || 0
   }
 
   const profile = normalizeProfileData(profileData, userData)

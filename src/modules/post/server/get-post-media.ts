@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { isCreatorOwner } from "@/modules/creator/lib/creator-identity"
 import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import {
@@ -100,10 +101,10 @@ export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
   }
 
   const creatorUserId = creator?.user_id ?? null
-  const isOwner =
-    viewerUserId !== null &&
-    creatorUserId !== null &&
-    viewerUserId === creatorUserId
+  const isOwner = isCreatorOwner({
+    viewerUserId,
+    creatorUserId,
+  })
 
   if (!isOwner) {
     const isVisibleCreator = isEligiblePublicDiscoveryCreator({

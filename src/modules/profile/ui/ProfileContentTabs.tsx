@@ -15,15 +15,15 @@ export function ProfileContentTabs({
   const [activeTab, setActiveTab] = useState<"posts" | "updates">("posts")
 
   function getPreviewMedia(post: MyPostListItem) {
-    return post.renderInput?.primaryLockedPreviewMedia ?? post.media?.[0]
+    return post.renderInput.primaryLockedPreviewMedia ?? post.media?.[0]
   }
 
   function getMediaCount(post: MyPostListItem) {
-    return post.renderInput?.blockMedia.length ?? post.media?.length ?? 0
+    return post.renderInput.blockMedia.length || post.media?.length || 0
   }
 
   function getPreviewText(post: MyPostListItem) {
-    return post.renderInput?.blockText || post.content || "No content"
+    return post.renderInput.blockText || post.content || "No content"
   }
 
   return (

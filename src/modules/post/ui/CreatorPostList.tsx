@@ -7,7 +7,7 @@ import type { PostCommerceState, PostRenderInput } from "../types"
 type CreatorPostListItem = {
   id: string
   content: string | null
-  renderInput?: PostRenderInput
+  renderInput: PostRenderInput
   createdAt: string
   canView: boolean
   isLocked: boolean
@@ -58,7 +58,6 @@ export function CreatorPostList({
           <PostCard
             key={post.id}
             postId={post.id}
-            text={post.content ?? ""}
             renderInput={post.renderInput}
             createdAt={post.createdAt}
             canView={post.canView}

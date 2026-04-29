@@ -1,3 +1,5 @@
+import { isCreatorOwner } from "@/modules/creator/lib/creator-identity"
+
 export type CanViewPostInput = {
   visibility: "public" | "subscribers" | "paid"
   viewerUserId: string | null | undefined
@@ -14,7 +16,12 @@ export function canViewPost(input: CanViewPostInput): boolean {
     return false
   }
 
-  if (viewerUserId && viewerUserId === creatorUserId) {
+  if (
+    isCreatorOwner({
+      viewerUserId,
+      creatorUserId,
+    })
+  ) {
     return true
   }
 

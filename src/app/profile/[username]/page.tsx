@@ -123,7 +123,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
                       ) : (
                         <div className="px-5 pb-5 pt-4">
                           <p className="whitespace-pre-wrap text-sm leading-7 text-zinc-700">
-                            {post.renderInput?.blockText ?? post.content ?? ""}
+                            {post.renderInput.blockText || post.content || ""}
                           </p>
                         </div>
                       )}

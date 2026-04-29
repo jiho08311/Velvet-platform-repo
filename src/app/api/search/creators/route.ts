@@ -1,27 +1,21 @@
 import { NextResponse } from "next/server"
-import { searchCreators } from "@/modules/search/server/search-creators"
-import type { CreatorSearchResponse } from "@/modules/search/types"
+import {
+  readCreatorSearchApiRequest,
+  resolveCreatorSearchApiResponse,
+} from "@/modules/search/server/creator-search-api-contract"
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url)
+    const searchRequest = readCreatorSearchApiRequest(request)
+    const response = await resolveCreatorSearchApiResponse(searchRequest)
 
-    const query = searchParams.get("query") ?? ""
-    const limitParam = searchParams.get("limit")
-
-    const limit = limitParam ? Number(limitParam) : undefined
-
-    const result = await searchCreators({
-      query,
-      limit,
+    return NextResponse.json(response, {
+      status: 200,
+      headers: {
+        "x-search-contract": "creator-search",
+        "x-search-route-status": "active",
+      },
     })
-
-    const response: CreatorSearchResponse = {
-      creators: result.items,
-      nextCursor: result.nextCursor,
-    }
-
-    return NextResponse.json(response, { status: 200 })
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to search creators"

@@ -315,6 +315,7 @@ export async function listFeedPosts({
         commerce: getSubscribedFeedCommerceState(),
         publishedAt: post.published_at ?? null,
         createdAt: post.created_at,
+        renderInput,
         media: media.map((item) => ({
           id: item.id,
           url: item.url,

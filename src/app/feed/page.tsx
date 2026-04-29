@@ -10,6 +10,7 @@ import {
 } from "@/modules/auth/lib/redirect-handoff"
 import { getSession } from "@/modules/auth/server/get-session"
 import { requireActiveUser } from "@/modules/auth/server/require-active-user"
+import { buildCreatorRoutePath } from "@/modules/creator/lib/creator-identity"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { getHomeFeed } from "@/modules/feed/server/get-home-feed"
 import { getPublicUpcomingPosts } from "@/modules/feed/server/get-public-upcoming-posts"
@@ -283,7 +284,9 @@ export default async function FeedPage() {
                         </div>
 
                         <a
-                          href={`/creator/${creator.username}`}
+                          href={buildCreatorRoutePath({
+                            username: creator.username,
+                          })}
                           className="rounded-full border border-zinc-700 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-zinc-800"
                         >
                           View

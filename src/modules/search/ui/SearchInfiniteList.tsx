@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import type { CreatorSearchResult } from "../types"
+import { buildCreatorRoutePath } from "@/modules/creator/lib/creator-identity"
+import type { CreatorSearchResult } from "../creator-search-contract"
 
 type SearchInfiniteListProps = {
   query: string
@@ -37,7 +38,7 @@ export function SearchInfiniteList({
           setIsLoading(true)
 
           const response = await fetch(
-            `/api/search?query=${encodeURIComponent(query)}&limit=20&cursor=${encodeURIComponent(cursor)}`,
+            `/api/search/creators?query=${encodeURIComponent(query)}&limit=20&cursor=${encodeURIComponent(cursor)}`,
             {
               method: "GET",
               cache: "no-store",
@@ -84,7 +85,7 @@ export function SearchInfiniteList({
         {creators.map((creator) => (
       <Link
   key={creator.id}
-  href={`/creator/${creator.username}`}
+  href={buildCreatorRoutePath({ username: creator.username })}
   className="group flex items-center gap-3 rounded-2xl bg-zinc-900 px-4 py-3 transition hover:bg-zinc-800"
 >
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-700 text-sm font-semibold text-white">

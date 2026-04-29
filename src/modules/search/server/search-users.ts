@@ -6,6 +6,22 @@ type SearchUsersInput = {
   limit?: number
 }
 
+export const SEARCH_USERS_CONTRACT_STATUS = {
+  activeConsumer: "unknown",
+  resultScope: "public-profile-user-search",
+  creatorOnly: false,
+  postSearch: false,
+  compatibilityAction: "preserve-until-consumer-status-is-confirmed",
+} as const
+
+export type UserSearchResult = {
+  id: string
+  username: string
+  displayName: string | null
+  avatarUrl: string | null
+  isCreator: boolean
+}
+
 type SearchUserRow = {
   id: string
   username: string
@@ -21,7 +37,7 @@ type SearchUserRow = {
 export async function searchUsers({
   query,
   limit = 20,
-}: SearchUsersInput) {
+}: SearchUsersInput): Promise<UserSearchResult[]> {
   const trimmed = query.trim()
 
   if (!trimmed) return []

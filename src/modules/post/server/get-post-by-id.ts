@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { isCreatorOwner } from "@/modules/creator/lib/creator-identity"
 import type {
   PostBlock,
   PostCommerceState,
@@ -157,9 +158,10 @@ export async function getPostById(
     throw new Error("Creator not found")
   }
 
-  const isOwner =
-    resolvedViewerUserId !== null &&
-    creator.user_id === resolvedViewerUserId
+  const isOwner = isCreatorOwner({
+    viewerUserId: resolvedViewerUserId,
+    creatorUserId: creator.user_id,
+  })
 
   const now = new Date().toISOString()
 

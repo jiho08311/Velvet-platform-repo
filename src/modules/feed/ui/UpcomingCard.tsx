@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { buildCreatorRoutePath } from "@/modules/creator/lib/creator-identity"
 import { Avatar } from "@/shared/ui/Avatar"
 import { Card } from "@/shared/ui/Card"
 import { StatusBadge } from "@/shared/ui/StatusBadge"
@@ -42,7 +43,7 @@ export function UpcomingCard({
 
       <div className="mt-4 flex items-center gap-3">
         <Link
-          href={`/creator/${creator.username}`}
+          href={buildCreatorRoutePath({ username: creator.username })}
           className="shrink-0"
         >
           <Avatar
@@ -55,7 +56,7 @@ export function UpcomingCard({
 
         <div className="min-w-0">
           <Link
-            href={`/creator/${creator.username}`}
+            href={buildCreatorRoutePath({ username: creator.username })}
             className="block"
           >
             <p className="truncate text-base font-semibold text-white transition hover:opacity-80">

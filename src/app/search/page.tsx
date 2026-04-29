@@ -14,9 +14,11 @@ import { ExploreCreatorGrid } from "@/modules/search/ui/ExploreCreatorGrid"
 import { SearchInput } from "@/modules/search/ui/SearchInput"
 import type {
   CreatorSearchConnection,
+} from "@/modules/search/creator-search-contract"
+import type {
   DiscoveryCreatorLinkItem,
   DiscoveryPostLinkItem,
-} from "@/modules/search/types"
+} from "@/modules/search/discovery-contract"
 
 type SearchPageProps = {
   searchParams: Promise<{ q?: string }>

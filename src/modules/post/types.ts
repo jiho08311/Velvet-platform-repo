@@ -540,7 +540,7 @@ export type PostRenderSurfaceItem = {
   creatorId: string
   content: string | null
   createdAt: string
-  renderInput?: PostRenderInput
+  renderInput: PostRenderInput
   media: Array<{
     id?: string
     url: string
@@ -566,7 +566,7 @@ export type PostRenderListItem = {
   id: string
   creatorId: string
   content: string | null
-  renderInput?: PostRenderInput
+  renderInput: PostRenderInput
   status: PostStatus
   visibility: PostVisibility
   price: number
