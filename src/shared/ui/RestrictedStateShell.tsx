@@ -2,9 +2,9 @@ import type { ReactNode } from "react"
 import { Card } from "./Card"
 import { StatusBadge } from "./StatusBadge"
 
-type RestrictedStateShellTone = "neutral" | "success" | "warning" | "danger"
+export type RestrictedStateShellTone = "neutral" | "success" | "warning" | "danger"
 
-type RestrictedStateShellBadgeTone =
+export type RestrictedStateShellBadgeTone =
   | "neutral"
   | "subtle"
   | "info"
@@ -12,7 +12,9 @@ type RestrictedStateShellBadgeTone =
   | "warning"
   | "danger"
 
-type RestrictedStateShellProps = {
+export type RestrictedStateShellAlign = "left" | "center"
+
+export type RestrictedStateShellProps = {
   title: string
   description?: string
   action?: ReactNode
@@ -21,16 +23,38 @@ type RestrictedStateShellProps = {
   visual?: ReactNode
   children?: ReactNode
   className?: string
-  align?: "left" | "center"
+  align?: RestrictedStateShellAlign
   tone?: RestrictedStateShellTone
 }
 
-const toneClassNameMap: Record<RestrictedStateShellTone, string> = {
+const toneClassNameMap = {
   neutral: "border-zinc-800 bg-zinc-900/70",
   success: "border-green-500/20 bg-zinc-900/70",
   warning: "border-yellow-500/20 bg-zinc-900/70",
   danger: "border-red-500/20 bg-zinc-900/70",
-}
+} satisfies Record<RestrictedStateShellTone, string>
+
+const alignClassNameMap = {
+  left: "items-start text-left",
+  center: "items-center text-center",
+} satisfies Record<RestrictedStateShellAlign, string>
+
+const badgeWrapperClassNameMap = {
+  left: "mb-3",
+  center: "mb-4",
+} satisfies Record<RestrictedStateShellAlign, string>
+
+const contentClassNameMap = {
+  left: "w-full",
+  center: "max-w-md",
+} satisfies Record<RestrictedStateShellAlign, string>
+
+const actionWrapperClassNameMap = {
+  left: "justify-start",
+  center: "justify-center",
+} satisfies Record<RestrictedStateShellAlign, string>
+
+const visualWrapperClassName = "mb-4"
 
 export function RestrictedStateShell({
   title,
@@ -44,19 +68,15 @@ export function RestrictedStateShell({
   align = "left",
   tone = "neutral",
 }: RestrictedStateShellProps) {
-  const isCentered = align === "center"
-
   return (
     <Card
       className={`${toneClassNameMap[tone]} ${className}`}
     >
       <div
-        className={`flex flex-col ${
-          isCentered ? "items-center text-center" : "items-start text-left"
-        }`}
+        className={`flex flex-col ${alignClassNameMap[align]}`}
       >
         {badgeLabel ? (
-          <div className={isCentered ? "mb-4" : "mb-3"}>
+          <div className={badgeWrapperClassNameMap[align]}>
             <StatusBadge
               label={badgeLabel}
               tone={badgeTone}
@@ -65,12 +85,12 @@ export function RestrictedStateShell({
         ) : null}
 
         {visual ? (
-          <div className={isCentered ? "mb-4" : "mb-4"}>
+          <div className={visualWrapperClassName}>
             {visual}
           </div>
         ) : null}
 
-        <div className={isCentered ? "max-w-md" : "w-full"}>
+        <div className={contentClassNameMap[align]}>
           <h2 className="text-xl font-semibold tracking-tight text-white">
             {title}
           </h2>
@@ -89,9 +109,7 @@ export function RestrictedStateShell({
 
           {action ? (
             <div
-              className={`mt-6 flex w-full ${
-                isCentered ? "justify-center" : "justify-start"
-              }`}
+              className={`mt-6 flex w-full ${actionWrapperClassNameMap[align]}`}
             >
               {action}
             </div>

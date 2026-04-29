@@ -1,13 +1,16 @@
-type StatusBadgeTone =
-  | "default"
-  | "neutral"
-  | "subtle"
-  | "info"
-  | "success"
-  | "warning"
-  | "danger"
+export const STATUS_BADGE_TONES = [
+  "default",
+  "neutral",
+  "subtle",
+  "info",
+  "success",
+  "warning",
+  "danger",
+] as const
 
-type StatusBadgeProps = {
+export type StatusBadgeTone = (typeof STATUS_BADGE_TONES)[number]
+
+export type StatusBadgeProps = {
   label: string
   tone?: StatusBadgeTone
   className?: string
@@ -16,7 +19,9 @@ type StatusBadgeProps = {
 const baseClassName =
   "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold"
 
-const toneStyles: Record<StatusBadgeTone, string> = {
+const defaultTone = "neutral" satisfies StatusBadgeTone
+
+const toneStyles = {
   default:
     "border border-zinc-800 bg-zinc-950 text-zinc-300",
   neutral:
@@ -31,11 +36,11 @@ const toneStyles: Record<StatusBadgeTone, string> = {
     "border border-yellow-700 bg-yellow-900/40 text-yellow-300",
   danger:
     "border border-red-700 bg-red-900/40 text-red-300",
-}
+} satisfies Record<StatusBadgeTone, string>
 
 export function StatusBadge({
   label,
-  tone = "neutral",
+  tone = defaultTone,
   className = "",
 }: StatusBadgeProps) {
   return (

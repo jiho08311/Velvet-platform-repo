@@ -1,8 +1,8 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react"
 
-type ButtonVariant = "primary" | "secondary" | "danger"
+export type ButtonVariant = "primary" | "secondary" | "danger"
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode
   variant?: ButtonVariant
   className?: string
@@ -10,6 +10,31 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   loadingLabel?: string
   fullWidth?: boolean
   embedded?: boolean
+}
+
+const buttonVariantClassNames: Record<ButtonVariant, string> = {
+  primary: [
+    "bg-[#C2185B]",
+    "text-white",
+    "hover:bg-[#D81B60]",
+    "active:bg-[#AD1457]",
+    "disabled:opacity-60",
+  ].join(" "),
+  secondary: [
+    "border",
+    "border-zinc-800",
+    "bg-zinc-900",
+    "text-zinc-100",
+    "hover:bg-zinc-800",
+    "disabled:opacity-50",
+  ].join(" "),
+  danger: [
+    "bg-red-600",
+    "text-white",
+    "hover:bg-red-500",
+    "active:bg-red-700",
+    "disabled:opacity-60",
+  ].join(" "),
 }
 
 function getBaseClassName({
@@ -43,34 +68,29 @@ function getBaseClassName({
 }
 
 function getVariantClassName(variant: ButtonVariant) {
-  if (variant === "primary") {
-    return [
-      "bg-[#C2185B]",
-      "text-white",
-      "hover:bg-[#D81B60]",
-      "active:bg-[#AD1457]",
-      "disabled:opacity-60",
-    ].join(" ")
-  }
+  return buttonVariantClassNames[variant]
+}
 
-  if (variant === "danger") {
-    return [
-      "bg-red-600",
-      "text-white",
-      "hover:bg-red-500",
-      "active:bg-red-700",
-      "disabled:opacity-60",
-    ].join(" ")
-  }
+function getIsDisabled({
+  disabled,
+  loading,
+}: {
+  disabled: boolean
+  loading: boolean
+}) {
+  return disabled || loading
+}
 
-  return [
-    "border",
-    "border-zinc-800",
-    "bg-zinc-900",
-    "text-zinc-100",
-    "hover:bg-zinc-800",
-    "disabled:opacity-50",
-  ].join(" ")
+function getButtonContent({
+  children,
+  loading,
+  loadingLabel,
+}: {
+  children: ReactNode
+  loading: boolean
+  loadingLabel?: string
+}) {
+  return loading ? loadingLabel ?? children : children
 }
 
 export function Button({
@@ -86,7 +106,8 @@ export function Button({
   embedded = false,
   ...props
 }: ButtonProps) {
-  const isDisabled = disabled || loading
+  const isDisabled = getIsDisabled({ disabled, loading })
+  const content = getButtonContent({ children, loading, loadingLabel })
   const baseClassName = getBaseClassName({
     fullWidth,
     embedded,
@@ -101,7 +122,7 @@ export function Button({
       className={`${baseClassName} ${variantClassName} ${className}`}
       {...props}
     >
-      {loading ? loadingLabel ?? children : children}
+      {content}
     </button>
   )
 }

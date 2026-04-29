@@ -1,5 +1,16 @@
 import { Skeleton } from "./Skeleton"
 
+const skeletonCardClassName =
+  "rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5"
+const skeletonCardAvatarSize = 40
+const skeletonCardTitleWidth = 120
+const skeletonCardTitleHeight = 14
+const skeletonCardSubtitleWidth = 80
+const skeletonCardSubtitleHeight = 12
+const skeletonCardLineHeight = 14
+const skeletonCardLastLineWidth = "60%"
+const skeletonCardMediaHeight = 220
+
 type SkeletonCardProps = {
   lines?: number
   showAvatar?: boolean
@@ -15,14 +26,24 @@ export function SkeletonCard({
 }: SkeletonCardProps) {
   return (
     <div
-      className={`rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5 ${className}`}
+      className={`${skeletonCardClassName} ${className}`}
     >
       {showAvatar ? (
         <div className="flex items-center gap-3">
-          <Skeleton width={40} height={40} rounded="rounded-full" />
+          <Skeleton
+            width={skeletonCardAvatarSize}
+            height={skeletonCardAvatarSize}
+            rounded="rounded-full"
+          />
           <div className="space-y-2">
-            <Skeleton width={120} height={14} />
-            <Skeleton width={80} height={12} />
+            <Skeleton
+              width={skeletonCardTitleWidth}
+              height={skeletonCardTitleHeight}
+            />
+            <Skeleton
+              width={skeletonCardSubtitleWidth}
+              height={skeletonCardSubtitleHeight}
+            />
           </div>
         </div>
       ) : null}
@@ -31,8 +52,8 @@ export function SkeletonCard({
         {Array.from({ length: lines }).map((_, index) => (
           <Skeleton
             key={index}
-            width={index === lines - 1 ? "60%" : "100%"}
-            height={14}
+            width={index === lines - 1 ? skeletonCardLastLineWidth : "100%"}
+            height={skeletonCardLineHeight}
             rounded="rounded-lg"
           />
         ))}
@@ -40,7 +61,7 @@ export function SkeletonCard({
 
       {showMedia ? (
         <div className="mt-4">
-          <Skeleton height={220} rounded="rounded-2xl" />
+          <Skeleton height={skeletonCardMediaHeight} rounded="rounded-2xl" />
         </div>
       ) : null}
     </div>

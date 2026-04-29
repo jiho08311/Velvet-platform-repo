@@ -1,13 +1,29 @@
 import type { ReactNode } from "react"
 import { Card } from "./Card"
 
-type RestrictedFullCardShellProps = {
+export type RestrictedFullCardShellProps = {
   backdrop?: ReactNode
   badge?: ReactNode
   overlayContent: ReactNode
   footer?: ReactNode
   className?: string
 }
+
+const restrictedFullCardClassName = "overflow-hidden p-0"
+
+const restrictedFullCardFrameClassName = "relative"
+
+const restrictedFullCardFallbackClassName =
+  "flex aspect-[4/5] items-center justify-center bg-zinc-950 text-sm text-zinc-500"
+
+const restrictedFullCardBadgeClassName = "absolute left-4 top-4 z-10"
+
+const restrictedFullCardOverlayClassName =
+  "absolute inset-0 flex flex-col items-center justify-center px-6 text-center"
+
+const restrictedFullCardOverlayContentClassName = "max-w-xs"
+
+const restrictedFullCardFooterClassName = "p-5"
 
 export function RestrictedFullCardShell({
   backdrop,
@@ -17,30 +33,30 @@ export function RestrictedFullCardShell({
   className = "",
 }: RestrictedFullCardShellProps) {
   return (
-    <Card className={`overflow-hidden p-0 ${className}`}>
-      <div className="relative">
+    <Card className={`${restrictedFullCardClassName} ${className}`}>
+      <div className={restrictedFullCardFrameClassName}>
         {backdrop ? (
           backdrop
         ) : (
-          <div className="flex aspect-[4/5] items-center justify-center bg-zinc-950 text-sm text-zinc-500">
+          <div className={restrictedFullCardFallbackClassName}>
             Restricted content
           </div>
         )}
 
         {badge ? (
-          <div className="absolute left-4 top-4 z-10">
+          <div className={restrictedFullCardBadgeClassName}>
             {badge}
           </div>
         ) : null}
 
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-          <div className="max-w-xs">
+        <div className={restrictedFullCardOverlayClassName}>
+          <div className={restrictedFullCardOverlayContentClassName}>
             {overlayContent}
           </div>
         </div>
       </div>
 
-      {footer ? <div className="p-5">{footer}</div> : null}
+      {footer ? <div className={restrictedFullCardFooterClassName}>{footer}</div> : null}
     </Card>
   )
 }
