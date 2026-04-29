@@ -1,9 +1,8 @@
-import type { ReportStatus } from "@/modules/report/types"
 import { listReports } from "@/modules/report/server/list-reports"
 import { Card } from "@/shared/ui/Card"
 import { EmptyState } from "@/shared/ui/EmptyState"
-import { StatusBadge } from "@/shared/ui/StatusBadge"
 import { updateReportStatusAction } from "./actions"
+import { AdminReportTable } from "@/modules/admin/ui/AdminReportTable"
 
 type Props = {
   searchParams: Promise<{
@@ -11,37 +10,32 @@ type Props = {
   }>
 }
 
-type ReportActionStatus = Extract<ReportStatus, "reviewing" | "resolved" | "rejected">
-
-const reportActionButtonBaseClass =
-  "rounded-xl px-3 py-1 text-xs font-semibold text-white"
-
-const reportActionButtonToneClass: Record<ReportActionStatus, string> = {
-  reviewing: "bg-yellow-600",
-  resolved: "bg-green-600",
-  rejected: "bg-red-600",
-}
-
-function getReportActionButtonClass(status: ReportActionStatus) {
-  return `${reportActionButtonBaseClass} ${reportActionButtonToneClass[status]}`
-}
-
-type ReportActionButtonProps = {
-  reportId: string
-  status: ReportActionStatus
-  label: string
-}
+type ReportActionStatus = "reviewing" | "resolved" | "rejected"
 
 function ReportActionButton({
   reportId,
   status,
   label,
-}: ReportActionButtonProps) {
+}: {
+  reportId: string
+  status: ReportActionStatus
+  label: string
+}) {
+  const toneClass: Record<ReportActionStatus, string> = {
+    reviewing: "bg-yellow-600",
+    resolved: "bg-green-600",
+    rejected: "bg-red-600",
+  }
+
   return (
     <form action={updateReportStatusAction}>
       <input type="hidden" name="reportId" value={reportId} />
       <input type="hidden" name="status" value={status} />
-      <button className={getReportActionButtonClass(status)}>{label}</button>
+      <button
+        className={`rounded-xl px-3 py-1 text-xs font-semibold text-white ${toneClass[status]}`}
+      >
+        {label}
+      </button>
     </form>
   )
 }
@@ -75,92 +69,34 @@ export default async function AdminReportsPage({ searchParams }: Props) {
       </div>
 
       <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-left text-zinc-500">
-              <tr>
-                <th className="pb-3">Reporter</th>
-                <th className="pb-3">Target</th>
-                <th className="pb-3">Reason</th>
-                <th className="pb-3">Status</th>
-                <th className="pb-3">Action</th>
-                <th className="pb-3">Created</th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-zinc-800">
-              {reports.map((report) => {
-                const actionEligibility = report.actionEligibility
-
-                return (
-                  <tr
-                    key={report.id}
-                    className="hover:bg-zinc-900/50 transition"
-                  >
-                    <td className="py-3">
-                      <div className="font-medium text-white">
-                        {report.reporterLabel}
-                      </div>
-                      <div className="text-xs text-zinc-500">
-                        {report.reporterEmailLabel}
-                      </div>
-                    </td>
-
-                    <td className="py-3 text-zinc-300">
-                      <div>{report.targetReference.type}</div>
-                      <div className="text-xs text-zinc-500">
-                        {report.targetShortId}
-                      </div>
-                    </td>
-
-                    <td className="py-3 text-zinc-300">
-                      <div className="font-medium">{report.reason}</div>
-                      <div className="text-xs text-zinc-500">
-                        {report.description || "-"}
-                      </div>
-                    </td>
-
-                    <td className="py-3">
-                      <StatusBadge label={report.status} />
-                    </td>
-
-                    <td className="py-3">
-                      <div className="flex flex-wrap gap-2">
-                        {actionEligibility.canMarkReviewing && (
-                          <ReportActionButton
-                            reportId={report.id}
-                            status="reviewing"
-                            label="Review"
-                          />
-                        )}
-
-                        {actionEligibility.canResolve && (
-                          <ReportActionButton
-                            reportId={report.id}
-                            status="resolved"
-                            label="Resolve"
-                          />
-                        )}
-
-                        {actionEligibility.canReject && (
-                          <ReportActionButton
-                            reportId={report.id}
-                            status="rejected"
-                            label="Reject"
-                          />
-                        )}
-                      </div>
-                    </td>
-
-                    <td className="py-3 text-zinc-400">
-                      {report.createdDateLabel}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+        <AdminReportTable
+          reports={reports}
+          renderActions={(report) => (
+            <div className="flex flex-wrap gap-2">
+              {report.actionEligibility.canMarkReviewing && (
+                <ReportActionButton
+                  reportId={report.id}
+                  status="reviewing"
+                  label="Review"
+                />
+              )}
+              {report.actionEligibility.canResolve && (
+                <ReportActionButton
+                  reportId={report.id}
+                  status="resolved"
+                  label="Resolve"
+                />
+              )}
+              {report.actionEligibility.canReject && (
+                <ReportActionButton
+                  reportId={report.id}
+                  status="rejected"
+                  label="Reject"
+                />
+              )}
+            </div>
+          )}
+        />
       </Card>
 
       {nextCursor && (

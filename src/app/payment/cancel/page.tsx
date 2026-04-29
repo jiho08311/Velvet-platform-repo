@@ -2,7 +2,7 @@ import Link from "next/link"
 
 import { getPaymentResultPageState } from "@/modules/payment/server/payment-result-state"
 import { Card } from "@/shared/ui/Card"
-
+import { PaymentStateNotice } from "@/modules/payment/ui/PaymentStateNotice"
 export default function PaymentCancelPage() {
   const resultState = getPaymentResultPageState("canceled")
 
@@ -22,9 +22,12 @@ export default function PaymentCancelPage() {
             {resultState.message}
           </p>
 
-          <div className="mt-6 rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-700">
-            {resultState.notice}
-          </div>
+       <PaymentStateNotice
+  status="canceled"
+  message={resultState.notice}
+  variant="compact"
+  className="mt-6"
+/>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link

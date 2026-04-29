@@ -1,15 +1,15 @@
-import type { AdminPayoutAction } from "@/modules/admin/lib/payout-request-admin-policy";
-import type { AdminPayoutRequestListItem } from "@/modules/admin/server/list-payout-requests";
+import type { AdminPayoutAction } from "@/modules/admin/lib/payout-request-admin-policy"
+import type { AdminPayoutRequestListItem } from "@/modules/admin/server/list-payout-requests"
 
-import { AdminBadge } from "./AdminBadge";
-import { PayoutMarkAsFailedButton } from "./PayoutMarkAsFailedButton";
-import { PayoutMarkAsPaidButton } from "./PayoutMarkAsPaidButton";
-import { PayoutRequestApproveButton } from "./PayoutRequestApproveButton";
-import { PayoutRequestRejectButton } from "./PayoutRequestRejectButton";
+import { AdminBadge } from "./AdminBadge"
+import { PayoutMarkAsFailedButton } from "./PayoutMarkAsFailedButton"
+import { PayoutMarkAsPaidButton } from "./PayoutMarkAsPaidButton"
+import { PayoutRequestApproveButton } from "./PayoutRequestApproveButton"
+import { PayoutRequestRejectButton } from "./PayoutRequestRejectButton"
 
 type PayoutRequestAdminListProps = {
-  items: AdminPayoutRequestListItem[];
-};
+  items: AdminPayoutRequestListItem[]
+}
 
 type ResolvedAdminPayoutRow = Pick<
   AdminPayoutRequestListItem,
@@ -21,24 +21,17 @@ type ResolvedAdminPayoutRow = Pick<
   | "statusBadges"
   | "availableActionOrder"
   | "failureMessage"
->;
+>
 
-function formatAmount(amount: number, currency: string) {
-  return new Intl.NumberFormat("ko-KR", {
-    style: "currency",
-    currency: currency || "KRW",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
+type ActionRenderer = (payoutRequestId: string) => React.ReactNode
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("ko-KR", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
-
-type ActionRenderer = (payoutRequestId: string) => React.ReactNode;
+const payoutRequestAdminHeaders = [
+  "Creator",
+  "Amount",
+  "Status",
+  "Created At",
+  "Action",
+]
 
 const actionRenderers: Record<AdminPayoutAction, ActionRenderer> = {
   approve: (payoutRequestId) => (
@@ -69,30 +62,67 @@ const actionRenderers: Record<AdminPayoutAction, ActionRenderer> = {
       disabled={false}
     />
   ),
-};
+}
+
+function formatAmount(amount: number, currency: string) {
+  return new Intl.NumberFormat("ko-KR", {
+    style: "currency",
+    currency: currency || "KRW",
+    maximumFractionDigits: 0,
+  }).format(amount)
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value))
+}
+
+function PayoutRequestEmptyState() {
+  return (
+    <div className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5 text-sm text-zinc-400">
+      요청된 payout request가 없습니다.
+    </div>
+  )
+}
+
+function PayoutRequestNoActionsBadge() {
+  return (
+    <span className="inline-flex rounded-xl border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-400">
+      No actions
+    </span>
+  )
+}
 
 function renderActions(actions: AdminPayoutAction[], payoutRequestId: string) {
   if (actions.length === 0) {
-    return (
-      <span className="inline-flex rounded-xl border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-400">
-        No actions
-      </span>
-    );
+    return <PayoutRequestNoActionsBadge />
   }
 
   return (
     <div className="flex flex-wrap gap-2">
       {actions.map((action) => actionRenderers[action](payoutRequestId))}
     </div>
-  );
+  )
 }
 
 function renderFailureMessage(message: string | null) {
   if (!message) {
-    return null;
+    return null
   }
 
-  return <p className="mt-2 text-xs text-red-400">{message}</p>;
+  return <p className="mt-2 text-xs text-red-400">{message}</p>
+}
+
+function PayoutRequestAdminHeader() {
+  return (
+    <div className="grid grid-cols-5 gap-4 border-b border-zinc-800 px-5 py-4 text-xs font-medium uppercase tracking-wide text-zinc-500">
+      {payoutRequestAdminHeaders.map((header) => (
+        <div key={header}>{header}</div>
+      ))}
+    </div>
+  )
 }
 
 function PayoutRequestAdminRow({ row }: { row: ResolvedAdminPayoutRow }) {
@@ -123,29 +153,19 @@ function PayoutRequestAdminRow({ row }: { row: ResolvedAdminPayoutRow }) {
 
       <div>{renderActions(row.availableActionOrder, row.id)}</div>
     </div>
-  );
+  )
 }
 
 export function PayoutRequestAdminList({
   items,
 }: PayoutRequestAdminListProps) {
   if (items.length === 0) {
-    return (
-      <div className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5 text-sm text-zinc-400">
-        요청된 payout request가 없습니다.
-      </div>
-    );
+    return <PayoutRequestEmptyState />
   }
 
   return (
     <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/70">
-      <div className="grid grid-cols-5 gap-4 border-b border-zinc-800 px-5 py-4 text-xs font-medium uppercase tracking-wide text-zinc-500">
-        <div>Creator</div>
-        <div>Amount</div>
-        <div>Status</div>
-        <div>Created At</div>
-        <div>Action</div>
-      </div>
+      <PayoutRequestAdminHeader />
 
       <div className="divide-y divide-zinc-800">
         {items.map((item) => (
@@ -165,5 +185,5 @@ export function PayoutRequestAdminList({
         ))}
       </div>
     </div>
-  );
+  )
 }

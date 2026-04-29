@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-
+import { PaymentStateNotice } from "@/modules/payment/ui/PaymentStateNotice"
 import { Card } from "@/shared/ui/Card"
 import { Skeleton } from "@/shared/ui/Skeleton"
 import type { PaymentResultPageState } from "@/modules/payment/server/payment-result-state"
@@ -252,9 +252,12 @@ export function PaymentSuccessContent({
             {resultState.message}
           </p>
 
-          <div className="mt-6 rounded-2xl border border-green-900/60 bg-green-950/60 px-4 py-3 text-sm text-green-300">
-            {resultState.notice}
-          </div>
+         <PaymentStateNotice
+  status="succeeded"
+  message={resultState.notice}
+  variant="compact"
+  className="mt-6"
+/>
 
           <div className="mt-6 space-y-3">
             <div className="space-y-2">

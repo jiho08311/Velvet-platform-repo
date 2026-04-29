@@ -1,5 +1,5 @@
 import Link from "next/link"
-
+import { PaymentStateNotice } from "@/modules/payment/ui/PaymentStateNotice"
 import { getPaymentResultPageState } from "@/modules/payment/server/payment-result-state"
 import { Card } from "@/shared/ui/Card"
 
@@ -31,9 +31,12 @@ export default async function PaymentFailPage({
             {resultState.message}
           </p>
 
-          <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {resultState.notice}
-          </div>
+<PaymentStateNotice
+  status="failed"
+  message={resultState.notice}
+  variant="compact"
+  className="mt-6"
+/>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link

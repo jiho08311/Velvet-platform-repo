@@ -8,10 +8,18 @@ type MessageComposerSendData = {
   files: File[]
 }
 
+type MessageComposerClassNames = {
+  textarea: string
+  fileInput: string
+  submitButton: string
+}
+
 export function MessageComposer({
   onSend,
+  classNames,
 }: {
   onSend: (data: MessageComposerSendData) => void | Promise<void>
+  classNames: MessageComposerClassNames
 }) {
   const [content, setContent] = useState("")
   const [files, setFiles] = useState<File[]>([])
@@ -49,7 +57,7 @@ export function MessageComposer({
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        className="w-full rounded-xl border border-zinc-800 bg-zinc-900 p-3 text-sm text-white"
+        className={classNames.textarea}
         placeholder="메시지를 입력하세요..."
       />
 
@@ -63,7 +71,7 @@ export function MessageComposer({
             multiple
             accept="image/*,video/*"
             onChange={handleFileChange}
-            className="block w-full rounded-xl border border-zinc-800 bg-zinc-900 p-2 text-sm text-white file:mr-3 file:rounded-lg file:border-0 file:bg-[#C2185B] file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
+            className={classNames.fileInput}
           />
         </label>
 
@@ -112,7 +120,7 @@ export function MessageComposer({
       <button
         type="button"
         onClick={handleSend}
-        className="w-full rounded-xl bg-[#C2185B] py-2 text-sm font-medium text-white"
+        className={classNames.submitButton}
       >
         전송
       </button>

@@ -9,6 +9,22 @@ import { StatusBadge } from "@/shared/ui/StatusBadge"
 import { toggleUserStatusAction } from "./actions"
 import { toggleUserBanAction } from "./actions"
 
+type AdminUserActionTone = "positive" | "destructive"
+
+const adminUserActionButtonBaseClassName =
+  "rounded-xl px-3 py-1 text-xs font-semibold text-white"
+
+const adminUserActionButtonToneClassNames = {
+  positive: "bg-green-600",
+  destructive: "bg-red-600",
+} satisfies Record<AdminUserActionTone, string>
+
+function getAdminUserActionButtonClassName(
+  tone: AdminUserActionTone
+) {
+  return `${adminUserActionButtonBaseClassName} ${adminUserActionButtonToneClassNames[tone]}`
+}
+
 export default async function AdminUsersPage() {
   const { user: currentAdmin } = await requireAdmin()
   const users = await listUsers()
@@ -103,11 +119,11 @@ export default async function AdminUsersPage() {
 
                             <button
                               type="submit"
-                              className={
+                              className={getAdminUserActionButtonClassName(
                                 user.isDeactivated
-                                  ? "rounded-xl bg-green-600 px-3 py-1 text-xs font-semibold text-white"
-                                  : "rounded-xl bg-red-600 px-3 py-1 text-xs font-semibold text-white"
-                              }
+                                  ? "positive"
+                                  : "destructive"
+                              )}
                             >
                               {user.isDeactivated ? "Activate" : "Deactivate"}
                             </button>
@@ -127,11 +143,9 @@ export default async function AdminUsersPage() {
 
                             <button
                               type="submit"
-                              className={
-                                user.isBanned
-                                  ? "rounded-xl bg-green-600 px-3 py-1 text-xs font-semibold text-white"
-                                  : "rounded-xl bg-red-600 px-3 py-1 text-xs font-semibold text-white"
-                              }
+                              className={getAdminUserActionButtonClassName(
+                                user.isBanned ? "positive" : "destructive"
+                              )}
                             >
                               {user.isBanned ? "Unban" : "Ban"}
                             </button>

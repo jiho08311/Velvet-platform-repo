@@ -20,6 +20,23 @@ type MessageComposerSendData = {
   files: File[]
 }
 
+const messageComposerSectionClassNames = {
+  notice: {
+    error:
+      "rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300",
+    sending:
+      "rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-300",
+  },
+  composer: {
+    textarea:
+      "w-full rounded-xl border border-zinc-800 bg-zinc-900 p-3 text-sm text-white",
+    fileInput:
+      "block w-full rounded-xl border border-zinc-800 bg-zinc-900 p-2 text-sm text-white file:mr-3 file:rounded-lg file:border-0 file:bg-[#C2185B] file:px-3 file:py-2 file:text-sm file:font-medium file:text-white",
+    submitButton:
+      "w-full rounded-xl bg-[#C2185B] py-2 text-sm font-medium text-white",
+  },
+}
+
 export function MessageComposerSection({
   conversationId,
   onMessageSent,
@@ -92,10 +109,10 @@ export function MessageComposerSection({
         },
         body: JSON.stringify(
           normalizeSendMessagePayload({
-          conversationId,
-          content: data.content,
-          type: "text",
-          mediaIds,
+            conversationId,
+            content: data.content,
+            type: "text",
+            mediaIds,
           })
         ),
       })
@@ -157,18 +174,21 @@ export function MessageComposerSection({
   return (
     <div className="space-y-3">
       {error ? (
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <div className={messageComposerSectionClassNames.notice.error}>
           {error}
         </div>
       ) : null}
 
       {isSending ? (
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-300">
+        <div className={messageComposerSectionClassNames.notice.sending}>
           전송 중...
         </div>
       ) : null}
 
-      <MessageComposer onSend={handleSend} />
+      <MessageComposer
+        classNames={messageComposerSectionClassNames.composer}
+        onSend={handleSend}
+      />
     </div>
   )
 }

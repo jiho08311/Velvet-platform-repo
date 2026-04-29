@@ -1,76 +1,103 @@
+import { AdminTable } from "./AdminTable"
+import { StatusBadge } from "@/shared/ui/StatusBadge"
+
+type ReportActionEligibility = {
+  canMarkReviewing: boolean
+  canResolve: boolean
+  canReject: boolean
+}
+
 type AdminReportTableItem = {
   id: string
-  targetType: string
-  targetId: string
-  reporterUserId: string
+  reporterLabel: string
+  reporterEmailLabel: string
+  targetReference: {
+    type: string
+  }
+  targetShortId: string
   reason: string
+  description?: string | null
   status: string
-  createdAt: string
+  createdDateLabel: string
+  actionEligibility: ReportActionEligibility
 }
 
 type AdminReportTableProps = {
   reports: AdminReportTableItem[]
-  emptyMessage?: string
+  renderActions: (report: AdminReportTableItem) => React.ReactNode
+}
+
+function AdminReportRow({
+  report,
+  renderActions,
+}: {
+  report: AdminReportTableItem
+  renderActions: (report: AdminReportTableItem) => React.ReactNode
+}) {
+  return (
+    <div className="grid grid-cols-6 gap-4 px-4 py-4 text-sm text-white">
+      {/* Reporter */}
+      <div>
+        <p className="font-medium">{report.reporterLabel}</p>
+        <p className="text-xs text-zinc-500">{report.reporterEmailLabel}</p>
+      </div>
+
+      {/* Target */}
+      <div className="text-zinc-300">
+        <div>{report.targetReference.type}</div>
+        <div className="text-xs text-zinc-500">{report.targetShortId}</div>
+      </div>
+
+      {/* Reason */}
+      <div className="text-zinc-300">
+        <div className="font-medium">{report.reason}</div>
+        <div className="text-xs text-zinc-500">
+          {report.description || "-"}
+        </div>
+      </div>
+
+      {/* Status */}
+      <div>
+        <StatusBadge label={report.status} />
+      </div>
+
+      {/* Actions */}
+      <div>
+        {renderActions(report)}
+      </div>
+
+      {/* Created */}
+      <div className="text-zinc-400">
+        {report.createdDateLabel}
+      </div>
+    </div>
+  )
 }
 
 export function AdminReportTable({
   reports,
-  emptyMessage = "No reports found.",
+  renderActions,
 }: AdminReportTableProps) {
-  if (reports.length === 0) {
-    return (
-      <section className="rounded-2xl border border-white/10 bg-neutral-950 p-8 text-center text-sm text-white/60">
-        {emptyMessage}
-      </section>
-    )
-  }
-
   return (
-    <section className="overflow-hidden rounded-2xl border border-white/10 bg-neutral-950">
-      <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse text-left text-sm text-white">
-          <thead className="bg-white/5 text-white/60">
-            <tr className="border-b border-white/10">
-              <th className="px-4 py-3 font-medium">Target</th>
-              <th className="px-4 py-3 font-medium">Reason</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Reporter</th>
-              <th className="px-4 py-3 font-medium">Created</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reports.map((report) => (
-              <tr
-                key={report.id}
-                className="border-b border-white/10 last:border-b-0"
-              >
-                <td className="px-4 py-4 align-top">
-                  <div className="space-y-1">
-                    <p className="font-medium text-white">{report.targetType}</p>
-                    <p className="text-xs text-white/45">{report.targetId}</p>
-                  </div>
-                </td>
-                <td className="px-4 py-4 align-top text-white/75">
-                  <p className="max-w-md whitespace-pre-wrap leading-6">
-                    {report.reason}
-                  </p>
-                </td>
-                <td className="px-4 py-4 align-top">
-                  <span className="inline-flex rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-white/80">
-                    {report.status}
-                  </span>
-                </td>
-                <td className="px-4 py-4 align-top text-white/60">
-                  {report.reporterUserId}
-                </td>
-                <td className="px-4 py-4 align-top text-white/45">
-                  {report.createdAt}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+    <AdminTable
+      headers={[
+        "Reporter",
+        "Target",
+        "Reason",
+        "Status",
+        "Action",
+        "Created",
+      ]}
+      headerClassName="grid-cols-6"
+      bodyClassName=""
+    >
+      {reports.map((report) => (
+        <AdminReportRow
+          key={report.id}
+          report={report}
+          renderActions={renderActions}
+        />
+      ))}
+    </AdminTable>
   )
 }
