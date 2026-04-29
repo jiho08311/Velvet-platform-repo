@@ -1,3 +1,5 @@
+import { Card } from "@/shared/ui/Card"
+
 type AdminSectionCardProps = {
   title: string
   description?: string
@@ -10,7 +12,7 @@ export function AdminSectionCard({
   children,
 }: AdminSectionCardProps) {
   return (
-    <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5">
+    <Card>
       <div className="mb-4">
         <p className="text-lg font-semibold text-white">{title}</p>
         {description ? (
@@ -19,6 +21,6 @@ export function AdminSectionCard({
       </div>
 
       {children}
-    </section>
+    </Card>
   )
 }

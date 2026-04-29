@@ -1,5 +1,9 @@
 import type { ReactNode } from "react"
 import { Card } from "./Card"
+import {
+  restrictedShellClassName,
+  restrictedShellClassNames,
+} from "./RestrictedStateShell"
 
 export type RestrictedFullCardShellProps = {
   backdrop?: ReactNode
@@ -9,22 +13,6 @@ export type RestrictedFullCardShellProps = {
   className?: string
 }
 
-const restrictedFullCardClassName = "overflow-hidden p-0"
-
-const restrictedFullCardFrameClassName = "relative"
-
-const restrictedFullCardFallbackClassName =
-  "flex aspect-[4/5] items-center justify-center bg-zinc-950 text-sm text-zinc-500"
-
-const restrictedFullCardBadgeClassName = "absolute left-4 top-4 z-10"
-
-const restrictedFullCardOverlayClassName =
-  "absolute inset-0 flex flex-col items-center justify-center px-6 text-center"
-
-const restrictedFullCardOverlayContentClassName = "max-w-xs"
-
-const restrictedFullCardFooterClassName = "p-5"
-
 export function RestrictedFullCardShell({
   backdrop,
   badge,
@@ -33,30 +21,39 @@ export function RestrictedFullCardShell({
   className = "",
 }: RestrictedFullCardShellProps) {
   return (
-    <Card className={`${restrictedFullCardClassName} ${className}`}>
-      <div className={restrictedFullCardFrameClassName}>
+    <Card
+      className={restrictedShellClassName(
+        restrictedShellClassNames.fullCard.card,
+        className,
+      )}
+    >
+      <div className={restrictedShellClassNames.fullCard.frame}>
         {backdrop ? (
           backdrop
         ) : (
-          <div className={restrictedFullCardFallbackClassName}>
+          <div className={restrictedShellClassNames.fullCard.fallback}>
             Restricted content
           </div>
         )}
 
         {badge ? (
-          <div className={restrictedFullCardBadgeClassName}>
+          <div className={restrictedShellClassNames.fullCard.badge}>
             {badge}
           </div>
         ) : null}
 
-        <div className={restrictedFullCardOverlayClassName}>
-          <div className={restrictedFullCardOverlayContentClassName}>
+        <div className={restrictedShellClassNames.fullCard.overlay}>
+          <div className={restrictedShellClassNames.fullCard.overlayContent}>
             {overlayContent}
           </div>
         </div>
       </div>
 
-      {footer ? <div className={restrictedFullCardFooterClassName}>{footer}</div> : null}
+      {footer ? (
+        <div className={restrictedShellClassNames.fullCard.footer}>
+          {footer}
+        </div>
+      ) : null}
     </Card>
   )
 }

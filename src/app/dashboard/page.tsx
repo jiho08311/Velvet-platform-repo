@@ -12,6 +12,27 @@ import { PayoutList } from "@/modules/payout/ui/PayoutHistoryList"
 
 import { Card } from "@/shared/ui/Card"
 
+type PageHeaderProps = {
+  title: string
+  description: string
+  className?: string
+  descriptionClassName?: string
+}
+
+function PageHeader({
+  title,
+  description,
+  className,
+  descriptionClassName = "mt-1 text-sm text-zinc-500",
+}: PageHeaderProps) {
+  return (
+    <div className={className}>
+      <h1 className="text-2xl font-semibold text-white">{title}</h1>
+      <p className={descriptionClassName}>{description}</p>
+    </div>
+  )
+}
+
 async function requestPayoutAction(formData: FormData) {
   "use server"
 
@@ -83,14 +104,12 @@ export default async function PayoutsPage() {
   if (!readiness.ok) {
     return (
       <main className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
-        <div className="max-w-md text-center">
-          <h1 className="text-2xl font-semibold text-white">
-            승인 대기중입니다
-          </h1>
-          <p className="mt-3 text-sm text-zinc-500">
-            현재 크리에이터 신청이 검토 중입니다. 승인 후 기능을 이용할 수 있습니다.
-          </p>
-        </div>
+        <PageHeader
+          title="승인 대기중입니다"
+          description="현재 크리에이터 신청이 검토 중입니다. 승인 후 기능을 이용할 수 있습니다."
+          className="max-w-md text-center"
+          descriptionClassName="mt-3 text-sm text-zinc-500"
+        />
       </main>
     )
   }
@@ -124,12 +143,10 @@ const requestEligibility = summary.requestEligibility
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
       <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-white">정산</h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            수익 확인 및 출금을 관리하세요
-          </p>
-        </div>
+        <PageHeader
+          title="정산"
+          description="수익 확인 및 출금을 관리하세요"
+        />
 
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
