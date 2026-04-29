@@ -231,6 +231,7 @@ export async function getCreatorFeed({
     .from("comments")
     .select("post_id")
     .in("post_id", postIds)
+    .is("deleted_at", null)
 
   if (commentRowsError) {
     throw commentRowsError
