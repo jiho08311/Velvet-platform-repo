@@ -181,14 +181,18 @@ const posts = creatorFeedPosts.map((post) => {
   }
 })
 
+  function getPostRenderMediaCount(post: (typeof posts)[number]) {
+    return post.renderInput?.blockMedia.length ?? post.media?.length ?? 0
+  }
+
   const profile = normalizeProfileData(profileData, userData)
 
   const updatePosts = posts.filter(
-    (post) => (post.media?.length ?? 0) === 0 || post.status !== "published"
+    (post) => getPostRenderMediaCount(post) === 0 || post.status !== "published"
   )
 
   const mediaPosts = posts.filter(
-    (post) => (post.media?.length ?? 0) > 0 && post.status === "published"
+    (post) => getPostRenderMediaCount(post) > 0 && post.status === "published"
   )
 
   if (!profile) {

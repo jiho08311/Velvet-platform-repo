@@ -140,10 +140,12 @@ function getUpdateSurfaceState(
 
 
 function getPostTileState(post: CreatorContentTabPost, isOwner: boolean) {
+  const mediaCount = post.renderInput?.blockMedia.length ?? post.media?.length ?? 0
+
   return {
     isLocked: Boolean(post.isLocked),
     isDraft: isOwner && post.status === "draft",
-    extraMediaCount: Math.max((post.media?.length ?? 0) - 1, 0),
+    extraMediaCount: Math.max(mediaCount - 1, 0),
     media:
       post.renderInput?.primaryLockedPreviewMedia ??
       post.media?.[0],

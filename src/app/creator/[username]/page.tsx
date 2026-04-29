@@ -198,12 +198,16 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
     userId,
   })
 
+  function getPostRenderMediaCount(post: (typeof posts)[number]) {
+    return post.renderInput?.blockMedia.length ?? post.media?.length ?? 0
+  }
+
   const updatePosts = posts.filter(
-    (post) => (post.media?.length ?? 0) === 0 || post.status !== "published"
+    (post) => getPostRenderMediaCount(post) === 0 || post.status !== "published"
   )
 
   const mediaPosts = posts.filter(
-    (post) => (post.media?.length ?? 0) > 0 && post.status === "published"
+    (post) => getPostRenderMediaCount(post) > 0 && post.status === "published"
   )
 
   const viewerSubscription = userId
