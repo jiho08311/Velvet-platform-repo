@@ -122,7 +122,7 @@ export async function GET(
   profile,
   likesCount: readLikeCountFromMap(likeCountMap, comment.id),
   viewerHasLiked: likedCommentIdSet.has(comment.id),
-canDelete: canCurrentUserDeleteComment({
+  canDelete: canDeleteComment({
   currentUserId,
   commentUserId: comment.user_id,
 }),
