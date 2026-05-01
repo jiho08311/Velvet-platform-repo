@@ -118,15 +118,15 @@ export async function GET(
     const profile = profileMap.get(comment.user_id)
 
     return createCommentItem({
-      comment,
-      profile,
-      likesCount: readLikeCountFromMap(likeCountMap, comment.id),
-      viewerHasLiked: likedCommentIdSet.has(comment.id),
-      canDelete: canDeleteComment({
-        currentUserId,
-        commentUserId: comment.user_id,
-      }),
-    })
+  comment,
+  profile,
+  likesCount: readLikeCountFromMap(likeCountMap, comment.id),
+  viewerHasLiked: likedCommentIdSet.has(comment.id),
+canDelete: canDeleteComment({
+  currentUserId,
+  commentUserId: comment.user_id,
+}),
+})
   })
 
   return NextResponse.json({ items })

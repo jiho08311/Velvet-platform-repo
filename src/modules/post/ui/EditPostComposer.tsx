@@ -86,43 +86,45 @@ export function EditPostComposer({
         </div>
       ) : null}
 
-      <CreatePostForm
-        isSubmitting={isPending}
-        initialBlocks={initialBlocks}
-        initialVisibility={initialVisibility}
-        visibilityOptions={[initialVisibility]}
-        showPublishMode={false}
-        submitLabel="Save changes"
-        resetAfterSubmit={false}
-        onSubmitPost={({ visibility, blocks, uploadedFiles }) => {
-          startTransition(async () => {
-            try {
-              setError(null)
+      <div className="border-b border-zinc-800 px-0 py-4">
+        <CreatePostForm
+          isSubmitting={isPending}
+          initialBlocks={initialBlocks}
+          initialVisibility={initialVisibility}
+          visibilityOptions={[initialVisibility]}
+          showPublishMode={false}
+          submitLabel="Save changes"
+          resetAfterSubmit={false}
+          onSubmitPost={({ visibility, blocks, uploadedFiles }) => {
+            startTransition(async () => {
+              try {
+                setError(null)
 
-              await updatePostAction({
-                postId,
-                visibility,
-                files: collectUploadedFilesFromDraft(blocks, uploadedFiles),
-                blocks,
-              })
-            } catch (submitError) {
-              if (submitError instanceof Error) {
-                if (submitError.message === "IMAGE_BLOCKED") {
-                  setError(
-                    "부적절한 이미지가 포함되어 있어 게시글을 수정할 수 없습니다."
-                  )
+                await updatePostAction({
+                  postId,
+                  visibility,
+                  files: collectUploadedFilesFromDraft(blocks, uploadedFiles),
+                  blocks,
+                })
+              } catch (submitError) {
+                if (submitError instanceof Error) {
+                  if (submitError.message === "IMAGE_BLOCKED") {
+                    setError(
+                      "부적절한 이미지가 포함되어 있어 게시글을 수정할 수 없습니다."
+                    )
+                    return
+                  }
+
+                  setError(submitError.message)
                   return
                 }
 
-                setError(submitError.message)
-                return
+                setError("Failed to update post")
               }
-
-              setError("Failed to update post")
-            }
-          })
-        }}
-      />
+            })
+          }}
+        />
+      </div>
     </div>
   )
 }

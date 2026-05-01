@@ -27,7 +27,7 @@ function getStatusClassName(
     return "border-amber-500/20 bg-amber-500/15 text-amber-300"
   }
 
- if (status === "inactive") {
+         if (status === "inactive") {
     return "border-zinc-700 bg-zinc-800/70 text-zinc-300"
   }
 

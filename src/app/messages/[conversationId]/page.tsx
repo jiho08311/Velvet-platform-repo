@@ -15,10 +15,7 @@ import { getConversationById } from "@/modules/message/server/get-conversation-b
 import { listMessages } from "@/modules/message/server/list-messages"
 import { markConversationRead } from "@/modules/message/server/mark-conversation-read"
 import { MessageThreadSection } from "@/modules/message/ui/MessageThreadSection"
-import {
-  toConversationMessageListItem,
-  type ConversationParticipantIdentity,
-} from "@/modules/message/types"
+import { toConversationMessageListItem } from "@/modules/message/types"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 
 type ConversationDetailPageProps = {
@@ -29,75 +26,6 @@ type ConversationDetailPageProps = {
 
 type ProfileRow = {
   username: string | null
-}
-
-type MessageThreadHeaderProps = {
-  participant: ConversationParticipantIdentity | null
-}
-
-const MESSAGE_THREAD_HEADER_CLASS_NAME =
-  "flex items-center gap-4 rounded-2xl border border-white/10 bg-neutral-950 p-5 text-white"
-
-const MESSAGE_THREAD_BACK_LINK_CLASS_NAME =
-  "inline-flex h-10 items-center justify-center rounded-xl border border-white/10 px-4 text-sm font-medium text-white/80 transition hover:bg-white/5"
-
-const MESSAGE_THREAD_AVATAR_CLASS_NAME =
-  "flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5 text-sm font-semibold text-white/80"
-
-function MessageThreadHeader({ participant }: MessageThreadHeaderProps) {
-  const participantDisplayName = participant?.displayName ?? "Unknown user"
-  const participantUsername = participant?.username ?? "unknown"
-  const participantAvatarUrl = participant?.avatarUrl ?? null
-
-  return (
-    <section className={MESSAGE_THREAD_HEADER_CLASS_NAME}>
-      <MessageThreadBackLink />
-
-      <MessageThreadParticipantAvatar
-        displayName={participantDisplayName}
-        avatarUrl={participantAvatarUrl}
-      />
-
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-white">
-          {participantDisplayName}
-        </p>
-        <p className="truncate text-xs text-white/50">
-          @{participantUsername}
-        </p>
-      </div>
-    </section>
-  )
-}
-
-function MessageThreadBackLink() {
-  return (
-    <Link href="/messages" className={MESSAGE_THREAD_BACK_LINK_CLASS_NAME}>
-      뒤로가기
-    </Link>
-  )
-}
-
-function MessageThreadParticipantAvatar({
-  displayName,
-  avatarUrl,
-}: {
-  displayName: string
-  avatarUrl: string | null
-}) {
-  return (
-    <div className={MESSAGE_THREAD_AVATAR_CLASS_NAME}>
-      {avatarUrl ? (
-        <img
-          src={avatarUrl}
-          alt={displayName}
-          className="h-full w-full object-cover"
-        />
-      ) : (
-        displayName.slice(0, 1).toUpperCase()
-      )}
-    </div>
-  )
 }
 
 export default async function ConversationDetailPage({
@@ -152,7 +80,7 @@ export default async function ConversationDetailPage({
     notFound()
   }
 
-  const messages = await listMessages({
+   const messages = await listMessages({
     conversationId,
     userId: user.id,
   })
@@ -170,15 +98,56 @@ export default async function ConversationDetailPage({
       reportPathname: pathname,
     })
   )
-
+/**
+   * Load-side read boundary.
+   *
+   * This call intentionally preserves the current persistence behavior of
+   * markConversationRead(). At the moment, read persistence SoT is not defined
+   * here, and this page must not introduce unread badge/count behavior.
+   *
+   * Thread rendering remains sourced from listMessages() above.
+   */
   await markConversationRead({
     conversationId,
     userId: user.id,
   })
 
+  const participant = conversation.participant
+  const participantDisplayName = participant?.displayName ?? "Unknown user"
+  const participantUsername = participant?.username ?? "unknown"
+  const participantAvatarUrl = participant?.avatarUrl ?? null
+
   return (
     <main className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-4xl flex-col gap-4 px-4 py-6">
-      <MessageThreadHeader participant={conversation.participant} />
+      <section className="flex items-center gap-4 rounded-2xl border border-white/10 bg-neutral-950 p-5 text-white">
+        <Link
+          href="/messages"
+          className="inline-flex h-10 items-center justify-center rounded-xl border border-white/10 px-4 text-sm font-medium text-white/80 transition hover:bg-white/5"
+        >
+          뒤로가기
+        </Link>
+
+        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5 text-sm font-semibold text-white/80">
+          {participantAvatarUrl ? (
+            <img
+              src={participantAvatarUrl}
+              alt={participantDisplayName}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            participantDisplayName.slice(0, 1).toUpperCase()
+          )}
+        </div>
+
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-white">
+            {participantDisplayName}
+          </p>
+          <p className="truncate text-xs text-white/50">
+            @{participantUsername}
+          </p>
+        </div>
+      </section>
 
       <section className="flex flex-1 flex-col rounded-2xl border border-white/10 bg-neutral-950 p-4">
         <MessageThreadSection

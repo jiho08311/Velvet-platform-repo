@@ -80,6 +80,32 @@ type EditorBlock =
   | EditorMediaBlock
   | EditorCarouselBlock
 
+type BlockHeaderControlsProps = {
+  canMoveUp: boolean
+  canMoveDown: boolean
+  isDragging: boolean
+  onDragStart: () => void
+  onDragEnd: () => void
+  onMoveUp: () => void
+  onMoveDown: () => void
+  onRemove: () => void
+}
+
+type AddCarouselItemsButtonProps = {
+  onClick: () => void
+}
+
+type MediaToolChipProps = {
+  active: boolean
+  children: string
+  onClick: () => void
+}
+
+type MinorCTAButtonProps = {
+  children: string
+  onClick: () => void
+}
+
 const FILTER_PRESETS = ["none", "warm", "cool", "mono", "vivid"] as const
 type PostFilterPreset = (typeof FILTER_PRESETS)[number]
 const FILTER_SWIPE_THRESHOLD = 40
@@ -100,6 +126,14 @@ function createCarouselBlock(items: CarouselEditorItem[] = []): EditorBlock {
 
 function createUploadedPlaceholderId(file: File) {
   return `create-upload:${file.name}:${file.size}:${file.lastModified}:${file.type}`
+}
+
+function isAcceptedPostMediaFile(file: File) {
+  return file.type.startsWith("image/") || file.type.startsWith("video/")
+}
+
+function getAcceptedPostMediaFiles(fileList: FileList | null) {
+  return Array.from(fileList ?? []).filter(isAcceptedPostMediaFile)
 }
 
 function createUploadedMediaSource(
@@ -305,6 +339,94 @@ function getFilterStyle(filter?: string) {
     default:
       return { filter: "none" }
   }
+}
+
+function BlockHeaderControls({
+  canMoveUp,
+  canMoveDown,
+  isDragging,
+  onDragStart,
+  onDragEnd,
+  onMoveUp,
+  onMoveDown,
+  onRemove,
+}: BlockHeaderControlsProps) {
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        draggable
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-sm text-white transition hover:bg-zinc-800 ${
+          isDragging ? "cursor-grabbing" : "cursor-grab active:cursor-grabbing"
+        }`}
+        aria-label="Drag block"
+        title="Drag block"
+      >
+        ⋮⋮
+      </button>
+
+      <button
+        type="button"
+        onClick={onMoveUp}
+        disabled={!canMoveUp}
+        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-white transition hover:bg-zinc-800 disabled:opacity-30"
+      >
+        ↑
+      </button>
+
+      <button
+        type="button"
+        onClick={onMoveDown}
+        disabled={!canMoveDown}
+        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-white transition hover:bg-zinc-800 disabled:opacity-30"
+      >
+        ↓
+      </button>
+
+      <button
+        type="button"
+        onClick={onRemove}
+        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10 text-red-400 transition hover:bg-red-500/20"
+        aria-label="Remove block"
+      >
+        ✕
+      </button>
+    </div>
+  )
+}
+
+function AddCarouselItemsButton({ onClick }: AddCarouselItemsButtonProps) {
+  return (
+    <MinorCTAButton onClick={onClick}>
+      +
+    </MinorCTAButton>
+  )
+}
+
+function MinorCTAButton({ children, onClick }: MinorCTAButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={getComposerMinorCTAClassName()}
+    >
+      {children}
+    </button>
+  )
+}
+
+function MediaToolChip({ active, children, onClick }: MediaToolChipProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={resolveComposerToolChipClassName(active)}
+    >
+      {children}
+    </button>
+  )
 }
 
 export function CreatePostForm({
@@ -1295,55 +1417,16 @@ onSubmitPost({
                     : "Image block"}
               </span>
 
-              <div className="flex items-center gap-2">
-
-
-
-
-
-                <button
-                  type="button"
-                  draggable
-                  onDragStart={() => handleDragStart(block.id)}
-                  onDragEnd={handleDragEnd}
-                  className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-sm text-white transition hover:bg-zinc-800 ${
-  draggingBlockId === block.id
-    ? "cursor-grabbing"
-    : "cursor-grab active:cursor-grabbing"
-}`}
-                  aria-label="Drag block"
-                  title="Drag block"
-                >
-                  ⋮⋮
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => moveBlockUp(index)}
-                  disabled={index === 0}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-white transition hover:bg-zinc-800 disabled:opacity-30"
-                >
-                  ↑
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => moveBlockDown(index)}
-                  disabled={index === blocks.length - 1}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-white transition hover:bg-zinc-800 disabled:opacity-30"
-                >
-                  ↓
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => removeBlock(block.id)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10 text-red-400 transition hover:bg-red-500/20"
-                  aria-label="Remove block"
-                >
-                  ✕
-                </button>
-              </div>
+              <BlockHeaderControls
+                canMoveUp={index > 0}
+                canMoveDown={index < blocks.length - 1}
+                isDragging={draggingBlockId === block.id}
+                onDragStart={() => handleDragStart(block.id)}
+                onDragEnd={handleDragEnd}
+                onMoveUp={() => moveBlockUp(index)}
+                onMoveDown={() => moveBlockDown(index)}
+                onRemove={() => removeBlock(block.id)}
+              />
             </div>
 
    
@@ -1639,39 +1722,29 @@ onSubmitPost({
                   <div className="border-t border-zinc-800 bg-zinc-950/80 p-3 pt-0">
                     <div className="mt-3 space-y-3">
                       <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
+                        <MediaToolChip
+                          active={getActiveMediaTool(block.id) === "text"}
                           onClick={() => {
                             enableImageOverlayText(block.id)
                             setActiveMediaTool(block.id, "text")
                           }}
-                          className={resolveComposerToolChipClassName(
-                            getActiveMediaTool(block.id) === "text"
-                          )}
                         >
                           Text
-                        </button>
+                        </MediaToolChip>
 
-                        <button
-                          type="button"
+                        <MediaToolChip
+                          active={getActiveMediaTool(block.id) === "filter"}
                           onClick={() => setActiveMediaTool(block.id, "filter")}
-                          className={resolveComposerToolChipClassName(
-                            getActiveMediaTool(block.id) === "filter"
-                          )}
                         >
                           Filter
-                        </button>
+                        </MediaToolChip>
 
-<button
-  type="button"
-  onClick={() => {
-    pendingCarouselBlockIdRef.current = block.id
-    carouselFileInputRef.current?.click()
-  }}
-  className={getComposerMinorCTAClassName()}
->
-  +
-</button>
+                        <AddCarouselItemsButton
+                          onClick={() => {
+                            pendingCarouselBlockIdRef.current = block.id
+                            carouselFileInputRef.current?.click()
+                          }}
+                        />
 
 
 
@@ -1736,15 +1809,12 @@ onSubmitPost({
                 {block.type === "video" ? (
                   <div className="space-y-3 border-t border-zinc-800 bg-zinc-950/80 p-3">
                     <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
+                      <MediaToolChip
+                        active={getActiveMediaTool(block.id) === "trim"}
                         onClick={() => setActiveMediaTool(block.id, "trim")}
-                        className={resolveComposerToolChipClassName(
-                          getActiveMediaTool(block.id) === "trim"
-                        )}
                       >
                         Trim
-                      </button>
+                      </MediaToolChip>
 
 
 
@@ -1757,33 +1827,27 @@ onSubmitPost({
 
 
 
-<button
-  type="button"
-  onClick={() => {
-    pendingCarouselBlockIdRef.current = block.id
-    carouselFileInputRef.current?.click()
-  }}
-  className={getComposerMinorCTAClassName()}
->
-  +
-</button>
+                      <AddCarouselItemsButton
+                        onClick={() => {
+                          pendingCarouselBlockIdRef.current = block.id
+                          carouselFileInputRef.current?.click()
+                        }}
+                      />
 
 
 
-                      <button
-                        type="button"
+                      <MinorCTAButton
                         onClick={() =>
                           updateVideoMuted(
                             block.id,
                             !(block.editorState?.video?.muted ?? true)
                           )
                         }
-                        className={getComposerMinorCTAClassName()}
                       >
                         {(block.editorState?.video?.muted ?? true)
                           ? "Sound On"
                           : "Muted"}
-                      </button>
+                      </MinorCTAButton>
                     </div>
 
                     {getActiveMediaTool(block.id) === "trim" ? (
@@ -1853,10 +1917,7 @@ onSubmitPost({
             multiple
             accept="image/*,video/*"
             onChange={(e) => {
-              const nextFiles = Array.from(e.target.files ?? []).filter(
-                (file) =>
-                  file.type.startsWith("image/") || file.type.startsWith("video/")
-              )
+              const nextFiles = getAcceptedPostMediaFiles(e.target.files)
 
               addMediaBlocks(nextFiles)
             }}
@@ -1870,10 +1931,7 @@ onSubmitPost({
   accept="image/*,video/*"
   onChange={(e) => {
     const blockId = pendingCarouselBlockIdRef.current
-    const nextFiles = Array.from(e.target.files ?? []).filter(
-      (file) =>
-        file.type.startsWith("image/") || file.type.startsWith("video/")
-    )
+    const nextFiles = getAcceptedPostMediaFiles(e.target.files)
 
     if (blockId) {
       addCarouselItems(blockId, nextFiles)

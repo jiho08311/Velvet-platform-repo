@@ -98,6 +98,51 @@ function getFilterStyle(filter?: string) {
   }
 }
 
+const POST_CARD_HEADER_CLASSES = {
+  root: "flex items-center justify-between px-0",
+  creatorButton: "flex items-center gap-3 text-left",
+  avatarImage: "h-11 w-11 rounded-full object-cover",
+  avatarFallback:
+    "flex h-11 w-11 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-white",
+  creatorNameContainer: "min-w-0",
+  creatorName: "truncate text-[15px] font-semibold text-white",
+} as const
+
+const POST_CARD_ACTION_CLASSES = {
+  root: "flex items-center gap-4 px-0 pt-3",
+  button:
+    "flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95",
+  likedIcon: "h-6 w-6 text-pink-500",
+  icon: "h-6 w-6 stroke-[2.5]",
+  count: "text-[14px] font-semibold",
+  date: "text-[13px] text-zinc-400",
+} as const
+
+const POST_CARD_COMMENT_CLASSES = {
+  root: "space-y-3 px-3 pt-3",
+  input:
+    "w-full border-b border-zinc-800 bg-black px-0 py-3 text-sm text-white outline-none placeholder:text-zinc-500",
+  error: "text-xs text-red-500",
+  loadingList: "space-y-2",
+  loadingItem: "animate-pulse px-0 py-3",
+  loadingAuthor: "mb-2 h-3 w-1/3 rounded bg-zinc-700",
+  loadingContent: "h-3 w-2/3 rounded bg-zinc-700",
+  empty: "text-xs text-zinc-500",
+  list: "space-y-2",
+  item: "bg-black px-1 py-2",
+  itemRow: "flex items-start justify-between gap-3",
+  itemContent: "min-w-0 text-sm leading-6 text-zinc-300",
+  itemAuthor: "mr-2 text-sm font-semibold text-white",
+  itemActions: "flex shrink-0 items-center gap-2",
+  likeButton:
+    "inline-flex items-center gap-1.5 px-0 py-1 text-sm text-zinc-300 transition hover:text-white active:scale-95",
+  likedIcon: "h-4 w-4 text-pink-500",
+  likeIcon: "h-6 w-6 stroke-[2.5]",
+  deleteButton:
+    "px-0 py-1 text-sm font-medium text-zinc-400 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60",
+  expandButton: "text-sm text-zinc-400 hover:text-white",
+} as const
+
 export function PostCard({
   postId,
   createdAt,
@@ -125,12 +170,9 @@ export function PostCard({
   const [currentLikesCount, setCurrentLikesCount] = useState(likesCount)
   const [isLikeLoading, setIsLikeLoading] = useState(false)
 
-
-// CommentItem is the shared render contract for comment consumers.
-// Do not redefine a local post comment shape here.
-const [comments, setComments] = useState<CommentItem[]>([])
-
-
+  // CommentItem is the shared render contract for comment consumers.
+  // Do not redefine a local post comment shape here.
+  const [comments, setComments] = useState<CommentItem[]>([])
 
   const [commentInput, setCommentInput] = useState("")
   const [isCommentsLoading, setIsCommentsLoading] = useState(false)
@@ -348,16 +390,14 @@ const [comments, setComments] = useState<CommentItem[]>([])
     setCurrentLikesCount(likesCount)
   }, [likesCount])
 
+  useEffect(() => {
+    if (previousServerCommentsCountRef.current === commentsCount) {
+      return
+    }
 
-useEffect(() => {
-  if (previousServerCommentsCountRef.current === commentsCount) {
-    return
-  }
-
-  previousServerCommentsCountRef.current = commentsCount
-  setOptimisticCommentCountDelta(0)
-}, [commentsCount])
-
+    previousServerCommentsCountRef.current = commentsCount
+    setOptimisticCommentCountDelta(0)
+  }, [commentsCount])
 
   function handleCardClick() {
     return
@@ -655,7 +695,7 @@ useEffect(() => {
     return null
   }
 
-   const creatorName = creator.displayName ?? creator.username
+  const creatorName = creator.displayName ?? creator.username
 
   const creatorInitial = creatorName.slice(0, 1).toUpperCase()
   const visibleComments = expandedComments ? comments : comments.slice(0, 3)
@@ -691,33 +731,188 @@ useEffect(() => {
     return comment.profiles?.username ?? "user"
   }
 
+  function handleCommentsToggle(event: React.MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation()
+
+    const nextShow = !showComments
+    setShowComments(nextShow)
+
+    if (nextShow && comments.length === 0) {
+      loadComments()
+    }
+  }
+
+  function handleExpandedCommentsToggle(
+    event: React.MouseEvent<HTMLButtonElement>
+  ) {
+    event.stopPropagation()
+    setExpandedComments((prev) => !prev)
+  }
+
   function handleCreatorClick(event: React.MouseEvent) {
     event.stopPropagation()
     router.push(buildCreatorRoutePath({ username: creator.username }))
   }
 
+  function handleCreatorMessageClick(event: React.MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation()
+
+    if (!creatorUserId) return
+
+    router.push(buildCreatorMessageHref({ creatorUserId }))
+  }
+
+  function renderCommentsLoadingState() {
+    return (
+      <div className={POST_CARD_COMMENT_CLASSES.loadingList}>
+        {[1, 2, 3].map((index) => (
+          <div key={index} className={POST_CARD_COMMENT_CLASSES.loadingItem}>
+            <div className={POST_CARD_COMMENT_CLASSES.loadingAuthor} />
+            <div className={POST_CARD_COMMENT_CLASSES.loadingContent} />
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  function renderCommentItem(comment: CommentItem) {
+    const canShowDeleteButton = comment.canDelete === true
+
+    return (
+      <div key={comment.id} className={POST_CARD_COMMENT_CLASSES.item}>
+        <div className={POST_CARD_COMMENT_CLASSES.itemRow}>
+          <p className={POST_CARD_COMMENT_CLASSES.itemContent}>
+            <span className={POST_CARD_COMMENT_CLASSES.itemAuthor}>
+              @{getCommentUsername(comment)}
+            </span>
+            {comment.content}
+          </p>
+
+          <div className={POST_CARD_COMMENT_CLASSES.itemActions}>
+            <button
+              type="button"
+              onClick={(event) =>
+                handleLikeComment(event, comment.id, Boolean(comment.is_liked))
+              }
+              disabled={likingCommentId === comment.id}
+              className={POST_CARD_COMMENT_CLASSES.likeButton}
+            >
+              {comment.is_liked ? (
+                <HeartSolid className={POST_CARD_COMMENT_CLASSES.likedIcon} />
+              ) : (
+                <HeartOutline className={POST_CARD_COMMENT_CLASSES.likeIcon} />
+              )}
+              <span>{comment.likes_count ?? 0}</span>
+            </button>
+
+            <div onClick={(event) => event.stopPropagation()}>
+              <ReportButton
+                payload={buildReportTriggerPayload({
+                  targetType: "comment",
+                  targetId: comment.id,
+                  pathname,
+                })}
+                currentUserId={currentUserId}
+              />
+            </div>
+
+            {canShowDeleteButton ? (
+              <button
+                type="button"
+                onClick={(event) => handleDeleteComment(event, comment.id)}
+                disabled={deletingCommentId === comment.id}
+                className={POST_CARD_COMMENT_CLASSES.deleteButton}
+              >
+                {deletingCommentId === comment.id ? "Deleting..." : "Delete"}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  function renderCommentsList() {
+    if (isCommentsLoading) {
+      return renderCommentsLoadingState()
+    }
+
+    if (comments.length === 0) {
+      return (
+        <p className={POST_CARD_COMMENT_CLASSES.empty}>No comments yet.</p>
+      )
+    }
+
+    return (
+      <div className={POST_CARD_COMMENT_CLASSES.list}>
+        {visibleComments.map(renderCommentItem)}
+
+        {comments.length > 3 ? (
+          <button
+            type="button"
+            onClick={handleExpandedCommentsToggle}
+            className={POST_CARD_COMMENT_CLASSES.expandButton}
+          >
+            {expandedComments
+              ? "Hide comments"
+              : `View ${comments.length - 3} more comments`}
+          </button>
+        ) : null}
+      </div>
+    )
+  }
+
+  function renderCommentsPanel() {
+    if (!showComments) {
+      return null
+    }
+
+    return (
+      <div
+        className={POST_CARD_COMMENT_CLASSES.root}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <form onSubmit={handleCommentSubmit}>
+          <input
+            value={commentInput}
+            onChange={(event) => setCommentInput(event.target.value)}
+            placeholder="Write a comment..."
+            className={POST_CARD_COMMENT_CLASSES.input}
+            disabled={isCommentSubmitting}
+          />
+        </form>
+
+        {commentError ? (
+          <p className={POST_CARD_COMMENT_CLASSES.error}>{commentError}</p>
+        ) : null}
+
+        {renderCommentsList()}
+      </div>
+    )
+  }
+
   return (
     <article onClick={handleCardClick} className="group w-full">
-      <div className="flex items-center justify-between px-0">
+      <div className={POST_CARD_HEADER_CLASSES.root}>
         <button
           type="button"
           onClick={handleCreatorClick}
-          className="flex items-center gap-3 text-left"
+          className={POST_CARD_HEADER_CLASSES.creatorButton}
         >
           {creator.avatarUrl ? (
             <img
               src={creator.avatarUrl}
               alt={creatorName}
-              className="h-11 w-11 rounded-full object-cover"
+              className={POST_CARD_HEADER_CLASSES.avatarImage}
             />
           ) : (
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-white">
+            <div className={POST_CARD_HEADER_CLASSES.avatarFallback}>
               {creatorInitial}
             </div>
           )}
 
-          <div className="min-w-0">
-            <p className="truncate text-[15px] font-semibold text-white">
+          <div className={POST_CARD_HEADER_CLASSES.creatorNameContainer}>
+            <p className={POST_CARD_HEADER_CLASSES.creatorName}>
               {creatorName}
             </p>
           </div>
@@ -748,176 +943,48 @@ useEffect(() => {
         <>
           {renderSections.map(renderSection)}
 
-          <div className="flex items-center gap-4 px-0 pt-3">
+          <div className={POST_CARD_ACTION_CLASSES.root}>
             <button
               type="button"
               onClick={handleLike}
               disabled={isLikeLoading}
-              className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
+              className={POST_CARD_ACTION_CLASSES.button}
             >
               {currentViewerHasLiked ? (
-                <HeartSolid className="h-6 w-6 text-pink-500" />
+                <HeartSolid className={POST_CARD_ACTION_CLASSES.likedIcon} />
               ) : (
-                <HeartOutline className="h-6 w-6 stroke-[2.5]" />
+                <HeartOutline className={POST_CARD_ACTION_CLASSES.icon} />
               )}
-              <span className="text-[14px] font-semibold">
+              <span className={POST_CARD_ACTION_CLASSES.count}>
                 {currentLikesCount}
               </span>
             </button>
 
             <button
               type="button"
-              onClick={(event) => {
-                event.stopPropagation()
-
-                const nextShow = !showComments
-                setShowComments(nextShow)
-
-                if (nextShow && comments.length === 0) {
-                  loadComments()
-                }
-              }}
-              className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
+              onClick={handleCommentsToggle}
+              className={POST_CARD_ACTION_CLASSES.button}
             >
-              <ChatBubbleOvalLeftIcon className="h-6 w-6 stroke-[2.5]" />
-              <span className="text-[14px] font-semibold">
+              <ChatBubbleOvalLeftIcon className={POST_CARD_ACTION_CLASSES.icon} />
+              <span className={POST_CARD_ACTION_CLASSES.count}>
                 {displayCommentCount}
               </span>
             </button>
 
             <button
               type="button"
-              onClick={(event) => {
-                event.stopPropagation()
-
-                if (!creatorUserId) return
-
-                router.push(buildCreatorMessageHref({ creatorUserId }))
-              }}
-              className="flex items-center gap-1.5 p-2 text-zinc-300 hover:text-white active:scale-95"
+              onClick={handleCreatorMessageClick}
+              className={POST_CARD_ACTION_CLASSES.button}
             >
-              <PaperAirplaneIcon className="h-6 w-6 stroke-[2.5]" />
+              <PaperAirplaneIcon className={POST_CARD_ACTION_CLASSES.icon} />
             </button>
 
-            <p className="text-[13px] text-zinc-400">
+            <p className={POST_CARD_ACTION_CLASSES.date}>
               {formatPostDate(createdAt)}
             </p>
           </div>
 
-          {showComments ? (
-            <div
-              className="space-y-3 px-3 pt-3"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <form onSubmit={handleCommentSubmit}>
-                <input
-                  value={commentInput}
-                  onChange={(event) => setCommentInput(event.target.value)}
-                  placeholder="Write a comment..."
-                  className="w-full border-b border-zinc-800 bg-black px-0 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
-                  disabled={isCommentSubmitting}
-                />
-              </form>
-
-              {commentError ? (
-                <p className="text-xs text-red-500">{commentError}</p>
-              ) : null}
-
-              {isCommentsLoading ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map((index) => (
-                    <div key={index} className="animate-pulse px-0 py-3">
-                      <div className="mb-2 h-3 w-1/3 rounded bg-zinc-700" />
-                      <div className="h-3 w-2/3 rounded bg-zinc-700" />
-                    </div>
-                  ))}
-                </div>
-              ) : comments.length === 0 ? (
-                <p className="text-xs text-zinc-500">No comments yet.</p>
-              ) : (
-                <div className="space-y-2">
-{visibleComments.map((comment) => {
-  const canShowDeleteButton = comment.canDelete === true
-
-  return (
-    <div key={comment.id} className="bg-black px-1 py-2">
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="min-w-0 text-sm leading-6 text-zinc-300">
-                          <span className="mr-2 text-sm font-semibold text-white">
-                            @{getCommentUsername(comment)}
-                          </span>
-                          {comment.content}
-                        </p>
-
-                        <div className="flex shrink-0 items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={(event) =>
-                              handleLikeComment(
-                                event,
-                                comment.id,
-                                Boolean(comment.is_liked)
-                              )
-                            }
-                            disabled={likingCommentId === comment.id}
-                            className="inline-flex items-center gap-1.5 px-0 py-1 text-sm text-zinc-300 transition hover:text-white active:scale-95"
-                          >
-                            {comment.is_liked ? (
-                              <HeartSolid className="h-4 w-4 text-pink-500" />
-                            ) : (
-                              <HeartOutline className="h-6 w-6 stroke-[2.5]" />
-                            )}
-                            <span>{comment.likes_count ?? 0}</span>
-                          </button>
-
-                          <div onClick={(event) => event.stopPropagation()}>
-                            <ReportButton
-                              payload={buildReportTriggerPayload({
-                                targetType: "comment",
-                                targetId: comment.id,
-                                pathname,
-                              })}
-                              currentUserId={currentUserId}
-                            />
-                          </div>
-
-                   {canShowDeleteButton ? (
-                            <button
-                              type="button"
-                              onClick={(event) =>
-                                handleDeleteComment(event, comment.id)
-                              }
-                              disabled={deletingCommentId === comment.id}
-                              className="px-0 py-1 text-sm font-medium text-zinc-400 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              {deletingCommentId === comment.id
-                                ? "Deleting..."
-                                : "Delete"}
-                            </button>
-                          ) : null}
-                        </div>
-                      </div>
-                                   </div>
-                  )
-                })}
-                  {comments.length > 3 ? (
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        setExpandedComments((prev) => !prev)
-                      }}
-                      className="text-sm text-zinc-400 hover:text-white"
-                    >
-                      {expandedComments
-                        ? "Hide comments"
-                        : `View ${comments.length - 3} more comments`}
-                    </button>
-                  ) : null}
-                </div>
-              )}
-            </div>
-          ) : null}
+          {renderCommentsPanel()}
         </>
       )}
     </article>
