@@ -1,0 +1,225 @@
+src/app/profile/edit/page.tsx:        const { error: uploadError } = await supabase.storage
+src/app/profile/edit/page.tsx:          .from("avatars")
+src/app/profile/edit/page.tsx:        const { data } = supabase.storage.from("avatars").getPublicUrl(filePath)
+src/app/api/story/create/route.ts:  storagePath?: unknown
+src/app/api/story/create/route.ts:      storagePath: payload.storagePath,
+src/app/api/upload/media/route.ts:  // Placeholder external storage upload (S3/R2 assumed)
+src/app/api/upload/media/route.ts:  // await storageClient.putObject({ key: fileKey, body: buffer })
+src/app/api/upload/media/route.ts:  const fileUrl = `https://storage.example.com/${fileKey}`
+src/app/api/media/upload/route.ts:import { createMedia } from "@/modules/media/server/create-media"
+src/app/api/media/upload/route.ts:import { uploadMedia } from "@/modules/media/server/upload-media"
+src/app/api/media/upload/route.ts:      const storagePath = await uploadMedia({
+src/app/api/media/upload/route.ts:      const media = await createMedia({
+src/app/api/media/upload/route.ts:        storagePath,
+src/workflows/process-video-moderation.ts:const MEDIA_BUCKET =
+src/workflows/process-video-moderation.ts:  storagePath: string,
+src/workflows/process-video-moderation.ts:  console.log("[video-moderation] storage download start", { storagePath })
+src/workflows/process-video-moderation.ts:  const { data, error } = await supabaseAdmin.storage
+src/workflows/process-video-moderation.ts:    .from(MEDIA_BUCKET)
+src/workflows/process-video-moderation.ts:    .download(storagePath)
+src/workflows/process-video-moderation.ts:    console.error("[video-moderation] storage download failed", {
+src/workflows/process-video-moderation.ts:      storagePath,
+src/workflows/process-video-moderation.ts:    throw error ?? new Error("Failed to download video from storage")
+src/workflows/process-video-moderation.ts:  console.log("[video-moderation] storage download done", {
+src/workflows/process-video-moderation.ts:    storagePath,
+src/workflows/process-video-moderation.ts:  storagePath,
+src/workflows/process-video-moderation.ts:  storagePath: string
+src/workflows/process-video-moderation.ts:    storagePath,
+src/workflows/process-video-moderation.ts:    await downloadStorageFile(storagePath, videoPath)
+src/workflows/process-video-moderation.ts:          storagePath,
+src/workflows/process-video-moderation.ts:          storagePath,
+src/workflows/process-video-moderation.ts:      storagePath,
+src/workflows/process-video-moderation.ts:    (item) => item.type === "video" && item.storagePath.trim().length > 0
+src/workflows/process-video-moderation.ts:        storagePath: item.storagePath,
+src/workflows/process-video-moderation.ts:        storagePath: item.storagePath,
+src/workflows/create-post-with-media-workflow.ts:      storagePath: mediaRow.storagePath,
+src/modules/creator/server/get-creator-page.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/creator/server/get-creator-page.ts:  storage_path: string
+src/modules/creator/server/get-creator-page.ts:    .select("id, post_id, storage_path, type, mime_type, status, sort_order")
+src/modules/creator/server/get-creator-page.ts:          url: await createMediaSignedUrl({
+src/modules/creator/server/get-creator-page.ts:            storagePath: item.storage_path,
+src/modules/post/ui/CreatePostComposer.tsx:const MEDIA_BUCKET =
+src/modules/post/ui/CreatePostComposer.tsx:    const { error } = await supabase.storage
+src/modules/post/ui/CreatePostComposer.tsx:      .from(MEDIA_BUCKET)
+src/modules/post/server/list-creator-posts.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/post/server/list-creator-posts.ts:  storage_path: string
+src/modules/post/server/list-creator-posts.ts:    .select("id, post_id, storage_path, type, mime_type, status, sort_order")
+src/modules/post/server/list-creator-posts.ts:          const url = await createMediaSignedUrl({
+src/modules/post/server/list-creator-posts.ts:            storagePath: item.storage_path,
+src/modules/post/server/get-post-media.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/post/server/get-post-media.ts:  storage_path: string
+src/modules/post/server/get-post-media.ts:    .select("id, post_id, type, storage_path, mime_type, sort_order, status")
+src/modules/post/server/get-post-media.ts:      const url = await createMediaSignedUrl({
+src/modules/post/server/get-post-media.ts:        storagePath: media.storage_path,
+src/modules/post/server/get-creator-feed.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/post/server/get-creator-feed.ts:  storage_path: string
+src/modules/post/server/get-creator-feed.ts:    .select("id, post_id, storage_path, type, mime_type, status, sort_order")
+src/modules/post/server/get-creator-feed.ts:          const url = await createMediaSignedUrl({
+src/modules/post/server/get-creator-feed.ts:            storagePath: item.storage_path,
+src/modules/post/server/get-my-posts.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/post/server/get-my-posts.ts:  storage_path: string
+src/modules/post/server/get-my-posts.ts:    .select("id, post_id, storage_path, type, mime_type, sort_order, status")
+src/modules/post/server/get-my-posts.ts:          const url = await createMediaSignedUrl({
+src/modules/post/server/get-my-posts.ts:            storagePath: item.storage_path,
+src/modules/post/server/list-feed-posts.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/post/server/list-feed-posts.ts:  storage_path: string
+src/modules/post/server/list-feed-posts.ts:    .select("id, post_id, storage_path, type, mime_type, status, sort_order")
+src/modules/post/server/list-feed-posts.ts:          const url = await createMediaSignedUrl({
+src/modules/post/server/list-feed-posts.ts:            storagePath: item.storage_path,
+src/modules/post/server/get-creator-studio-post.ts:  storage_path: string
+src/modules/post/server/get-creator-studio-post.ts:    .select("id, post_id, storage_path, type, mime_type, status, sort_order")
+src/modules/post/server/get-creator-studio-post.ts:      const { data: signedUrlData } = await supabaseAdmin.storage
+src/modules/post/server/get-creator-studio-post.ts:        .createSignedUrl(item.storage_path, 60 * 60)
+src/modules/post/server/get-creator-studio-post.ts:        url: signedUrlData?.signedUrl ?? "",
+src/modules/post/server/update-post-action.ts:import { createMedia } from "@/modules/media/server/create-media"
+src/modules/post/server/update-post-action.ts:import { uploadMedia } from "@/modules/media/server/upload-media"
+src/modules/post/server/update-post-action.ts:  storage_path: string
+src/modules/post/server/update-post-action.ts:  storagePath: string
+src/modules/post/server/update-post-action.ts:      .select("id, storage_path")
+src/modules/post/server/update-post-action.ts:    const storagePaths = (mediaToDelete ?? [])
+src/modules/post/server/update-post-action.ts:      .map((media) => media.storage_path)
+src/modules/post/server/update-post-action.ts:    if (storagePaths.length > 0) {
+src/modules/post/server/update-post-action.ts:      const { error: storageDeleteError } = await supabaseAdmin.storage
+src/modules/post/server/update-post-action.ts:        .remove(storagePaths)
+src/modules/post/server/update-post-action.ts:      if (storageDeleteError) {
+src/modules/post/server/update-post-action.ts:        throw storageDeleteError
+src/modules/post/server/update-post-action.ts:      const storagePath = await uploadMedia({
+src/modules/post/server/update-post-action.ts:      const createdMedia = await createMedia({
+src/modules/post/server/update-post-action.ts:        storagePath,
+src/modules/post/server/update-post-action.ts:          storagePath: createdMedia.storagePath,
+src/modules/post/server/get-post-by-id.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/post/server/get-post-by-id.ts:  storage_path: string
+src/modules/post/server/get-post-by-id.ts:      .select("id, post_id, type, storage_path, mime_type, sort_order, status")
+src/modules/post/server/get-post-by-id.ts:      const url = await createMediaSignedUrl({
+src/modules/post/server/get-post-by-id.ts:        storagePath: item.storage_path,
+src/modules/post/server/create-post-draft-policy.ts:    storagePath: item.storagePath,
+src/modules/post/types.ts: * before it is uploaded and replaced with a storage path.
+src/modules/post/types.ts: * Uploaded media is identified by placeholderId, not storage path.
+src/modules/post/types.ts:  storagePath: string
+src/modules/post/types.ts:  storagePath: string
+src/modules/message/server/get-secure-message-media.ts:export async function getSecureMessageMedia({
+src/modules/message/server/get-secure-message-media.ts:    .select("id, message_id, storage_path, mime_type")
+src/modules/message/server/create-conversation-message-media.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/message/server/create-conversation-message-media.ts:  storage_path: string
+src/modules/message/server/create-conversation-message-media.ts:    url: await createMediaSignedUrl({
+src/modules/message/server/create-conversation-message-media.ts:      storagePath: media.storage_path,
+src/modules/message/server/send-message.ts:const MEDIA_BUCKET =
+src/modules/message/server/send-message.ts:  storage_path: string
+src/modules/message/server/send-message.ts:    .select("id, storage_path, mime_type")
+src/modules/message/server/send-message.ts:    const { data, error: downloadError } = await supabaseAdmin.storage
+src/modules/message/server/send-message.ts:      .from(MEDIA_BUCKET)
+src/modules/message/server/send-message.ts:      .download(media.storage_path)
+src/modules/message/server/send-message.ts:    .select("id, message_id, storage_path, mime_type")
+src/modules/message/server/list-messages.ts:      .select("id, message_id, storage_path, mime_type")
+src/modules/search/server/get-explore-posts.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/search/server/get-explore-posts.ts:  storage_path: string
+src/modules/search/server/get-explore-posts.ts:    .select("id, post_id, storage_path, mime_type, sort_order, type")
+src/modules/search/server/get-explore-posts.ts:          const url = await createMediaSignedUrl({
+src/modules/search/server/get-explore-posts.ts:            storagePath: item.storage_path,
+src/modules/search/server/get-explore-posts.ts:        id: `${post.id}:${media.storage_path}`,
+src/modules/feed/ui/FeedComposer.tsx:const MEDIA_BUCKET =
+src/modules/feed/ui/FeedComposer.tsx:    const { error } = await supabase.storage
+src/modules/feed/ui/FeedComposer.tsx:      .from(MEDIA_BUCKET)
+src/modules/feed/server/get-home-feed.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/feed/server/get-home-feed.ts:  storage_path: string
+src/modules/feed/server/get-home-feed.ts:    .select("id, post_id, storage_path, type, mime_type, status, sort_order")
+src/modules/feed/server/get-home-feed.ts:          url: await createMediaSignedUrl({
+src/modules/feed/server/get-home-feed.ts:            storagePath: item.storage_path,
+src/modules/story/ui/CreateStoryComposer.tsx:const MEDIA_BUCKET =
+src/modules/story/ui/CreateStoryComposer.tsx:  const { error } = await supabase.storage
+src/modules/story/ui/CreateStoryComposer.tsx:    .from(MEDIA_BUCKET)
+src/modules/story/ui/CreateStoryComposer.tsx:      const storagePath = await uploadStoryFile(file)
+src/modules/story/ui/CreateStoryComposer.tsx:            storagePath,
+src/modules/story/ui/EditStoryModal.tsx:const MEDIA_BUCKET =
+src/modules/story/ui/EditStoryModal.tsx:  const { error } = await supabase.storage
+src/modules/story/ui/EditStoryModal.tsx:    .from(MEDIA_BUCKET)
+src/modules/story/ui/EditStoryModal.tsx:                        storagePath: nextStoragePath,
+src/modules/story/server/create-story.ts:  storagePath: string
+src/modules/story/server/create-story.ts:  storagePath: string
+src/modules/story/server/create-story.ts:  storage_path: string
+src/modules/story/server/create-story.ts:    mediaUrl: data.storage_path,
+src/modules/story/server/create-story.ts:  storagePath,
+src/modules/story/server/create-story.ts:        storagePath,
+src/modules/story/server/create-story.ts:      "id, creator_id, storage_path, text, visibility, editor_state, created_at, expires_at, is_deleted"
+src/modules/story/server/create-story.ts:  storagePath,
+src/modules/story/server/create-story.ts:  const resolvedStoragePath = storagePath.trim()
+src/modules/story/server/create-story.ts:    storagePath: resolvedStoragePath,
+src/modules/story/server/create-story.ts:    storagePath: processedVideoStoragePath,
+src/modules/story/server/get-stories.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/story/server/get-stories.ts:  storage_path: string
+src/modules/story/server/get-stories.ts:function resolveStoryMediaType(storagePath: string): "image" | "video" {
+src/modules/story/server/get-stories.ts:  const lower = storagePath.toLowerCase()
+src/modules/story/server/get-stories.ts:      storage_path,
+src/modules/story/server/get-stories.ts:          ? await createMediaSignedUrl({
+src/modules/story/server/get-stories.ts:              storagePath: story.row.storage_path,
+src/modules/story/server/get-stories.ts:        mediaType: resolveStoryMediaType(story.row.storage_path),
+src/modules/story/server/create-story-action.ts:  storagePath: string
+src/modules/story/server/create-story-action.ts:  storagePath,
+src/modules/story/server/create-story-action.ts:    storagePath,
+src/modules/story/server/update-story-action.ts:  storagePath?: string | null
+src/modules/story/server/update-story-action.ts:  storagePath,
+src/modules/story/server/update-story-action.ts:    typeof storagePath === "string" ? storagePath.trim() || null : undefined
+src/modules/story/server/update-story-action.ts:    storage_path?: string
+src/modules/story/server/update-story-action.ts:    updatePayload.storage_path = nextStoragePath
+src/modules/story/lib/story-create-payload.ts:  storagePath: string
+src/modules/story/lib/story-create-payload.ts:    storagePath: params.storagePath,
+src/modules/story/lib/story-create-payload.ts:  storagePath?: unknown
+src/modules/story/lib/story-create-payload.ts:  if (typeof value?.storagePath !== "string" || !value.storagePath.trim()) {
+src/modules/story/lib/story-create-payload.ts:  if (isVideoStoryStoragePath(value.storagePath)) {
+src/modules/story/lib/story-create-payload.ts:    storagePath: value.storagePath,
+src/modules/story/lib/story-create-payload.ts:  storagePath: string
+src/modules/story/lib/story-create-payload.ts:    storage_path: params.storagePath,
+src/modules/story/lib/story-create-payload.ts:    temp_storage_path: params.tempStoragePath,
+src/modules/moderation/server/video-moderation-job.ts:  storagePath: string
+src/modules/media/server/get-secure-post-media.ts:import { createMediaSignedUrl } from "./create-media-signed-url"
+src/modules/media/server/get-secure-post-media.ts:  storage_path: string
+src/modules/media/server/get-secure-post-media.ts:export async function getSecurePostMedia({
+src/modules/media/server/get-secure-post-media.ts:    .select("id, post_id, type, storage_path, mime_type, sort_order, status")
+src/modules/media/server/get-secure-post-media.ts:      const url = await createMediaSignedUrl({
+src/modules/media/server/get-secure-post-media.ts:        storagePath: media.storage_path,
+src/modules/media/server/create-media.ts:  storagePath: string
+src/modules/media/server/create-media.ts:  storage_path: string
+src/modules/media/server/create-media.ts:export async function createMedia({
+src/modules/media/server/create-media.ts:  storagePath,
+src/modules/media/server/create-media.ts:  const resolvedStoragePath = storagePath.trim()
+src/modules/media/server/create-media.ts:    throw new Error("storagePath is required")
+src/modules/media/server/create-media.ts:    storage_path: resolvedStoragePath,
+src/modules/media/server/create-media.ts:      "id, post_id, message_id, owner_user_id, type, storage_path, mime_type, sort_order, status, created_at"
+src/modules/media/server/create-media.ts:    storagePath: data.storage_path,
+src/modules/media/server/create-media.ts:  return createMedia({
+src/modules/media/server/create-media.ts:    storagePath: media.uploaded.path,
+src/modules/media/server/upload-media.ts:const MEDIA_BUCKET =
+src/modules/media/server/upload-media.ts:export async function uploadMedia({
+src/modules/media/server/upload-media.ts:  const storagePath = buildStoragePath(resolvedUploaderUserId, file, purpose)
+src/modules/media/server/upload-media.ts:  const { error } = await supabaseAdmin.storage
+src/modules/media/server/upload-media.ts:    .from(MEDIA_BUCKET)
+src/modules/media/server/upload-media.ts:    .upload(storagePath, file, {
+src/modules/media/server/upload-media.ts:  return storagePath
+src/modules/media/server/story-video-processor.server.ts:} from "./story-video-storage.service"
+src/modules/media/server/story-video-job.service.ts:} from "@/modules/media/server/story-video-storage.service"
+src/modules/media/server/story-video-job.service.ts:  temp_storage_path: string
+src/modules/media/server/story-video-job.service.ts:  trimmed_storage_path: string | null
+src/modules/media/server/create-media-signed-url.ts:  storagePath: string
+src/modules/media/server/create-media-signed-url.ts:const MEDIA_BUCKET =
+src/modules/media/server/create-media-signed-url.ts:export async function createMediaSignedUrl({
+src/modules/media/server/create-media-signed-url.ts:  storagePath,
+src/modules/media/server/create-media-signed-url.ts:  const resolvedStoragePath = storagePath?.trim() ?? ""
+src/modules/media/server/create-media-signed-url.ts:  const { data, error } = await supabaseAdmin.storage
+src/modules/media/server/create-media-signed-url.ts:    .from(MEDIA_BUCKET)
+src/modules/media/server/create-media-signed-url.ts:  return data?.signedUrl ?? ""
+src/modules/media/server/story-video-storage.service.ts:  const storagePath = `${params.creatorId}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${ext}`
+src/modules/media/server/story-video-storage.service.ts:  const { error } = await admin.storage
+src/modules/media/server/story-video-storage.service.ts:    .upload(storagePath, fileBuffer, {
+src/modules/media/server/story-video-storage.service.ts:  return storagePath
+src/modules/media/server/story-video-storage.service.ts:  const { data, error } = await admin.storage
+src/modules/media/server/story-video-storage.service.ts:  const storagePath = `${params.creatorId}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.mp4`
+src/modules/media/server/story-video-storage.service.ts:  const { error } = await admin.storage
+src/modules/media/server/story-video-storage.service.ts:    .upload(storagePath, params.localFileBuffer, {
+src/modules/media/server/story-video-storage.service.ts:  return storagePath
+src/modules/media/server/story-video-storage.service.ts:  await admin.storage.from(STORIES_TEMP_BUCKET).remove([tempStoragePath])
+src/modules/media/types.ts:  storagePath: string
+src/modules/media/lib/story-video-processor-contract.ts:  temp_storage_path: string
+src/modules/media/lib/story-video-processor-contract.ts:    tempStoragePath: job.temp_storage_path,
+src/modules/media/lib/story-video-processor-contract.ts:    temp_storage_path: job.temp_storage_path,
+src/modules/media/lib/story-video-job-contract.ts:  trimmed_storage_path: string
+src/modules/media/lib/story-video-job-contract.ts:    trimmed_storage_path: params.trimmedStoragePath,

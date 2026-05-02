@@ -1,5 +1,5 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { CreatePostPersistedBlockRowInput } from "../types"
+import { insertPostBlocks } from "../repositories/post-block-repository"
 
 export async function createPostBlocks(
   postId: string,
@@ -18,11 +18,5 @@ export async function createPostBlocks(
     editor_state: block.editorState ?? null,
   }))
 
-  const { error } = await supabaseAdmin
-    .from("post_blocks")
-    .insert(rows)
-
-  if (error) {
-    throw error
-  }
+  await insertPostBlocks(rows)
 }

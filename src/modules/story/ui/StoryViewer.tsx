@@ -25,7 +25,10 @@ type StoryViewerProps = {
   > | void
 }
 
-
+const STORY_VIEWER_NAV_BUTTON_CLASS =
+  "inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-xl leading-none text-white transition hover:bg-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+const STORY_VIEWER_NAV_SIDE_CLASS =
+  "absolute top-1/2 z-20 -translate-y-1/2"
 
 function formatStoryDate(value: string) {
   const date = new Date(value)
@@ -92,10 +95,9 @@ export function StoryViewer({
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const lastMarkedStoryIdRef = useRef<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
-    const timerRef = useRef<number | null>(null)
+  const timerRef = useRef<number | null>(null)
   const timerStartedAtRef = useRef<number | null>(null)
-
-const hasAdvancedRef = useRef(false)
+  const hasAdvancedRef = useRef(false)
 
   useEffect(() => {
     if (open) {
@@ -109,41 +111,35 @@ const hasAdvancedRef = useRef(false)
 
   const story = stories[currentIndex] ?? null
 
-  const playbackPolicy = story
-  ? getStoryPlaybackPolicy(story)
-  : null
-
-const shouldUseFixedTimer = playbackPolicy?.mode === "fixed"
-const fixedDurationMs = playbackPolicy?.durationMs ?? 10000
-
-
- 
+  const playbackPolicy = story ? getStoryPlaybackPolicy(story) : null
+  const shouldUseFixedTimer = playbackPolicy?.mode === "fixed"
+  const fixedDurationMs = playbackPolicy?.durationMs ?? 10000
 
   const markSeen = useCallback(
     async (trigger: "advance" | "close") => {
-    if (!story) return
+      if (!story) return
 
-    const resolution = resolveStorySeenUpdate({
-      creatorId: story.creatorId,
-      storyId: story.id,
-      lastMarkedStoryId: lastMarkedStoryIdRef.current,
-      trigger,
-    })
+      const resolution = resolveStorySeenUpdate({
+        creatorId: story.creatorId,
+        storyId: story.id,
+        lastMarkedStoryId: lastMarkedStoryIdRef.current,
+        trigger,
+      })
 
-    if (!resolution.shouldMarkSeen) {
-      return
-    }
+      if (!resolution.shouldMarkSeen) {
+        return
+      }
 
-    const result = await onSeenStories?.({
-      creatorId: story.creatorId,
-      storyId: story.id,
-    })
+      const result = await onSeenStories?.({
+        creatorId: story.creatorId,
+        storyId: story.id,
+      })
 
-    if (result && !result.ok) {
-      return
-    }
+      if (result && !result.ok) {
+        return
+      }
 
-    lastMarkedStoryIdRef.current = result?.persistedStoryId ?? story.id
+      lastMarkedStoryIdRef.current = result?.persistedStoryId ?? story.id
     },
     [onSeenStories, story]
   )
@@ -153,43 +149,43 @@ const fixedDurationMs = playbackPolicy?.durationMs ?? 10000
     onClose()
   }, [markSeen, onClose])
 
-function handlePrev() {
-  if (currentIndex === 0) return
+  function handlePrev() {
+    if (currentIndex === 0) return
 
-  if (timerRef.current) {
-    window.clearInterval(timerRef.current)
-    timerRef.current = null
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+
+    timerStartedAtRef.current = null
+
+    setCurrentIndex((prev) => prev - 1)
+    setProgress(0)
   }
 
-  timerStartedAtRef.current = null
+  async function handleNext() {
+    if (hasAdvancedRef.current) return
+    hasAdvancedRef.current = true
 
-  setCurrentIndex((prev) => prev - 1)
-  setProgress(0)
-}
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current)
+      timerRef.current = null
+    }
 
-async function handleNext() {
-  if (hasAdvancedRef.current) return
-  hasAdvancedRef.current = true
+    timerStartedAtRef.current = null
 
-  if (timerRef.current) {
-    window.clearInterval(timerRef.current)
-    timerRef.current = null
+    await markSeen("advance")
+
+    const resolution = resolveNextStoryIndex(stories, currentIndex)
+
+    if (resolution.shouldClose) {
+      onClose()
+      return
+    }
+
+    setCurrentIndex(resolution.nextIndex!)
+    setProgress(0)
   }
-
-  timerStartedAtRef.current = null
-
-  await markSeen("advance")
-
-  const resolution = resolveNextStoryIndex(stories, currentIndex)
-
-  if (resolution.shouldClose) {
-    onClose()
-    return
-  }
-
-  setCurrentIndex(resolution.nextIndex!)
-  setProgress(0)
-}
 
   function handleTouchStart(event: React.TouchEvent<HTMLDivElement>) {
     touchStartXRef.current = event.touches[0]?.clientX ?? null
@@ -248,13 +244,10 @@ async function handleNext() {
     timerStartedAtRef.current = null
     setProgress(0)
   }, [open, story?.id])
+
   const musicPreviewUrl = story?.editorState?.music?.previewUrl ?? null
 
-
-
-
-
-    useEffect(() => {
+  useEffect(() => {
     if (!open || !story) return
     if (!shouldUseFixedTimer) return
 
@@ -272,8 +265,8 @@ async function handleNext() {
     }
 
     if (timerStartedAtRef.current === null) {
- timerStartedAtRef.current =
-  Date.now() - (progress / 100) * fixedDurationMs
+      timerStartedAtRef.current =
+        Date.now() - (progress / 100) * fixedDurationMs
     }
 
     timerRef.current = window.setInterval(() => {
@@ -282,7 +275,7 @@ async function handleNext() {
       const elapsed = Date.now() - timerStartedAtRef.current
       const nextProgress = Math.min(
         100,
-   (elapsed / fixedDurationMs) * 100
+        (elapsed / fixedDurationMs) * 100
       )
 
       setProgress(nextProgress)
@@ -305,9 +298,6 @@ async function handleNext() {
       }
     }
   }, [currentIndex, handleNext, isPaused, open, shouldUseFixedTimer, story])
-
-
-  
 
   useEffect(() => {
     setHasAudioError(false)
@@ -348,7 +338,7 @@ async function handleNext() {
   const storyMusic = story.editorState?.music ?? null
   const musicStickerX = Math.min(0.78, Math.max(0.22, storyMusic?.x ?? 0.22))
   const musicStickerY = Math.min(0.22, Math.max(0.14, storyMusic?.y ?? 0.12))
-const storyMusicStyle = storyMusic?.style ?? "default"
+  const storyMusicStyle = storyMusic?.style ?? "default"
   return (
     <div
       className="fixed inset-0 z-[100] bg-black/90"
@@ -528,72 +518,78 @@ const storyMusicStyle = storyMusic?.style ?? "default"
                       top: `${(musicStickerY * 100).toFixed(2)}%`,
                     }}
                   >
-<div
-  className={`border border-white/10 bg-black/65 backdrop-blur-sm ${
-    storyMusicStyle === "minimal"
-      ? "rounded-full px-3 py-1.5"
-      : storyMusicStyle === "bold"
-        ? "rounded-3xl px-4 py-3 shadow-2xl"
-        : "rounded-2xl px-3 py-2 shadow-lg"
-  }`}
->
-  {storyMusicStyle === "minimal" ? (
-    <div className="flex items-center gap-2">
-      <span className="text-sm text-white">🎵</span>
-      <p className="max-w-[160px] truncate text-xs font-medium text-white">
-        {storyMusic.title ?? "Story music"}
-      </p>
-    </div>
-  ) : (
-    <div className="flex items-center gap-3">
-      {storyMusic.artworkUrl ? (
-        <img
-          src={storyMusic.artworkUrl}
-          alt={storyMusic.title ?? "Story music"}
-          className={`object-cover ${
-            storyMusicStyle === "bold"
-              ? "h-12 w-12 rounded-2xl"
-              : "h-10 w-10 rounded-xl"
-          }`}
-        />
-      ) : (
-        <div
-          className={`flex items-center justify-center bg-white/10 text-white ${
-            storyMusicStyle === "bold"
-              ? "h-12 w-12 rounded-2xl text-base"
-              : "h-10 w-10 rounded-xl text-sm"
-          }`}
-        >
-          🎵
-        </div>
-      )}
+                    <div
+                      className={`border border-white/10 bg-black/65 backdrop-blur-sm ${
+                        storyMusicStyle === "minimal"
+                          ? "rounded-full px-3 py-1.5"
+                          : storyMusicStyle === "bold"
+                            ? "rounded-3xl px-4 py-3 shadow-2xl"
+                            : "rounded-2xl px-3 py-2 shadow-lg"
+                      }`}
+                    >
+                      {storyMusicStyle === "minimal" ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-white">🎵</span>
+                          <p className="max-w-[160px] truncate text-xs font-medium text-white">
+                            {storyMusic.title ?? "Story music"}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          {storyMusic.artworkUrl ? (
+                            <img
+                              src={storyMusic.artworkUrl}
+                              alt={storyMusic.title ?? "Story music"}
+                              className={`object-cover ${
+                                storyMusicStyle === "bold"
+                                  ? "h-12 w-12 rounded-2xl"
+                                  : "h-10 w-10 rounded-xl"
+                              }`}
+                            />
+                          ) : (
+                            <div
+                              className={`flex items-center justify-center bg-white/10 text-white ${
+                                storyMusicStyle === "bold"
+                                  ? "h-12 w-12 rounded-2xl text-base"
+                                  : "h-10 w-10 rounded-xl text-sm"
+                              }`}
+                            >
+                              🎵
+                            </div>
+                          )}
 
-      <div className="min-w-0">
-        <p
-          className={`truncate font-medium uppercase tracking-[0.18em] text-pink-300 ${
-            storyMusicStyle === "bold" ? "text-[10px]" : "text-[11px]"
-          }`}
-        >
-          Music
-        </p>
-        <p
-          className={`truncate font-semibold text-white ${
-            storyMusicStyle === "bold" ? "text-base" : "text-sm"
-          }`}
-        >
-          {storyMusic.title ?? "Story music"}
-        </p>
-        <p
-          className={`truncate text-zinc-300 ${
-            storyMusicStyle === "bold" ? "text-sm" : "text-xs"
-          }`}
-        >
-          {storyMusic.artist ?? ""}
-        </p>
-      </div>
-    </div>
-  )}
-</div>
+                          <div className="min-w-0">
+                            <p
+                              className={`truncate font-medium uppercase tracking-[0.18em] text-pink-300 ${
+                                storyMusicStyle === "bold"
+                                  ? "text-[10px]"
+                                  : "text-[11px]"
+                              }`}
+                            >
+                              Music
+                            </p>
+                            <p
+                              className={`truncate font-semibold text-white ${
+                                storyMusicStyle === "bold"
+                                  ? "text-base"
+                                  : "text-sm"
+                              }`}
+                            >
+                              {storyMusic.title ?? "Story music"}
+                            </p>
+                            <p
+                              className={`truncate text-zinc-300 ${
+                                storyMusicStyle === "bold"
+                                  ? "text-sm"
+                                  : "text-xs"
+                              }`}
+                            >
+                              {storyMusic.artist ?? ""}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ) : null}
 
@@ -604,7 +600,6 @@ const storyMusicStyle = storyMusic?.style ?? "default"
                     style={{
                       left: `${overlay.x * 100}%`,
                       top: `${overlay.y * 100}%`,
-                  
                       transform: `translate(-50%, -50%) scale(${overlay.scale ?? 1})`,
                     }}
                   >
@@ -649,28 +644,36 @@ const storyMusicStyle = storyMusic?.style ?? "default"
               </>
             )}
 
-      {currentIndex > 0 ? (
+            {currentIndex > 0 ? (
               <button
                 type="button"
                 onClick={(event) => {
                   event.stopPropagation()
                   handlePrev()
                 }}
-                className="absolute left-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/40 px-3 py-2 text-white"
+                className={[
+                  STORY_VIEWER_NAV_SIDE_CLASS,
+                  "left-3",
+                  STORY_VIEWER_NAV_BUTTON_CLASS,
+                ].join(" ")}
                 aria-label="Previous story"
               >
                 ‹
               </button>
             ) : null}
 
-        {currentIndex < stories.length - 1 ? (
+            {currentIndex < stories.length - 1 ? (
               <button
                 type="button"
                 onClick={(event) => {
                   event.stopPropagation()
                   void handleNext()
                 }}
-                className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/40 px-3 py-2 text-white"
+                className={[
+                  STORY_VIEWER_NAV_SIDE_CLASS,
+                  "right-3",
+                  STORY_VIEWER_NAV_BUTTON_CLASS,
+                ].join(" ")}
                 aria-label="Next story"
               >
                 ›

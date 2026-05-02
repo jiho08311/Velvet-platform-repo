@@ -1,0 +1,75 @@
+src/modules/media/server/get-secure-post-media.ts:    .from("media")
+src/modules/media/server/get-secure-post-media.ts:        storagePath: media.storage_path,
+src/modules/media/server/create-media.ts:    .from("media")
+src/modules/media/server/create-media.ts:    storagePath: data.storage_path,
+src/modules/media/server/upload-media.ts:  const { error } = await supabaseAdmin.storage
+src/modules/media/server/upload-media.ts:    .upload(storagePath, file, {
+src/modules/media/server/create-media-signed-url.ts:  const { data, error } = await supabaseAdmin.storage
+src/modules/media/server/create-media-signed-url.ts:    .createSignedUrl(resolvedStoragePath, expiresIn)
+src/modules/media/server/story-video-storage.service.ts:  const { error } = await admin.storage
+src/modules/media/server/story-video-storage.service.ts:    .upload(storagePath, fileBuffer, {
+src/modules/media/server/story-video-storage.service.ts:  const { data, error } = await admin.storage
+src/modules/media/server/story-video-storage.service.ts:  const { error } = await admin.storage
+src/modules/media/server/story-video-storage.service.ts:    .upload(storagePath, params.localFileBuffer, {
+src/modules/media/server/story-video-storage.service.ts:  await admin.storage.from(STORIES_TEMP_BUCKET).remove([tempStoragePath])
+src/app/api/story-read/route.ts:        remove() {},
+src/app/api/story/video-job/route.ts:          remove() {},
+src/app/api/story/video-job/[jobId]/route.ts:          remove() {},
+src/app/api/story/create/route.ts:      storagePath: payload.storagePath,
+src/modules/post/ui/CreatePostComposer.tsx:    const { error } = await supabase.storage
+src/modules/post/ui/CreatePostComposer.tsx:      .upload(path, entry.file, {
+src/modules/post/server/list-creator-posts.ts:    .from("media")
+src/modules/post/server/list-creator-posts.ts:            storagePath: item.storage_path,
+src/modules/post/server/get-post-media.ts:    .from("media")
+src/modules/post/server/get-post-media.ts:        storagePath: media.storage_path,
+src/modules/post/server/get-creator-feed.ts:    .from("media")
+src/modules/post/server/get-creator-feed.ts:            storagePath: item.storage_path,
+src/modules/post/server/get-my-posts.ts:    .from("media")
+src/modules/post/server/get-my-posts.ts:            storagePath: item.storage_path,
+src/modules/post/server/list-feed-posts.ts:    .from("media")
+src/modules/post/server/list-feed-posts.ts:            storagePath: item.storage_path,
+src/modules/post/server/get-creator-studio-post.ts:    .from("media")
+src/modules/post/server/get-creator-studio-post.ts:      const { data: signedUrlData } = await supabaseAdmin.storage
+src/modules/post/server/get-creator-studio-post.ts:        .createSignedUrl(item.storage_path, 60 * 60)
+src/modules/post/server/update-post-action.ts:      .from("media")
+src/modules/post/server/update-post-action.ts:      .map((media) => media.storage_path)
+src/modules/post/server/update-post-action.ts:      const { error: storageDeleteError } = await supabaseAdmin.storage
+src/modules/post/server/update-post-action.ts:        .remove(storagePaths)
+src/modules/post/server/update-post-action.ts:      .from("media")
+src/modules/post/server/update-post-action.ts:      .from("media")
+src/modules/post/server/update-post-action.ts:          storagePath: createdMedia.storagePath,
+src/modules/post/server/update-post-action.ts:        .from("media")
+src/modules/post/server/get-post-by-id.ts:      .from("media")
+src/modules/post/server/get-post-by-id.ts:        storagePath: item.storage_path,
+src/modules/post/server/create-post-draft-policy.ts:    storagePath: item.storagePath,
+src/modules/message/server/get-secure-message-media.ts:    .from("media")
+src/modules/message/server/assert-message-attachment-eligibility.ts:    .from("media")
+src/modules/message/server/create-conversation-message-media.ts:      storagePath: media.storage_path,
+src/modules/message/server/send-message.ts:    .from("media")
+src/modules/message/server/send-message.ts:    const { data, error: downloadError } = await supabaseAdmin.storage
+src/modules/message/server/send-message.ts:      .download(media.storage_path)
+src/modules/message/server/send-message.ts:      .from("media")
+src/modules/message/server/send-message.ts:    .from("media")
+src/modules/message/server/list-messages.ts:      .from("media")
+src/modules/story/ui/CreateStoryComposer.tsx:  const { error } = await supabase.storage
+src/modules/story/ui/CreateStoryComposer.tsx:    .upload(path, file, {
+src/modules/story/ui/EditStoryModal.tsx:  const { error } = await supabase.storage
+src/modules/story/ui/EditStoryModal.tsx:    .upload(path, file, {
+src/modules/story/server/create-story.ts:    mediaUrl: data.storage_path,
+src/modules/story/server/get-stories.ts:              storagePath: story.row.storage_path,
+src/modules/story/server/get-stories.ts:        mediaType: resolveStoryMediaType(story.row.storage_path),
+src/modules/story/server/update-story-action.ts:    updatePayload.storage_path = nextStoragePath
+src/modules/story/lib/story-create-payload.ts:    storagePath: params.storagePath,
+src/modules/story/lib/story-create-payload.ts:  if (typeof value?.storagePath !== "string" || !value.storagePath.trim()) {
+src/modules/story/lib/story-create-payload.ts:  if (isVideoStoryStoragePath(value.storagePath)) {
+src/modules/story/lib/story-create-payload.ts:    storagePath: value.storagePath,
+src/modules/story/lib/story-create-payload.ts:    storage_path: params.storagePath,
+src/modules/feed/ui/FeedComposer.tsx:    const { error } = await supabase.storage
+src/modules/feed/ui/FeedComposer.tsx:      .upload(path, file, {
+src/modules/feed/server/get-home-feed.ts:    .from("media")
+src/modules/feed/server/get-home-feed.ts:            storagePath: item.storage_path,
+src/modules/search/server/get-explore-posts.ts:    .from("media")
+src/modules/search/server/get-explore-posts.ts:            storagePath: item.storage_path,
+src/modules/search/server/get-explore-posts.ts:        id: `${post.id}:${media.storage_path}`,
+src/modules/creator/server/get-creator-page.ts:    .from("media")
+src/modules/creator/server/get-creator-page.ts:            storagePath: item.storage_path,

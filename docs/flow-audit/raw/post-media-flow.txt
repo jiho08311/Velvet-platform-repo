@@ -1,0 +1,310 @@
+src/app/creator/studio/page.tsx:async function deletePostAction(postId: string) {
+src/app/creator/studio/page.tsx:                    <form action={deletePostAction.bind(null, post.id)}>
+src/app/creator/[username]/page.tsx:import { getCreatorFeed } from "@/modules/post/server/get-creator-feed"
+src/app/creator/[username]/page.tsx:  updatePostCount: number
+src/app/creator/[username]/page.tsx:  updatePostCount,
+src/app/creator/[username]/page.tsx:        <p className="text-base font-semibold text-white">{updatePostCount}</p>
+src/app/creator/[username]/page.tsx:  const posts = await getCreatorFeed({
+src/app/creator/[username]/page.tsx:  function getPostRenderMediaCount(post: (typeof posts)[number]) {
+src/app/creator/[username]/page.tsx:  const updatePosts = posts.filter(
+src/app/creator/[username]/page.tsx:    (post) => getPostRenderMediaCount(post) === 0 || post.status !== "published"
+src/app/creator/[username]/page.tsx:    (post) => getPostRenderMediaCount(post) > 0 && post.status === "published"
+src/app/creator/[username]/page.tsx:  updatePostCount={updatePosts.length}
+src/app/creator/[username]/page.tsx:                  updatePosts={updatePosts}
+src/app/post/[postId]/page.tsx:import { getPostById } from "@/modules/post/server/get-post-by-id"
+src/app/post/[postId]/page.tsx:import { deletePostAction } from "@/modules/post/server/delete-post-action"
+src/app/post/[postId]/page.tsx:import { getPostLockedPreviewPresentation } from "@/modules/post/lib/get-post-locked-preview-presentation"
+src/app/post/[postId]/page.tsx:import { getPostCommerceCtaDecision } from "@/modules/post/lib/post-commerce-policy"
+src/app/post/[postId]/page.tsx:  const post = await getPostById(postId, user?.id ?? null)
+src/app/post/[postId]/page.tsx:  const lockedPreviewPresentation = getPostLockedPreviewPresentation({
+src/app/post/[postId]/page.tsx:  const ctaDecision = getPostCommerceCtaDecision({
+src/app/post/[postId]/page.tsx:            <form action={deletePostAction.bind(null, post.id)}>
+src/app/post/[postId]/page.tsx:              commentsCount={post.commentsCount}
+src/app/profile/page.tsx:import { getCreatorFeed } from "@/modules/post/server/get-creator-feed"
+src/app/profile/page.tsx:      ? getCreatorFeed({
+src/app/profile/page.tsx:  function getPostRenderMediaCount(post: (typeof posts)[number]) {
+src/app/profile/page.tsx:  const updatePosts = posts.filter(
+src/app/profile/page.tsx:    (post) => getPostRenderMediaCount(post) === 0 || post.status !== "published"
+src/app/profile/page.tsx:    (post) => getPostRenderMediaCount(post) > 0 && post.status === "published"
+src/app/profile/page.tsx:                      {updatePosts.length}
+src/app/profile/page.tsx:            updatePosts={updatePosts}
+src/app/profile/[username]/page.tsx:import { getCreatorFeed } from "@/modules/post/server/get-creator-feed"
+src/app/profile/[username]/page.tsx:import { getPostCommerceCtaDecision } from "@/modules/post/lib/post-commerce-policy"
+src/app/profile/[username]/page.tsx:  const posts = await getCreatorFeed({
+src/app/profile/[username]/page.tsx:                  const shouldShowPurchaseCta = getPostCommerceCtaDecision({
+src/app/feed/page.tsx:    commentsCount: item.commentsCount,
+src/app/api/post/feed/route.ts:import { getCreatorFeed } from "@/modules/post/server/get-creator-feed";
+src/app/api/post/feed/route.ts:    const posts = await getCreatorFeed({
+src/app/api/post/purchase/route.ts:import { getPostById } from "@/modules/post/server/get-post-by-id"
+src/app/api/post/purchase/route.ts:  const post = await getPostById(postId, user.id)
+src/app/api/post/create/route.ts:import { createPostWithMediaWorkflow } from "@/workflows/create-post-with-media-workflow"
+src/app/api/post/create/route.ts:    await createPostWithMediaWorkflow({
+src/app/api/post/[postId]/comments/route.ts:  const { data: comments, error: commentsError } = await supabaseAdmin
+src/app/api/post/[postId]/comments/route.ts:    .from("comments")
+src/app/api/post/[postId]/comments/route.ts:  if (commentsError) {
+src/app/api/post/[postId]/comments/route.ts:      { error: commentsError.message },
+src/app/api/post/[postId]/comments/route.ts:  const commentIds = (comments ?? []).map((comment) => comment.id)
+src/app/api/post/[postId]/comments/route.ts:    .from("comment_likes")
+src/app/api/post/[postId]/comments/route.ts:    new Set((comments ?? []).map((comment) => comment.user_id).filter(Boolean))
+src/app/api/post/[postId]/comments/route.ts:  const items = (comments ?? []).map((comment) => {
+src/app/api/post/[postId]/like/route.ts:async function getPostLikesCount(postId: string) {
+src/app/api/post/[postId]/like/route.ts:    .from("post_likes")
+src/app/api/post/[postId]/like/route.ts:    .from("post_likes")
+src/app/api/post/[postId]/like/route.ts:  const likesCount = await getPostLikesCount(postId)
+src/app/api/post/[postId]/like/route.ts:    .from("post_likes")
+src/app/api/post/[postId]/like/route.ts:  const likesCount = await getPostLikesCount(postId)
+src/app/api/post/[postId]/delete/route.ts:import { deletePost } from "@/modules/post/server/delete-post"
+src/app/api/post/[postId]/delete/route.ts:    await deletePost({
+src/app/api/post/[postId]/comment/route.ts:    .from("comments")
+src/app/api/comment/[commentId]/like/route.ts:    .from("comment_likes")
+src/app/api/comment/[commentId]/like/route.ts:    .from("comment_likes")
+src/app/api/comment/[commentId]/like/route.ts:    .from("comments")
+src/app/api/comment/[commentId]/like/route.ts:    .from("comment_likes")
+src/app/api/comment/[commentId]/route.ts:    .from("comments")
+src/app/api/comment/[commentId]/route.ts:    .from("comments")
+src/app/api/payment/ppv-post/route.ts:import { getPostById } from "@/modules/post/server/get-post-by-id";
+src/app/api/payment/ppv-post/route.ts:  const post = await getPostById(postId, user.id);
+src/app/api/media/upload/route.ts:import { createMedia } from "@/modules/media/server/create-media"
+src/app/api/media/upload/route.ts:import { uploadMedia } from "@/modules/media/server/upload-media"
+src/app/api/media/upload/route.ts:      const storagePath = await uploadMedia({
+src/app/api/media/upload/route.ts:      const media = await createMedia({
+src/workflows/create-post-with-media-workflow.ts:import { createPost } from "@/modules/post/server/create-post"
+src/workflows/create-post-with-media-workflow.ts:import { createPostAuthoringMedia } from "@/modules/media/server/create-media"
+src/workflows/create-post-with-media-workflow.ts:import { updatePostStatus } from "@/modules/post/server/update-post-status"
+src/workflows/create-post-with-media-workflow.ts:import { createPostBlocks } from "@/modules/post/server/create-post-blocks"
+src/workflows/create-post-with-media-workflow.ts:  await updatePostStatus({
+src/workflows/create-post-with-media-workflow.ts:  await updatePostStatus({
+src/workflows/create-post-with-media-workflow.ts:export async function createPostWithMediaWorkflow({
+src/workflows/create-post-with-media-workflow.ts:  const post = await createPost({
+src/workflows/create-post-with-media-workflow.ts:    const mediaRow = await createPostAuthoringMedia({
+src/workflows/create-post-with-media-workflow.ts:  await createPostBlocks(post.id, persistencePlan.blocksToInsert)
+src/shared/lib/like-interaction-result.ts:export function createPostLikeCompatibilityFields(
+src/modules/creator/ui/CreatorContentTabs.tsx:  updatePosts: CreatorContentTabPost[]
+src/modules/creator/ui/CreatorContentTabs.tsx:function getPostTileState(post: CreatorContentTabPost, isOwner: boolean) {
+src/modules/creator/ui/CreatorContentTabs.tsx:    getPostTileState(post, isOwner)
+src/modules/creator/ui/CreatorContentTabs.tsx:  updatePosts,
+src/modules/creator/ui/CreatorContentTabs.tsx:      ) : updatePosts.length > 0 ? (
+src/modules/creator/ui/CreatorContentTabs.tsx:          {updatePosts.map((post) => (
+src/modules/creator/server/get-creator-page.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/creator/server/get-creator-page.ts:import { getPostLockedPreviewPresentation } from "@/modules/post/lib/get-post-locked-preview-presentation"
+src/modules/creator/server/get-creator-page.ts:import { getPostAccess } from "@/modules/post/server/get-post-access"
+src/modules/creator/server/get-creator-page.ts:import { createPostLikeCompatibilityFields } from "@/shared/lib/like-interaction-result"
+src/modules/creator/server/get-creator-page.ts:    .from("post_likes")
+src/modules/creator/server/get-creator-page.ts:      .from("post_likes")
+src/modules/creator/server/get-creator-page.ts:    .from("comments")
+src/modules/creator/server/get-creator-page.ts:    .from("post_blocks")
+src/modules/creator/server/get-creator-page.ts:          ...createPostLikeCompatibilityFields(likeState),
+src/modules/creator/server/get-creator-page.ts:          commentsCount: 0,
+src/modules/creator/server/get-creator-page.ts:      const access = await getPostAccess({
+src/modules/creator/server/get-creator-page.ts:      const lockedPreviewPresentation = getPostLockedPreviewPresentation(access)
+src/modules/creator/server/get-creator-page.ts:          url: await createMediaSignedUrl({
+src/modules/creator/server/get-creator-page.ts:        ...createPostLikeCompatibilityFields(likeState),
+src/modules/creator/server/get-creator-page.ts:        commentsCount: commentCountMap.get(post.id) ?? 0,
+src/modules/post/ui/PostCard.tsx:import { getPostCommerceCtaDecision } from "@/modules/post/lib/post-commerce-policy"
+src/modules/post/ui/PostCard.tsx:  commentsCount?: number
+src/modules/post/ui/PostCard.tsx:  commentsCount = 0,
+src/modules/post/ui/PostCard.tsx:  const [comments, setComments] = useState<CommentItem[]>([])
+src/modules/post/ui/PostCard.tsx:  const previousServerCommentsCountRef = useRef(commentsCount)
+src/modules/post/ui/PostCard.tsx:  const displayCommentCount = Math.max(0, commentsCount + optimisticCommentCountDelta)
+src/modules/post/ui/PostCard.tsx:      const response = await fetch(`/api/post/${postId}/comments`, {
+src/modules/post/ui/PostCard.tsx:    if (previousServerCommentsCountRef.current === commentsCount) {
+src/modules/post/ui/PostCard.tsx:    previousServerCommentsCountRef.current = commentsCount
+src/modules/post/ui/PostCard.tsx:  }, [commentsCount])
+src/modules/post/ui/PostCard.tsx:    const ctaDecision = getPostCommerceCtaDecision({
+src/modules/post/ui/PostCard.tsx:  const visibleComments = expandedComments ? comments : comments.slice(0, 3)
+src/modules/post/ui/PostCard.tsx:    if (nextShow && comments.length === 0) {
+src/modules/post/ui/PostCard.tsx:    if (comments.length === 0) {
+src/modules/post/ui/PostCard.tsx:        <p className={POST_CARD_COMMENT_CLASSES.empty}>No comments yet.</p>
+src/modules/post/ui/PostCard.tsx:        {comments.length > 3 ? (
+src/modules/post/ui/PostCard.tsx:              ? "Hide comments"
+src/modules/post/ui/PostCard.tsx:              : `View ${comments.length - 3} more comments`}
+src/modules/post/ui/EditPostComposer.tsx:import { updatePostAction } from "../server/update-post-action"
+src/modules/post/ui/EditPostComposer.tsx:                await updatePostAction({
+src/modules/post/ui/CreatePostComposer.tsx:import { createPostAction } from "../server/create-post-action"
+src/modules/post/ui/CreatePostComposer.tsx:              await createPostAction({
+src/modules/post/server/delete-post.ts:export async function deletePost({
+src/modules/post/server/post-editor-draft-normalizer.ts: * Persisted post_blocks -> create-compatible editor draft blocks.
+src/modules/post/server/list-creator-posts.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/post/server/list-creator-posts.ts:    .from("post_blocks")
+src/modules/post/server/list-creator-posts.ts:          const url = await createMediaSignedUrl({
+src/modules/post/server/get-post-access.ts:export async function getPostAccess({
+src/modules/post/server/update-post-status.ts:export async function updatePostStatus(input: UpdatePostStatusInput) {
+src/modules/post/server/enforce-post-visibility.ts:import { getPostAccess } from "./get-post-access"
+src/modules/post/server/enforce-post-visibility.ts:  return getPostAccess({
+src/modules/post/server/update-post.ts:export async function updatePost({
+src/modules/post/server/list-liked-posts.ts:    .from("post_likes")
+src/modules/post/server/create-feed-post-action.ts:import { createPostWithMediaWorkflow } from "@/workflows/create-post-with-media-workflow"
+src/modules/post/server/create-feed-post-action.ts:  await createPostWithMediaWorkflow(draftIntent)
+src/modules/post/server/get-post-media.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/post/server/get-post-media.ts:export async function getPostMedia(postId: string): Promise<PostMediaItem[]> {
+src/modules/post/server/get-post-media.ts:      const url = await createMediaSignedUrl({
+src/modules/post/server/get-creator-feed.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/post/server/get-creator-feed.ts:import { createPostLikeCompatibilityFields } from "@/shared/lib/like-interaction-result"
+src/modules/post/server/get-creator-feed.ts:export async function getCreatorFeed({
+src/modules/post/server/get-creator-feed.ts:    .from("post_likes")
+src/modules/post/server/get-creator-feed.ts:    .from("post_likes")
+src/modules/post/server/get-creator-feed.ts:    .from("comments")
+src/modules/post/server/get-creator-feed.ts:        ...createPostLikeCompatibilityFields(likeState),
+src/modules/post/server/get-creator-feed.ts:        commentsCount: 0,
+src/modules/post/server/get-creator-feed.ts:    .from("post_blocks")
+src/modules/post/server/get-creator-feed.ts:          const url = await createMediaSignedUrl({
+src/modules/post/server/get-creator-feed.ts:        ...createPostLikeCompatibilityFields(likeState),
+src/modules/post/server/get-creator-feed.ts:        commentsCount: commentCountMap.get(post.id) ?? 0,
+src/modules/post/server/create-post-action.ts:import { createPostWithMediaWorkflow } from "@/workflows/create-post-with-media-workflow"
+src/modules/post/server/create-post-action.ts:export async function createPostAction({
+src/modules/post/server/create-post-action.ts:    await createPostWithMediaWorkflow(draftIntent)
+src/modules/post/server/create-post-action.ts:    console.error("[createPostAction]", error)
+src/modules/post/server/get-my-posts.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/post/server/get-my-posts.ts:  createPostLikeCompatibilityFields,
+src/modules/post/server/get-my-posts.ts:    .from("post_likes")
+src/modules/post/server/get-my-posts.ts:    .from("post_blocks")
+src/modules/post/server/get-my-posts.ts:          const url = await createMediaSignedUrl({
+src/modules/post/server/get-my-posts.ts:        ...createPostLikeCompatibilityFields(likeState),
+src/modules/post/server/list-feed-posts.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/post/server/list-feed-posts.ts:import { getPostAccess } from "./get-post-access"
+src/modules/post/server/list-feed-posts.ts:  createPostLikeCompatibilityFields,
+src/modules/post/server/list-feed-posts.ts:export async function listFeedPosts({
+src/modules/post/server/list-feed-posts.ts:    .from("post_likes")
+src/modules/post/server/list-feed-posts.ts:    .from("post_blocks")
+src/modules/post/server/list-feed-posts.ts:      const access = await getPostAccess({
+src/modules/post/server/list-feed-posts.ts:          const url = await createMediaSignedUrl({
+src/modules/post/server/list-feed-posts.ts:        ...createPostLikeCompatibilityFields(likeState),
+src/modules/post/server/list-creator-studio-posts.ts:    .from("post_blocks")
+src/modules/post/server/get-creator-studio-post.ts:import { getPostBlocks } from "@/modules/post/server/get-post-blocks"
+src/modules/post/server/get-creator-studio-post.ts:      const { data: signedUrlData } = await supabaseAdmin.storage
+src/modules/post/server/get-creator-studio-post.ts:        url: signedUrlData?.signedUrl ?? "",
+src/modules/post/server/get-creator-studio-post.ts:  const rawBlocks = await getPostBlocks(post.id)
+src/modules/post/server/create-post.ts:export async function createPost({
+src/modules/post/server/delete-post-action.ts:import { deletePost } from "@/modules/post/server/delete-post"
+src/modules/post/server/delete-post-action.ts:export async function deletePostAction(postId: string) {
+src/modules/post/server/delete-post-action.ts:  await deletePost({
+src/modules/post/server/get-post-blocks.ts:export async function getPostBlocks(
+src/modules/post/server/get-post-blocks.ts:    .from("post_blocks")
+src/modules/post/server/update-post-action.ts:import { createMedia } from "@/modules/media/server/create-media"
+src/modules/post/server/update-post-action.ts:import { uploadMedia } from "@/modules/media/server/upload-media"
+src/modules/post/server/update-post-action.ts:import { updatePost } from "@/modules/post/server/update-post"
+src/modules/post/server/update-post-action.ts:import { updatePostStatus } from "@/modules/post/server/update-post-status"
+src/modules/post/server/update-post-action.ts:export async function updatePostAction({
+src/modules/post/server/update-post-action.ts:  await updatePost({
+src/modules/post/server/update-post-action.ts:      const storagePath = await uploadMedia({
+src/modules/post/server/update-post-action.ts:      const createdMedia = await createMedia({
+src/modules/post/server/update-post-action.ts:    await updatePostStatus({
+src/modules/post/server/update-post-action.ts:    .from("post_blocks")
+src/modules/post/server/update-post-action.ts:      .from("post_blocks")
+src/modules/post/server/resolve-post-access-state.ts:import { getPostPurchaseEligibility } from "@/modules/post/lib/can-purchase-post"
+src/modules/post/server/resolve-post-access-state.ts:import { getPostCommerceState } from "@/modules/post/lib/post-commerce-policy"
+src/modules/post/server/resolve-post-access-state.ts:import { getPostAccess } from "./get-post-access"
+src/modules/post/server/resolve-post-access-state.ts:  const access = await getPostAccess({
+src/modules/post/server/resolve-post-access-state.ts:  const purchaseEligibility = getPostPurchaseEligibility({
+src/modules/post/server/resolve-post-access-state.ts:    commerce: getPostCommerceState({
+src/modules/post/server/get-post-by-id.ts:import { getPostBlocks } from "@/modules/post/server/get-post-blocks"
+src/modules/post/server/get-post-by-id.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/post/server/get-post-by-id.ts:  createPostLikeCompatibilityFields,
+src/modules/post/server/get-post-by-id.ts:  commentsCount: number
+src/modules/post/server/get-post-by-id.ts:export async function getPostById(
+src/modules/post/server/get-post-by-id.ts:  const [{ count: likesCount }, { count: commentsCount }] = await Promise.all([
+src/modules/post/server/get-post-by-id.ts:      .from("post_likes")
+src/modules/post/server/get-post-by-id.ts:      .from("comments")
+src/modules/post/server/get-post-by-id.ts:        .from("post_likes")
+src/modules/post/server/get-post-by-id.ts:    getPostBlocks(post.id),
+src/modules/post/server/get-post-by-id.ts:      const url = await createMediaSignedUrl({
+src/modules/post/server/get-post-by-id.ts:    ...createPostLikeCompatibilityFields(likeState),
+src/modules/post/server/get-post-by-id.ts:    commentsCount: commentsCount ?? 0,
+src/modules/post/server/create-post-blocks.ts:export async function createPostBlocks(
+src/modules/post/server/create-post-blocks.ts:    .from("post_blocks")
+src/modules/post/server/create-post-draft-policy.ts: * - post_blocks rows
+src/modules/post/types.ts: * This shape is for rows that are ready to be inserted into post_blocks.
+src/modules/post/types.ts: * from saved post_blocks rows.
+src/modules/post/types.ts: * These coordinates are the source of truth for both post_blocks.sort_order and
+src/modules/post/types.ts: * This is the normalized input consumed by createPost persistence.
+src/modules/post/types.ts:  commentsCount: number
+src/modules/post/lib/get-post-locked-preview-presentation.ts:export function getPostLockedPreviewPresentation(
+src/modules/post/lib/get-post-public-state.ts:export function getPostPublicState(
+src/modules/post/lib/post-commerce-policy.ts:function getPostPurchaseCtaVisibility({
+src/modules/post/lib/post-commerce-policy.ts:export function getPostCommerceState({
+src/modules/post/lib/post-commerce-policy.ts:  return getPostCommerceState({
+src/modules/post/lib/post-commerce-policy.ts:export function getPostCommerceCtaDecision({
+src/modules/post/lib/post-commerce-policy.ts:    showPurchaseCta: getPostPurchaseCtaVisibility({
+src/modules/post/lib/can-purchase-post.ts:export function getPostPurchaseEligibility({
+src/modules/post/lib/can-purchase-post.ts:  return getPostPurchaseEligibility(input).canPurchase
+src/modules/post/lib/is-post-hidden.ts:import { getPostPublicState } from "./get-post-public-state"
+src/modules/post/lib/is-post-hidden.ts:    getPostPublicState({
+src/modules/post/lib/public-discovery-inclusion.ts:  getPostPublicState,
+src/modules/post/lib/public-discovery-inclusion.ts:  return getPostPublicState({
+src/modules/notification/ui/NotificationListSurface.tsx:            Stay updated on likes, comments, subscriptions, messages, and payments.
+src/modules/notification/server/create-notification-inputs.ts:export function createPostLikedNotificationInput(input: {
+src/modules/notification/server/create-interaction-notification-input.ts:  createPostLikedNotificationInput,
+src/modules/notification/server/create-interaction-notification-input.ts:      return createPostLikedNotificationInput({
+src/modules/payment/server/create-post-purchase-session.ts:async function getPost(postId: string): Promise<PostRow> {
+src/modules/payment/server/create-post-purchase-session.ts:export async function createPostPurchaseSession({
+src/modules/payment/server/create-post-purchase-session.ts:  const post = await getPost(postId)
+src/modules/payment/server/verify-payment-access-after-success.ts:import { getPostById } from "@/modules/post/server/get-post-by-id"
+src/modules/payment/server/verify-payment-access-after-success.ts:      const post = await getPostById(payment.target_id, safeViewerUserId)
+src/modules/message/server/create-conversation-message-media.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/message/server/create-conversation-message-media.ts:    url: await createMediaSignedUrl({
+src/modules/search/ui/ExplorePostGrid.tsx:  createPostLikeCompatibilityFields,
+src/modules/search/ui/ExplorePostGrid.tsx:          ...createPostLikeCompatibilityFields(data),
+src/modules/search/ui/ExplorePostGrid.tsx:        commentsCount: prev.commentsCount + 1,
+src/modules/search/ui/ExplorePostGrid.tsx:                      {selected.commentsCount}
+src/modules/search/ui/SearchExploreCommentsDrawer.tsx:const [comments, setComments] = useState<CommentItem[]>([])
+src/modules/search/ui/SearchExploreCommentsDrawer.tsx:  async function fetchComments(targetPostId: string) {
+src/modules/search/ui/SearchExploreCommentsDrawer.tsx:      const response = await fetch(`/api/post/${targetPostId}/comments`, {
+src/modules/search/ui/SearchExploreCommentsDrawer.tsx:        setError(data?.error ?? "Failed to load comments")
+src/modules/search/ui/SearchExploreCommentsDrawer.tsx:      // Do not treat comments.length as the post-level commentsCount SoT.
+src/modules/search/ui/SearchExploreCommentsDrawer.tsx:      setError("Failed to load comments")
+src/modules/search/ui/SearchExploreCommentsDrawer.tsx:            ) : comments.length === 0 ? (
+src/modules/search/ui/SearchExploreCommentsDrawer.tsx:                No comments yet
+src/modules/search/ui/SearchExploreCommentsDrawer.tsx:                {comments.map((comment) => {
+src/modules/search/server/get-explore-posts.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/search/server/get-explore-posts.ts:import { createPostLikeCompatibilityFields } from "@/shared/lib/like-interaction-result"
+src/modules/search/server/get-explore-posts.ts:    .from("post_likes")
+src/modules/search/server/get-explore-posts.ts:    .from("comments")
+src/modules/search/server/get-explore-posts.ts:    .from("post_blocks")
+src/modules/search/server/get-explore-posts.ts:          const url = await createMediaSignedUrl({
+src/modules/search/server/get-explore-posts.ts:        ...createPostLikeCompatibilityFields(likeState),
+src/modules/search/server/get-explore-posts.ts:        commentsCount: commentCountMap.get(post.id) ?? 0,
+src/modules/search/discovery-contract.ts:   * This must not be mixed with a loaded comments list length.
+src/modules/search/discovery-contract.ts:  commentsCount: number
+src/modules/profile/ui/ProfileContentTabs.tsx:  updatePosts: MyPostListItem[]
+src/modules/profile/ui/ProfileContentTabs.tsx:  updatePosts,
+src/modules/profile/ui/ProfileContentTabs.tsx:      ) : updatePosts.length > 0 ? (
+src/modules/profile/ui/ProfileContentTabs.tsx:          {updatePosts.map((post) => {
+src/modules/feed/ui/FeedInfiniteList.tsx:  commentsCount?: number
+src/modules/feed/ui/FeedInfiniteList.tsx:  commentsCount: number
+src/modules/feed/ui/FeedInfiniteList.tsx:    commentsCount: item.commentsCount,
+src/modules/feed/server/get-home-feed.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/feed/server/get-home-feed.ts:import { getPostAccess } from "@/modules/post/server/get-post-access"
+src/modules/feed/server/get-home-feed.ts:import { createPostLikeCompatibilityFields } from "@/shared/lib/like-interaction-result"
+src/modules/feed/server/get-home-feed.ts:  commentsCount: number
+src/modules/feed/server/get-home-feed.ts:  post_blocks?: Array<{
+src/modules/feed/server/get-home-feed.ts:  return [...(post.post_blocks ?? [])]
+src/modules/feed/server/get-home-feed.ts:         post_blocks (
+src/modules/feed/server/get-home-feed.ts:    .from("post_likes")
+src/modules/feed/server/get-home-feed.ts:      .from("post_likes")
+src/modules/feed/server/get-home-feed.ts:    .from("comments")
+src/modules/feed/server/get-home-feed.ts:        const access = await getPostAccess({
+src/modules/feed/server/get-home-feed.ts:          ...createPostLikeCompatibilityFields(likeState),
+src/modules/feed/server/get-home-feed.ts:          commentsCount: 0,
+src/modules/feed/server/get-home-feed.ts:      const access = await getPostAccess({
+src/modules/feed/server/get-home-feed.ts:          url: await createMediaSignedUrl({
+src/modules/feed/server/get-home-feed.ts:        ...createPostLikeCompatibilityFields(likeState),
+src/modules/feed/server/get-home-feed.ts:        commentsCount: commentCountMap.get(post.id) ?? 0,
+src/modules/feed/types.ts:  commentsCount?: number 
+src/modules/story/server/get-stories.ts:import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+src/modules/story/server/get-stories.ts:          ? await createMediaSignedUrl({
+src/modules/moderation/server/apply-video-moderation-outcome.ts:import { updatePostStatus } from "@/modules/post/server/update-post-status"
+src/modules/moderation/server/apply-video-moderation-outcome.ts:    await updatePostStatus({
+src/modules/moderation/server/apply-video-moderation-outcome.ts:    await updatePostStatus({
+src/modules/moderation/server/apply-video-moderation-outcome.ts:    await updatePostStatus({
+src/modules/moderation/server/apply-video-moderation-outcome.ts:  await updatePostStatus({
+src/modules/media/server/get-secure-post-media.ts:import { getPostById } from "@/modules/post/server/get-post-by-id"
+src/modules/media/server/get-secure-post-media.ts:import { createMediaSignedUrl } from "./create-media-signed-url"
+src/modules/media/server/get-secure-post-media.ts:export async function getSecurePostMedia({
+src/modules/media/server/get-secure-post-media.ts:  const post = await getPostById(postId, viewerUserId ?? null)
+src/modules/media/server/get-secure-post-media.ts:      const url = await createMediaSignedUrl({
+src/modules/media/server/create-media.ts:export async function createMedia({
+src/modules/media/server/create-media.ts:export async function createPostAuthoringMedia({
+src/modules/media/server/create-media.ts:  return createMedia({
+src/modules/media/server/upload-media.ts:export async function uploadMedia({
+src/modules/media/server/create-media-signed-url.ts:export async function createMediaSignedUrl({
+src/modules/media/server/create-media-signed-url.ts:  return data?.signedUrl ?? ""

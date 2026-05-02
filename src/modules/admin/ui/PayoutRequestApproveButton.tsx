@@ -6,6 +6,7 @@ import {
   approvePayoutRequestAction,
   type ApprovePayoutRequestActionState,
 } from "../server/approve-payout-request-action";
+import { getPayoutActionButtonClassName } from "./payoutActionButtonClassName";
 
 type PayoutRequestApproveButtonProps = {
   payoutRequestId: string;
@@ -15,13 +16,6 @@ type PayoutRequestApproveButtonProps = {
 const initialState: ApprovePayoutRequestActionState = {
   error: null,
 };
-
-const payoutActionButtonBaseClassName =
-  "rounded-xl px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50";
-
-function getPayoutActionButtonClassName(toneClassName: string) {
-  return `${payoutActionButtonBaseClassName} ${toneClassName}`;
-}
 
 function SubmitButton({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();

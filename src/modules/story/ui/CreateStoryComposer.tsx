@@ -251,9 +251,9 @@ export function CreateStoryComposer({
           }}
         />
       ) : draft ? (
-        <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-6">
+        <div className="w-full">
           <div className="space-y-5">
-            <div className="flex items-center justify-between">
+            <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
               <button
                 type="button"
                 onClick={() => setStep("editor")}
@@ -262,13 +262,15 @@ export function CreateStoryComposer({
                 Back
               </button>
 
-              <p className="text-sm font-medium text-black">Story settings</p>
+              <p className="text-center text-sm font-medium text-black">
+                Story settings
+              </p>
 
               <button
                 type="button"
                 disabled={isPending}
                 onClick={() => handleSubmitStory(draft)}
-                className="rounded-full bg-pink-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-pink-500 disabled:opacity-50"
+                className="min-w-[92px] rounded-full bg-pink-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-pink-500 disabled:opacity-50"
               >
                 {isPending ? "Publishing..." : "Publish"}
               </button>

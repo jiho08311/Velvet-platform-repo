@@ -1,0 +1,699 @@
+src/modules/subscription/ui/SubscriptionEmptyState.tsx:  title = "No subscriptions yet",
+src/modules/subscription/server/get-creator-subscribers.ts:import { resolveSubscriptionState } from "@/modules/subscription/lib/resolve-subscription-state"
+src/modules/subscription/server/get-creator-subscribers.ts:  subscriptionId: string
+src/modules/subscription/server/get-creator-subscribers.ts:  subscribedAt: string
+src/modules/subscription/server/get-creator-subscribers.ts:  .from("subscriptions")
+src/modules/subscription/server/get-creator-subscribers.ts:    subscriptionId: row.id,
+src/modules/subscription/server/get-creator-subscribers.ts:    subscribedAt: row.created_at,
+src/modules/subscription/server/get-subscription-by-id.ts:} from "@/modules/subscription/server/build-subscription-read-model"
+src/modules/subscription/server/get-subscription-by-id.ts:  subscriptionId: string
+src/modules/subscription/server/get-subscription-by-id.ts:    .from("subscriptions")
+src/modules/subscription/server/get-subscription-by-id.ts:    .eq("id", subscriptionId)
+src/modules/subscription/server/get-subscription-by-id.ts:      planLabel: "Monthly subscription",
+src/modules/subscription/server/unsubscribe.ts:export async function unsubscribe(subscriptionId: string) {
+src/modules/subscription/server/unsubscribe.ts:    .from("subscriptions")
+src/modules/subscription/server/unsubscribe.ts:    .eq("id", subscriptionId)
+src/modules/subscription/server/unsubscribe.ts:    throw new Error("Failed to unsubscribe")
+src/modules/subscription/server/get-viewer-subscription.ts:} from "@/modules/subscription/server/build-subscription-read-model"
+src/modules/subscription/server/get-viewer-subscription.ts:  subscription: {
+src/modules/subscription/server/get-viewer-subscription.ts:      subscription: null,
+src/modules/subscription/server/get-viewer-subscription.ts:    .from("subscriptions")
+src/modules/subscription/server/get-viewer-subscription.ts:      subscription: null,
+src/modules/subscription/server/get-viewer-subscription.ts:      subscription: null,
+src/modules/subscription/server/get-viewer-subscription.ts:    subscription: {
+src/modules/subscription/server/list-subscriptions.ts:    .from("subscriptions")
+src/modules/subscription/server/list-subscriptions.ts:    throw new Error("Failed to load subscriptions")
+src/modules/subscription/server/list-subscriptions.ts:  return (data ?? []).map((subscription: any) => {
+src/modules/subscription/server/list-subscriptions.ts:    const user = Array.isArray(subscription.profiles)
+src/modules/subscription/server/list-subscriptions.ts:      ? subscription.profiles[0]
+src/modules/subscription/server/list-subscriptions.ts:      : subscription.profiles
+src/modules/subscription/server/list-subscriptions.ts:      id: subscription.id,
+src/modules/subscription/server/list-subscriptions.ts:      status: subscription.status,
+src/modules/subscription/server/list-subscriptions.ts:      startedAt: subscription.created_at,
+src/modules/subscription/server/build-subscription-read-model.ts:import { resolveSubscriptionState } from "@/modules/subscription/lib/resolve-subscription-state"
+src/modules/subscription/server/build-subscription-read-model.ts:import type { SubscriptionStatus } from "@/modules/subscription/server/subscription-status"
+src/modules/subscription/server/is-subscribed.ts:import { resolveSubscriptionState } from "@/modules/subscription/lib/resolve-subscription-state"
+src/modules/subscription/server/is-subscribed.ts:export async function isSubscribed({
+src/modules/subscription/server/is-subscribed.ts:    .from("subscriptions")
+src/modules/subscription/server/get-active-subscription.ts:} from "@/modules/subscription/server/build-subscription-read-model"
+src/modules/subscription/server/get-active-subscription.ts:  provider_subscription_id: string | null
+src/modules/subscription/server/get-active-subscription.ts:export async function getActiveSubscription({
+src/modules/subscription/server/get-active-subscription.ts:    .from("subscriptions")
+src/modules/subscription/server/get-active-subscription.ts:      "id, user_id, creator_id, status, provider, provider_subscription_id, cancel_at_period_end, current_period_start, current_period_end, canceled_at, created_at, updated_at"
+src/modules/subscription/server/get-active-subscription.ts:    providerSubscriptionId: activeRow.provider_subscription_id,
+src/modules/subscription/server/list-user-subscriptions.ts:} from "@/modules/subscription/server/build-subscription-read-model"
+src/modules/subscription/server/list-user-subscriptions.ts:    .from("subscriptions")
+src/modules/subscription/server/list-user-subscriptions.ts:    throw new Error("Failed to load subscriptions")
+src/modules/subscription/server/upsert-subscription.ts:  provider_subscription_id: string | null
+src/modules/subscription/server/upsert-subscription.ts:export async function upsertSubscription({
+src/modules/subscription/server/upsert-subscription.ts:    .from("subscriptions")
+src/modules/subscription/server/upsert-subscription.ts:      "id, user_id, creator_id, status, provider, provider_subscription_id, current_period_start, current_period_end, canceled_at, cancel_at_period_end, created_at, updated_at"
+src/modules/subscription/server/upsert-subscription.ts:      .from("subscriptions")
+src/modules/subscription/server/upsert-subscription.ts:        provider_subscription_id:
+src/modules/subscription/server/upsert-subscription.ts:          providerSubscriptionId ?? existing.provider_subscription_id,
+src/modules/subscription/server/upsert-subscription.ts:        "id, user_id, creator_id, status, provider, provider_subscription_id, current_period_start, current_period_end, canceled_at, cancel_at_period_end, created_at, updated_at"
+src/modules/subscription/server/upsert-subscription.ts:    .from("subscriptions")
+src/modules/subscription/server/upsert-subscription.ts:      provider_subscription_id: providerSubscriptionId ?? null,
+src/modules/subscription/server/upsert-subscription.ts:      "id, user_id, creator_id, status, provider, provider_subscription_id, current_period_start, current_period_end, canceled_at, cancel_at_period_end, created_at, updated_at"
+src/modules/subscription/server/cancel-subscription.ts:    .from("subscriptions")
+src/modules/subscription/server/check-subscription.ts:import { getViewerSubscription } from "@/modules/subscription/server/get-viewer-subscription"
+src/modules/subscription/server/check-subscription.ts:export async function checkSubscription({
+src/modules/subscription/server/check-subscription.ts:  const viewerSubscription = await getViewerSubscription(
+src/modules/subscription/server/check-subscription.ts:  return viewerSubscription.isActive
+src/modules/subscription/lib/resolve-subscription-state.ts:import type { SubscriptionStatus } from "@/modules/subscription/server/subscription-status"
+src/modules/payment/ui/PaymentEmptyState.tsx:  title = "No payments yet",
+src/modules/payment/ui/PaymentEmptyState.tsx:  description = "Your payment history will appear here.",
+src/modules/payment/ui/PaymentHistoryList.tsx:import type { CreatorPaymentHistoryItem } from "@/modules/payment/types"
+src/modules/payment/ui/PaymentHistoryList.tsx:  payments: CreatorPaymentHistoryItem[]
+src/modules/payment/ui/PaymentHistoryList.tsx:  payment: CreatorPaymentHistoryItem
+src/modules/payment/ui/PaymentHistoryList.tsx:  payment,
+src/modules/payment/ui/PaymentHistoryList.tsx:        <p className={amountClassName}>{payment.displayAmount}</p>
+src/modules/payment/ui/PaymentHistoryList.tsx:        <p className={dateClassName}>{payment.displayDate}</p>
+src/modules/payment/ui/PaymentHistoryList.tsx:      <StatusBadge label={payment.statusLabel} />
+src/modules/payment/ui/PaymentHistoryList.tsx:  payments,
+src/modules/payment/ui/PaymentHistoryList.tsx:  emptyMessage = "No payments yet.",
+src/modules/payment/ui/PaymentHistoryList.tsx:  if (payments.length === 0) {
+src/modules/payment/ui/PaymentHistoryList.tsx:        {payments.map((payment) => (
+src/modules/payment/ui/PaymentHistoryList.tsx:          <PaymentHistoryListItem key={payment.id} payment={payment} />
+src/modules/payment/ui/payment-success-content.tsx:import { PaymentStateNotice } from "@/modules/payment/ui/PaymentStateNotice"
+src/modules/payment/ui/payment-success-content.tsx:import type { PaymentResultPageState } from "@/modules/payment/server/payment-result-state"
+src/modules/payment/ui/payment-success-content.tsx:import type { PaymentAccessVerification } from "@/modules/payment/types"
+src/modules/payment/ui/payment-success-content.tsx:  paymentId: string
+src/modules/payment/ui/payment-success-content.tsx:  paymentKey?: string | null
+src/modules/payment/ui/payment-success-content.tsx:  const paymentIdParam = searchParams.get("paymentId")
+src/modules/payment/ui/payment-success-content.tsx:  const paymentId = paymentIdParam || orderId
+src/modules/payment/ui/payment-success-content.tsx:  if (!paymentId) {
+src/modules/payment/ui/payment-success-content.tsx:    paymentId,
+src/modules/payment/ui/payment-success-content.tsx:    paymentKey: searchParams.get("paymentKey"),
+src/modules/payment/ui/payment-success-content.tsx:  if (accessVerification.kind === "payment") {
+src/modules/payment/ui/payment-success-content.tsx:      accessVerification.paymentType !== "ppv_message"
+src/modules/payment/ui/payment-success-content.tsx:      accessVerification.kind !== "subscription" ||
+src/modules/payment/ui/payment-success-content.tsx:      router.replace("/payment/fail?reason=invalid_request")
+src/modules/payment/ui/payment-success-content.tsx:        const res = await fetch("/api/payment/confirm", {
+src/modules/payment/ui/payment-success-content.tsx:        router.replace("/payment/fail?reason=verification_failed")
+src/modules/payment/server/create-post-purchase-session.ts:  visibility: "public" | "subscribers" | "paid"
+src/modules/payment/server/get-payment-by-id.ts:  paymentId: string
+src/modules/payment/server/get-payment-by-id.ts:  const id = paymentId.trim()
+src/modules/payment/server/get-payment-by-id.ts:    .from("payments")
+src/modules/payment/server/create-payment.ts:type PaymentType = "subscription" | "tip" | "ppv_message" | "ppv_post"
+src/modules/payment/server/create-payment.ts:        .from("payments")
+src/modules/payment/server/create-payment.ts:    .from("payments")
+src/modules/payment/server/toss-payment-provider.ts:} from "./payment-provider"
+src/modules/payment/server/toss-payment-provider.ts:      providerReferenceId: input.paymentId,
+src/modules/payment/server/toss-payment-provider.ts:    const paymentKey = input.providerReferenceId
+src/modules/payment/server/toss-payment-provider.ts:    if (!paymentKey || !orderId || amount == null) {
+src/modules/payment/server/toss-payment-provider.ts:    const res = await fetch("https://api.tosspayments.com/v1/payments/confirm", {
+src/modules/payment/server/toss-payment-provider.ts:        paymentKey,
+src/modules/payment/server/toss-payment-provider.ts:      providerReferenceId: paymentKey,
+src/modules/payment/server/payment-provider.ts:  paymentId: string
+src/modules/payment/server/payment-provider.ts:  paymentId: string
+src/modules/payment/server/get-analytics.ts:      .from("subscriptions")
+src/modules/payment/server/get-analytics.ts:      .from("subscriptions")
+src/modules/payment/server/get-analytics.ts:      .from("payments")
+src/modules/payment/server/get-analytics.ts:      .from("payments")
+src/modules/payment/server/has-purchased-post.ts:import { canPaymentUnlockAccess } from "./payment-result-state"
+src/modules/payment/server/has-purchased-post.ts:    .from("payments")
+src/modules/payment/server/confirm-provider-payment.ts:import { confirmPayment } from "./confirm-payment"
+src/modules/payment/server/confirm-provider-payment.ts:import { getPaymentProvider } from "./payment-provider-factory"
+src/modules/payment/server/confirm-provider-payment.ts:import { handlePaymentFailure } from "./handle-payment-failure"
+src/modules/payment/server/confirm-provider-payment.ts:import type { PaymentProviderName } from "./payment-provider"
+src/modules/payment/server/confirm-provider-payment.ts:  paymentId: string
+src/modules/payment/server/confirm-provider-payment.ts:  paymentId,
+src/modules/payment/server/confirm-provider-payment.ts:  const paymentProvider = getPaymentProvider(provider)
+src/modules/payment/server/confirm-provider-payment.ts:  const providerResult = await paymentProvider.confirmPayment({
+src/modules/payment/server/confirm-provider-payment.ts:    paymentId,
+src/modules/payment/server/confirm-provider-payment.ts:      paymentId,
+src/modules/payment/server/confirm-provider-payment.ts:      failureReason: "Provider payment confirmation failed",
+src/modules/payment/server/confirm-provider-payment.ts:      payment: null,
+src/modules/payment/server/confirm-provider-payment.ts:  const payment = await confirmPayment({ paymentId })
+src/modules/payment/server/confirm-provider-payment.ts:    status: payment ? ("succeeded" as const) : ("failed" as const),
+src/modules/payment/server/confirm-provider-payment.ts:    payment,
+src/modules/payment/server/payment-result-state.ts:const paymentResultPageMessages: Record<
+src/modules/payment/server/payment-result-state.ts:  const state = paymentResultPageMessages[safeReason]
+src/modules/payment/server/create-payment-checkout.ts:import createPayment from "./create-payment"
+src/modules/payment/server/create-payment-checkout.ts:import { getPaymentProvider } from "./payment-provider-factory"
+src/modules/payment/server/create-payment-checkout.ts:import type { PaymentProviderName } from "./payment-provider"
+src/modules/payment/server/create-payment-checkout.ts:import { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"
+src/modules/payment/server/create-payment-checkout.ts:import { assertValidSubscriptionPrice } from "@/modules/subscription/lib/subscription-price"
+src/modules/payment/server/create-payment-checkout.ts:type PaymentType = "subscription" | "tip" | "ppv_message" | "ppv_post"
+src/modules/payment/server/create-payment-checkout.ts:  if (type === "subscription") {
+src/modules/payment/server/create-payment-checkout.ts:    const activeSubscription = await getActiveSubscription({
+src/modules/payment/server/create-payment-checkout.ts:  const payment = await createPayment({
+src/modules/payment/server/create-payment-checkout.ts:  const paymentProvider = getPaymentProvider(provider)
+src/modules/payment/server/create-payment-checkout.ts:    ? `${successUrl}&paymentId=${payment.id}`
+src/modules/payment/server/create-payment-checkout.ts:    : `${successUrl}?paymentId=${payment.id}`
+src/modules/payment/server/create-payment-checkout.ts:  const checkout = await paymentProvider.createCheckout({
+src/modules/payment/server/create-payment-checkout.ts:    paymentId: payment.id,
+src/modules/payment/server/create-payment-checkout.ts:    payment,
+src/modules/payment/server/list-payments.ts:  type: "subscription" | "tip" | "ppv_post" | "ppv_message" | null
+src/modules/payment/server/list-payments.ts:  paymentType: "subscription" | "tip" | "ppv_post" | "ppv_message" | "unknown"
+src/modules/payment/server/list-payments.ts:  const { data: payments, error: paymentsError } = await supabase
+src/modules/payment/server/list-payments.ts:    .from("payments")
+src/modules/payment/server/list-payments.ts:  if (paymentsError) {
+src/modules/payment/server/list-payments.ts:    throw new Error(paymentsError.message)
+src/modules/payment/server/list-payments.ts:  const rows = payments ?? []
+src/modules/payment/server/list-payments.ts:      paymentType: row.type ?? "unknown",
+src/modules/payment/server/payment-provider-factory.ts:import { PaymentProvider, PaymentProviderName } from "./payment-provider"
+src/modules/payment/server/payment-provider-factory.ts:import { mockPaymentProvider } from "./mock-payment-provider"
+src/modules/payment/server/payment-provider-factory.ts:import { tossPaymentProvider } from "./toss-payment-provider"
+src/modules/payment/server/payment-provider-factory.ts:      throw new Error(`Unsupported payment provider: ${provider}`)
+src/modules/payment/server/handle-payment-failure.ts:import { isTerminalFailedPaymentStatus } from "./payment-result-state"
+src/modules/payment/server/handle-payment-failure.ts:  paymentId: string
+src/modules/payment/server/handle-payment-failure.ts:  const paymentId = input.paymentId.trim()
+src/modules/payment/server/handle-payment-failure.ts:  if (!paymentId) {
+src/modules/payment/server/handle-payment-failure.ts:  const { data: payment, error: paymentError } = await supabaseAdmin
+src/modules/payment/server/handle-payment-failure.ts:    .from("payments")
+src/modules/payment/server/handle-payment-failure.ts:    .eq("id", paymentId)
+src/modules/payment/server/handle-payment-failure.ts:  if (paymentError) {
+src/modules/payment/server/handle-payment-failure.ts:    throw paymentError
+src/modules/payment/server/handle-payment-failure.ts:  if (payment) {
+src/modules/payment/server/handle-payment-failure.ts:    if (!isTerminalFailedPaymentStatus(payment.status)) {
+src/modules/payment/server/handle-payment-failure.ts:        .from("payments")
+src/modules/payment/server/handle-payment-failure.ts:        .eq("id", payment.id)
+src/modules/payment/server/handle-payment-failure.ts:    paymentId,
+src/modules/payment/server/handle-payment-failure.ts:    id: paymentId,
+src/modules/payment/server/verify-payment-access-after-success.ts:import { getViewerSubscription } from "@/modules/subscription/server/get-viewer-subscription"
+src/modules/payment/server/verify-payment-access-after-success.ts:import type { PaymentAccessVerification } from "@/modules/payment/types"
+src/modules/payment/server/verify-payment-access-after-success.ts:  type: "subscription" | "tip" | "ppv_message" | "ppv_post"
+src/modules/payment/server/verify-payment-access-after-success.ts:  paymentId: string
+src/modules/payment/server/verify-payment-access-after-success.ts:async function readPayment(paymentId: string): Promise<PaymentRow | null> {
+src/modules/payment/server/verify-payment-access-after-success.ts:    .from("payments")
+src/modules/payment/server/verify-payment-access-after-success.ts:    .eq("id", paymentId)
+src/modules/payment/server/verify-payment-access-after-success.ts:  paymentId,
+src/modules/payment/server/verify-payment-access-after-success.ts:  const safePaymentId = paymentId.trim()
+src/modules/payment/server/verify-payment-access-after-success.ts:      kind: "payment",
+src/modules/payment/server/verify-payment-access-after-success.ts:      status: "payment_not_found",
+src/modules/payment/server/verify-payment-access-after-success.ts:  const payment = await readPayment(safePaymentId)
+src/modules/payment/server/verify-payment-access-after-success.ts:  if (!payment) {
+src/modules/payment/server/verify-payment-access-after-success.ts:      kind: "payment",
+src/modules/payment/server/verify-payment-access-after-success.ts:      status: "payment_not_found",
+src/modules/payment/server/verify-payment-access-after-success.ts:  if (payment.user_id !== safeViewerUserId) {
+src/modules/payment/server/verify-payment-access-after-success.ts:      kind: "payment",
+src/modules/payment/server/verify-payment-access-after-success.ts:  if (payment.status !== "succeeded") {
+src/modules/payment/server/verify-payment-access-after-success.ts:      kind: "payment",
+src/modules/payment/server/verify-payment-access-after-success.ts:      status: "payment_not_successful",
+src/modules/payment/server/verify-payment-access-after-success.ts:  if (payment.type === "ppv_post") {
+src/modules/payment/server/verify-payment-access-after-success.ts:    if (payment.target_type !== "post" || !payment.target_id) {
+src/modules/payment/server/verify-payment-access-after-success.ts:        postId: payment.target_id,
+src/modules/payment/server/verify-payment-access-after-success.ts:      const post = await getPostById(payment.target_id, safeViewerUserId)
+src/modules/payment/server/verify-payment-access-after-success.ts:          postId: payment.target_id,
+src/modules/payment/server/verify-payment-access-after-success.ts:      postId: payment.target_id,
+src/modules/payment/server/verify-payment-access-after-success.ts:  if (payment.type === "subscription") {
+src/modules/payment/server/verify-payment-access-after-success.ts:    if (!payment.creator_id) {
+src/modules/payment/server/verify-payment-access-after-success.ts:        kind: "subscription",
+src/modules/payment/server/verify-payment-access-after-success.ts:    const creator = await getCreatorById(payment.creator_id)
+src/modules/payment/server/verify-payment-access-after-success.ts:        kind: "subscription",
+src/modules/payment/server/verify-payment-access-after-success.ts:        creatorId: payment.creator_id,
+src/modules/payment/server/verify-payment-access-after-success.ts:      const viewerSubscription = await getViewerSubscription(
+src/modules/payment/server/verify-payment-access-after-success.ts:        payment.creator_id
+src/modules/payment/server/verify-payment-access-after-success.ts:      if (viewerSubscription.isActive) {
+src/modules/payment/server/verify-payment-access-after-success.ts:          kind: "subscription",
+src/modules/payment/server/verify-payment-access-after-success.ts:          creatorId: payment.creator_id,
+src/modules/payment/server/verify-payment-access-after-success.ts:      kind: "subscription",
+src/modules/payment/server/verify-payment-access-after-success.ts:      creatorId: payment.creator_id,
+src/modules/payment/server/verify-payment-access-after-success.ts:    paymentType: payment.type,
+src/modules/payment/server/mock-payment-provider.ts:} from "./payment-provider"
+src/modules/payment/server/mock-payment-provider.ts:      providerReferenceId: input.paymentId,
+src/modules/payment/server/mock-payment-provider.ts:      providerReferenceId: input.paymentId,
+src/modules/payment/server/confirm-payment.ts:import { upsertSubscription } from "@/modules/subscription/server/upsert-subscription"
+src/modules/payment/server/confirm-payment.ts:import { getPaymentProvider } from "./payment-provider-factory"
+src/modules/payment/server/confirm-payment.ts:import { isSuccessfulPaymentStatus } from "./payment-result-state"
+src/modules/payment/server/confirm-payment.ts:type PaymentType = "subscription" | "tip" | "ppv_message" | "ppv_post"
+src/modules/payment/server/confirm-payment.ts:  paymentId: string
+src/modules/payment/server/confirm-payment.ts:  paymentKey?: string
+src/modules/payment/server/confirm-payment.ts:    type === "subscription" ||
+src/modules/payment/server/confirm-payment.ts:async function processSettlement(payment: {
+src/modules/payment/server/confirm-payment.ts:  if (!isSettlablePaymentType(payment.type)) return
+src/modules/payment/server/confirm-payment.ts:      paymentId: payment.id,
+src/modules/payment/server/confirm-payment.ts:async function activateSubscriptionFromPayment(payment: {
+src/modules/payment/server/confirm-payment.ts:  if (!payment.creator_id) {
+src/modules/payment/server/confirm-payment.ts:  const currentPeriodStart = payment.confirmed_at ?? new Date().toISOString()
+src/modules/payment/server/confirm-payment.ts:  await upsertSubscription({
+src/modules/payment/server/confirm-payment.ts:    userId: payment.user_id,
+src/modules/payment/server/confirm-payment.ts:    creatorId: payment.creator_id,
+src/modules/payment/server/confirm-payment.ts:    provider: payment.provider,
+src/modules/payment/server/confirm-payment.ts:    providerSubscriptionId: payment.id,
+src/modules/payment/server/confirm-payment.ts:  paymentId,
+src/modules/payment/server/confirm-payment.ts:  paymentKey,
+src/modules/payment/server/confirm-payment.ts:  const id = paymentId.trim()
+src/modules/payment/server/confirm-payment.ts:      .from("payments")
+src/modules/payment/server/confirm-payment.ts:    if (existingPayment.type === "subscription") {
+src/modules/payment/server/confirm-payment.ts:        .from("payments")
+src/modules/payment/server/confirm-payment.ts:          paymentId: existingPayment.id,
+src/modules/payment/server/confirm-payment.ts:              paymentId: existingPayment.id,
+src/modules/payment/server/confirm-payment.ts:              paymentId: existingPayment.id,
+src/modules/payment/server/confirm-payment.ts:    paymentId: existingPayment.id,
+src/modules/payment/server/confirm-payment.ts:    providerReferenceId: paymentKey,
+src/modules/payment/server/confirm-payment.ts:    .from("payments")
+src/modules/payment/server/confirm-payment.ts:  action: "payment_confirmed",
+src/modules/payment/server/confirm-payment.ts:  targetType: "payment",
+src/modules/payment/server/confirm-payment.ts:  if (data.type === "subscription") {
+src/modules/payment/server/confirm-payment.ts:      .from("payments")
+src/modules/payment/server/confirm-payment.ts:        paymentId: data.id,
+src/modules/payment/server/confirm-payment.ts:            paymentId: data.id,
+src/modules/payment/server/confirm-payment.ts:            paymentId: data.id,
+src/modules/payment/server/refund-payment.ts:  paymentId: string
+src/modules/payment/server/refund-payment.ts:  type: "subscription" | "tip" | "ppv_message" | "ppv_post"
+src/modules/payment/server/refund-payment.ts:  paymentId,
+src/modules/payment/server/refund-payment.ts:  const safePaymentId = paymentId.trim()
+src/modules/payment/server/refund-payment.ts:    throw new Error("Invalid payment id")
+src/modules/payment/server/refund-payment.ts:  const { data: payment, error: paymentError } = await supabaseAdmin
+src/modules/payment/server/refund-payment.ts:    .from("payments")
+src/modules/payment/server/refund-payment.ts:  if (paymentError) {
+src/modules/payment/server/refund-payment.ts:    throw paymentError
+src/modules/payment/server/refund-payment.ts:  if (!payment) {
+src/modules/payment/server/refund-payment.ts:  if (payment.status === "refunded") {
+src/modules/payment/server/refund-payment.ts:  if (payment.status !== "succeeded") {
+src/modules/payment/server/refund-payment.ts:    .from("payments")
+src/modules/payment/server/refund-payment.ts:    .eq("id", payment.id)
+src/modules/payment/server/refund-payment.ts:    paymentId: payment.id,
+src/modules/payment/server/refund-payment.ts:  if (payment.type === "subscription" && payment.creator_id) {
+src/modules/payment/server/refund-payment.ts:      .from("subscriptions")
+src/modules/payment/server/refund-payment.ts:      .eq("user_id", payment.user_id)
+src/modules/payment/server/refund-payment.ts:      .eq("creator_id", payment.creator_id)
+src/modules/payment/server/list-creator-payments.ts:} from "@/modules/payment/types"
+src/modules/payment/server/list-creator-payments.ts:const paymentTypeLabels: Record<PaymentType, string> = {
+src/modules/payment/server/list-creator-payments.ts:  subscription: "Subscription",
+src/modules/payment/server/list-creator-payments.ts:const paymentStatusLabels: Record<PaymentStatus, string> = {
+src/modules/payment/server/list-creator-payments.ts:    statusLabel: paymentStatusLabels[row.status],
+src/modules/payment/server/list-creator-payments.ts:    paymentType: row.type,
+src/modules/payment/server/list-creator-payments.ts:    paymentTypeLabel: paymentTypeLabels[row.type],
+src/modules/payment/server/list-creator-payments.ts:    .from("payments")
+src/modules/payment/server/create-ppv-post-payment.ts:    .from("payments")
+src/modules/payment/server/create-ppv-post-payment.ts:    .from("payments")
+src/modules/payment/server/create-ppv-post-payment.ts:          paymentId: data.id,
+src/modules/payment/types.ts:  | "subscription"
+src/modules/payment/types.ts:      kind: "subscription"
+src/modules/payment/types.ts:      kind: "payment"
+src/modules/payment/types.ts:      status: "payment_not_found" | "payment_not_successful" | "viewer_mismatch"
+src/modules/payment/types.ts:      paymentType: "tip" | "ppv_message"
+src/modules/payment/types.ts:  subscriptionId: string | null
+src/modules/payment/types.ts:  paymentType: PaymentType
+src/modules/payment/types.ts:  paymentTypeLabel: string
+src/modules/payment/lib/payment-provider.ts:  paymentId: string
+src/modules/payment/lib/payment-provider.ts:  paymentId: string
+src/modules/payment/lib/payment-factory.ts:} from "./payment-provider"
+src/modules/payment/lib/payment-factory.ts:      providerPaymentId: "mock_payment_id",
+src/modules/payment/lib/payment-factory.ts:      providerPaymentId: input.providerPaymentId ?? "mock_payment_id",
+src/app/api/post/purchase/route.ts:import { createPaymentCheckout } from "@/modules/payment/server/create-payment-checkout"
+src/app/api/post/purchase/route.ts:    case "subscribed":
+src/app/api/post/purchase/route.ts:      successUrl: `${appUrl}/payment/success?postId=${post.id}&creatorUsername=${creator.username}`,
+src/app/api/post/purchase/route.ts:      failUrl: `${appUrl}/payment/fail`,
+src/app/api/post/create/route.ts:type PostVisibility = "public" | "subscribers" | "paid"
+src/app/api/post/create/route.ts:  return value === "public" || value === "subscribers" || value === "paid"
+src/app/api/post/create/route.ts:        : "subscribers"
+src/app/api/payment/ppv-post/route.ts:import { createPpvPostPayment } from "@/modules/payment/server/create-ppv-post-payment";
+src/app/api/payment/mock/confirm-post/route.ts:import { confirmProviderPayment } from "@/modules/payment/server/confirm-provider-payment"
+src/app/api/payment/mock/confirm-post/route.ts:    const { paymentId, postId } = body as {
+src/app/api/payment/mock/confirm-post/route.ts:      paymentId?: string
+src/app/api/payment/mock/confirm-post/route.ts:    if (!paymentId || !postId) {
+src/app/api/payment/mock/confirm-post/route.ts:        { error: "Missing paymentId or postId" },
+src/app/api/payment/mock/confirm-post/route.ts:    const { data: payment, error: paymentError } = await supabaseAdmin
+src/app/api/payment/mock/confirm-post/route.ts:      .from("payments")
+src/app/api/payment/mock/confirm-post/route.ts:      .eq("id", paymentId)
+src/app/api/payment/mock/confirm-post/route.ts:    if (paymentError || !payment) {
+src/app/api/payment/mock/confirm-post/route.ts:    if (payment.user_id !== user.id) {
+src/app/api/payment/mock/confirm-post/route.ts:    if (payment.type !== "ppv_post") {
+src/app/api/payment/mock/confirm-post/route.ts:        { error: "Invalid payment type" },
+src/app/api/payment/mock/confirm-post/route.ts:    if (payment.target_type !== "post" || payment.target_id !== postId) {
+src/app/api/payment/mock/confirm-post/route.ts:      paymentId,
+src/app/api/payment/mock/confirm-post/route.ts:      provider: payment.provider,
+src/app/api/payment/mock/confirm-post/route.ts:      payment: result.payment,
+src/app/api/payment/mock/confirm-post/route.ts:      { error: "Failed to confirm mock post payment" },
+src/app/api/payment/mock/confirm/route.ts:import createPayment from "@/modules/payment/server/create-payment"
+src/app/api/payment/mock/confirm/route.ts:import { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"
+src/app/api/payment/mock/confirm/route.ts:import { upsertSubscription } from "@/modules/subscription/server/upsert-subscription"
+src/app/api/payment/mock/confirm/route.ts:        { error: "You cannot subscribe to your own creator page" },
+src/app/api/payment/mock/confirm/route.ts:    const activeSubscription = await getActiveSubscription({
+src/app/api/payment/mock/confirm/route.ts:        { error: "You already have an active subscription" },
+src/app/api/payment/mock/confirm/route.ts:    if (!creator.subscriptionPrice || creator.subscriptionPrice <= 0) {
+src/app/api/payment/mock/confirm/route.ts:        { error: "Invalid subscription price" },
+src/app/api/payment/mock/confirm/route.ts:    const payment = await createPayment({
+src/app/api/payment/mock/confirm/route.ts:      type: "subscription",
+src/app/api/payment/mock/confirm/route.ts:      amount: creator.subscriptionPrice,
+src/app/api/payment/mock/confirm/route.ts:      currency: creator.subscriptionCurrency,
+src/app/api/payment/mock/confirm/route.ts:    const subscription = await upsertSubscription({
+src/app/api/payment/mock/confirm/route.ts:      payment,
+src/app/api/payment/mock/confirm/route.ts:      subscription,
+src/app/api/payment/mock/confirm/route.ts:      { error: "Failed to confirm mock payment" },
+src/app/api/payment/confirm/route.ts:import { confirmPayment } from "@/modules/payment/server/confirm-payment"
+src/app/api/payment/confirm/route.ts:import { verifyPaymentAccessAfterSuccess } from "@/modules/payment/server/verify-payment-access-after-success"
+src/app/api/payment/confirm/route.ts:    let paymentId = body.paymentId as string | undefined
+src/app/api/payment/confirm/route.ts:    const paymentKey = body.paymentKey as string | undefined
+src/app/api/payment/confirm/route.ts:    if (!paymentId && orderId) {
+src/app/api/payment/confirm/route.ts:      paymentId = orderId
+src/app/api/payment/confirm/route.ts:    if (!paymentId) {
+src/app/api/payment/confirm/route.ts:        { error: "Missing paymentId" },
+src/app/api/payment/confirm/route.ts:      paymentId,
+src/app/api/payment/confirm/route.ts:      paymentKey,
+src/app/api/payment/confirm/route.ts:      paymentId: result.id,
+src/app/api/payment/confirm/route.ts:      paymentId: result.id,
+src/app/api/payment/confirm/route.ts:    console.error("payment confirm route error:", error)
+src/app/api/payment/confirm/route.ts:      { error: "Failed to confirm payment" },
+src/app/api/payment/checkout/route.ts:        import("@/modules/payment/server/create-payment-checkout"),
+src/app/api/payment/checkout/route.ts:        { error: "You cannot subscribe to your own creator page" },
+src/app/api/payment/checkout/route.ts:      type: "subscription",
+src/app/api/payment/checkout/route.ts:      amount: creator.subscriptionPrice,
+src/app/api/payment/checkout/route.ts:      orderId: `subscription_${creator.id}_${user.id}_${Date.now()}`,
+src/app/api/payment/checkout/route.ts:      successUrl: `${appUrl}/payment/success?creatorUsername=${creator.username}`,
+src/app/api/payment/checkout/route.ts:      failUrl: `${appUrl}/payment/fail`,
+src/app/api/payment/confirm-message/route.ts:import { confirmProviderPayment } from "@/modules/payment/server/confirm-provider-payment"
+src/app/api/payment/confirm-message/route.ts:  paymentId?: string
+src/app/api/payment/confirm-message/route.ts:    const paymentId = body.paymentId
+src/app/api/payment/confirm-message/route.ts:    if (!paymentId || !messageId) {
+src/app/api/payment/confirm-message/route.ts:        { error: "paymentId and messageId are required" },
+src/app/api/payment/confirm-message/route.ts:    const { data: payment, error: paymentError } = await supabaseAdmin
+src/app/api/payment/confirm-message/route.ts:      .from("payments")
+src/app/api/payment/confirm-message/route.ts:      .eq("id", paymentId)
+src/app/api/payment/confirm-message/route.ts:    if (paymentError || !payment) {
+src/app/api/payment/confirm-message/route.ts:    if (payment.user_id !== user.id) {
+src/app/api/payment/confirm-message/route.ts:    if (payment.type !== "ppv_message") {
+src/app/api/payment/confirm-message/route.ts:        { error: "Invalid payment type" },
+src/app/api/payment/confirm-message/route.ts:    if (payment.target_type !== "message" || payment.target_id !== messageId) {
+src/app/api/payment/confirm-message/route.ts:      paymentId,
+src/app/api/payment/confirm-message/route.ts:      provider: payment.provider,
+src/app/api/payment/confirm-message/route.ts:        payment: result.payment,
+src/app/api/payment/confirm-message/route.ts:      { error: "Failed to confirm message payment" },
+src/app/api/subscription/cancel/route.ts:import { cancelSubscription } from "@/modules/subscription/server/cancel-subscription"
+src/app/api/subscription/cancel/route.ts:import { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"
+src/app/api/subscription/cancel/route.ts:import { notifySubscriptionCanceledWorkflow } from "@/workflows/subscription/notify-subscription-canceled-workflow"
+src/app/api/subscription/cancel/route.ts:  const subscription = await getActiveSubscription({
+src/app/api/subscription/cancel/route.ts:  if (!subscription) {
+src/app/api/subscription/cancel/route.ts:      { error: "No active subscription" },
+src/app/api/subscription/cancel/route.ts:    userId: subscription.userId,
+src/app/api/subscription/cancel/route.ts:    creatorId: subscription.creatorId,
+src/app/api/subscription/cancel/route.ts:      { error: "Failed to cancel subscription" },
+src/app/api/subscription/cancel/route.ts:    subscriptionId: subscription.id,
+src/app/api/subscription/cancel/route.ts:    creatorId: subscription.creatorId,
+src/app/api/subscription/cancel/route.ts:    subscriberId: subscription.userId,
+src/app/api/subscription/unsubscribe/route.ts:import { unsubscribe } from "@/modules/subscription/server/unsubscribe"
+src/app/api/subscription/unsubscribe/route.ts:import { notifySubscriptionCanceledWorkflow } from "@/workflows/subscription/notify-subscription-canceled-workflow"
+src/app/api/subscription/unsubscribe/route.ts:  const subscriptionId = body.subscriptionId as string | undefined
+src/app/api/subscription/unsubscribe/route.ts:  if (!subscriptionId) {
+src/app/api/subscription/unsubscribe/route.ts:      { error: "Missing subscriptionId" },
+src/app/api/subscription/unsubscribe/route.ts:  const { data: subscription, error } = await supabase
+src/app/api/subscription/unsubscribe/route.ts:    .from("subscriptions")
+src/app/api/subscription/unsubscribe/route.ts:    .eq("id", subscriptionId)
+src/app/api/subscription/unsubscribe/route.ts:  if (error || !subscription) {
+src/app/api/subscription/unsubscribe/route.ts:  const updated = await unsubscribe(subscription.id)
+src/app/api/subscription/unsubscribe/route.ts:      { error: "Failed to unsubscribe" },
+src/app/api/subscription/unsubscribe/route.ts:    subscriptionId: subscription.id,
+src/app/api/subscription/unsubscribe/route.ts:    creatorId: subscription.creator_id,
+src/app/api/subscription/unsubscribe/route.ts:    subscriberId: subscription.user_id,
+src/app/api/subscription/check/route.ts:import { getViewerSubscription } from "@/modules/subscription/server/get-viewer-subscription"
+src/app/api/subscription/check/route.ts:    subscribed: false,
+src/app/api/subscription/check/route.ts:    const viewerSubscription = await getViewerSubscription(user.id, creatorId)
+src/app/api/subscription/check/route.ts:    const subscription = viewerSubscription.subscription
+src/app/api/subscription/check/route.ts:      viewerSubscription.isActive && subscription?.cancelAtPeriodEnd === true
+src/app/api/subscription/check/route.ts:    const state: SubscriptionCheckState = !subscription
+src/app/api/subscription/check/route.ts:      : subscription.status === "expired"
+src/app/api/subscription/check/route.ts:          : viewerSubscription.isActive
+src/app/api/subscription/check/route.ts:        subscribed: viewerSubscription.isActive,
+src/app/api/subscription/check/route.ts:        cancelAtPeriodEnd: subscription?.cancelAtPeriodEnd ?? false,
+src/app/api/subscription/check/route.ts:        hasAccess: viewerSubscription.isActive,
+src/app/payment/cancel/page.tsx:import { getPaymentResultPageState } from "@/modules/payment/server/payment-result-state"
+src/app/payment/cancel/page.tsx:import { PaymentStateNotice } from "@/modules/payment/ui/PaymentStateNotice"
+src/app/payment/cancel/page.tsx:              href="/dashboard/payments"
+src/app/payment/success/page.tsx:import { getPaymentResultPageState } from "@/modules/payment/server/payment-result-state"
+src/app/payment/success/page.tsx:import { PaymentSuccessContent } from "@/modules/payment/ui/payment-success-content"
+src/app/payment/fail/page.tsx:import { PaymentStateNotice } from "@/modules/payment/ui/PaymentStateNotice"
+src/app/payment/fail/page.tsx:import { getPaymentResultPageState } from "@/modules/payment/server/payment-result-state"
+src/app/payment/fail/page.tsx:              href="/dashboard/payments"
+src/app/subscriptions/[subscriptionId]/page.tsx:import { getSubscriptionById } from "@/modules/subscription/server/get-subscription-by-id"
+src/app/subscriptions/[subscriptionId]/page.tsx:    subscriptionId: string
+src/app/subscriptions/[subscriptionId]/page.tsx:  const { subscriptionId } = await params
+src/app/subscriptions/[subscriptionId]/page.tsx:  const subscription = await getSubscriptionById(subscriptionId)
+src/app/subscriptions/[subscriptionId]/page.tsx:  if (!subscription) {
+src/app/subscriptions/[subscriptionId]/page.tsx:            href="/subscriptions"
+src/app/subscriptions/[subscriptionId]/page.tsx:            ← Back to subscriptions
+src/app/subscriptions/[subscriptionId]/page.tsx:              This subscription does not exist or is no longer available.
+src/app/subscriptions/[subscriptionId]/page.tsx:            href="/subscriptions"
+src/app/subscriptions/[subscriptionId]/page.tsx:            Unsubscribe
+src/app/subscriptions/[subscriptionId]/page.tsx:                {subscription.creator.avatarUrl ? (
+src/app/subscriptions/[subscriptionId]/page.tsx:                    src={subscription.creator.avatarUrl}
+src/app/subscriptions/[subscriptionId]/page.tsx:                    alt={subscription.creator.displayName}
+src/app/subscriptions/[subscriptionId]/page.tsx:                  subscription.creator.displayName.slice(0, 1).toUpperCase()
+src/app/subscriptions/[subscriptionId]/page.tsx:                  {subscription.creator.displayName}
+src/app/subscriptions/[subscriptionId]/page.tsx:                  @{subscription.creator.username}
+src/app/subscriptions/[subscriptionId]/page.tsx:                subscription.status
+src/app/subscriptions/[subscriptionId]/page.tsx:              {subscription.status}
+src/app/subscriptions/[subscriptionId]/page.tsx:                {formatDate(subscription.startedAt)}
+src/app/subscriptions/[subscriptionId]/page.tsx:                {formatDate(subscription.billing.renewalDate)}
+src/app/subscriptions/[subscriptionId]/page.tsx:                {subscription.billing.planLabel}
+src/app/subscriptions/[subscriptionId]/page.tsx:                {subscription.billing.amountLabel}
+src/app/subscriptions/[subscriptionId]/page.tsx:              href={`/creator/${subscription.creator.username}`}
+src/app/subscriptions/error.tsx:          Failed to load subscriptions
+src/app/subscriptions/error.tsx:          Your subscription list is not available at the moment. Please retry.
+src/app/subscriptions/loading.tsx:// src/app/subscriptions/loading.tsx
+src/app/subscriptions/page.tsx:} from "@/modules/subscription/server/list-user-subscriptions"
+src/app/subscriptions/page.tsx:  const nextPath = "/subscriptions"
+src/app/subscriptions/page.tsx:  const subscriptions = await listUserSubscriptions(userId)
+src/app/subscriptions/page.tsx:            My subscriptions
+src/app/subscriptions/page.tsx:            Manage creators you are currently subscribed to.
+src/app/subscriptions/page.tsx:        {subscriptions.length === 0 ? (
+src/app/subscriptions/page.tsx:            title="No subscriptions yet"
+src/app/subscriptions/page.tsx:            description="Once you subscribe to creators, they will appear here."
+src/app/subscriptions/page.tsx:            {subscriptions.map((subscription) => (
+src/app/subscriptions/page.tsx:                key={subscription.id}
+src/app/subscriptions/page.tsx:                      {subscription.creator.avatarUrl ? (
+src/app/subscriptions/page.tsx:                          src={subscription.creator.avatarUrl}
+src/app/subscriptions/page.tsx:                          alt={subscription.creator.displayName}
+src/app/subscriptions/page.tsx:                        subscription.creator.displayName
+src/app/subscriptions/page.tsx:                          {subscription.creator.displayName}
+src/app/subscriptions/page.tsx:                            subscription.status
+src/app/subscriptions/page.tsx:                          {subscription.status}
+src/app/subscriptions/page.tsx:                        @{subscription.creator.username}
+src/app/subscriptions/page.tsx:                        Started on {formatDate(subscription.startedAt)}
+src/app/subscriptions/page.tsx:                      href={`/creator/${subscription.creator.username}`}
+src/modules/post/ui/PostCard.tsx:  lockReason?: "none" | "subscription" | "purchase"
+src/modules/post/ui/CreatorPostList.tsx:  isSubscribed: boolean
+src/modules/post/ui/CreatorPostList.tsx:  isSubscribed: _isSubscribed,
+src/modules/post/ui/PostPurchaseButton.tsx:import { loadTossPayments } from "@tosspayments/tosspayments-sdk"
+src/modules/post/ui/PostPurchaseButton.tsx:      const payment = data.payment
+src/modules/post/ui/PostPurchaseButton.tsx:      if (!payment?.id || !payment?.amount) {
+src/modules/post/ui/PostPurchaseButton.tsx:      const paymentInstance = tossPayments.payment({
+src/modules/post/ui/PostPurchaseButton.tsx:        customerKey: payment.id,
+src/modules/post/ui/PostPurchaseButton.tsx:      await paymentInstance.requestPayment({
+src/modules/post/ui/PostPurchaseButton.tsx:          value: payment.amount,
+src/modules/post/ui/PostPurchaseButton.tsx:        orderId: data.orderId ?? payment.id,
+src/modules/post/ui/PostPurchaseButton.tsx:        successUrl: `${window.location.origin}/payment/success?paymentId=${payment.id}&postId=${postId}&creatorUsername=${creatorUsername ?? ""}`,
+src/modules/post/ui/PostPurchaseButton.tsx:        failUrl: `${window.location.origin}/payment/fail`,
+src/modules/post/ui/LockedPostCard.tsx:  lockReason?: "subscription" | "purchase"
+src/modules/post/ui/CreatePostForm.tsx:  visibilityOptions = ["public", "subscribers"],
+src/modules/post/ui/CreatePostForm.tsx:    initialVisibility ?? "subscribers"
+src/modules/post/ui/CreatePostForm.tsx:      setVisibility("subscribers")
+src/modules/post/ui/CreatePostForm.tsx:                  : option === "subscribers"
+src/modules/post/ui/PostComposer.tsx:type PostComposerVisibility = "public" | "subscribers"
+src/modules/post/ui/PostComposer.tsx:              <option value="subscribers">Subscribers</option>
+src/modules/post/ui/PostComposer.tsx:              {visibility === "subscribers" &&
+src/modules/post/ui/PostComposer.tsx:                "Only your subscribers can view this post."}
+src/modules/post/server/list-creator-posts.ts:  visibility: "public" | "subscribers" | "paid"
+src/modules/post/server/list-creator-posts.ts:      isSubscribed: boolean
+src/modules/post/server/list-creator-posts.ts:      isSubscribed: resolvedAccessState.isSubscribed,
+src/modules/post/server/list-creator-posts.ts:            isSubscribed: post.isSubscribed,
+src/modules/post/server/get-post-access.ts:    visibility: "public" | "subscribers" | "paid"
+src/modules/post/server/get-post-access.ts:  isSubscribedResult: boolean
+src/modules/post/server/get-post-access.ts:  isSubscribedResult,
+src/modules/post/server/get-post-access.ts:    isSubscribed: isSubscribedResult,
+src/modules/post/server/get-post-access.ts:      : post.visibility === "subscribers"
+src/modules/post/server/get-post-access.ts:        ? "subscription"
+src/modules/post/server/enforce-post-visibility.ts:  isSubscribed: boolean
+src/modules/post/server/enforce-post-visibility.ts:  isSubscribed,
+src/modules/post/server/enforce-post-visibility.ts:    isSubscribedResult: isSubscribed,
+src/modules/post/server/update-post.ts:  visibility?: "public" | "subscribers" | "paid";
+src/modules/post/server/update-post.ts:  visibility: "public" | "subscribers" | "paid";
+src/modules/post/server/update-post.ts:  visibility: "public" | "subscribers" | "paid";
+src/modules/post/server/update-post.ts:    if (!["public", "subscribers", "paid"].includes(visibility)) {
+src/modules/post/server/create-feed-post-action.ts:  visibility: "public" | "subscribers"
+src/modules/post/server/get-post-media.ts:  visibility: "public" | "subscribers" | "paid"
+src/modules/post/server/get-post-media.ts:    isSubscribed,
+src/modules/post/server/get-post-media.ts:        isSubscribed,
+src/modules/post/server/get-creator-feed.ts:  visibility: "public" | "subscribers" | "paid"
+src/modules/post/server/get-creator-feed.ts:        isSubscribed: resolvedAccessState.isSubscribed,
+src/modules/post/server/get-creator-feed.ts:            isSubscribed: post.isSubscribed,
+src/modules/post/server/create-post-action.ts:  visibility: "public" | "subscribers" | "paid"
+src/modules/post/server/get-my-posts.ts:  visibility: "public" | "subscribers" | "paid"
+src/modules/post/server/get-my-posts.ts:    isSubscribed: true,
+src/modules/post/server/get-my-posts.ts:            isSubscribed: true,
+src/modules/post/server/list-feed-posts.ts:import { buildSubscriptionReadModel } from "@/modules/subscription/server/build-subscription-read-model"
+src/modules/post/server/list-feed-posts.ts:  visibility: "public" | "subscribers" | "paid"
+src/modules/post/server/list-feed-posts.ts:    isSubscribed: true,
+src/modules/post/server/list-feed-posts.ts:  const { data: subscriptions, error: subscriptionsError } = await supabaseAdmin
+src/modules/post/server/list-feed-posts.ts:    .from("subscriptions")
+src/modules/post/server/list-feed-posts.ts:  if (subscriptionsError) {
+src/modules/post/server/list-feed-posts.ts:    throw subscriptionsError
+src/modules/post/server/list-feed-posts.ts:  const creatorIds = (subscriptions ?? [])
+src/modules/post/server/list-feed-posts.ts:    .filter((subscription) =>
+src/modules/post/server/list-feed-posts.ts:      buildSubscriptionReadModel(subscription).hasAccess
+src/modules/post/server/list-feed-posts.ts:    .map((subscription) => subscription.creator_id)
+src/modules/post/server/list-feed-posts.ts:    .in("visibility", ["public", "subscribers"])
+src/modules/post/server/list-feed-posts.ts:        isSubscribedResult: true,
+src/modules/post/server/list-feed-posts.ts:            isSubscribed: true,
+src/modules/post/server/list-creator-studio-posts.ts:  visibility: "public" | "subscribers" | "paid"
+src/modules/post/server/get-creator-studio-post.ts:  visibility: "public" | "subscribers" | "paid"
+src/modules/post/server/get-creator-studio-post.ts:  visibility: "public" | "subscribers" | "paid"
+src/modules/post/server/create-post.ts:  visibility = "subscribers",
+src/modules/post/server/create-post.ts:  if (!["public", "subscribers", "paid"].includes(visibility)) {
+src/modules/post/server/update-post-action.ts:  visibility: "public" | "subscribers" | "paid"
+src/modules/post/server/resolve-post-access-state.ts:import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
+src/modules/post/server/resolve-post-access-state.ts:import { getViewerSubscription } from "@/modules/subscription/server/get-viewer-subscription"
+src/modules/post/server/resolve-post-access-state.ts:  isSubscribed: boolean
+src/modules/post/server/resolve-post-access-state.ts:  let isSubscribed = false
+src/modules/post/server/resolve-post-access-state.ts:    isSubscribed = true
+src/modules/post/server/resolve-post-access-state.ts:    const viewerSubscription = await getViewerSubscription(
+src/modules/post/server/resolve-post-access-state.ts:    isSubscribed = viewerSubscription.isActive
+src/modules/post/server/resolve-post-access-state.ts:    isSubscribedResult: isSubscribed,
+src/modules/post/server/resolve-post-access-state.ts:    isSubscribed,
+src/modules/post/server/resolve-post-access-state.ts:    isSubscribed,
+src/modules/post/server/resolve-post-access-state.ts:      isSubscribed,
+src/modules/post/server/normalize-create-post-draft.ts:  visibility: Extract<PostVisibility, "public" | "subscribers">
+src/modules/post/server/get-post-by-id.ts:  visibility: "public" | "subscribers" | "paid"
+src/modules/post/server/get-post-by-id.ts:  visibility: "public" | "subscribers" | "paid"
+src/modules/post/server/get-post-by-id.ts:  lockReason: "none" | "subscription" | "purchase"
+src/modules/post/server/get-post-by-id.ts:    isSubscribed,
+src/modules/post/server/get-post-by-id.ts:        isSubscribed,
+src/modules/post/server/locked-preview-policy.ts:  lockReason: "none" | "subscription" | "purchase"
+src/modules/post/server/locked-preview-policy.ts:  previewVariant: "none" | "subscription" | "purchase"
+src/modules/post/server/can-view-post.ts:  visibility: "public" | "subscribers" | "paid"
+src/modules/post/server/can-view-post.ts:  isSubscribed: boolean
+src/modules/post/server/can-view-post.ts:  if (input.visibility === "subscribers") {
+src/modules/post/server/can-view-post.ts:    return input.isSubscribed
+src/modules/post/types.ts:  | "subscribers"
+src/modules/post/types.ts:  | "subscription"
+src/modules/post/types.ts:  | "subscribed"
+src/modules/post/types.ts:  isSubscribed: boolean
+src/modules/post/lib/post-commerce-policy.ts:  isSubscribed: boolean
+src/modules/post/lib/post-commerce-policy.ts:  isSubscribed: boolean
+src/modules/post/lib/post-commerce-policy.ts:  isSubscribed,
+src/modules/post/lib/post-commerce-policy.ts:    isSubscribed,
+src/modules/post/lib/post-commerce-policy.ts:  isSubscribed,
+src/modules/post/lib/post-commerce-policy.ts:    isSubscribed,
+src/modules/post/lib/post-commerce-policy.ts:      lockReason === "subscription" &&
+src/modules/post/lib/post-commerce-policy.ts:      commerce.isSubscribed === false,
+src/modules/post/lib/is-post-public-base-visible.ts:  return visibility === "public" || visibility === "subscribers"
+src/modules/post/lib/can-purchase-post.ts:  isSubscribed: boolean
+src/modules/post/lib/can-purchase-post.ts:  isSubscribed,
+src/modules/post/lib/can-purchase-post.ts:  if (isSubscribed) {
+src/modules/post/lib/can-purchase-post.ts:      blockingReason: "subscribed",
+src/modules/creator/ui/CreatorHeader.tsx:  subscriptionprice: number
+src/modules/creator/ui/CreatorHeader.tsx:const subscriptionPriceClassName =
+src/modules/creator/ui/CreatorHeader.tsx:function formatSubscriptionPrice(subscriptionprice: number) {
+src/modules/creator/ui/CreatorHeader.tsx:  return `₩${subscriptionprice.toLocaleString()} 구독`
+src/modules/creator/ui/CreatorHeader.tsx:  subscriptionprice,
+src/modules/creator/ui/CreatorHeader.tsx:  "displayName" | "username" | "bio" | "subscriptionprice"
+src/modules/creator/ui/CreatorHeader.tsx:      <div className={subscriptionPriceClassName}>
+src/modules/creator/ui/CreatorHeader.tsx:        {formatSubscriptionPrice(subscriptionprice)}
+src/modules/creator/ui/CreatorHeader.tsx:  subscriptionprice,
+src/modules/creator/ui/CreatorHeader.tsx:          subscriptionprice={subscriptionprice}
+src/modules/creator/ui/SubscribeButton.tsx:import { loadTossPayments } from "@tosspayments/payment-sdk"
+src/modules/creator/ui/SubscribeButton.tsx:  subscribed?: boolean
+src/modules/creator/ui/SubscribeButton.tsx:  payment?: {
+src/modules/creator/ui/SubscribeButton.tsx:  if (message === "You already have an active subscription") {
+src/modules/creator/ui/SubscribeButton.tsx:  if (message === "You cannot subscribe to your own creator page") {
+src/modules/creator/ui/SubscribeButton.tsx:  if (message === "Invalid subscription price") {
+src/modules/creator/ui/SubscribeButton.tsx:      subscribed: data.hasAccess ?? (state === "active" || state === "ending"),
+src/modules/creator/ui/SubscribeButton.tsx:    subscribed: Boolean(data.subscribed),
+src/modules/creator/ui/SubscribeButton.tsx:  const subscriptionPresentation = getCreatorSubscriptionPresentation(
+src/modules/creator/ui/SubscribeButton.tsx:  const [subscribed, setSubscribed] = useState(false)
+src/modules/creator/ui/SubscribeButton.tsx:      const res = await fetch(`/api/subscription/check?creatorId=${creatorId}`, {
+src/modules/creator/ui/SubscribeButton.tsx:      setSubscribed(flags.subscribed)
+src/modules/creator/ui/SubscribeButton.tsx:      return flags.subscribed
+src/modules/creator/ui/SubscribeButton.tsx:      const res = await fetch("/api/payment/checkout", {
+src/modules/creator/ui/SubscribeButton.tsx:            data.error ?? "Failed to create payment request"
+src/modules/creator/ui/SubscribeButton.tsx:      const paymentId = data.payment?.id
+src/modules/creator/ui/SubscribeButton.tsx:      const amount = data.payment?.amount ?? 0
+src/modules/creator/ui/SubscribeButton.tsx:      const orderId = data.checkout?.orderId ?? paymentId
+src/modules/creator/ui/SubscribeButton.tsx:      if (!paymentId || !orderId || amount <= 0) {
+src/modules/creator/ui/SubscribeButton.tsx:        successUrl: `${window.location.origin}/payment/success?paymentId=${paymentId}&creatorUsername=${creatorUsername}`,
+src/modules/creator/ui/SubscribeButton.tsx:        failUrl: `${window.location.origin}/payment/fail?paymentId=${paymentId}`,
+src/modules/creator/ui/SubscribeButton.tsx:      setErrorMessage(subscriptionPresentation.subscribeFallbackError)
+src/modules/creator/ui/SubscribeButton.tsx:      const res = await fetch("/api/subscription/cancel", {
+src/modules/creator/ui/SubscribeButton.tsx:          data.error ?? subscriptionPresentation.cancelFallbackError
+src/modules/creator/ui/SubscribeButton.tsx:      setErrorMessage(subscriptionPresentation.cancelFallbackError)
+src/modules/creator/ui/SubscribeButton.tsx:    subscribed,
+src/modules/creator/ui/SubscribeButton.tsx:  if (subscribed) {
+src/modules/creator/ui/SubscribeButton.tsx:            {subscriptionPresentation.cancelAtPeriodEndMessage}
+src/modules/creator/ui/creator-surface-policy.ts:  if (visibility === "subscribers") {
+src/modules/creator/ui/creator-surface-policy.ts:    pricePeriodLabel: "monthly subscription",
+src/modules/creator/ui/creator-surface-policy.ts:    unlockDescription: `Subscribe to unlock posts, updates, and subscriber-only content from ${displayName}.`,
+src/modules/creator/ui/creator-surface-policy.ts:    subscribeFallbackError: "구독 처리에 실패했습니다",
+src/modules/creator/ui/creator-surface-policy.ts:    subscribers: "Subscribers",
+src/modules/creator/server/update-creator.ts:  subscriptionPrice?: number;
+src/modules/creator/server/update-creator.ts:  subscriptionCurrency?: string;
+src/modules/creator/server/update-creator.ts:  subscription_price: number;
+src/modules/creator/server/update-creator.ts:  subscription_currency: string;
+src/modules/creator/server/update-creator.ts:  subscriptionPrice,
+src/modules/creator/server/update-creator.ts:  subscriptionCurrency,
+src/modules/creator/server/update-creator.ts:  subscriptionPrice: number;
+src/modules/creator/server/update-creator.ts:  subscriptionCurrency: string;
+src/modules/creator/server/update-creator.ts:  if (subscriptionPrice !== undefined) {
+src/modules/creator/server/update-creator.ts:    if (!isValidSubscriptionPrice(subscriptionPrice)) {
+src/modules/creator/server/update-creator.ts:      throw new Error("Invalid subscription price");
+src/modules/creator/server/update-creator.ts:    updateData.subscription_price = subscriptionPrice;
+src/modules/creator/server/update-creator.ts:  if (subscriptionCurrency !== undefined) {
+src/modules/creator/server/update-creator.ts:    updateData.subscription_currency = subscriptionCurrency;
+src/modules/creator/server/update-creator.ts:      "id, user_id, status, subscription_price, subscription_currency, created_at, updated_at"
+src/modules/creator/server/update-creator.ts:    subscriptionPrice: data.subscription_price,
+src/modules/creator/server/update-creator.ts:    subscriptionCurrency: data.subscription_currency,
+src/modules/creator/server/create-creator.ts:  subscription_price: number
+src/modules/creator/server/create-creator.ts:  subscription_currency: string
+src/modules/creator/server/create-creator.ts:  subscriptionPrice: number
+src/modules/creator/server/create-creator.ts:  subscriptionCurrency: string
+src/modules/creator/server/create-creator.ts:      subscription_price: 0,
+src/modules/creator/server/create-creator.ts:      subscription_currency: "KRW",
+src/modules/creator/server/create-creator.ts:      "id, user_id, status, subscription_price, subscription_currency, instagram_username, created_at, updated_at"
+src/modules/creator/server/create-creator.ts:    subscriptionPrice: data.subscription_price,
+src/modules/creator/server/create-creator.ts:    subscriptionCurrency: data.subscription_currency,
+src/modules/creator/server/get-creator-by-username.ts:  subscription_price: number
+src/modules/creator/server/get-creator-by-username.ts:  subscription_currency: string
+src/modules/creator/server/get-creator-by-username.ts:      "id, user_id, status, subscription_price, subscription_currency, created_at, updated_at, username"
+src/modules/creator/server/get-creator-by-username.ts:    subscriptionPrice: creator.subscription_price,
+src/modules/creator/server/get-creator-by-username.ts:    subscriptionCurrency: creator.subscription_currency,
+src/modules/creator/server/get-creator-page.ts:import { checkSubscription } from "@/modules/subscription/server/check-subscription"
+src/modules/creator/server/get-creator-page.ts:  visibility: "public" | "subscribers" | "paid"
+src/modules/creator/server/get-creator-page.ts:  let isSubscribed = false
+src/modules/creator/server/get-creator-page.ts:    isSubscribed = await checkSubscription({
+src/modules/creator/server/get-creator-page.ts:    const { data: payments } = await supabaseAdmin
+src/modules/creator/server/get-creator-page.ts:      .from("payments")
+src/modules/creator/server/get-creator-page.ts:    purchasedSet = new Set((payments ?? []).map((payment) => payment.target_id))
+src/modules/creator/server/get-creator-page.ts:        isSubscribedResult: isSubscribed,
+src/modules/creator/server/get-creator-page.ts:      isSubscribed,
+src/modules/creator/server/update-creator-settings.ts:import { assertValidSubscriptionPrice } from "@/modules/subscription/lib/subscription-price"
+src/modules/creator/server/update-creator-settings.ts:  subscriptionPrice: number
+src/modules/creator/server/update-creator-settings.ts:    "DEBUG input.subscriptionPrice:",
+src/modules/creator/server/update-creator-settings.ts:    input.subscriptionPrice
+src/modules/creator/server/update-creator-settings.ts:    .select("id, user_id, subscription_price")
+src/modules/creator/server/update-creator-settings.ts:  const price = assertValidSubscriptionPrice(input.subscriptionPrice)
+src/modules/creator/server/update-creator-settings.ts:      subscription_price: price,
+src/modules/creator/server/update-creator-settings.ts:    .select("id, user_id, subscription_price, updated_at")
+src/modules/creator/server/get-creator-by-id.ts:  subscription_price: number | null
+src/modules/creator/server/get-creator-by-id.ts:  subscription_currency: string | null
+src/modules/creator/server/get-creator-by-id.ts:  subscriptionPrice: number
+src/modules/creator/server/get-creator-by-id.ts:  subscriptionCurrency: string
+src/modules/creator/server/get-creator-by-id.ts:      subscription_price,
+src/modules/creator/server/get-creator-by-id.ts:      subscription_currency,
+src/modules/creator/server/get-creator-by-id.ts:    subscriptionPrice: creator.subscription_price ?? 0,
+src/modules/creator/server/get-creator-by-id.ts:    subscriptionCurrency: creator.subscription_currency ?? "KRW",
+src/modules/creator/server/list-creators.ts:  subscription_price: number
+src/modules/creator/server/list-creators.ts:  subscription_currency: string
+src/modules/creator/server/list-creators.ts:    subscriptionPrice: number
+src/modules/creator/server/list-creators.ts:    subscriptionCurrency: string
+src/modules/creator/server/list-creators.ts:      "id, user_id, status, subscription_price, subscription_currency, created_at, updated_at"
+src/modules/creator/server/list-creators.ts:        subscriptionPrice: creator.subscription_price,
+src/modules/creator/server/list-creators.ts:        subscriptionCurrency: creator.subscription_currency,
+src/modules/creator/server/get-creator-by-user-id.ts:  subscription_price: number | null
+src/modules/creator/server/get-creator-by-user-id.ts:  subscription_currency: string | null
+src/modules/creator/server/get-creator-by-user-id.ts:      subscription_price,
+src/modules/creator/server/get-creator-by-user-id.ts:      subscription_currency,
+src/modules/creator/server/get-creator-by-user-id.ts:    subscriptionPrice: data.subscription_price ?? 0,
+src/modules/creator/server/get-creator-by-user-id.ts:    subscriptionCurrency: data.subscription_currency ?? "KRW",
+src/modules/creator/server/create-creator-profile.ts:      subscription_price: 0,
+src/modules/creator/server/create-creator-profile.ts:      subscription_currency: "KRW",
+src/modules/creator/server/get-creator-dashboard.ts:import { resolveSubscriptionState } from "@/modules/subscription/lib/resolve-subscription-state"
+src/modules/creator/server/get-creator-dashboard.ts:    subscriptionsResult,
+src/modules/creator/server/get-creator-dashboard.ts:      .from("subscriptions")
+src/modules/creator/server/get-creator-dashboard.ts:      .from("payments")
+src/modules/creator/server/get-creator-dashboard.ts:      .from("payments")
+src/modules/creator/server/get-creator-dashboard.ts:  if (subscriptionsResult.error) throw new Error("Failed to load creator dashboard")
+src/modules/creator/server/get-creator-dashboard.ts:  const activeSubscriberCount = (subscriptionsResult.data ?? []).filter((row) => {
+src/modules/creator/lib/require-creator.ts:  subscriptionPrice: number

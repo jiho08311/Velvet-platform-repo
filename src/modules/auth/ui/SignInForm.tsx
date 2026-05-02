@@ -4,11 +4,13 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/client";
 import { resolveRedirectTarget } from "@/modules/auth/lib/redirect-handoff";
-import { AuthFormField, AuthFormInput } from "@/modules/auth/ui/AuthFormField";
+import {
+  AuthFormField,
+  AuthFormInput,
+  AuthFormNotice,
+  AuthFormSubmitButton,
+} from "@/modules/auth/ui/AuthFormField";
 
-const errorNoticeClassName =
-  "rounded-2xl border border-red-300 bg-red-50 px-4 py-3";
-const errorNoticeTextClassName = "text-sm text-red-600";
 const signInButtonBaseClassName =
   "w-full rounded-2xl px-5 py-4 text-base transition disabled:opacity-60";
 const oAuthButtonBaseClassName = [
@@ -22,10 +24,6 @@ const googleButtonClassName = [
 const kakaoButtonClassName = [
   oAuthButtonBaseClassName,
   "bg-[#FEE500] text-[#191919] hover:brightness-95",
-].join(" ");
-const emailSubmitButtonClassName = [
-  signInButtonBaseClassName,
-  "bg-[#C2185B] font-semibold text-white hover:bg-[#D81B60] disabled:cursor-not-allowed",
 ].join(" ");
 
 function GoogleLogo() {
@@ -127,9 +125,7 @@ export function SignInForm() {
   return (
     <div className="space-y-6">
       {errorMessage ? (
-        <div className={errorNoticeClassName}>
-          <p className={errorNoticeTextClassName}>{errorMessage}</p>
-        </div>
+        <AuthFormNotice tone="error">{errorMessage}</AuthFormNotice>
       ) : null}
 
       <div className="space-y-3">
@@ -185,13 +181,12 @@ export function SignInForm() {
           />
         </AuthFormField>
 
-        <button
+        <AuthFormSubmitButton
           type="submit"
           disabled={isPending}
-          className={emailSubmitButtonClassName}
         >
           {isPending ? "Signing in..." : "이메일로 로그인"}
-        </button>
+        </AuthFormSubmitButton>
       </form>
 
       <div className="text-center text-sm text-zinc-600">

@@ -134,75 +134,77 @@ export function EditStoryModal({
           </div>
 
           <div className="space-y-2">
-            <button
-              type="button"
-              disabled={isPending}
-              onClick={() => {
-                startTransition(async () => {
-                  try {
-                    setError(null)
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() => {
+                  startTransition(async () => {
+                    try {
+                      setError(null)
 
-                    let nextStoragePath: string | null | undefined = undefined
+                      let nextStoragePath: string | null | undefined = undefined
 
-                    if (file) {
-                      if (
-                        !file.type.startsWith("image/") &&
-                        !file.type.startsWith("video/")
-                      ) {
-                        throw new Error("Only image or video files are allowed")
+                      if (file) {
+                        if (
+                          !file.type.startsWith("image/") &&
+                          !file.type.startsWith("video/")
+                        ) {
+                          throw new Error("Only image or video files are allowed")
+                        }
+
+                        nextStoragePath = await uploadStoryFile(file)
                       }
 
-                      nextStoragePath = await uploadStoryFile(file)
+                      await updateStoryAction({
+                        storyId: latestStory.id,
+                        text,
+                        storagePath: nextStoragePath,
+                        editorState,
+                      })
+
+                      onClose()
+                    } catch (submitError) {
+                      if (submitError instanceof Error) {
+                        setError(submitError.message)
+                        return
+                      }
+
+                      setError("Failed to update story")
                     }
+                  })
+                }}
+                className="w-full rounded-2xl bg-pink-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-pink-500 disabled:opacity-50"
+              >
+                {isPending ? "Saving..." : "Save changes"}
+              </button>
 
-                    await updateStoryAction({
-                      storyId: latestStory.id,
-                      text,
-                      storagePath: nextStoragePath,
-                      editorState,
-                    })
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() => {
+                  startTransition(async () => {
+                    try {
+                      setError(null)
+                      await deleteStoryAction({
+                        storyId: latestStory.id,
+                      })
+                      onClose()
+                    } catch (submitError) {
+                      if (submitError instanceof Error) {
+                        setError(submitError.message)
+                        return
+                      }
 
-                    onClose()
-                  } catch (submitError) {
-                    if (submitError instanceof Error) {
-                      setError(submitError.message)
-                      return
+                      setError("Failed to delete story")
                     }
-
-                    setError("Failed to update story")
-                  }
-                })
-              }}
-              className="w-full rounded-2xl bg-pink-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-pink-500 disabled:opacity-50"
-            >
-              {isPending ? "Saving..." : "Save changes"}
-            </button>
-
-            <button
-              type="button"
-              disabled={isPending}
-              onClick={() => {
-                startTransition(async () => {
-                  try {
-                    setError(null)
-                    await deleteStoryAction({
-                      storyId: latestStory.id,
-                    })
-                    onClose()
-                  } catch (submitError) {
-                    if (submitError instanceof Error) {
-                      setError(submitError.message)
-                      return
-                    }
-
-                    setError("Failed to delete story")
-                  }
-                })
-              }}
-              className="w-full rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-300 transition hover:bg-red-500/20 disabled:opacity-50"
-            >
-              {isPending ? "Deleting..." : "Delete story"}
-            </button>
+                  })
+                }}
+                className="w-full rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-300 transition hover:bg-red-500/20 disabled:opacity-50"
+              >
+                {isPending ? "Deleting..." : "Delete story"}
+              </button>
+            </div>
 
             <button
               type="button"

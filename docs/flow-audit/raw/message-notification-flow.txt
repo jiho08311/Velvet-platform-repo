@@ -1,0 +1,992 @@
+src/app/creator/studio/new-post/page.tsx:        error instanceof Error ? error.message : "Failed to create post"
+src/app/messages/new/page.tsx:import { getOrCreateConversation } from "@/modules/message/server/get-or-create-conversation"
+src/app/messages/new/page.tsx:    redirect("/messages")
+src/app/messages/new/page.tsx:    redirect("/messages")
+src/app/messages/new/page.tsx:    redirect("/messages")
+src/app/messages/new/page.tsx:    const conversation = await getOrCreateConversation({
+src/app/messages/new/page.tsx:    redirect(`/messages/${conversation.id}`)
+src/app/messages/new/page.tsx:    if (error instanceof Error && error.message === "Subscription required") {
+src/app/messages/error.tsx:// src/app/messages/error.tsx
+src/app/messages/error.tsx:          Failed to load messages
+src/app/messages/error.tsx:          The conversation list is temporarily unavailable. Please try again.
+src/app/messages/[conversationId]/page.tsx:import { getConversationById } from "@/modules/message/server/get-conversation-by-id"
+src/app/messages/[conversationId]/page.tsx:import { listMessages } from "@/modules/message/server/list-messages"
+src/app/messages/[conversationId]/page.tsx:import { markConversationRead } from "@/modules/message/server/mark-conversation-read"
+src/app/messages/[conversationId]/page.tsx:import { MessageThreadSection } from "@/modules/message/ui/MessageThreadSection"
+src/app/messages/[conversationId]/page.tsx:import { toConversationMessageListItem } from "@/modules/message/types"
+src/app/messages/[conversationId]/page.tsx:    conversationId: string
+src/app/messages/[conversationId]/page.tsx:  const { conversationId } = await params
+src/app/messages/[conversationId]/page.tsx:  const pathname = `/messages/${conversationId}`
+src/app/messages/[conversationId]/page.tsx:  const conversation = await getConversationById({
+src/app/messages/[conversationId]/page.tsx:    conversationId,
+src/app/messages/[conversationId]/page.tsx:  if (!conversation) {
+src/app/messages/[conversationId]/page.tsx:   const messages = await listMessages({
+src/app/messages/[conversationId]/page.tsx:    conversationId,
+src/app/messages/[conversationId]/page.tsx:  const messageListItems = messages.map((message) =>
+src/app/messages/[conversationId]/page.tsx:      message,
+src/app/messages/[conversationId]/page.tsx:   * markConversationRead(). At the moment, read persistence SoT is not defined
+src/app/messages/[conversationId]/page.tsx:  await markConversationRead({
+src/app/messages/[conversationId]/page.tsx:    conversationId,
+src/app/messages/[conversationId]/page.tsx:  const participant = conversation.participant
+src/app/messages/[conversationId]/page.tsx:          href="/messages"
+src/app/messages/[conversationId]/page.tsx:          conversationId={conversation.id}
+src/app/messages/[conversationId]/page.tsx:          initialMessages={messageListItems}
+src/app/messages/page.tsx:import { listConversations } from "@/modules/message/server/list-conversations"
+src/app/messages/page.tsx:import { ConversationList } from "@/modules/message/ui/ConversationList"
+src/app/messages/page.tsx:import { getOrCreateConversation } from "@/modules/message/server/get-or-create-conversation"
+src/app/messages/page.tsx:  const nextPath = nextQuery ? `/messages?${nextQuery}` : "/messages"
+src/app/messages/page.tsx:    const conversation = await getOrCreateConversation({
+src/app/messages/page.tsx:    redirect(`/messages/${conversation.id}`)
+src/app/messages/page.tsx:      const conversation = await getOrCreateConversation({
+src/app/messages/page.tsx:      redirect(`/messages/${conversation.id}`)
+src/app/messages/page.tsx:  const conversations = await listConversations({
+src/app/messages/page.tsx:  const visibleConversations = conversations.filter(
+src/app/messages/page.tsx:      conversation
+src/app/messages/page.tsx:    ): conversation is typeof conversation & {
+src/app/messages/page.tsx:      participant: NonNullable<typeof conversation.participant>
+src/app/messages/page.tsx:    } => conversation.participant !== null
+src/app/messages/page.tsx:          View your conversations and continue chatting with creators and fans.
+src/app/messages/page.tsx:        conversations={visibleConversations}
+src/app/messages/page.tsx:        emptyMessage="No conversations yet."
+src/app/payment/cancel/page.tsx:            {resultState.message}
+src/app/payment/cancel/page.tsx:  message={resultState.notice}
+src/app/payment/fail/page.tsx:            {resultState.message}
+src/app/payment/fail/page.tsx:  message={resultState.notice}
+src/app/admin/admins/page.tsx:            <AdminEmptyState message="표시할 사용자가 없습니다." />
+src/app/admin/admins/page.tsx:            <AdminEmptyState message="표시할 크리에이터가 없습니다." />
+src/app/admin/admins/page.tsx:          <AdminEmptyState message="대기 중인 payout request가 없습니다." />
+src/app/dashboard/subscribers/page.tsx:import { getOrCreateConversation } from "@/modules/message/server/get-or-create-conversation"
+src/app/dashboard/subscribers/page.tsx:import { sendMessage } from "@/modules/message/server/send-message"
+src/app/dashboard/subscribers/page.tsx:import { normalizeSendMessagePayload } from "@/modules/message/types"
+src/app/dashboard/subscribers/page.tsx:    const conversation = await getOrCreateConversation({
+src/app/dashboard/subscribers/page.tsx:    await sendMessage({
+src/app/dashboard/subscribers/page.tsx:        conversationId: conversation.id,
+src/app/dashboard/subscribers/page.tsx:                href={subscriber.messageHref}
+src/app/_components/MobileNavigation.tsx:  { href: "/messages", label: "Messages", icon: Mail },
+src/app/_components/AppSidebar.tsx:  { href: "/messages", label: "Messages", icon: Mail },
+src/app/_components/AppSidebar.tsx:  { href: "/notifications", label: "Notifications", icon: Bell },
+src/app/_components/AppSidebar.tsx:        const res = await fetch("/api/notifications/badge", {
+src/app/_components/AppSidebar.tsx:                {item.href === "/notifications" && isAuthenticated && hasUnread ? (
+src/app/feed/page.tsx:    message: "Posts from creators you follow will appear here.",
+src/app/feed/page.tsx:            emptyMessage={feedEmptyState.message}
+src/app/error.tsx:            {error.message || "알 수 없는 오류가 발생했어요."}
+src/app/api/creator/payouts/route.ts:          error instanceof Error ? error.message : "unknown error",
+src/app/api/creator/analytics/route.ts:    const message =
+src/app/api/creator/analytics/route.ts:      error instanceof Error ? error.message : "Failed to load analytics"
+src/app/api/creator/analytics/route.ts:      { error: message },
+src/app/api/messages/route.ts:import { sendMessage } from "@/modules/message/server/send-message"
+src/app/api/messages/route.ts:} from "@/modules/message/types"
+src/app/api/messages/route.ts:    if (!payload.conversationId || (!payload.content && payload.mediaIds.length === 0)) {
+src/app/api/messages/route.ts:        { error: "conversationId and content or media are required" },
+src/app/api/messages/route.ts:    const message = await sendMessage({
+src/app/api/messages/route.ts:    return NextResponse.json(createSendMessageResult(message), { status: 200 })
+src/app/api/messages/route.ts:    const message =
+src/app/api/messages/route.ts:      error instanceof Error ? error.message : "Failed to send message"
+src/app/api/messages/route.ts:    return NextResponse.json({ error: message }, { status: 400 })
+src/app/api/messages/[conversationId]/send/route.ts:import { sendMessage } from "@/modules/message/server/send-message"
+src/app/api/messages/[conversationId]/send/route.ts:} from "@/modules/message/types"
+src/app/api/messages/[conversationId]/send/route.ts:    conversationId: string
+src/app/api/messages/[conversationId]/send/route.ts:    const { conversationId } = await context.params
+src/app/api/messages/[conversationId]/send/route.ts:      conversationId,
+src/app/api/messages/[conversationId]/send/route.ts:    if (!payload.conversationId || (!payload.content && payload.mediaIds.length === 0)) {
+src/app/api/messages/[conversationId]/send/route.ts:    const message = await sendMessage({
+src/app/api/messages/[conversationId]/send/route.ts:    return NextResponse.json(createSendMessageResult(message), { status: 200 })
+src/app/api/messages/[conversationId]/send/route.ts:    const message =
+src/app/api/messages/[conversationId]/send/route.ts:      error instanceof Error ? error.message : "Failed to send message"
+src/app/api/messages/[conversationId]/send/route.ts:    return NextResponse.json({ error: message }, { status: 400 })
+src/app/api/post/purchase/route.ts:    if (error instanceof Error && error.message === "POST_ALREADY_PURCHASED") {
+src/app/api/post/purchase/route.ts:      return NextResponse.json({ error: error.message }, { status: 400 })
+src/app/api/post/create/route.ts:    const message =
+src/app/api/post/create/route.ts:      error instanceof Error ? error.message : "Failed to create post"
+src/app/api/post/create/route.ts:    return NextResponse.json({ error: message }, { status: 400 })
+src/app/api/post/[postId]/comments/route.ts:      { error: commentsError.message },
+src/app/api/post/[postId]/comments/route.ts:      { error: likeRowsError.message },
+src/app/api/post/[postId]/comments/route.ts:        { error: profilesError.message },
+src/app/api/post/[postId]/like/route.ts:import { createNotification } from "@/modules/notification/server/create-notification"
+src/app/api/post/[postId]/like/route.ts:import { createInteractionNotificationInput } from "@/modules/notification/server/create-interaction-notification-input"
+src/app/api/post/[postId]/like/route.ts:    return NextResponse.json({ error: error.message }, { status: 500 })
+src/app/api/post/[postId]/like/route.ts:      const notificationInput = createInteractionNotificationInput({
+src/app/api/post/[postId]/like/route.ts:      if (notificationInput) {
+src/app/api/post/[postId]/like/route.ts:        await createNotification(notificationInput)
+src/app/api/post/[postId]/like/route.ts:    return NextResponse.json({ error: error.message }, { status: 500 })
+src/app/api/post/[postId]/delete/route.ts:    const message =
+src/app/api/post/[postId]/delete/route.ts:      error instanceof Error ? error.message : "Failed to delete post"
+src/app/api/post/[postId]/delete/route.ts:    return NextResponse.json({ error: message }, { status: 400 })
+src/app/api/post/[postId]/comment/route.ts:import { createNotification } from "@/modules/notification/server/create-notification"
+src/app/api/post/[postId]/comment/route.ts:import { createInteractionNotificationInput } from "@/modules/notification/server/create-interaction-notification-input"
+src/app/api/post/[postId]/comment/route.ts:      { error: insertError.message },
+src/app/api/post/[postId]/comment/route.ts:      { error: profileError.message },
+src/app/api/post/[postId]/comment/route.ts:      const notificationInput = createInteractionNotificationInput({
+src/app/api/post/[postId]/comment/route.ts:      if (notificationInput) {
+src/app/api/post/[postId]/comment/route.ts:        await createNotification(notificationInput)
+src/app/api/auth/sign-up/route.ts:    const message = e instanceof Error ? e.message : "sign up failed";
+src/app/api/auth/sign-up/route.ts:    return NextResponse.json({ error: message }, { status: 400 });
+src/app/api/auth/sign-in/route.ts:      return NextResponse.json({ error: error.message }, { status: 400 });
+src/app/api/comment/[commentId]/like/route.ts:import { createNotification } from "@/modules/notification/server/create-notification"
+src/app/api/comment/[commentId]/like/route.ts:import { createInteractionNotificationInput } from "@/modules/notification/server/create-interaction-notification-input"
+src/app/api/comment/[commentId]/like/route.ts:    return NextResponse.json({ error: error.message }, { status: 500 })
+src/app/api/comment/[commentId]/like/route.ts:    const notificationInput = createInteractionNotificationInput({
+src/app/api/comment/[commentId]/like/route.ts:    if (notificationInput) {
+src/app/api/comment/[commentId]/like/route.ts:      await createNotification(notificationInput)
+src/app/api/comment/[commentId]/like/route.ts:    return NextResponse.json({ error: error.message }, { status: 500 })
+src/app/api/comment/[commentId]/route.ts:    return NextResponse.json({ error: deleteError.message }, { status: 500 })
+src/app/api/payment/checkout/route.ts:    const message =
+src/app/api/payment/checkout/route.ts:      error instanceof Error ? error.message : "Failed to create checkout"
+src/app/api/payment/checkout/route.ts:    return NextResponse.json({ error: message }, { status: 400 })
+src/app/api/payment/confirm-message/route.ts:  messageId?: string
+src/app/api/payment/confirm-message/route.ts:    const messageId = body.messageId
+src/app/api/payment/confirm-message/route.ts:    if (!paymentId || !messageId) {
+src/app/api/payment/confirm-message/route.ts:        { error: "paymentId and messageId are required" },
+src/app/api/payment/confirm-message/route.ts:    const { data: message, error: messageError } = await supabaseAdmin
+src/app/api/payment/confirm-message/route.ts:      .from("messages")
+src/app/api/payment/confirm-message/route.ts:      .eq("id", messageId)
+src/app/api/payment/confirm-message/route.ts:    if (messageError || !message) {
+src/app/api/payment/confirm-message/route.ts:    if (payment.type !== "ppv_message") {
+src/app/api/payment/confirm-message/route.ts:    if (payment.target_type !== "message" || payment.target_id !== messageId) {
+src/app/api/payment/confirm-message/route.ts:        { error: "Payment does not match message" },
+src/app/api/payment/confirm-message/route.ts:    console.error("confirm message route error:", error)
+src/app/api/payment/confirm-message/route.ts:      { error: "Failed to confirm message payment" },
+src/app/api/story-read/route.ts:import { markStoryReadState } from "@/modules/story/server/story-read-state"
+src/app/api/story-read/route.ts:  const result = await markStoryReadState({
+src/app/api/admin/unban-user/route.ts:    const message =
+src/app/api/admin/unban-user/route.ts:      error instanceof Error ? error.message : "Failed to unban user"
+src/app/api/admin/unban-user/route.ts:      { error: message },
+src/app/api/admin/banned-users/route.ts:    const message =
+src/app/api/admin/banned-users/route.ts:      error instanceof Error ? error.message : "Failed to unban user"
+src/app/api/admin/banned-users/route.ts:      { error: message },
+src/app/api/admin/users/route.ts:    const message =
+src/app/api/admin/users/route.ts:      error instanceof Error ? error.message : "Failed to load users"
+src/app/api/admin/users/route.ts:      { error: message },
+src/app/api/admin/users/[userId]/route.ts:    const message =
+src/app/api/admin/users/[userId]/route.ts:      error instanceof Error ? error.message : "Failed to load user"
+src/app/api/admin/users/[userId]/route.ts:      { error: message },
+src/app/api/admin/creators/[creatorId]/route.ts:    const message =
+src/app/api/admin/creators/[creatorId]/route.ts:      error instanceof Error ? error.message : "Failed to load creator"
+src/app/api/admin/creators/[creatorId]/route.ts:      { error: message },
+src/app/api/admin/creators/route.ts:    const message =
+src/app/api/admin/creators/route.ts:      error instanceof Error ? error.message : "Failed to load creators"
+src/app/api/admin/creators/route.ts:      { error: message },
+src/app/api/admin/ban-user/route.ts:    const message =
+src/app/api/admin/ban-user/route.ts:      error instanceof Error ? error.message : "Failed to ban user"
+src/app/api/admin/ban-user/route.ts:      { error: message },
+src/app/api/admin/payout/requests/route.ts:    const message =
+src/app/api/admin/payout/requests/route.ts:      error instanceof Error ? error.message : "Failed to load payout requests"
+src/app/api/admin/payout/requests/route.ts:      { error: message },
+src/app/api/admin/reports/route.ts:    const message =
+src/app/api/admin/reports/route.ts:      error instanceof Error ? error.message : "Failed to load reports"
+src/app/api/admin/reports/route.ts:      { error: message },
+src/app/api/admin/reports/[reportId]/route.ts:    const message =
+src/app/api/admin/reports/[reportId]/route.ts:      error instanceof Error ? error.message : "Failed to load report"
+src/app/api/admin/reports/[reportId]/route.ts:      { error: message },
+src/app/api/message/conversation-by-message/route.ts:import { getConversationIdByMessage } from "@/modules/message/server/get-conversation-id-by-message"
+src/app/api/message/conversation-by-message/route.ts:    const messageId = searchParams.get("messageId")
+src/app/api/message/conversation-by-message/route.ts:    if (!messageId) {
+src/app/api/message/conversation-by-message/route.ts:        { error: "messageId is required" },
+src/app/api/message/conversation-by-message/route.ts:    const conversationId = await getConversationIdByMessage({
+src/app/api/message/conversation-by-message/route.ts:      messageId,
+src/app/api/message/conversation-by-message/route.ts:    if (!conversationId) {
+src/app/api/message/conversation-by-message/route.ts:      { conversationId },
+src/app/api/message/conversation-by-message/route.ts:    const message =
+src/app/api/message/conversation-by-message/route.ts:        ? error.message
+src/app/api/message/conversation-by-message/route.ts:        : "Failed to load conversation by message"
+src/app/api/message/conversation-by-message/route.ts:      { error: message },
+src/app/api/search/route.ts:    const message =
+src/app/api/search/route.ts:      error instanceof Error ? error.message : "Search failed"
+src/app/api/search/route.ts:    return NextResponse.json({ error: message }, { status: 400 })
+src/app/api/search/creators/route.ts:    const message =
+src/app/api/search/creators/route.ts:      error instanceof Error ? error.message : "Failed to search creators"
+src/app/api/search/creators/route.ts:      { error: message },
+src/app/api/profile/onboarding/route.ts:    const message =
+src/app/api/profile/onboarding/route.ts:      error instanceof Error ? error.message : "Failed to complete onboarding"
+src/app/api/profile/onboarding/route.ts:    return NextResponse.json({ error: message }, { status: 400 })
+src/app/api/conversations/route.ts:import { listConversations } from "@/modules/message/server/list-conversations"
+src/app/api/conversations/route.ts:    const conversations = await listConversations({
+src/app/api/conversations/route.ts:      { conversations },
+src/app/api/conversations/route.ts:    const message =
+src/app/api/conversations/route.ts:      error instanceof Error ? error.message : "Failed to load conversations"
+src/app/api/conversations/route.ts:      { error: message },
+src/app/api/feed/route.ts:    const message =
+src/app/api/feed/route.ts:      error instanceof Error ? error.message : "Failed to load feed"
+src/app/api/feed/route.ts:    return NextResponse.json({ error: message }, { status: 400 })
+src/app/api/account/onboarding/route.ts:      return NextResponse.json({ error: error.message }, { status: 400 })
+src/app/api/account/onboarding/route.ts:        error: error instanceof Error ? error.message : "Unexpected error",
+src/app/api/notifications/read/route.ts:import { markNotificationRead } from "@/modules/notification/server/mark-notification-read"
+src/app/api/notifications/read/route.ts:  notificationId?: string
+src/app/api/notifications/read/route.ts:    if (!body.notificationId) {
+src/app/api/notifications/read/route.ts:        { error: "notificationId is required" },
+src/app/api/notifications/read/route.ts:    const notification = await markNotificationRead(
+src/app/api/notifications/read/route.ts:      body.notificationId,
+src/app/api/notifications/read/route.ts:    if (!notification) {
+src/app/api/notifications/read/route.ts:    return NextResponse.json({ notification }, { status: 200 })
+src/app/api/notifications/read/route.ts:    const message =
+src/app/api/notifications/read/route.ts:      error instanceof Error ? error.message : "Failed to mark as read"
+src/app/api/notifications/read/route.ts:    return NextResponse.json({ error: message }, { status: 500 })
+src/app/api/notifications/route.ts:import { listNotificationItems } from "@/modules/notification/server/list-notifications"
+src/app/api/notifications/route.ts:    const notificationItems = await listNotificationItems({
+src/app/api/notifications/route.ts:        notifications: notificationItems,
+src/app/api/notifications/route.ts:    const message =
+src/app/api/notifications/route.ts:      error instanceof Error ? error.message : "Failed to load notifications"
+src/app/api/notifications/route.ts:    return NextResponse.json({ error: message }, { status: 400 })
+src/app/api/notifications/[notificationId]/delete/route.ts:import { deleteNotification } from "@/modules/notification/server/delete-notification"
+src/app/api/notifications/[notificationId]/delete/route.ts:    notificationId: string
+src/app/api/notifications/[notificationId]/delete/route.ts:    const { notificationId } = await params
+src/app/api/notifications/[notificationId]/delete/route.ts:      notificationId,
+src/app/api/notifications/[notificationId]/delete/route.ts:    const message =
+src/app/api/notifications/[notificationId]/delete/route.ts:      error instanceof Error ? error.message : "Failed to delete notification"
+src/app/api/notifications/[notificationId]/delete/route.ts:    return NextResponse.json({ error: message }, { status: 400 })
+src/app/api/notifications/[notificationId]/read/route.ts:import { markNotificationRead } from "@/modules/notification/server/mark-notification-read"
+src/app/api/notifications/[notificationId]/read/route.ts:    notificationId: string
+src/app/api/notifications/[notificationId]/read/route.ts:    const { notificationId } = await params
+src/app/api/notifications/[notificationId]/read/route.ts:    const notification = await markNotificationRead(notificationId, user.id)
+src/app/api/notifications/[notificationId]/read/route.ts:    if (!notification) {
+src/app/api/notifications/[notificationId]/read/route.ts:    return NextResponse.json({ notification }, { status: 200 })
+src/app/api/notifications/[notificationId]/read/route.ts:    const message =
+src/app/api/notifications/[notificationId]/read/route.ts:        ? error.message
+src/app/api/notifications/[notificationId]/read/route.ts:        : "Failed to mark notification as read"
+src/app/api/notifications/[notificationId]/read/route.ts:    return NextResponse.json({ error: message }, { status: 400 })
+src/app/api/notifications/badge/route.ts:import { listNotificationReadStates } from "@/modules/notification/server/list-notifications"
+src/app/api/notifications/badge/route.ts:import { buildNotificationBadgeSummary } from "@/modules/notification/types"
+src/app/api/notifications/badge/route.ts:    const message =
+src/app/api/notifications/badge/route.ts:        ? error.message
+src/app/api/notifications/badge/route.ts:        : "Failed to load notification badge"
+src/app/api/notifications/badge/route.ts:    return NextResponse.json({ error: message }, { status: 400 })
+src/app/api/payout/reject/route.ts:    const message =
+src/app/api/payout/reject/route.ts:      error instanceof Error ? error.message : JSON.stringify(error)
+src/app/api/payout/reject/route.ts:    return NextResponse.json({ error: message }, { status: 400 })
+src/app/api/payout/requests/[payoutRequestId]/reject/route.ts:    const message =
+src/app/api/payout/requests/[payoutRequestId]/reject/route.ts:      error instanceof Error ? error.message : "Failed to reject payout request"
+src/app/api/payout/requests/[payoutRequestId]/reject/route.ts:      { error: message },
+src/app/api/payout/requests/[payoutRequestId]/approve/route.ts:    const message =
+src/app/api/payout/requests/[payoutRequestId]/approve/route.ts:      error instanceof Error ? error.message : "Failed to approve payout request"
+src/app/api/payout/requests/[payoutRequestId]/approve/route.ts:      { error: message },
+src/app/api/payout/requests/route.ts:    const message =
+src/app/api/payout/requests/route.ts:      error instanceof Error ? error.message : "Failed to load payout requests"
+src/app/api/payout/requests/route.ts:      { error: message },
+src/app/api/payout/approve/route.ts:    const message =
+src/app/api/payout/approve/route.ts:      error instanceof Error ? error.message : JSON.stringify(error)
+src/app/api/payout/approve/route.ts:    return NextResponse.json({ error: message }, { status: 400 })
+src/app/api/payout/request/route.ts:    const message =
+src/app/api/payout/request/route.ts:      error instanceof Error ? error.message : JSON.stringify(error)
+src/app/api/payout/request/route.ts:    return NextResponse.json({ error: message }, { status: 400 })
+src/app/api/payout/send/route.ts:    const message =
+src/app/api/payout/send/route.ts:      error instanceof Error ? error.message : JSON.stringify(error)
+src/app/api/payout/send/route.ts:    return NextResponse.json({ error: message }, { status: 400 })
+src/app/api/story/video-job/route.ts:      return NextResponse.json({ error: error.message }, { status: 400 })
+src/app/api/story/video-job/route.ts:    const message =
+src/app/api/story/video-job/route.ts:      error instanceof Error ? error.message : "Failed to enqueue job"
+src/app/api/story/video-job/route.ts:    return NextResponse.json({ error: message }, { status: 500 })
+src/app/api/story/video-job/[jobId]/route.ts:    const message =
+src/app/api/story/video-job/[jobId]/route.ts:      error instanceof Error ? error.message : "Failed to get job status"
+src/app/api/story/video-job/[jobId]/route.ts:    return NextResponse.json({ error: message }, { status: 500 })
+src/app/api/story/create/route.ts:      return NextResponse.json({ error: error.message }, { status: 400 })
+src/app/api/story/create/route.ts:    const message =
+src/app/api/story/create/route.ts:      error instanceof Error ? error.message : "Failed to create story"
+src/app/api/story/create/route.ts:    return NextResponse.json({ error: message }, { status: 500 })
+src/app/api/cron/payout/run/route.ts:            error instanceof Error ? error.message : "Unknown error",
+src/app/api/analytics/admin-dashboard/route.ts:    const message =
+src/app/api/analytics/admin-dashboard/route.ts:      error instanceof Error ? error.message : "Failed to load admin analytics"
+src/app/api/analytics/admin-dashboard/route.ts:      { error: message },
+src/app/api/analytics/route.ts:    const message =
+src/app/api/analytics/route.ts:      error instanceof Error ? error.message : "Failed to load analytics"
+src/app/api/analytics/route.ts:      { error: message },
+src/app/api/analytics/creator-dashboard/route.ts:    const message =
+src/app/api/analytics/creator-dashboard/route.ts:      error instanceof Error ? error.message : "Failed to load creator analytics"
+src/app/api/analytics/creator-dashboard/route.ts:      { error: message },
+src/app/api/reports/route.ts:    const message =
+src/app/api/reports/route.ts:      error instanceof Error ? error.message : "Failed to load reports"
+src/app/api/reports/route.ts:      { error: message },
+src/app/api/reports/[reportId]/resolve/route.ts:    const message =
+src/app/api/reports/[reportId]/resolve/route.ts:      error instanceof Error ? error.message : "Failed to resolve report"
+src/app/api/reports/[reportId]/resolve/route.ts:      { error: message },
+src/app/api/media/upload/route.ts:        purpose: "message",
+src/app/sign-in/error.tsx:        {error.message}
+src/app/notifications/error.tsx:// src/app/notifications/error.tsx
+src/app/notifications/error.tsx:          Failed to load notifications
+src/app/notifications/[id]/page.tsx:import { getNotificationById } from "@/modules/notification/server/get-notification-by-id"
+src/app/notifications/[id]/page.tsx:import { listNotificationItems } from "@/modules/notification/server/list-notifications"
+src/app/notifications/[id]/page.tsx:import { requireNotificationPageAccess } from "@/modules/notification/server/require-notification-page-access"
+src/app/notifications/[id]/page.tsx:import { getUnreadNotificationCount } from "@/modules/notification/types"
+src/app/notifications/[id]/page.tsx:import { NotificationListSurface } from "@/modules/notification/ui/NotificationListSurface"
+src/app/notifications/[id]/page.tsx:  const nextPath = `/notifications/${id}`
+src/app/notifications/[id]/page.tsx:    notificationId: id,
+src/app/notifications/[id]/page.tsx:  const notificationItems = await listNotificationItems({
+src/app/notifications/[id]/page.tsx:  const unreadCount = getUnreadNotificationCount(notificationItems)
+src/app/notifications/[id]/page.tsx:          notifications={notificationItems}
+src/app/notifications/page.tsx:import { listNotificationItems } from "@/modules/notification/server/list-notifications"
+src/app/notifications/page.tsx:import { requireNotificationPageAccess } from "@/modules/notification/server/require-notification-page-access"
+src/app/notifications/page.tsx:import { getUnreadNotificationCount } from "@/modules/notification/types"
+src/app/notifications/page.tsx:import { NotificationListSurface } from "@/modules/notification/ui/NotificationListSurface"
+src/app/notifications/page.tsx:  const nextPath = "/notifications"
+src/app/notifications/page.tsx:  const notificationItems = await listNotificationItems({
+src/app/notifications/page.tsx:  const unreadCount = getUnreadNotificationCount(notificationItems)
+src/app/notifications/page.tsx:          notifications={notificationItems}
+src/workflows/process-video-moderation.ts:          error instanceof Error ? error.message : "video moderation failed",
+src/workflows/subscription/notify-subscription-canceled-workflow.ts:import { createNotification } from "@/modules/notification/server/create-notification"
+src/workflows/subscription/notify-subscription-canceled-workflow.ts:import { createSubscriptionCanceledNotificationInput } from "@/modules/notification/server/create-notification-inputs"
+src/workflows/subscription/notify-subscription-canceled-workflow.ts:  await createNotification(
+src/workflows/subscription/handle-subscription-created.ts:import { createNotification } from "@/modules/notification/server/create-notification"
+src/workflows/subscription/handle-subscription-created.ts:import { createSubscriptionStartedNotificationInput } from "@/modules/notification/server/create-notification-inputs"
+src/workflows/subscription/handle-subscription-created.ts:      await createNotification(
+src/modules/creator/ui/SubscribeButton.tsx:function getSubscribeErrorMessage(message: string) {
+src/modules/creator/ui/SubscribeButton.tsx:  if (message === "You already have an active subscription") {
+src/modules/creator/ui/SubscribeButton.tsx:  if (message === "You cannot subscribe to your own creator page") {
+src/modules/creator/ui/SubscribeButton.tsx:  if (message === "Invalid subscription price") {
+src/modules/creator/ui/SubscribeButton.tsx:  if (message === "Creator not found") {
+src/modules/creator/lib/creator-identity.ts:  return `/messages?creatorId=${encodeURIComponent(creatorUserId)}`
+src/modules/post/ui/post-composer-ui-state.ts:  message: string | null
+src/modules/post/ui/post-composer-ui-state.ts:  if (!message) {
+src/modules/post/ui/post-composer-ui-state.ts:    message,
+src/modules/post/ui/EditPostComposer.tsx:          {errorPresentation.message}
+src/modules/post/ui/EditPostComposer.tsx:                  if (submitError.message === "IMAGE_BLOCKED") {
+src/modules/post/ui/EditPostComposer.tsx:                  setError(submitError.message)
+src/modules/post/ui/CreatePostComposer.tsx:      throw new Error(error.message)
+src/modules/post/ui/CreatePostComposer.tsx:          {errorPresentation.message}
+src/modules/post/ui/CreatePostComposer.tsx:                  if (submitError.message === "TEXT_BLOCKED") {
+src/modules/post/ui/CreatePostComposer.tsx:                  if (submitError.message === "IMAGE_BLOCKED") {
+src/modules/post/ui/CreatePostComposer.tsx:                  setError(submitError.message)
+src/modules/post/server/create-post-action.ts:      throw new Error(`DEBUG: ${error.message}`)
+src/modules/auth/ui/ForgotPasswordForm.tsx:        setErrorMessage(error.message)
+src/modules/auth/ui/ForgotPasswordForm.tsx:        error instanceof Error ? error.message : "Something went wrong."
+src/modules/auth/ui/SignInForm.tsx:        setErrorMessage(error.message || "Failed to sign in.");
+src/modules/auth/ui/SignInForm.tsx:        error instanceof Error ? error.message : "Something went wrong."
+src/modules/auth/ui/SignInForm.tsx:        error instanceof Error ? error.message : "로그인에 실패했습니다."
+src/modules/auth/ui/ResetPasswordForm.tsx:        if (error.message.includes("Auth session missing")) {
+src/modules/auth/ui/ResetPasswordForm.tsx:          setErrorMessage(error.message)
+src/modules/auth/ui/ResetPasswordForm.tsx:        error instanceof Error ? error.message : "Something went wrong."
+src/modules/auth/ui/SignUpForm.tsx:      if (error) setErrorMessage(error.message || "Google sign up failed");
+src/modules/auth/ui/SignUpForm.tsx:      if (error) setErrorMessage(error.message || "Kakao sign up failed");
+src/modules/auth/server/sign-up-with-adult-check.ts:        error: { message: string } | null;
+src/modules/auth/server/sign-up-with-adult-check.ts:        error: { message: string } | null;
+src/modules/auth/server/sign-up-with-adult-check.ts:    throw new Error(error.message);
+src/modules/auth/server/sign-up-with-adult-check.ts:    throw new Error(signInError.message);
+src/modules/notification/ui/NotificationListSurface.tsx:  notifications: NotificationListItem[]
+src/modules/notification/ui/NotificationListSurface.tsx:  notification: NotificationListItem
+src/modules/notification/ui/NotificationListSurface.tsx:            Stay updated on likes, comments, subscriptions, messages, and payments.
+src/modules/notification/ui/NotificationListSurface.tsx:  notification,
+src/modules/notification/ui/NotificationListSurface.tsx:        href={`/notifications/${notification.id}`}
+src/modules/notification/ui/NotificationListSurface.tsx:          isRead: notification.isRead,
+src/modules/notification/ui/NotificationListSurface.tsx:                label={notification.label}
+src/modules/notification/ui/NotificationListSurface.tsx:                tone={notification.tone}
+src/modules/notification/ui/NotificationListSurface.tsx:              {!notification.isRead ? (
+src/modules/notification/ui/NotificationListSurface.tsx:                notification.isRead
+src/modules/notification/ui/NotificationListSurface.tsx:              {notification.body}
+src/modules/notification/ui/NotificationListSurface.tsx:              {new Date(notification.createdAt).toLocaleString()}
+src/modules/notification/ui/NotificationListSurface.tsx:  notifications,
+src/modules/notification/ui/NotificationListSurface.tsx:        {notifications.length === 0 ? (
+src/modules/notification/ui/NotificationListSurface.tsx:            title="No notifications yet"
+src/modules/notification/ui/NotificationListSurface.tsx:            {notifications.map((notification) => {
+src/modules/notification/ui/NotificationListSurface.tsx:              const isSelected = notification.id === selectedNotificationId
+src/modules/notification/ui/NotificationListSurface.tsx:                  key={notification.id}
+src/modules/notification/ui/NotificationListSurface.tsx:                  notification={notification}
+src/modules/notification/server/create-notification-inputs.ts:import type { MessageSentEvent } from "@/modules/message/types"
+src/modules/notification/server/create-notification-inputs.ts:  ppv_message_purchased: {
+src/modules/notification/server/create-notification-inputs.ts:  message_received: {
+src/modules/notification/server/create-notification-inputs.ts:    conversationId: string
+src/modules/notification/server/create-notification-inputs.ts:    messageId: string
+src/modules/notification/server/create-notification-inputs.ts:function createNotificationInput<TType extends keyof NotificationInputPayloadByType>(
+src/modules/notification/server/create-notification-inputs.ts:  return createNotificationInput({
+src/modules/notification/server/create-notification-inputs.ts:  return createNotificationInput({
+src/modules/notification/server/create-notification-inputs.ts:  return createNotificationInput({
+src/modules/notification/server/create-notification-inputs.ts:  return createNotificationInput({
+src/modules/notification/server/create-notification-inputs.ts:    type: "ppv_message_purchased",
+src/modules/notification/server/create-notification-inputs.ts:    body: "A user purchased your PPV message.",
+src/modules/notification/server/create-notification-inputs.ts:  return createNotificationInput({
+src/modules/notification/server/create-notification-inputs.ts:  return createNotificationInput({
+src/modules/notification/server/create-notification-inputs.ts:  return createNotificationInput({
+src/modules/notification/server/create-notification-inputs.ts:  return createNotificationInput({
+src/modules/notification/server/create-notification-inputs.ts:  return createNotificationInput({
+src/modules/notification/server/create-notification-inputs.ts:    type: "message_received",
+src/modules/notification/server/create-notification-inputs.ts:    title: "New message",
+src/modules/notification/server/create-notification-inputs.ts:      conversationId: event.conversationId,
+src/modules/notification/server/create-notification-inputs.ts:      messageId: event.messageId,
+src/modules/notification/server/get-notification-by-id.ts:import { getNotificationVisibilityScope } from "./notification-visibility-policy"
+src/modules/notification/server/get-notification-by-id.ts:import { NOTIFICATION_ROW_SELECT } from "./notification-row-query"
+src/modules/notification/server/get-notification-by-id.ts:  notificationId: string
+src/modules/notification/server/get-notification-by-id.ts:  notificationId,
+src/modules/notification/server/get-notification-by-id.ts:    .from("notifications")
+src/modules/notification/server/get-notification-by-id.ts:    .eq("id", notificationId)
+src/modules/notification/server/notification-read-state-policy.ts:export function createNotificationReadUpdate(
+src/modules/notification/server/notification-type-policy.ts:  "conversationId",
+src/modules/notification/server/notification-type-policy.ts:  "messageId",
+src/modules/notification/server/notification-type-policy.ts:  ppv_message_received: {
+src/modules/notification/server/notification-type-policy.ts:    label: "Locked message",
+src/modules/notification/server/notification-type-policy.ts:    dataKeys: ["conversationId", "messageId", "paymentId"],
+src/modules/notification/server/notification-type-policy.ts:  ppv_message_purchased: {
+src/modules/notification/server/notification-type-policy.ts:  message_received: {
+src/modules/notification/server/notification-type-policy.ts:    dataKeys: ["conversationId", "messageId"],
+src/modules/notification/server/create-message-received-notification.ts:import type { MessageSentEvent } from "@/modules/message/types"
+src/modules/notification/server/create-message-received-notification.ts:import { createNotification } from "./create-notification"
+src/modules/notification/server/create-message-received-notification.ts:import { createMessageReceivedNotificationInput } from "./create-notification-inputs"
+src/modules/notification/server/create-message-received-notification.ts:  await createNotification(createMessageReceivedNotificationInput(event))
+src/modules/notification/server/list-notifications.ts:import { resolveNotificationReadState } from "./notification-read-state-policy"
+src/modules/notification/server/list-notifications.ts:import { NOTIFICATION_BADGE_ROW_SELECT } from "./notification-row-query"
+src/modules/notification/server/list-notifications.ts:import { getNotificationVisibilityScope } from "./notification-visibility-policy"
+src/modules/notification/server/list-notifications.ts:} from "./notification-row-query"
+src/modules/notification/server/list-notifications.ts:export async function listNotifications({
+src/modules/notification/server/list-notifications.ts:    .from("notifications")
+src/modules/notification/server/list-notifications.ts:    .from("notifications")
+src/modules/notification/server/list-notifications.ts:    .from("notifications")
+src/modules/notification/server/mark-notification-read.ts:import { getNotificationVisibilityScope } from "./notification-visibility-policy"
+src/modules/notification/server/mark-notification-read.ts:import { NOTIFICATION_READ_STATE_SELECT } from "./notification-read-row-query"
+src/modules/notification/server/mark-notification-read.ts:  createNotificationReadUpdate,
+src/modules/notification/server/mark-notification-read.ts:} from "./notification-read-state-policy"
+src/modules/notification/server/mark-notification-read.ts:export async function markNotificationRead(
+src/modules/notification/server/mark-notification-read.ts:  notificationId: string,
+src/modules/notification/server/mark-notification-read.ts:    .from("notifications")
+src/modules/notification/server/mark-notification-read.ts:    .eq("id", notificationId)
+src/modules/notification/server/mark-notification-read.ts:    .from("notifications")
+src/modules/notification/server/mark-notification-read.ts:    .update(createNotificationReadUpdate(readAt))
+src/modules/notification/server/mark-notification-read.ts:    .eq("id", notificationId)
+src/modules/notification/server/create-interaction-notification-input.ts:} from "./create-notification-inputs"
+src/modules/notification/server/create-interaction-notification-input.ts:      // Reports stay within moderation/admin flows and do not fan out to user notifications.
+src/modules/notification/server/delete-notification.ts:import { getNotificationVisibilityScope } from "./notification-visibility-policy"
+src/modules/notification/server/delete-notification.ts:  notificationId: string
+src/modules/notification/server/delete-notification.ts:  notificationId,
+src/modules/notification/server/delete-notification.ts:    .from("notifications")
+src/modules/notification/server/delete-notification.ts:    .eq("id", notificationId)
+src/modules/notification/server/delete-notification.ts:    .from("notifications")
+src/modules/notification/server/delete-notification.ts:    .eq("id", notificationId)
+src/modules/notification/server/create-notification.ts:export async function createNotification(
+src/modules/notification/server/create-notification.ts:  const { error } = await supabaseAdmin.from("notifications").insert({
+src/modules/notification/server/notification-visibility-policy.ts:import { getNotificationOwnerIds } from "./get-notification-owner-ids"
+src/modules/notification/server/notification-visibility-policy.ts:  notificationUserId: string,
+src/modules/notification/server/notification-visibility-policy.ts:  return scope.ownerIds.includes(notificationUserId)
+src/modules/notification/server/mark-all-notifications-read.ts:import { getNotificationVisibilityScope } from "./notification-visibility-policy"
+src/modules/notification/server/mark-all-notifications-read.ts:import { NOTIFICATION_READ_STATE_SELECT } from "./notification-read-row-query"
+src/modules/notification/server/mark-all-notifications-read.ts:import { createNotificationReadUpdate } from "./notification-read-state-policy"
+src/modules/notification/server/mark-all-notifications-read.ts:export async function markAllNotificationsRead({
+src/modules/notification/server/mark-all-notifications-read.ts:    .from("notifications")
+src/modules/notification/server/mark-all-notifications-read.ts:    .from("notifications")
+src/modules/notification/server/mark-all-notifications-read.ts:    .update(createNotificationReadUpdate(readAt))
+src/modules/notification/types.ts:import { resolveNotificationReadState } from "./server/notification-read-state-policy"
+src/modules/notification/types.ts:} from "./server/notification-type-policy"
+src/modules/notification/types.ts:  "ppv_message_received",
+src/modules/notification/types.ts:  "ppv_message_purchased",
+src/modules/notification/types.ts:  "message_received",
+src/modules/notification/types.ts:  conversationId?: string
+src/modules/notification/types.ts:  messageId?: string
+src/modules/notification/types.ts:  notification: Notification,
+src/modules/notification/types.ts:    id: notification.id,
+src/modules/notification/types.ts:    body: notification.body,
+src/modules/notification/types.ts:    label: notification.label,
+src/modules/notification/types.ts:    tone: notification.tone,
+src/modules/notification/types.ts:    isRead: notification.isRead,
+src/modules/notification/types.ts:    createdAt: notification.createdAt,
+src/modules/notification/types.ts:  notifications: readonly Pick<Notification, "isRead">[],
+src/modules/notification/types.ts:  return notifications.reduce((count, notification) => {
+src/modules/notification/types.ts:    return notification.isRead ? count : count + 1
+src/modules/notification/types.ts:  notifications: readonly Pick<Notification, "isRead">[],
+src/modules/notification/types.ts:  return getUnreadNotificationCount(notifications) > 0
+src/modules/notification/types.ts:  notifications: readonly Pick<Notification, "isRead">[],
+src/modules/notification/types.ts:  const unreadCount = getUnreadNotificationCount(notifications)
+src/modules/payment/ui/payment-success-content.tsx:      type: "message"
+src/modules/payment/ui/payment-success-content.tsx:      messageId: string
+src/modules/payment/ui/payment-success-content.tsx:  const messageId = searchParams.get("messageId")
+src/modules/payment/ui/payment-success-content.tsx:  if (messageId) {
+src/modules/payment/ui/payment-success-content.tsx:      type: "message",
+src/modules/payment/ui/payment-success-content.tsx:      messageId,
+src/modules/payment/ui/payment-success-content.tsx:  if (destination.type === "message") {
+src/modules/payment/ui/payment-success-content.tsx:      accessVerification.paymentType !== "ppv_message"
+src/modules/payment/ui/payment-success-content.tsx:        if (destination.type === "message") {
+src/modules/payment/ui/payment-success-content.tsx:          const conversationRes = await fetch(
+src/modules/payment/ui/payment-success-content.tsx:            `/api/message/conversation-by-message?messageId=${destination.messageId}`,
+src/modules/payment/ui/payment-success-content.tsx:          if (conversationRes.ok) {
+src/modules/payment/ui/payment-success-content.tsx:            const conversationData = await conversationRes.json()
+src/modules/payment/ui/payment-success-content.tsx:            if (conversationData?.conversationId) {
+src/modules/payment/ui/payment-success-content.tsx:              router.replace(`/messages/${conversationData.conversationId}`)
+src/modules/payment/ui/payment-success-content.tsx:          router.replace("/messages")
+src/modules/payment/ui/payment-success-content.tsx:            {resultState.message}
+src/modules/payment/ui/payment-success-content.tsx:  message={resultState.notice}
+src/modules/payment/ui/PaymentStateNotice.tsx:  message?: string
+src/modules/payment/ui/PaymentStateNotice.tsx:  message,
+src/modules/payment/ui/PaymentStateNotice.tsx:        {message}
+src/modules/payment/ui/PaymentStateNotice.tsx:          {message ?? "구매 또는 구독이 정상적으로 처리되었습니다."}
+src/modules/payment/ui/PaymentStateNotice.tsx:          {message ?? "환불이 완료되어 해당 결제의 접근 권한이 변경될 수 있습니다."}
+src/modules/payment/ui/PaymentStateNotice.tsx:          {message ?? "결제가 완료되지 않았습니다. 필요한 경우 다시 시도해 주세요."}
+src/modules/payment/ui/PaymentStateNotice.tsx:        {message ?? "결제 처리 중 문제가 발생했습니다. 다시 시도해 주세요."}
+src/modules/payment/server/create-payment.ts:type PaymentType = "subscription" | "tip" | "ppv_message" | "ppv_post"
+src/modules/payment/server/create-payment.ts:type PaymentTargetType = "post" | "message" | null
+src/modules/payment/server/payment-result-state.ts:  message: string
+src/modules/payment/server/payment-result-state.ts:    message: "결제 확인을 진행하고 있어요. 잠시만 기다려 주세요.",
+src/modules/payment/server/payment-result-state.ts:    message: "결제가 취소되었어요.",
+src/modules/payment/server/payment-result-state.ts:    message: "결제 처리에 실패했어요.",
+src/modules/payment/server/payment-result-state.ts:    message: "잘못된 결제 요청이에요.",
+src/modules/payment/server/payment-result-state.ts:    message: "결제 검증에 실패했어요.",
+src/modules/payment/server/create-payment-checkout.ts:import { assertValidMessagePrice } from "@/modules/message/lib/message-price"
+src/modules/payment/server/create-payment-checkout.ts:type PaymentType = "subscription" | "tip" | "ppv_message" | "ppv_post"
+src/modules/payment/server/create-payment-checkout.ts:type PaymentTargetType = "post" | "message" | null
+src/modules/payment/server/create-payment-checkout.ts:  if (type === "ppv_message") {
+src/modules/payment/server/list-payments.ts:  type: "subscription" | "tip" | "ppv_post" | "ppv_message" | null
+src/modules/payment/server/list-payments.ts:  paymentType: "subscription" | "tip" | "ppv_post" | "ppv_message" | "unknown"
+src/modules/payment/server/list-payments.ts:    throw new Error(paymentsError.message)
+src/modules/payment/server/list-payments.ts:    throw new Error(usersError.message)
+src/modules/payment/server/list-payments.ts:    throw new Error(creatorsError.message)
+src/modules/payment/server/verify-payment-access-after-success.ts:  type: "subscription" | "tip" | "ppv_message" | "ppv_post"
+src/modules/payment/server/verify-payment-access-after-success.ts:  target_type: "post" | "message" | null
+src/modules/payment/server/confirm-payment.ts:import { createNotification } from "@/modules/notification/server/create-notification"
+src/modules/payment/server/confirm-payment.ts:} from "@/modules/notification/server/create-notification-inputs"
+src/modules/payment/server/confirm-payment.ts:type PaymentType = "subscription" | "tip" | "ppv_message" | "ppv_post"
+src/modules/payment/server/confirm-payment.ts:    type === "ppv_message" ||
+src/modules/payment/server/confirm-payment.ts:    if (existingPayment.type === "ppv_message") {
+src/modules/payment/server/confirm-payment.ts:          target_type: "message",
+src/modules/payment/server/confirm-payment.ts:      await createNotification(
+src/modules/payment/server/confirm-payment.ts:        existingPayment.type === "ppv_message" &&
+src/modules/payment/server/confirm-payment.ts:          await createNotification(
+src/modules/payment/server/confirm-payment.ts:          await createNotification(
+src/modules/payment/server/confirm-payment.ts:      console.error("notification error:", e)
+src/modules/payment/server/confirm-payment.ts:  if (data.type === "ppv_message") {
+src/modules/payment/server/confirm-payment.ts:        target_type: "message",
+src/modules/payment/server/confirm-payment.ts:    await createNotification(
+src/modules/payment/server/confirm-payment.ts:    if (data.type === "ppv_message" && data.creator_id) {
+src/modules/payment/server/confirm-payment.ts:        await createNotification(
+src/modules/payment/server/confirm-payment.ts:        await createNotification(
+src/modules/payment/server/confirm-payment.ts:    console.error("notification error:", e)
+src/modules/payment/server/refund-payment.ts:  type: "subscription" | "tip" | "ppv_message" | "ppv_post"
+src/modules/payment/server/list-creator-payments.ts:  ppv_message: "Message purchase",
+src/modules/payment/server/list-creator-payments.ts:    throw new Error(error.message)
+src/modules/payment/server/create-ppv-post-payment.ts:import { createNotification } from "@/modules/notification/server/create-notification"
+src/modules/payment/server/create-ppv-post-payment.ts:import { createPpvPostPurchasedNotificationInput } from "@/modules/notification/server/create-notification-inputs"
+src/modules/payment/server/create-ppv-post-payment.ts:  // 🔥 notification 추가
+src/modules/payment/server/create-ppv-post-payment.ts:      await createNotification(
+src/modules/payment/server/create-ppv-post-payment.ts:    console.error("ppv_post notification error:", e)
+src/modules/payment/types.ts:  | "ppv_message"
+src/modules/payment/types.ts:export type PaymentTargetType = "post" | "message" | null
+src/modules/payment/types.ts:      paymentType: "tip" | "ppv_message"
+src/modules/admin/ui/PayoutRequestAdminList.tsx:function renderFailureMessage(message: string | null) {
+src/modules/admin/ui/PayoutRequestAdminList.tsx:  if (!message) {
+src/modules/admin/ui/PayoutRequestAdminList.tsx:  return <p className="mt-2 text-xs text-red-400">{message}</p>
+src/modules/admin/ui/AdminEmptyState.tsx:  message: string
+src/modules/admin/ui/AdminEmptyState.tsx:export function AdminEmptyState({ message }: AdminEmptyStateProps) {
+src/modules/admin/ui/AdminEmptyState.tsx:      <p className="text-sm text-zinc-500">{message}</p>
+src/modules/admin/server/approve-payout-request-action.ts:          ? error.message
+src/modules/admin/server/mark-payout-as-failed-action.ts:        error instanceof Error ? error.message : "failed to mark payout as failed",
+src/modules/admin/server/mark-payout-as-paid-action.ts:        error instanceof Error ? error.message : "failed to mark payout as paid",
+src/modules/admin/server/list-payout-requests.ts:    throw new Error(error.message)
+src/modules/admin/server/list-payout-requests.ts:      throw new Error(payoutsError.message)
+src/modules/admin/server/list-payout-requests.ts:      throw new Error(creatorsError.message)
+src/modules/admin/server/reject-payout-request-action.ts:          ? error.message
+src/modules/message/ui/ConversationList.tsx:// src/modules/message/ui/ConversationList.tsx
+src/modules/message/ui/ConversationList.tsx:import type { ConversationSummaryViewModel } from "@/modules/message/types"
+src/modules/message/ui/ConversationList.tsx:  conversations: ConversationListItem[]
+src/modules/message/ui/ConversationList.tsx:  conversations,
+src/modules/message/ui/ConversationList.tsx:  emptyMessage = "No conversations yet.",
+src/modules/message/ui/ConversationList.tsx:      {conversations.length === 0 ? (
+src/modules/message/ui/ConversationList.tsx:          {conversations.map((conversation) => {
+src/modules/message/ui/ConversationList.tsx:             * summary unread-state from message readAt.
+src/modules/message/ui/ConversationList.tsx:              conversation.lastMessage?.createdAt ?? conversation.updatedAt
+src/modules/message/ui/ConversationList.tsx:                key={conversation.id}
+src/modules/message/ui/ConversationList.tsx:                href={`/messages/${conversation.id}`}
+src/modules/message/ui/ConversationList.tsx:                  conversation.isSelected
+src/modules/message/ui/ConversationList.tsx:                  {conversation.participant?.avatarUrl ? (
+src/modules/message/ui/ConversationList.tsx:                      src={conversation.participant.avatarUrl}
+src/modules/message/ui/ConversationList.tsx:                      alt={conversation.participant.displayName}
+src/modules/message/ui/ConversationList.tsx:                      {(conversation.participant?.displayName ?? "U")
+src/modules/message/ui/ConversationList.tsx:                      {conversation.participant?.displayName ?? "Unknown user"}
+src/modules/message/ui/ConversationList.tsx:                    {conversation.lastMessage?.content ?? ""}
+src/modules/message/ui/PpvMessageState.tsx: * Do not connect this component to the message thread render path until the
+src/modules/message/ui/PpvMessageState.tsx: * PPV message purchase/unlock source of truth is confirmed.
+src/modules/message/ui/MessageItem.tsx:  messageId: string
+src/modules/message/ui/MessageItem.tsx:  messageId,
+src/modules/message/ui/MessageItem.tsx:             * Media signed URL generation and message media access policy stay
+src/modules/message/ui/MessageItem.tsx:             * Final message media access policy: unknown.
+src/modules/message/ui/MessageItem.tsx:                targetType: "message",
+src/modules/message/ui/MessageItem.tsx:                targetId: messageId,
+src/modules/message/ui/MessageList.tsx:import type { ConversationMessageListItem } from "@/modules/message/types"
+src/modules/message/ui/MessageList.tsx:  messages: ConversationMessageListItem[]
+src/modules/message/ui/MessageList.tsx:  messages,
+src/modules/message/ui/MessageList.tsx:  if (messages.length === 0) {
+src/modules/message/ui/MessageList.tsx:   * PPV message unlock / purchase source of truth:
+src/modules/message/ui/MessageList.tsx:      {messages.map((message) => (
+src/modules/message/ui/MessageList.tsx:          key={message.id}
+src/modules/message/ui/MessageList.tsx:          messageId={message.id}
+src/modules/message/ui/MessageList.tsx:          content={message.content}
+src/modules/message/ui/MessageList.tsx:          createdAt={message.createdAt}
+src/modules/message/ui/MessageList.tsx:          isOwn={message.isOwn}
+src/modules/message/ui/MessageList.tsx:          media={message.media}
+src/modules/message/ui/MessageList.tsx:          type={message.type}
+src/modules/message/ui/MessageList.tsx:          price={message.price}
+src/modules/message/ui/MessageList.tsx:          isLocked={message.isLocked}
+src/modules/message/ui/MessageList.tsx:          reportPathname={message.reportPathname}
+src/modules/message/ui/MessageBubble.tsx:  messageId: string
+src/modules/message/ui/MessageBubble.tsx:  messageId,
+src/modules/message/ui/MessageBubble.tsx:                targetType: "message",
+src/modules/message/ui/MessageBubble.tsx:                targetId: messageId,
+src/modules/message/ui/MessagePurchaseButton.tsx: * Do not connect this button to MessageItem or message thread rendering until
+src/modules/message/ui/MessagePurchaseButton.tsx: * the PPV message purchase API, payment target mapping, and unlock source of
+src/modules/message/ui/MessagePurchaseButton.tsx: * - /api/message/purchase is unavailable
+src/modules/message/ui/MessagePurchaseButton.tsx: * - ppv_message access verification is unsupported
+src/modules/message/ui/MessagePurchaseButton.tsx:  messageId: string
+src/modules/message/ui/MessagePurchaseButton.tsx:function getMessagePurchaseErrorMessage(message: string) {
+src/modules/message/ui/MessagePurchaseButton.tsx:  if (message === "MESSAGE_ALREADY_PURCHASED") {
+src/modules/message/ui/MessagePurchaseButton.tsx:  if (message === "Invalid message price") {
+src/modules/message/ui/MessagePurchaseButton.tsx:  if (message === "Message not found") {
+src/modules/message/ui/MessagePurchaseButton.tsx:  messageId,
+src/modules/message/ui/MessagePurchaseButton.tsx:      const checkoutRes = await fetch("/api/message/purchase", {
+src/modules/message/ui/MessagePurchaseButton.tsx:        body: JSON.stringify({ messageId }),
+src/modules/message/ui/MessagePurchaseButton.tsx:        successUrl: `${window.location.origin}/payment/success?messageId=${messageId}`,
+src/modules/message/ui/MessagePurchaseButton.tsx:      const message =
+src/modules/message/ui/MessagePurchaseButton.tsx:        error instanceof Error ? error.message : "Failed to purchase message"
+src/modules/message/ui/MessagePurchaseButton.tsx:      setErrorMessage(getMessagePurchaseErrorMessage(message))
+src/modules/message/ui/MessageThreadSection.tsx:} from "@/modules/message/types"
+src/modules/message/ui/MessageThreadSection.tsx:  conversationId: string
+src/modules/message/ui/MessageThreadSection.tsx:   * conversation summary unread-state. The thread UI must render only the
+src/modules/message/ui/MessageThreadSection.tsx:   * messages provided by the detail page.
+src/modules/message/ui/MessageThreadSection.tsx:   * readAt may exist on each message item, but this component does not decide
+src/modules/message/ui/MessageThreadSection.tsx:  conversationId,
+src/modules/message/ui/MessageThreadSection.tsx:  const [messages, setMessages] = useState(initialMessages)
+src/modules/message/ui/MessageThreadSection.tsx:   * conversation summary unread-state or read persistence.
+src/modules/message/ui/MessageThreadSection.tsx:  function handleMessageSent(message: ConversationMessageItem) {
+src/modules/message/ui/MessageThreadSection.tsx:      message,
+src/modules/message/ui/MessageThreadSection.tsx:      {messages.length === 0 ? (
+src/modules/message/ui/MessageThreadSection.tsx:        <MessageList messages={messages} />
+src/modules/message/ui/MessageThreadSection.tsx:          conversationId={conversationId}
+src/modules/message/ui/MessageComposerSection.tsx:} from "@/modules/message/types"
+src/modules/message/ui/MessageComposerSection.tsx:  conversationId: string
+src/modules/message/ui/MessageComposerSection.tsx:  onMessageSent?: (message: ConversationMessageItem) => void
+src/modules/message/ui/MessageComposerSection.tsx:const messageComposerSectionClassNames = {
+src/modules/message/ui/MessageComposerSection.tsx:  conversationId,
+src/modules/message/ui/MessageComposerSection.tsx:      const message =
+src/modules/message/ui/MessageComposerSection.tsx:      throw new Error(message)
+src/modules/message/ui/MessageComposerSection.tsx:      const response = await fetch(`/api/messages/${conversationId}/send`, {
+src/modules/message/ui/MessageComposerSection.tsx:            conversationId,
+src/modules/message/ui/MessageComposerSection.tsx:        const message =
+src/modules/message/ui/MessageComposerSection.tsx:        throw new Error(message)
+src/modules/message/ui/MessageComposerSection.tsx:        "message" in result &&
+src/modules/message/ui/MessageComposerSection.tsx:        result.message
+src/modules/message/ui/MessageComposerSection.tsx:        onMessageSent?.(result.message)
+src/modules/message/ui/MessageComposerSection.tsx:        if (error.message === "TEXT_BLOCKED") {
+src/modules/message/ui/MessageComposerSection.tsx:        if (error.message === "IMAGE_BLOCKED") {
+src/modules/message/ui/MessageComposerSection.tsx:        setError(error.message)
+src/modules/message/ui/MessageComposerSection.tsx:        <div className={messageComposerSectionClassNames.notice.error}>
+src/modules/message/ui/MessageComposerSection.tsx:        <div className={messageComposerSectionClassNames.notice.sending}>
+src/modules/message/ui/MessageComposerSection.tsx:        classNames={messageComposerSectionClassNames.composer}
+src/modules/message/server/get-secure-message-media.ts:} from "@/modules/message/server/create-conversation-message-media"
+src/modules/message/server/get-secure-message-media.ts:import { requireConversationAccess } from "@/modules/message/server/get-conversation-access"
+src/modules/message/server/get-secure-message-media.ts:  messageId,
+src/modules/message/server/get-secure-message-media.ts:  messageId: string
+src/modules/message/server/get-secure-message-media.ts:  const { data: message } = await supabase
+src/modules/message/server/get-secure-message-media.ts:    .from("messages")
+src/modules/message/server/get-secure-message-media.ts:    .select("id, conversation_id, sender_id, type")
+src/modules/message/server/get-secure-message-media.ts:    .eq("id", messageId)
+src/modules/message/server/get-secure-message-media.ts:  if (!message) return []
+src/modules/message/server/get-secure-message-media.ts:    conversationId: message.conversation_id,
+src/modules/message/server/get-secure-message-media.ts:    .select("id, message_id, storage_path, mime_type")
+src/modules/message/server/get-secure-message-media.ts:    .eq("message_id", messageId)
+src/modules/message/server/get-secure-message-media.ts:    senderUserIdByMessageId: new Map([[messageId, message.sender_id]]),
+src/modules/message/server/get-secure-message-media.ts:  return mediaMap.get(messageId) ?? []
+src/modules/message/server/get-conversation-participant-identity.ts:} from "@/modules/message/types"
+src/modules/message/server/assert-message-attachment-eligibility.ts:import { assertCanSendMessage } from "@/modules/message/server/assert-can-send-message"
+src/modules/message/server/assert-message-attachment-eligibility.ts:  conversationId: string
+src/modules/message/server/assert-message-attachment-eligibility.ts:  message_id: string | null
+src/modules/message/server/assert-message-attachment-eligibility.ts:  conversationId,
+src/modules/message/server/assert-message-attachment-eligibility.ts:    conversationId,
+src/modules/message/server/assert-message-attachment-eligibility.ts:      "id, owner_user_id, post_id, message_id, status, processing_status, moderation_status"
+src/modules/message/server/assert-message-attachment-eligibility.ts:      throw new Error("Invalid message attachment")
+src/modules/message/server/assert-message-attachment-eligibility.ts:    if (media.message_id) {
+src/modules/message/server/assert-message-attachment-eligibility.ts:      throw new Error("Invalid message attachment")
+src/modules/message/server/assert-message-attachment-eligibility.ts:      throw new Error("Invalid message attachment")
+src/modules/message/server/assert-message-attachment-eligibility.ts:      throw new Error("Invalid message attachment")
+src/modules/message/server/assert-message-attachment-eligibility.ts:      throw new Error("Invalid message attachment")
+src/modules/message/server/assert-can-send-message.ts:import { requireConversationAccess } from "@/modules/message/server/get-conversation-access"
+src/modules/message/server/assert-can-send-message.ts:import { assertMessageSendEligibility } from "@/modules/message/server/assert-message-send-eligibility"
+src/modules/message/server/assert-can-send-message.ts:  conversationId: string
+src/modules/message/server/assert-can-send-message.ts:  conversationId,
+src/modules/message/server/assert-can-send-message.ts:    conversationId,
+src/modules/message/server/get-conversation-id-by-message.ts:import { getConversationAccess } from "@/modules/message/server/get-conversation-access"
+src/modules/message/server/get-conversation-id-by-message.ts:  messageId: string
+src/modules/message/server/get-conversation-id-by-message.ts:  conversation_id: string
+src/modules/message/server/get-conversation-id-by-message.ts:  messageId,
+src/modules/message/server/get-conversation-id-by-message.ts:  const { data: message, error: messageError } = await supabase
+src/modules/message/server/get-conversation-id-by-message.ts:    .from("messages")
+src/modules/message/server/get-conversation-id-by-message.ts:    .select("id, conversation_id")
+src/modules/message/server/get-conversation-id-by-message.ts:    .eq("id", messageId)
+src/modules/message/server/get-conversation-id-by-message.ts:  if (messageError) {
+src/modules/message/server/get-conversation-id-by-message.ts:    throw messageError
+src/modules/message/server/get-conversation-id-by-message.ts:  if (!message) {
+src/modules/message/server/get-conversation-id-by-message.ts:    conversationId: message.conversation_id,
+src/modules/message/server/get-conversation-id-by-message.ts:  return message.conversation_id
+src/modules/message/server/get-conversation.ts:  conversationId: string
+src/modules/message/server/get-conversation.ts:  last_message_at: string | null
+src/modules/message/server/get-conversation.ts:  conversationId,
+src/modules/message/server/get-conversation.ts:    .from("conversations")
+src/modules/message/server/get-conversation.ts:    .select("id, created_at, updated_at, last_message_at")
+src/modules/message/server/get-conversation.ts:    .eq("id", conversationId)
+src/modules/message/server/get-conversation.ts:    lastMessageAt: row.last_message_at,
+src/modules/message/server/get-or-create-conversation.ts:  last_message_at: string | null
+src/modules/message/server/get-or-create-conversation.ts:    .from("conversation_participants")
+src/modules/message/server/get-or-create-conversation.ts:    .select("conversation_id, user_id")
+src/modules/message/server/get-or-create-conversation.ts:  const conversationCount = new Map<string, Set<string>>()
+src/modules/message/server/get-or-create-conversation.ts:    const set = conversationCount.get(row.conversation_id) ?? new Set<string>()
+src/modules/message/server/get-or-create-conversation.ts:    conversationCount.set(row.conversation_id, set)
+src/modules/message/server/get-or-create-conversation.ts:  const existingConversationId = [...conversationCount.entries()].find(
+src/modules/message/server/get-or-create-conversation.ts:      .from("conversations")
+src/modules/message/server/get-or-create-conversation.ts:      .select("id, created_at, updated_at, last_message_at")
+src/modules/message/server/get-or-create-conversation.ts:      lastMessageAt: data.last_message_at,
+src/modules/message/server/get-or-create-conversation.ts:  const { data: conversationData, error: conversationError } = await supabase
+src/modules/message/server/get-or-create-conversation.ts:    .from("conversations")
+src/modules/message/server/get-or-create-conversation.ts:      last_message_at: null,
+src/modules/message/server/get-or-create-conversation.ts:    .select("id, created_at, updated_at, last_message_at")
+src/modules/message/server/get-or-create-conversation.ts:  if (conversationError) {
+src/modules/message/server/get-or-create-conversation.ts:    throw conversationError
+src/modules/message/server/get-or-create-conversation.ts:    { conversation_id: conversationData.id, user_id: userAId },
+src/modules/message/server/get-or-create-conversation.ts:    { conversation_id: conversationData.id, user_id: userBId },
+src/modules/message/server/get-or-create-conversation.ts:    .from("conversation_participants")
+src/modules/message/server/get-or-create-conversation.ts:    id: conversationData.id,
+src/modules/message/server/get-or-create-conversation.ts:    createdAt: conversationData.created_at,
+src/modules/message/server/get-or-create-conversation.ts:    updatedAt: conversationData.updated_at,
+src/modules/message/server/get-or-create-conversation.ts:    lastMessageAt: conversationData.last_message_at,
+src/modules/message/server/create-conversation-message-media.ts:import type { ConversationMessageMedia } from "@/modules/message/types"
+src/modules/message/server/create-conversation-message-media.ts:  message_id: string | null
+src/modules/message/server/create-conversation-message-media.ts:     * The message UI must receive and render only server-generated signed URLs.
+src/modules/message/server/create-conversation-message-media.ts:     * existing signed URL generation behavior for message media.
+src/modules/message/server/create-conversation-message-media.ts:     * They must not be treated as the final message media access policy.
+src/modules/message/server/create-conversation-message-media.ts: * This function builds the server-generated signed URL map consumed by message
+src/modules/message/server/create-conversation-message-media.ts: * thread rendering paths. Callers should pass persisted media rows and message
+src/modules/message/server/create-conversation-message-media.ts:      const messageId = media.message_id
+src/modules/message/server/create-conversation-message-media.ts:      if (!messageId) {
+src/modules/message/server/create-conversation-message-media.ts:      const senderUserId = senderUserIdByMessageId.get(messageId)
+src/modules/message/server/create-conversation-message-media.ts:        messageId,
+src/modules/message/server/create-conversation-message-media.ts:    const current = mediaMap.get(entry.messageId) ?? []
+src/modules/message/server/create-conversation-message-media.ts:    mediaMap.set(entry.messageId, current)
+src/modules/message/server/create-conversation.ts:  last_message_at: string | null
+src/modules/message/server/create-conversation.ts:  const { data: conversationData, error: conversationError } = await supabase
+src/modules/message/server/create-conversation.ts:    .from("conversations")
+src/modules/message/server/create-conversation.ts:      last_message_at: null,
+src/modules/message/server/create-conversation.ts:    .select("id, created_at, updated_at, last_message_at")
+src/modules/message/server/create-conversation.ts:  if (conversationError) {
+src/modules/message/server/create-conversation.ts:    throw conversationError
+src/modules/message/server/create-conversation.ts:    conversation_id: conversationData.id,
+src/modules/message/server/create-conversation.ts:    .from("conversation_participants")
+src/modules/message/server/create-conversation.ts:    id: conversationData.id,
+src/modules/message/server/create-conversation.ts:    createdAt: conversationData.created_at,
+src/modules/message/server/create-conversation.ts:    updatedAt: conversationData.updated_at,
+src/modules/message/server/create-conversation.ts:    lastMessageAt: conversationData.last_message_at,
+src/modules/message/server/get-conversation-access.ts:  conversation_id: string
+src/modules/message/server/get-conversation-access.ts:  conversationId: string
+src/modules/message/server/get-conversation-access.ts:  conversationId,
+src/modules/message/server/get-conversation-access.ts:    .from("conversation_participants")
+src/modules/message/server/get-conversation-access.ts:    .select("conversation_id, user_id")
+src/modules/message/server/get-conversation-access.ts:    .eq("conversation_id", conversationId)
+src/modules/message/server/send-message.ts:} from "@/modules/message/server/create-conversation-message-media"
+src/modules/message/server/send-message.ts:import { assertMessageAttachmentEligibility } from "@/modules/message/server/assert-message-attachment-eligibility"
+src/modules/message/server/send-message.ts:} from "@/modules/message/types"
+src/modules/message/server/send-message.ts:import { createMessageReceivedNotification } from "@/modules/notification/server/create-message-received-notification"
+src/modules/message/server/send-message.ts:  conversation_id: string
+src/modules/message/server/send-message.ts:export async function sendMessage(input: SendMessageInput) {
+src/modules/message/server/send-message.ts:      conversationId: input.conversationId,
+src/modules/message/server/send-message.ts:  const { data: message, error: messageError } = await supabase
+src/modules/message/server/send-message.ts:    .from("messages")
+src/modules/message/server/send-message.ts:      conversation_id: input.conversationId,
+src/modules/message/server/send-message.ts:      "id, conversation_id, sender_id, content, created_at, read_at, status, type, price"
+src/modules/message/server/send-message.ts:  if (messageError) {
+src/modules/message/server/send-message.ts:    throw messageError
+src/modules/message/server/send-message.ts:  const messageSentEvent = createMessageSentEvent({
+src/modules/message/server/send-message.ts:    messageId: message.id,
+src/modules/message/server/send-message.ts:    conversationId: input.conversationId,
+src/modules/message/server/send-message.ts:        message_id: message.id,
+src/modules/message/server/send-message.ts:      .select("id, message_id")
+src/modules/message/server/send-message.ts:      throw new Error("Failed to attach media to message")
+src/modules/message/server/send-message.ts:  .from("conversations")
+src/modules/message/server/send-message.ts:    // Keep this tied to the persisted message timestamp, not a new client/server now.
+src/modules/message/server/send-message.ts:    last_message_at: message.created_at,
+src/modules/message/server/send-message.ts:  .eq("id", input.conversationId)
+src/modules/message/server/send-message.ts:    .select("id, message_id, storage_path, mime_type")
+src/modules/message/server/send-message.ts:    .eq("message_id", message.id)
+src/modules/message/server/send-message.ts:    senderUserIdByMessageId: new Map([[message.id, message.sender_id]]),
+src/modules/message/server/send-message.ts:    message: normalizeConversationMessageItem(
+src/modules/message/server/send-message.ts:      message,
+src/modules/message/server/send-message.ts:      mediaMap.get(message.id) ?? []
+src/modules/message/server/send-message.ts:    messageSentEvent,
+src/modules/message/server/send-message.ts:  await createMessageReceivedNotification(output.messageSentEvent)
+src/modules/message/server/send-message.ts:  return output.message
+src/modules/message/server/mark-conversation-read.ts:  conversationId: string
+src/modules/message/server/mark-conversation-read.ts:export async function markConversationRead({
+src/modules/message/server/mark-conversation-read.ts:  conversationId: _conversationId,
+src/modules/message/server/mark-conversation-read.ts:   * This function intentionally does not update messages.read_at and does not
+src/modules/message/server/mark-conversation-read.ts:   * update conversation summary unread-state.
+src/modules/message/server/list-conversations.ts:import { getConversationAccess } from "@/modules/message/server/get-conversation-access"
+src/modules/message/server/list-conversations.ts:import { getConversationParticipantIdentity } from "@/modules/message/server/get-conversation-participant-identity"
+src/modules/message/server/list-conversations.ts:} from "@/modules/message/types"
+src/modules/message/server/list-conversations.ts:  last_message_at: string | null
+src/modules/message/server/list-conversations.ts:  conversation_id: string
+src/modules/message/server/list-conversations.ts:    .from("conversation_participants")
+src/modules/message/server/list-conversations.ts:    .select("conversation_id, user_id")
+src/modules/message/server/list-conversations.ts:  const conversationIds = Array.from(
+src/modules/message/server/list-conversations.ts:    new Set((participantRows ?? []).map((row) => row.conversation_id))
+src/modules/message/server/list-conversations.ts:  if (conversationIds.length === 0) {
+src/modules/message/server/list-conversations.ts:  const conversationAccessEntries = await Promise.all(
+src/modules/message/server/list-conversations.ts:    conversationIds.map(async (conversationId) => [
+src/modules/message/server/list-conversations.ts:      conversationId,
+src/modules/message/server/list-conversations.ts:        conversationId,
+src/modules/message/server/list-conversations.ts:  const conversationAccessById = new Map(conversationAccessEntries)
+src/modules/message/server/list-conversations.ts:  const visibleConversationIds = conversationAccessEntries
+src/modules/message/server/list-conversations.ts:    .map(([conversationId]) => conversationId)
+src/modules/message/server/list-conversations.ts:const { data: conversations, error: conversationsError } = await supabase
+src/modules/message/server/list-conversations.ts:  .from("conversations")
+src/modules/message/server/list-conversations.ts:  .select("id, created_at, updated_at, last_message_at")
+src/modules/message/server/list-conversations.ts:  .order("last_message_at", { ascending: false })
+src/modules/message/server/list-conversations.ts:  if (conversationsError) {
+src/modules/message/server/list-conversations.ts:    throw conversationsError
+src/modules/message/server/list-conversations.ts:   * It must not be used as message thread source of truth, and it must not
+src/modules/message/server/list-conversations.ts:  const { data: messages, error: messagesError } = await supabase
+src/modules/message/server/list-conversations.ts:    .from("messages")
+src/modules/message/server/list-conversations.ts:    .select("id, conversation_id, sender_id, content, created_at, type")
+src/modules/message/server/list-conversations.ts:    .in("conversation_id", visibleConversationIds)
+src/modules/message/server/list-conversations.ts:  if (messagesError) {
+src/modules/message/server/list-conversations.ts:    throw messagesError
+src/modules/message/server/list-conversations.ts:  const messageRows = (messages ?? []) as MessageRow[]
+src/modules/message/server/list-conversations.ts:  for (const message of messageRows) {
+src/modules/message/server/list-conversations.ts:    if (!lastMessageMap.has(message.conversation_id)) {
+src/modules/message/server/list-conversations.ts:      lastMessageMap.set(message.conversation_id, message)
+src/modules/message/server/list-conversations.ts:  const conversationSummaries = await Promise.all(
+src/modules/message/server/list-conversations.ts:    ((conversations ?? []) as ConversationRow[]).map(async (row) => {
+src/modules/message/server/list-conversations.ts:        conversationAccessById.get(row.id)?.otherUserId ?? null
+src/modules/message/server/list-conversations.ts:        lastMessageAt: row.last_message_at,
+src/modules/message/server/list-conversations.ts:  return conversationSummaries.filter((row) => row.participant !== null)
+src/modules/message/server/list-messages.ts:} from "@/modules/message/server/create-conversation-message-media"
+src/modules/message/server/list-messages.ts:import { requireConversationAccess } from "@/modules/message/server/get-conversation-access"
+src/modules/message/server/list-messages.ts:} from "@/modules/message/types"
+src/modules/message/server/list-messages.ts:  conversationId: string
+src/modules/message/server/list-messages.ts:  conversation_id: string
+src/modules/message/server/list-messages.ts:  conversationId,
+src/modules/message/server/list-messages.ts:    conversationId,
+src/modules/message/server/list-messages.ts:  const { data: messagesData, error: messagesError } = await supabase
+src/modules/message/server/list-messages.ts:    .from("messages")
+src/modules/message/server/list-messages.ts:      "id, conversation_id, sender_id, content, created_at, read_at, status, type, price"
+src/modules/message/server/list-messages.ts:    .eq("conversation_id", conversationId)
+src/modules/message/server/list-messages.ts:  if (messagesError) {
+src/modules/message/server/list-messages.ts:    throw messagesError
+src/modules/message/server/list-messages.ts:  const messageRows = (messagesData ?? []) as MessageRow[]
+src/modules/message/server/list-messages.ts:  const messageIds = messageRows.map((message) => message.id)
+src/modules/message/server/list-messages.ts:  if (messageIds.length > 0) {
+src/modules/message/server/list-messages.ts:      .select("id, message_id, storage_path, mime_type")
+src/modules/message/server/list-messages.ts:      .in("message_id", messageIds)
+src/modules/message/server/list-messages.ts:    messageRows.map((message) => [message.id, message.sender_id])
+src/modules/message/server/list-messages.ts:  return messageRows
+src/modules/message/server/get-conversation-by-id.ts:import { getConversationAccess } from "@/modules/message/server/get-conversation-access"
+src/modules/message/server/get-conversation-by-id.ts:import { getConversationParticipantIdentity } from "@/modules/message/server/get-conversation-participant-identity"
+src/modules/message/server/get-conversation-by-id.ts:import { type ConversationSummary } from "@/modules/message/types"
+src/modules/message/server/get-conversation-by-id.ts:  conversationId: string
+src/modules/message/server/get-conversation-by-id.ts:  last_message_at: string | null
+src/modules/message/server/get-conversation-by-id.ts:  conversationId,
+src/modules/message/server/get-conversation-by-id.ts:  const { data: conversation, error: conversationError } = await supabase
+src/modules/message/server/get-conversation-by-id.ts:    .from("conversations")
+src/modules/message/server/get-conversation-by-id.ts:    .select("id, created_at, updated_at, last_message_at")
+src/modules/message/server/get-conversation-by-id.ts:    .eq("id", conversationId)
+src/modules/message/server/get-conversation-by-id.ts:  if (conversationError) {
+src/modules/message/server/get-conversation-by-id.ts:    throw conversationError
+src/modules/message/server/get-conversation-by-id.ts:  if (!conversation) {
+src/modules/message/server/get-conversation-by-id.ts:    conversationId,
+src/modules/message/server/get-conversation-by-id.ts:    id: conversation.id,
+src/modules/message/server/get-conversation-by-id.ts:    createdAt: conversation.created_at,
+src/modules/message/server/get-conversation-by-id.ts:    updatedAt: conversation.updated_at,
+src/modules/message/server/get-conversation-by-id.ts:    lastMessageAt: conversation.last_message_at,
+src/modules/message/types.ts:  conversationId: string
+src/modules/message/types.ts:  conversationId: string
+src/modules/message/types.ts:   * This field tells the message UI whether the message should be treated as a
+src/modules/message/types.ts:   * normal text message or a PPV-shaped message for display purposes.
+src/modules/message/types.ts:   * the message is purchasable, purchased, unlocked, or accessible.
+src/modules/message/types.ts:   * Existing behavior derives this from the message row shape. It must not be
+src/modules/message/types.ts:   * PPV message unlock / purchase source of truth: unknown / unsupported.
+src/modules/message/types.ts:  conversationId: string
+src/modules/message/types.ts:  message: ConversationMessageItem
+src/modules/message/types.ts:  type: "message.sent"
+src/modules/message/types.ts:  messageId: string
+src/modules/message/types.ts:  conversationId: string
+src/modules/message/types.ts:  message: ConversationMessageItem
+src/modules/message/types.ts:  messageSentEvent: MessageSentEvent
+src/modules/message/types.ts:  conversation_id: string
+src/modules/message/types.ts:    conversationId: row.conversation_id,
+src/modules/message/types.ts:     * This preserves the existing assumption that ppv messages are represented
+src/modules/message/types.ts:     * as locked in the message view model.
+src/modules/message/types.ts:  conversationId?: unknown
+src/modules/message/types.ts:    conversationId:
+src/modules/message/types.ts:      typeof input.conversationId === "string" ? input.conversationId : "",
+src/modules/message/types.ts:  message: ConversationMessageItem
+src/modules/message/types.ts:  return { message }
+src/modules/message/types.ts:  messageId,
+src/modules/message/types.ts:  conversationId,
+src/modules/message/types.ts:  messageId: string
+src/modules/message/types.ts:  conversationId: string
+src/modules/message/types.ts:    type: "message.sent",
+src/modules/message/types.ts:    messageId,
+src/modules/message/types.ts:    conversationId,
+src/modules/message/types.ts:  message,
+src/modules/message/types.ts:  messageSentEvent,
+src/modules/message/types.ts:    message,
+src/modules/message/types.ts:    messageSentEvent,
+src/modules/message/types.ts:  message,
+src/modules/message/types.ts:  message: ConversationMessageItem
+src/modules/message/types.ts:    ...message,
+src/modules/message/types.ts:    isOwn: message.senderId === currentUserId,
+src/modules/message/types.ts:    (message) => message.id !== nextMessage.id
+src/modules/message/types.ts:  conversationId: string
+src/modules/message/types.ts:  conversation_id: string
+src/modules/message/types.ts:    conversationId: row.conversation_id,
+src/modules/message/types.ts:   * Used only as the display fallback when the conversation has no
+src/modules/message/types.ts:   * This is the source of truth for conversation list sorting.
+src/modules/message/types.ts:   * listConversations() may populate this for /messages preview.
+src/modules/message/types.ts:   * Do not use this as the source of truth for message thread content.
+src/modules/message/types.ts:  conversationId: string
+src/modules/message/types.ts:  messages: ConversationMessageListItem[]
+src/modules/profile/ui/OnboardingForm.tsx:        error instanceof Error ? error.message : "Something went wrong."
+src/modules/profile/server/save-adult-verification.ts:          select: () => Promise<{ error: { message: string } | null }>;
+src/modules/profile/server/save-adult-verification.ts:    throw new Error(error.message);
+src/modules/feed/ui/FeedComposer.tsx:      throw new Error(error.message)
+src/modules/report/types.ts:  "message",
+src/modules/payout/server/mark-earning-as-available.ts:  source_type: "subscription" | "ppv_post" | "ppv_message"
+src/modules/payout/server/list-creator-payouts.ts:    throw new Error(error.message)
+src/modules/payout/server/create-earning.ts:type PaymentType = "subscription" | "tip" | "ppv_message" | "ppv_post"
+src/modules/payout/server/create-earning.ts:    case "ppv_message":
+src/modules/payout/server/create-earning.ts:  if (type === "ppv_message") {
+src/modules/payout/server/create-earning.ts:    return "ppv_message"
+src/modules/payout/server/create-earning.ts:    return "ppv_message"
+src/modules/payout/types.ts:  | "ppv_message"
+src/modules/story/ui/CreateStoryComposer.tsx:    throw new Error(error.message)
+src/modules/story/ui/CreateStoryComposer.tsx:        setError(submitError.message)
+src/modules/story/ui/EditStoryModal.tsx:    throw new Error(error.message)
+src/modules/story/ui/EditStoryModal.tsx:                        setError(submitError.message)
+src/modules/story/ui/EditStoryModal.tsx:                        setError(submitError.message)
+src/modules/story/server/story-read-state.ts:export async function markStoryReadState(
+src/modules/story/server/story-video-worker.ts:        const message =
+src/modules/story/server/story-video-worker.ts:          error instanceof Error ? error.message : "Story video processing failed"
+src/modules/story/server/story-video-worker.ts:          errorMessage: message,
+src/modules/story/server/story-video-worker.ts:          error: message,
+src/modules/story/lib/story-create-payload.ts:  constructor(message: string) {
+src/modules/story/lib/story-create-payload.ts:    super(message)
+src/modules/analytics/server/build-creator-analytics-summary.ts:  | "ppv_message"
+src/modules/analytics/server/get-creator-analytics.ts:    type === "ppv_message" ||
+src/modules/analytics/server/get-creator-analytics.ts:    ppvMessageRevenue: sumPaymentsByType(monthlyPayments, "ppv_message"),
+src/modules/analytics/server/get-dashboard-subscribers-read-model.ts:  messageHref: string
+src/modules/analytics/server/get-dashboard-subscribers-read-model.ts:    messageHref: `/messages?userId=${subscriber.viewerUserId}`,
+src/modules/moderation/server/moderation-queue-read-model.ts:export type ModerationQueueTargetType = "post" | "message" | "profile"
+src/modules/moderation/types.ts:  | "message"
+src/modules/media/server/create-media.ts:  messageId?: string | null
+src/modules/media/server/create-media.ts:  message_id: string | null
+src/modules/media/server/create-media.ts:  messageId = null,
+src/modules/media/server/create-media.ts:  const resolvedMessageId = messageId?.trim() || null
+src/modules/media/server/create-media.ts:    message_id: resolvedMessageId,
+src/modules/media/server/create-media.ts:      "id, post_id, message_id, owner_user_id, type, storage_path, mime_type, sort_order, status, created_at"
+src/modules/media/server/create-media.ts:    messageId: data.message_id,
+src/modules/media/server/upload-media.ts:  purpose?: "post" | "message"
+src/modules/media/server/upload-media.ts:  purpose: "post" | "message"
+src/modules/media/server/upload-media.ts:  if (purpose === "message") {
+src/modules/media/server/upload-media.ts:    return `user/${uploaderUserId}/messages/${now}-${random}${safeExtension}`
+src/modules/media/server/story-video-job.service.ts:  error_message: string | null
+src/modules/media/server/story-video-job.service.ts:    throw new Error(error?.message || "Failed to create job")
+src/modules/media/server/story-video-job.service.ts:    throw new Error(error.message)
+src/modules/media/server/story-video-job.service.ts:    throw new Error(error.message)
+src/modules/media/server/story-video-job.service.ts:    throw new Error(error.message)
+src/modules/media/server/story-video-storage.service.ts:    throw new Error(error.message)
+src/modules/media/server/story-video-storage.service.ts:    throw new Error(error?.message || "Failed to download temp story video")
+src/modules/media/server/story-video-storage.service.ts:    throw new Error(error.message)
+src/modules/media/types.ts:  messageId: string | null
+src/modules/media/lib/story-video-job-contract.ts:  "id, status, error_message, story_id, created_at, updated_at"
+src/modules/media/lib/story-video-job-contract.ts:  "error_message",
+src/modules/media/lib/story-video-job-contract.ts:  error_message: string | null
+src/modules/media/lib/story-video-job-contract.ts:  error_message: null
+src/modules/media/lib/story-video-job-contract.ts:  error_message: string
+src/modules/media/lib/story-video-job-contract.ts:      errorMessage: row.error_message || "Story video processing failed",
+src/modules/media/lib/story-video-job-contract.ts:    error_message: row.error_message,
+src/modules/media/lib/story-video-job-contract.ts:    error_message: null,
+src/modules/media/lib/story-video-job-contract.ts:    error_message: params.errorMessage,

@@ -83,7 +83,7 @@
 - conversation_participants
 - conversations
 - creators
-- earnings
+- earnings 
 - media
 - messages
 - moderation_queue

@@ -41,14 +41,11 @@ function renderPayoutMeta(payout: PayoutHistoryListItem) {
       ) : null}
 
       {payout.lifecycleState === "failed" && payout.failureReason ? (
-        <p className="mt-1 text-xs text-red-600">
-          {payout.failureReason}
-        </p>
+        <p className="mt-1 text-xs text-red-600">{payout.failureReason}</p>
       ) : null}
     </>
   )
 }
-
 
 function PayoutHistoryHeader() {
   return (
@@ -86,39 +83,31 @@ function PayoutHistoryRow({ payout }: { payout: PayoutHistoryListItem }) {
   )
 }
 
-
-
 export function PayoutHistoryList({
   payouts,
   emptyTitle = "출금 내역이 없습니다",
   emptyDescription = "출금 실행 내역은 생성되면 여기에 표시됩니다.",
 }: PayoutHistoryListProps) {
- if (payouts.length === 0) {
+  if (payouts.length === 0) {
+    return (
+      <div className={PAYOUT_HISTORY_SHELL_CLASS}>
+        <PayoutHistoryHeader />
+
+        <div className="p-6">
+          <EmptyState title={emptyTitle} description={emptyDescription} />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={PAYOUT_HISTORY_SHELL_CLASS}>
       <PayoutHistoryHeader />
 
-      <div className="p-6">
-        <EmptyState title={emptyTitle} description={emptyDescription} />
-      </div>
-    </div>
-  )
-}
-
-  return (
-    <div className={PAYOUT_HISTORY_SHELL_CLASS}>
-    <PayoutHistoryHeader />
-
       <div className="divide-y divide-zinc-200">
-    
-
-{payouts.map((payout) => (
-  <PayoutHistoryRow key={payout.id} payout={payout} />
-))}
-
-
-
-
+        {payouts.map((payout) => (
+          <PayoutHistoryRow key={payout.id} payout={payout} />
+        ))}
       </div>
     </div>
   )

@@ -1,0 +1,468 @@
+src/app/creator/settings/page.tsx:import { getSession } from "@/modules/auth/server/get-session"
+src/app/creator/settings/page.tsx:} from "@/modules/auth/lib/redirect-handoff"
+src/app/creator/studio/posts/new/page.tsx:    signInNext: "/creator/studio/posts/new",
+src/app/creator/studio/posts/[postId]/edit/page.tsx:    signInNext: `/creator/studio/posts/${postId}/edit`,
+src/app/creator/studio/page.tsx:    signInNext: "/creator/studio",
+src/app/creator/content/new/page.tsx:import { getSession } from "@/modules/auth/server/get-session"
+src/app/creator/content/new/page.tsx:import { getUserById } from "@/modules/user/server/get-user-by-id"
+src/app/creator/content/new/page.tsx:  const user = await getUserById(session.userId)
+src/app/creator/content/page.tsx:import { getSession } from "@/modules/auth/server/get-session"
+src/app/creator/dashboard/page.tsx:    signInNext: "/creator/dashboard",
+src/app/creator/earnings/page.tsx:import { getSession } from "@/modules/auth/server/get-session"
+src/app/creator/earnings/page.tsx:} from "@/modules/auth/lib/redirect-handoff"
+src/app/creator/subscribers/page.tsx:import { getSession } from "@/modules/auth/server/get-session"
+src/app/creator/subscribers/page.tsx:} from "@/modules/auth/lib/redirect-handoff"
+src/app/creator/payout/page.tsx:    signInNext: "/creator/payout",
+src/app/creator/payout/page.tsx:    signInNext: "/creator/payout",
+src/app/creator/[username]/page.tsx:import { getCurrentUser } from "@/modules/auth/server/get-current-user"
+src/app/creator/analytics/page.tsx:import { buildPathWithNext } from "@/modules/auth/lib/redirect-handoff"
+src/app/creator/analytics/page.tsx:    signInNext: nextPath,
+src/app/creator/media/page.tsx:import { getSession } from "@/modules/auth/server/get-session"
+src/app/creator/media/page.tsx:} from "@/modules/auth/lib/redirect-handoff"
+src/app/settings/page.tsx:import { requireActiveUser } from "@/modules/auth/server/require-active-user"
+src/app/settings/page.tsx:            <form action="/api/settings/deactivate" method="post">
+src/app/settings/page.tsx:              Super admin accounts cannot be deactivated here
+src/app/settings/page.tsx:            <form action="/api/settings/delete-account" method="post">
+src/app/sign-up/page.tsx:import { SignUpForm } from "@/modules/auth/ui/SignUpForm"
+src/app/messages/new/page.tsx:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/messages/[conversationId]/page.tsx:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/messages/[conversationId]/page.tsx:} from "@/modules/auth/server/assert-pass-verified"
+src/app/messages/[conversationId]/page.tsx:} from "@/modules/auth/lib/redirect-handoff"
+src/app/messages/page.tsx:} from "@/modules/auth/server/assert-pass-verified"
+src/app/messages/page.tsx:} from "@/modules/auth/lib/redirect-handoff"
+src/app/messages/page.tsx:import { requireActiveUser } from "@/modules/auth/server/require-active-user"
+src/app/messages/page.tsx:    creatorId: legacyCreatorMessageTargetUserId,
+src/app/messages/page.tsx:  if (legacyCreatorMessageTargetUserId) {
+src/app/messages/page.tsx:    nextSearchParams.set("creatorId", legacyCreatorMessageTargetUserId)
+src/app/messages/page.tsx:  if (legacyCreatorMessageTargetUserId) {
+src/app/messages/page.tsx:    const creator = await getCreatorByUserId(legacyCreatorMessageTargetUserId)
+src/app/post/new/page.tsx:} from "@/modules/auth/server/assert-pass-verified"
+src/app/post/new/page.tsx:    signInNext: nextPath,
+src/app/post/[postId]/edit/page.tsx:    signInNext: `/post/${postId}/edit`,
+src/app/post/[postId]/page.tsx:import { getCurrentUser } from "@/modules/auth/server/get-current-user"
+src/app/auth/callback/route.ts:} from "@/modules/auth/lib/redirect-handoff";
+src/app/auth/callback/route.ts:  const signInRedirectPath = buildPathWithNext({
+src/app/auth/callback/route.ts:    return NextResponse.redirect(new URL(signInRedirectPath, request.url));
+src/app/auth/callback/route.ts:  const { error } = await supabase.auth.exchangeCodeForSession(code);
+src/app/auth/callback/route.ts:    return NextResponse.redirect(new URL(signInRedirectPath, request.url));
+src/app/verifiy-pass-required/page.tsx:} from "@/modules/auth/server/assert-pass-verified"
+src/app/verifiy-pass-required/page.tsx:} from "@/modules/auth/lib/redirect-handoff"
+src/app/verifiy-pass-required/page.tsx:  } = await supabase.auth.getUser()
+src/app/admin/users/actions.ts:  const deactivate = formData.get("deactivate") === "true"
+src/app/admin/users/actions.ts:    targetUserId: userId,
+src/app/admin/users/actions.ts:    deactivate,
+src/app/admin/users/actions.ts:    targetUserId: userId,
+src/app/admin/users/page.tsx:                              name="deactivate"
+src/app/admin/users/[userId]/page.tsx:import { getUserDetail } from "@/modules/admin/server/get-user-detail"
+src/app/admin/users/[userId]/page.tsx:  const { profile, creator } = await getUserDetail({
+src/app/subscriptions/page.tsx:import { getSession } from "@/modules/auth/server/get-session"
+src/app/subscriptions/page.tsx:} from "@/modules/auth/lib/redirect-handoff"
+src/app/search/page.tsx:import { requireActiveUser } from "@/modules/auth/server/require-active-user"
+src/app/search/page.tsx:} from "@/modules/auth/server/assert-pass-verified"
+src/app/dashboard/payments/page.tsx:    signInNext: "/dashboard/payments",
+src/app/dashboard/subscribers/page.tsx:    signInNext: "/dashboard/subscribers",
+src/app/dashboard/subscribers/page.tsx:    signInNext: "/dashboard/subscribers",
+src/app/dashboard/page.tsx:    signInNext: "/dashboard/payouts",
+src/app/dashboard/page.tsx:    signInNext: "/dashboard/payouts",
+src/app/dashboard/page.tsx:    signInNext: "/dashboard/payouts",
+src/app/verify-pass/page.tsx:} from "@/modules/auth/server/assert-pass-verified"
+src/app/verify-pass/page.tsx:import { DEFAULT_AUTH_RESUME_PATH } from "@/modules/auth/lib/redirect-handoff"
+src/app/verify-pass/page.tsx:import { VerifyPassPage } from "@/modules/auth/ui/VerifyPassPage"
+src/app/verify-pass/page.tsx:  } = await supabase.auth.getUser()
+src/app/verify-pass/page.tsx:    const signInParams = new URLSearchParams({
+src/app/verify-pass/page.tsx:    redirect(`/sign-in?${signInParams.toString()}`)
+src/app/profile/edit/page.tsx:import { getSession } from "@/modules/auth/server/get-session"
+src/app/profile/edit/page.tsx:} from "@/modules/auth/lib/redirect-handoff"
+src/app/profile/page.tsx:import { getSession } from "@/modules/auth/server/get-session"
+src/app/profile/page.tsx:} from "@/modules/auth/lib/redirect-handoff"
+src/app/profile/page.tsx:import { getUserById } from "@/modules/user/server/get-user-by-id"
+src/app/profile/page.tsx:    getUserById(userId),
+src/app/profile/[username]/page.tsx:import { getCurrentUser } from "@/modules/auth/server/get-current-user"
+src/app/_components/MobileNavigation.tsx:        const res = await fetch("/api/auth/me", {
+src/app/_components/AppHeader.tsx:import { SignOutButton } from "@/modules/auth/ui/SignOutButton"
+src/app/_components/AppHeader.tsx:        const res = await fetch("/api/auth/me", {
+src/app/_components/AppChrome.tsx:  "/reactivate-account",
+src/app/become-creator/actions.ts:import { resolveRedirectTarget } from "@/modules/auth/lib/redirect-handoff";
+src/app/become-creator/actions.ts:import { requireOnboardingReadyUser } from "@/modules/auth/server/require-onboarding-ready-user";
+src/app/become-creator/actions.ts:    signInNext: "/become-creator",
+src/app/become-creator/page.tsx:import { resolveRedirectTarget } from "@/modules/auth/lib/redirect-handoff";
+src/app/become-creator/page.tsx:import { requireOnboardingReadyUser } from "@/modules/auth/server/require-onboarding-ready-user";
+src/app/become-creator/page.tsx:    signInNext: "/become-creator",
+src/app/feed/page.tsx:} from "@/modules/auth/server/assert-pass-verified"
+src/app/feed/page.tsx:} from "@/modules/auth/lib/redirect-handoff"
+src/app/feed/page.tsx:import { getSession } from "@/modules/auth/server/get-session"
+src/app/feed/page.tsx:import { requireActiveUser } from "@/modules/auth/server/require-active-user"
+src/app/feed/page.tsx:      redirect("/reactivate-account")
+src/app/forgot-password/page.tsx:import { ForgotPasswordForm } from "@/modules/auth/ui/ForgotPasswordForm"
+src/app/api/creator/me/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/creator/analytics/route.ts:import { requireActiveUser } from "@/modules/auth/server/require-active-user"
+src/app/api/settings/delete-account/route.ts:import { getCurrentUser } from "@/modules/auth/server/get-current-user"
+src/app/api/settings/delete-account/route.ts:      is_deactivated: true,
+src/app/api/settings/delete-account/route.ts:  await supabase.auth.signOut()
+src/app/api/settings/deactivate/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/settings/deactivate/route.ts:import { deactivateAccount } from "@/modules/user/server/deactivate-account"
+src/app/api/settings/deactivate/route.ts:  await deactivateAccount(user.id)
+src/app/api/settings/deactivate/route.ts:  await supabase.auth.signOut()
+src/app/api/messages/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/messages/[conversationId]/send/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/post/feed/route.ts:import { getCurrentUser } from "@/modules/auth/server/get-current-user";
+src/app/api/post/purchase/route.ts:  } = await supabase.auth.getUser()
+src/app/api/post/purchase/route.ts:    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+src/app/api/post/create/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/post/[postId]/comments/route.ts:  } = await supabase.auth.getUser()
+src/app/api/post/[postId]/like/route.ts:  } = await supabase.auth.getUser()
+src/app/api/post/[postId]/like/route.ts:    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+src/app/api/post/[postId]/like/route.ts:  } = await supabase.auth.getUser()
+src/app/api/post/[postId]/like/route.ts:    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+src/app/api/post/[postId]/delete/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/post/[postId]/comment/route.ts:  } = await supabase.auth.getUser()
+src/app/api/post/[postId]/comment/route.ts:    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+src/app/api/auth/sign-up/route.ts:import { signUpWithAdultCheck } from "@/modules/auth/server/sign-up-with-adult-check";
+src/app/api/auth/sign-up/route.ts:    await signUpWithAdultCheck({
+src/app/api/auth/pass/start/route.ts:import { normalizePassVerificationNext } from "@/modules/auth/server/assert-pass-verified";
+src/app/api/auth/pass/start/route.ts:  const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/pass/callback`;
+src/app/api/auth/pass/callback/route.ts:// src/app/api/auth/pass/callback/route.ts
+src/app/api/auth/pass/callback/route.ts:import { completePassVerification } from "@/modules/auth/server/complete-pass-verification";
+src/app/api/auth/pass/callback/route.ts:} from "@/modules/auth/server/assert-pass-verified";
+src/app/api/auth/pass/callback/route.ts:import { resolveRedirectTarget } from "@/modules/auth/lib/redirect-handoff";
+src/app/api/auth/start/route.ts:// src/app/api/auth/pass/start/route.ts
+src/app/api/auth/start/route.ts:import { normalizePassVerificationNext } from "@/modules/auth/server/assert-pass-verified";
+src/app/api/auth/start/route.ts:    new URL(`/api/auth/pass/callback?${callbackSearchParams.toString()}`, origin)
+src/app/api/auth/me/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/auth/sign-in/route.ts:    const { error } = await supabase.auth.signInWithPassword({
+src/app/api/auth/sign-out/route.ts:  await supabase.auth.signOut()
+src/app/api/comment/[commentId]/like/route.ts:  } = await supabase.auth.getUser()
+src/app/api/comment/[commentId]/like/route.ts:    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+src/app/api/comment/[commentId]/like/route.ts:  } = await supabase.auth.getUser()
+src/app/api/comment/[commentId]/like/route.ts:    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+src/app/api/comment/[commentId]/route.ts:  } = await supabase.auth.getUser()
+src/app/api/comment/[commentId]/route.ts:    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+src/app/api/payment/ppv-post/route.ts:  } = await supabase.auth.getUser();
+src/app/api/payment/ppv-post/route.ts:    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+src/app/api/payment/mock/confirm-post/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/payment/mock/confirm-post/route.ts:      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+src/app/api/payment/mock/confirm/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/payment/confirm/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/payment/checkout/route.ts:        import("@/modules/auth/server/require-user"),
+src/app/api/payment/confirm-message/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/story-read/route.ts:  } = await supabase.auth.getUser()
+src/app/api/story-read/route.ts:      { ok: false, reason: "unauthorized" },
+src/app/api/admin/unban-user/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/admin/banned-users/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/admin/users/route.ts:          is_deactivated: user.isDeactivated,
+src/app/api/admin/users/[userId]/route.ts:import { getUser } from "@/modules/admin/server/get-user"
+src/app/api/admin/users/[userId]/route.ts:    const user = await getUser(userId)
+src/app/api/admin/ban-user/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/admin/payout/requests/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/message/conversation-by-message/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/subscription/cancel/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/subscription/unsubscribe/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/subscription/check/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/profile/onboarding/route.ts:// src/app/api/profile/onboarding/route.ts
+src/app/api/profile/onboarding/route.ts:import { updateOnboardingProfile } from "@/modules/profile/server/update-onboarding-profile"
+src/app/api/profile/onboarding/route.ts:    } = await supabase.auth.getUser()
+src/app/api/profile/onboarding/route.ts:      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+src/app/api/profile/onboarding/route.ts:      error instanceof Error ? error.message : "Failed to complete onboarding"
+src/app/api/conversations/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/feed/route.ts:import { getSession } from "@/modules/auth/server/get-session"
+src/app/api/jobs/publish-posts/route.ts:  const authHeader = request.headers.get("authorization")
+src/app/api/jobs/publish-posts/route.ts:  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+src/app/api/jobs/publish-posts/route.ts:    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+src/app/api/account/reactivate/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/account/reactivate/route.ts:      is_deactivated: false,
+src/app/api/account/onboarding/route.ts:    } = await supabase.auth.getUser()
+src/app/api/account/onboarding/route.ts:      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+src/app/api/notifications/read/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/notifications/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/notifications/[notificationId]/delete/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/notifications/[notificationId]/read/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/notifications/badge/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/payout/requests/[payoutRequestId]/reject/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/payout/requests/[payoutRequestId]/approve/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/payout/requests/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/payout/request/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/story/video-job/route.ts:      error: authError,
+src/app/api/story/video-job/route.ts:    } = await supabase.auth.getUser()
+src/app/api/story/video-job/route.ts:    if (authError || !user) {
+src/app/api/story/video-job/route.ts:      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+src/app/api/story/video-job/[jobId]/route.ts:      error: authError,
+src/app/api/story/video-job/[jobId]/route.ts:    } = await supabase.auth.getUser()
+src/app/api/story/video-job/[jobId]/route.ts:    if (authError || !user) {
+src/app/api/story/video-job/[jobId]/route.ts:      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+src/app/api/story/create/route.ts:import { getCurrentUser } from "@/modules/auth/server/get-current-user"
+src/app/api/story/create/route.ts:      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+src/app/api/cron/release-earnings/route.ts:  const authHeader = request.headers.get("authorization")
+src/app/api/cron/release-earnings/route.ts:  return authHeader === `Bearer ${secret}`
+src/app/api/cron/release-earnings/route.ts:    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+src/app/api/analytics/admin-dashboard/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/analytics/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/analytics/creator-dashboard/route.ts:import { requireActiveUser } from "@/modules/auth/server/require-active-user"
+src/app/api/reports/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/api/media/upload/route.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/reset-password/page.tsx:import { ResetPasswordForm } from "@/modules/auth/ui/ResetPasswordForm"
+src/app/reactivate-account/page.tsx:import { requireUser } from "@/modules/auth/server/require-user"
+src/app/reactivate-account/page.tsx:  is_deactivated: boolean | null
+src/app/reactivate-account/page.tsx:      "is_deactivated, is_delete_pending, delete_scheduled_for, deleted_at"
+src/app/reactivate-account/page.tsx:    await supabase.auth.signOut()
+src/app/reactivate-account/page.tsx:    await supabase.auth.signOut()
+src/app/reactivate-account/page.tsx:  if (!profile?.is_deactivated && !profile?.is_delete_pending) {
+src/app/reactivate-account/page.tsx:        <h1 className="text-2xl font-semibold">Account deactivated</h1>
+src/app/reactivate-account/page.tsx:          Your account is currently deactivated. Reactivate your account to continue using the platform.
+src/app/reactivate-account/page.tsx:        <form action="/api/account/reactivate" method="post" className="mt-6">
+src/app/sign-in/page.tsx:import { SignInForm } from "@/modules/auth/ui/SignInForm"
+src/app/sign-in/page.tsx:import { getCurrentUser } from "@/modules/auth/server/get-current-user"
+src/app/sign-in/page.tsx:import { resolveRedirectTarget } from "@/modules/auth/lib/redirect-handoff"
+src/app/sign-in/page.tsx:  is_deactivated: boolean | null
+src/app/sign-in/page.tsx:        "is_deactivated, is_delete_pending, delete_scheduled_for, deleted_at"
+src/app/sign-in/page.tsx:      await supabase.auth.signOut()
+src/app/sign-in/page.tsx:      await supabase.auth.signOut()
+src/app/sign-in/page.tsx:    if (profile?.is_deactivated || profile?.is_delete_pending) {
+src/app/sign-in/page.tsx:      redirect("/reactivate-account")
+src/app/page.tsx:import { getPassVerificationRedirectPath } from "@/modules/auth/server/assert-pass-verified"
+src/app/page.tsx:} from "@/modules/auth/lib/redirect-handoff"
+src/app/page.tsx:  is_deactivated: boolean | null
+src/app/page.tsx:  } = await supabase.auth.getUser()
+src/app/page.tsx:    .select("is_deactivated, is_adult_verified, username")
+src/app/page.tsx:  if (profile.is_deactivated) {
+src/app/page.tsx:    redirect("/reactivate-account")
+src/app/story/new/page.tsx:} from "@/modules/auth/server/assert-pass-verified"
+src/app/story/new/page.tsx:    signInNext: nextPath,
+src/app/onboarding/page.tsx:// src/app/onboarding/page.tsx
+src/app/onboarding/page.tsx:import { readOnboardingReadiness } from "@/modules/auth/server/read-onboarding-readiness"
+src/app/onboarding/page.tsx:} from "@/modules/auth/lib/redirect-handoff"
+src/app/onboarding/page.tsx:  const onboardingPath = buildPathWithNext({
+src/app/onboarding/page.tsx:  } = await supabase.auth.getUser()
+src/app/onboarding/page.tsx:        next: onboardingPath,
+src/workflows/create-user-signup-workflow.ts:import { signUp } from "@/modules/auth/server/sign-up"
+src/workflows/create-user-signup-workflow.ts:  const authResult = await signUp({ email, password })
+src/workflows/create-user-signup-workflow.ts:  if (authResult.error) {
+src/workflows/create-user-signup-workflow.ts:    throw authResult.error
+src/workflows/create-user-signup-workflow.ts:  const authUser = authResult.data.user
+src/workflows/create-user-signup-workflow.ts:  if (!authUser) {
+src/workflows/create-user-signup-workflow.ts:    throw new Error("Failed to create auth user")
+src/workflows/create-user-signup-workflow.ts:    id: authUser.id,
+src/workflows/create-user-signup-workflow.ts:    email: authUser.email ?? email,
+src/workflows/create-user-signup-workflow.ts:    email: authUser.email ?? email,
+src/workflows/create-user-signup-workflow.ts:    auth: authResult.data,
+src/server/middleware/auth-guard.ts:import { buildPathWithNext } from "@/modules/auth/lib/redirect-handoff"
+src/server/middleware/auth-guard.ts:export async function authGuard(
+src/infrastructure/supabase/admin.ts:    auth: {
+src/modules/creator/server/get-creator-by-username.ts:  is_deactivated: boolean
+src/modules/creator/server/get-creator-by-username.ts:      "id, username, display_name, avatar_url, bio, is_deactivated, is_delete_pending, deleted_at, is_banned"
+src/modules/creator/server/get-creator-by-username.ts:            isDeactivated: profile.is_deactivated,
+src/modules/creator/server/require-creator-ready-user.ts:} from "@/modules/auth/lib/redirect-handoff"
+src/modules/creator/server/require-creator-ready-user.ts:import { requireOnboardingReadyUser } from "@/modules/auth/server/require-onboarding-ready-user"
+src/modules/creator/server/require-creator-ready-user.ts:  signInNext: string
+src/modules/creator/server/require-creator-ready-user.ts:  signInNext,
+src/modules/creator/server/require-creator-ready-user.ts:    target: signInNext,
+src/modules/creator/server/require-creator-ready-user.ts:    signInNext: resolvedNext,
+src/modules/creator/server/get-creator-page.ts:  is_deactivated: boolean
+src/modules/creator/server/get-creator-page.ts:      "id, display_name, avatar_url, bio, is_deactivated, is_delete_pending, deleted_at, is_banned"
+src/modules/creator/server/list-creators.ts:  is_deactivated: boolean | null
+src/modules/creator/server/list-creators.ts:      "id, username, display_name, avatar_url, bio, is_deactivated, is_delete_pending, deleted_at, is_banned"
+src/modules/creator/server/list-creators.ts:                profileMap.get(creator.user_id)?.is_deactivated ?? null,
+src/modules/creator/lib/require-creator.ts:import type { AuthSession } from "@/modules/auth/types"
+src/modules/creator/lib/build-public-creator-profile-visibility-input.ts:    is_deactivated: boolean | null | undefined
+src/modules/creator/lib/build-public-creator-profile-visibility-input.ts:          isDeactivated: input.profile.is_deactivated,
+src/modules/post/server/list-creator-posts.ts:    is_deactivated: boolean | null
+src/modules/post/server/list-creator-posts.ts:        is_deactivated,
+src/modules/post/server/get-post-media.ts:import { getCurrentUser } from "@/modules/auth/server/get-current-user"
+src/modules/post/server/get-post-media.ts:    is_deactivated: boolean | null
+src/modules/post/server/get-post-media.ts:        is_deactivated,
+src/modules/post/server/get-creator-feed.ts:    is_deactivated: boolean | null
+src/modules/post/server/get-creator-feed.ts:        is_deactivated,
+src/modules/post/server/list-feed-posts.ts:    is_deactivated: boolean | null
+src/modules/post/server/list-feed-posts.ts:        is_deactivated,
+src/modules/post/server/delete-post-action.ts:import { getCurrentUser } from "@/modules/auth/server/get-current-user"
+src/modules/post/server/update-post-action.ts:import { getCurrentUser } from "@/modules/auth/server/get-current-user"
+src/modules/post/server/get-post-by-id.ts:    is_deactivated: boolean | null
+src/modules/post/server/get-post-by-id.ts:        is_deactivated,
+src/modules/post/types.ts: * Post authoring block row contract that is already normalized for persistence.
+src/modules/post/types.ts: * Post authoring media row contract for persistence creation.
+src/modules/post/types.ts: * This is the authoritative normalized mapping item for uploaded media
+src/modules/post/types.ts: * This is the authoritative linkage record shared by:
+src/modules/post/types.ts: * Persistence-ready create mapping for post authoring.
+src/modules/post/types.ts: * Final persistence consumption derived from the authoritative projection
+src/modules/post/lib/public-discovery-inclusion.ts:  is_deactivated: boolean | null
+src/modules/auth/ui/SignOutButton.tsx:      await fetch("/api/auth/sign-out", {
+src/modules/auth/ui/ForgotPasswordForm.tsx:} from "@/modules/auth/ui/AuthFormField"
+src/modules/auth/ui/ForgotPasswordForm.tsx:      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+src/modules/auth/ui/SignInForm.tsx:import { resolveRedirectTarget } from "@/modules/auth/lib/redirect-handoff";
+src/modules/auth/ui/SignInForm.tsx:} from "@/modules/auth/ui/AuthFormField";
+src/modules/auth/ui/SignInForm.tsx:const signInButtonBaseClassName =
+src/modules/auth/ui/SignInForm.tsx:  signInButtonBaseClassName,
+src/modules/auth/ui/SignInForm.tsx:      const { error } = await supabase.auth.signInWithOAuth({
+src/modules/auth/ui/SignInForm.tsx:          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+src/modules/auth/ui/SignInForm.tsx:      const response = await fetch("/api/auth/sign-in", {
+src/modules/auth/ui/ResetPasswordForm.tsx:} from "@/modules/auth/ui/AuthFormField"
+src/modules/auth/ui/ResetPasswordForm.tsx:      const { error } = await supabase.auth.updateUser({
+src/modules/auth/ui/PassVerificationButton.tsx:    window.location.href = `/api/auth/pass/start?${searchParams.toString()}`;
+src/modules/auth/ui/VerifyPassPage.tsx:// src/modules/auth/ui/VerifyPassPage.tsx
+src/modules/auth/ui/SignUpForm.tsx:} from "@/modules/auth/lib/redirect-handoff";
+src/modules/auth/ui/SignUpForm.tsx:} from "@/modules/auth/ui/AuthFormField";
+src/modules/auth/ui/SignUpForm.tsx:const signUpButtonBaseClassName =
+src/modules/auth/ui/SignUpForm.tsx:  signUpButtonBaseClassName,
+src/modules/auth/ui/SignUpForm.tsx:      const { error } = await supabase.auth.signInWithOAuth({
+src/modules/auth/ui/SignUpForm.tsx:          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+src/modules/auth/ui/SignUpForm.tsx:      const { error } = await supabase.auth.signInWithOAuth({
+src/modules/auth/ui/SignUpForm.tsx:          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+src/modules/auth/ui/SignUpForm.tsx:      const res = await fetch("/api/auth/sign-up", {
+src/modules/auth/ui/AuthFormField.tsx:const authFormFieldClassName = "space-y-2";
+src/modules/auth/ui/AuthFormField.tsx:const authFormLabelClassName = "block text-sm font-medium text-zinc-700";
+src/modules/auth/ui/AuthFormField.tsx:const authFormInputClassName =
+src/modules/auth/ui/AuthFormField.tsx:const authFormNoticeClassNames = {
+src/modules/auth/ui/AuthFormField.tsx:const authFormNoticeTextClassNames = {
+src/modules/auth/ui/AuthFormField.tsx:const authFormSubmitButtonClassName =
+src/modules/auth/ui/AuthFormField.tsx:    <div className={authFormFieldClassName}>
+src/modules/auth/ui/AuthFormField.tsx:      <label htmlFor={htmlFor} className={authFormLabelClassName}>
+src/modules/auth/ui/AuthFormField.tsx:      className={[authFormInputClassName, className].filter(Boolean).join(" ")}
+src/modules/auth/ui/AuthFormField.tsx:    <div className={authFormNoticeClassNames[tone]}>
+src/modules/auth/ui/AuthFormField.tsx:      <p className={authFormNoticeTextClassNames[tone]}>{children}</p>
+src/modules/auth/ui/AuthFormField.tsx:      className={[authFormSubmitButtonClassName, className]
+src/modules/auth/server/require-user.ts:    throw new Error("Unauthorized")
+src/modules/auth/server/read-active-user-state.ts:  is_deactivated: boolean | null
+src/modules/auth/server/read-active-user-state.ts:    .select("is_deactivated, is_delete_pending, delete_scheduled_for, deleted_at")
+src/modules/auth/server/read-active-user-state.ts:  if (profile.is_deactivated || profile.is_delete_pending) {
+src/modules/auth/server/assert-pass-verified.ts:} from "@/modules/auth/lib/redirect-handoff"
+src/modules/auth/server/sign-up.ts:export async function signUp({
+src/modules/auth/server/sign-up.ts:  return supabase.auth.signUp({
+src/modules/auth/server/get-session.ts:  const { data } = await supabase.auth.getSession();
+src/modules/auth/server/sign-in.ts:export async function signIn({
+src/modules/auth/server/sign-in.ts:  return supabase.auth.signInWithPassword({
+src/modules/auth/server/sign-out.ts:export async function signOut(): Promise<void> {
+src/modules/auth/server/sign-out.ts:  await supabase.auth.signOut();
+src/modules/auth/server/require-onboarding-ready-user.ts:} from "@/modules/auth/lib/redirect-handoff"
+src/modules/auth/server/require-onboarding-ready-user.ts:import { readOnboardingReadiness } from "@/modules/auth/server/read-onboarding-readiness"
+src/modules/auth/server/require-onboarding-ready-user.ts:import { requireActiveUser } from "@/modules/auth/server/require-active-user"
+src/modules/auth/server/require-onboarding-ready-user.ts:  signInNext: string
+src/modules/auth/server/require-onboarding-ready-user.ts:  signInNext,
+src/modules/auth/server/require-onboarding-ready-user.ts:    target: signInNext,
+src/modules/auth/server/sign-up-with-adult-check.ts:} from "@/modules/auth/server/create-user-profile";
+src/modules/auth/server/sign-up-with-adult-check.ts:    auth: {
+src/modules/auth/server/sign-up-with-adult-check.ts:      signUp: (params: {
+src/modules/auth/server/sign-up-with-adult-check.ts:      signInWithPassword: (params: {
+src/modules/auth/server/sign-up-with-adult-check.ts:export async function signUpWithAdultCheck({
+src/modules/auth/server/sign-up-with-adult-check.ts:  const { data, error } = await supabase.auth.signUp({
+src/modules/auth/server/sign-up-with-adult-check.ts:    throw new Error("failed to create auth user");
+src/modules/auth/server/sign-up-with-adult-check.ts:  const { error: signInError } = await supabase.auth.signInWithPassword({
+src/modules/auth/server/sign-up-with-adult-check.ts:  if (signInError) {
+src/modules/auth/server/sign-up-with-adult-check.ts:    throw new Error(signInError.message);
+src/modules/auth/server/get-current-user.ts:  } = await supabase.auth.getUser();
+src/modules/auth/server/index.ts:export * from "./require-onboarding-ready-user";
+src/modules/auth/server/index.ts:export * from "./read-onboarding-readiness";
+src/modules/auth/server/require-active-user.ts:import { getCurrentUser } from "@/modules/auth/server/get-current-user"
+src/modules/auth/server/require-active-user.ts:import { readActiveUserState } from "@/modules/auth/server/read-active-user-state"
+src/modules/auth/server/require-active-user.ts:    throw new Error("Unauthorized")
+src/modules/auth/lib/sign-in-with-password.ts:export async function signInWithPassword({
+src/modules/auth/lib/sign-in-with-password.ts:  const { data, error } = await supabase.auth.signInWithPassword({
+src/modules/auth/lib/redirect-handoff.ts:export const ONBOARDING_PATH = "/onboarding"
+src/modules/notification/server/require-notification-page-access.ts:} from "@/modules/auth/server/assert-pass-verified"
+src/modules/notification/server/require-notification-page-access.ts:} from "@/modules/auth/lib/redirect-handoff"
+src/modules/notification/server/require-notification-page-access.ts:import { requireActiveUser } from "@/modules/auth/server/require-active-user"
+src/modules/admin/server/get-user.ts:export async function getUser(userId: string): Promise<AdminUser | null> 
+src/modules/admin/server/require-admin.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/modules/admin/server/get-user-detail.ts:export async function getUserDetail({
+src/modules/admin/server/get-user-detail.ts:      "id, email, username, display_name, is_deactivated, is_banned, is_delete_pending, delete_scheduled_for, deleted_at, created_at"
+src/modules/admin/server/toggle-user-ban.ts:  targetUserId: string
+src/modules/admin/server/toggle-user-ban.ts:  targetUserId,
+src/modules/admin/server/toggle-user-ban.ts:  if (user.id === targetUserId) {
+src/modules/admin/server/toggle-user-ban.ts:  const targetIsAdmin = await isAdminProfile(targetUserId)
+src/modules/admin/server/toggle-user-ban.ts:    .eq("id", targetUserId)
+src/modules/admin/server/list-users.ts:      "id, email, username, display_name, is_deactivated, is_banned, is_delete_pending, delete_scheduled_for, deleted_at, created_at"
+src/modules/admin/server/toggle-user-status.ts:  targetUserId: string
+src/modules/admin/server/toggle-user-status.ts:  deactivate: boolean
+src/modules/admin/server/toggle-user-status.ts:  targetUserId,
+src/modules/admin/server/toggle-user-status.ts:  deactivate,
+src/modules/admin/server/toggle-user-status.ts:  if (user.id === targetUserId) {
+src/modules/admin/server/toggle-user-status.ts:  const targetIsAdmin = await isAdminProfile(targetUserId)
+src/modules/admin/server/toggle-user-status.ts:    throw new Error("Cannot deactivate admin user")
+src/modules/admin/server/toggle-user-status.ts:      is_deactivated: deactivate,
+src/modules/admin/server/toggle-user-status.ts:    .eq("id", targetUserId)
+src/modules/admin/lib/admin-user-operational-policy.ts:  is_deactivated: boolean | null
+src/modules/admin/lib/admin-user-operational-policy.ts:  statusLabel: "active" | "deactivated" | "deleted"
+src/modules/admin/lib/admin-user-operational-policy.ts:  const isDeactivated = row.is_deactivated === true
+src/modules/admin/lib/admin-user-operational-policy.ts:      ? "deactivated"
+src/modules/message/ui/PpvMessageState.tsx: * unlock, paid access, or media authorization.
+src/modules/message/ui/MessageItem.tsx:   * media access, or signed URL authorization.
+src/modules/message/ui/MessageList.tsx:   * - media access / signed URL authorization
+src/modules/message/server/assert-message-attachment-eligibility.ts:      throw new Error("Unauthorized")
+src/modules/message/server/assert-can-send-message.ts:    throw new Error("Unauthorized")
+src/modules/message/server/get-conversation-access.ts:  is_deactivated: boolean | null
+src/modules/message/server/get-conversation-access.ts:    .select("id, is_deactivated")
+src/modules/message/server/get-conversation-access.ts:    canAccess: Boolean(profile && !profile.is_deactivated),
+src/modules/message/server/get-conversation-access.ts:    throw new Error("Unauthorized")
+src/modules/message/types.ts:   * authorization source of truth.
+src/modules/message/types.ts:     * signed URL authorization source of truth.
+src/modules/user/server/get-user-by-id.ts:export async function getUserById(userId: UserId): Promise<User | null> {
+src/modules/user/server/deactivate-account.ts:export async function deactivateAccount(userId: string) {
+src/modules/user/server/deactivate-account.ts:    throw new Error("Super admin accounts cannot be deactivated")
+src/modules/user/server/deactivate-account.ts:      is_deactivated: true,
+src/modules/search/server/get-explore-creators.ts:    is_deactivated: boolean | null
+src/modules/search/server/get-explore-creators.ts:        is_deactivated,
+src/modules/search/server/search-users.ts:  is_deactivated: boolean | null
+src/modules/search/server/search-users.ts:      is_deactivated,
+src/modules/search/server/search-users.ts:        isDeactivated: row.is_deactivated,
+src/modules/search/server/get-recommended-creators.ts:  is_deactivated: boolean | null
+src/modules/search/server/get-recommended-creators.ts:      "id, username, display_name, avatar_url, is_deactivated, is_delete_pending, deleted_at, is_banned"
+src/modules/search/server/get-recommended-creators.ts:                profileMap.get(creator.user_id)?.is_deactivated ?? null,
+src/modules/search/server/search-creators.ts:  is_deactivated: boolean | null
+src/modules/search/server/search-creators.ts:      "id, username, display_name, is_deactivated, is_delete_pending, deleted_at, is_banned"
+src/modules/search/server/get-explore-posts.ts:    is_deactivated: boolean | null
+src/modules/search/server/get-explore-posts.ts:        is_deactivated,
+src/modules/profile/ui/OnboardingForm.tsx:const onboardingFormClassName = "space-y-5"
+src/modules/profile/ui/OnboardingForm.tsx:const onboardingFieldClassName = "space-y-2"
+src/modules/profile/ui/OnboardingForm.tsx:const onboardingLabelClassName = "block text-sm font-medium text-zinc-700"
+src/modules/profile/ui/OnboardingForm.tsx:const onboardingInputClassName =
+src/modules/profile/ui/OnboardingForm.tsx:const onboardingHelperTextClassName = "text-xs text-zinc-500"
+src/modules/profile/ui/OnboardingForm.tsx:const onboardingErrorNoticeClassName =
+src/modules/profile/ui/OnboardingForm.tsx:const onboardingErrorTextClassName = "text-sm text-red-600"
+src/modules/profile/ui/OnboardingForm.tsx:const onboardingSubmitButtonClassName =
+src/modules/profile/ui/OnboardingForm.tsx:      const response = await fetch("/api/profile/onboarding", {
+src/modules/profile/ui/OnboardingForm.tsx:    <form onSubmit={handleSubmit} className={onboardingFormClassName}>
+src/modules/profile/ui/OnboardingForm.tsx:      <div className={onboardingFieldClassName}>
+src/modules/profile/ui/OnboardingForm.tsx:        <label htmlFor="username" className={onboardingLabelClassName}>
+src/modules/profile/ui/OnboardingForm.tsx:          className={onboardingInputClassName}
+src/modules/profile/ui/OnboardingForm.tsx:        <p id="username-help" className={onboardingHelperTextClassName}>
+src/modules/profile/ui/OnboardingForm.tsx:          className={onboardingErrorNoticeClassName}
+src/modules/profile/ui/OnboardingForm.tsx:          <p className={onboardingErrorTextClassName}>{errorMessage}</p>
+src/modules/profile/ui/OnboardingForm.tsx:        className={onboardingSubmitButtonClassName}
+src/modules/profile/server/update-onboarding-profile.ts:// src/modules/profile/server/update-onboarding-profile.ts
+src/modules/profile/server/get-profile-by-username.ts:  is_deactivated: boolean
+src/modules/profile/server/get-profile-by-username.ts:      "id, username, display_name, avatar_url, bio, is_deactivated, is_delete_pending, deleted_at, is_banned"
+src/modules/profile/server/get-profile-by-username.ts:      isDeactivated: data.is_deactivated,
+src/modules/feed/server/get-home-feed.ts:    is_deactivated: boolean | null
+src/modules/feed/server/get-home-feed.ts:        is_deactivated,
+src/modules/feed/server/feed-inclusion-policy.ts:  is_deactivated: boolean | null
+src/modules/feed/server/get-public-upcoming-posts.ts:    is_deactivated: boolean | null
+src/modules/feed/server/get-public-upcoming-posts.ts:        is_deactivated,
+src/modules/report/server/report-user.ts:  targetUserId: string
+src/modules/report/server/report-user.ts:  targetUserId,
+src/modules/report/server/report-user.ts:    targetId: targetUserId,
+src/modules/report/server/create-report.ts:import { requireActiveUser } from "@/modules/auth/server/require-active-user"
+src/modules/payout/server/get-payout-summary.ts: * - authenticated creator payout history
+src/modules/payout/server/reject-payout-request.ts: * It is NOT part of canonical payout terminal paid/failed execution authority.
+src/modules/payout/server/reject-payout-request.ts: * - request-phase reject authority: this file
+src/modules/payout/server/reject-payout-request.ts: * - terminal payout paid/failed authority: execute-payout-terminal-transition.ts
+src/modules/payout/server/release-payout-request-earnings.ts: * It is NOT the canonical failed terminal payout authority.
+src/modules/payout/server/release-payout-request-earnings.ts: * Canonical failed terminal payout authority lives in:
+src/modules/payout/server/get-creator-payout-history.ts:import { requireUser } from "@/modules/auth/server/require-user"
+src/modules/payout/server/get-creator-payout-history.ts: * Canonical authenticated reader for the current user's creator payout history.
+src/modules/payout/server/get-creator-payout-history.ts: * This file is an authenticated read-model only.
+src/modules/payout/server/execute-payout-terminal-transition.ts: * Canonical terminal execution authority for payout paid/failed transitions.
+src/modules/story/server/get-stories.ts:      is_deactivated: boolean | null
+src/modules/story/server/get-stories.ts:      is_deactivated: boolean | null
+src/modules/story/server/get-stories.ts:        is_deactivated: boolean | null
+src/modules/story/server/get-stories.ts:            isDeactivated: profile.is_deactivated,
+src/modules/story/server/get-stories.ts:          is_deactivated,
+src/modules/story/server/delete-story-action.ts:import { getCurrentUser } from "@/modules/auth/server/get-current-user"
+src/modules/story/server/delete-story-action.ts:    throw new Error("Unauthorized")
+src/modules/story/server/create-story-action.ts:import { getCurrentUser } from "@/modules/auth/server/get-current-user"
+src/modules/story/server/create-story-action.ts:    throw new Error("Unauthorized")
+src/modules/story/server/story-read-state.ts:      is_deactivated: boolean | null
+src/modules/story/server/story-read-state.ts:      is_deactivated: boolean | null
+src/modules/story/server/story-read-state.ts:            is_deactivated,
+src/modules/story/server/story-read-state.ts:            isDeactivated: profile.is_deactivated,
+src/modules/story/server/update-story-action.ts:import { getCurrentUser } from "@/modules/auth/server/get-current-user"
+src/modules/story/server/update-story-action.ts:    throw new Error("Unauthorized")
+src/modules/media/server/story-video-job.service.ts:    auth: {
+src/modules/media/server/story-video-storage.service.ts:    auth: {

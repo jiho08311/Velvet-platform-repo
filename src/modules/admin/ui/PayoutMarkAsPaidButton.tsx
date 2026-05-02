@@ -6,6 +6,7 @@ import {
   markPayoutAsPaidAction,
   type MarkPayoutAsPaidActionState,
 } from "../server/mark-payout-as-paid-action";
+import { getPayoutActionButtonClassName } from "./payoutActionButtonClassName";
 
 type PayoutMarkAsPaidButtonProps = {
   payoutRequestId: string;
@@ -15,13 +16,6 @@ type PayoutMarkAsPaidButtonProps = {
 const initialState: MarkPayoutAsPaidActionState = {
   error: null,
 };
-
-const payoutActionButtonBaseClassName =
-  "rounded-xl px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50";
-
-function getPayoutActionButtonClassName(toneClassName: string) {
-  return `${payoutActionButtonBaseClassName} ${toneClassName}`;
-}
 
 function SubmitButton({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();

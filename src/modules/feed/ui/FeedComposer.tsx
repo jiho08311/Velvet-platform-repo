@@ -20,6 +20,16 @@ type ComposerFileItem = {
   previewUrl: string
 }
 
+const feedComposerClassNames = {
+  card: "p-4",
+  textarea:
+    "w-full resize-none overflow-hidden bg-transparent text-sm text-white outline-none placeholder:text-zinc-500",
+  actionBar: "mt-3 flex items-center justify-between gap-3",
+  controlGroup: "flex flex-wrap items-center gap-2",
+  visibilitySelect:
+    "h-11 rounded-2xl border border-zinc-800 bg-zinc-900 px-3 text-xs font-medium text-white",
+}
+
 const MEDIA_BUCKET =
   process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "media"
 
@@ -306,26 +316,26 @@ export function FeedComposer({
   }
 
   return (
-    <Card className="p-4">
+    <Card className={feedComposerClassNames.card}>
       <textarea
         ref={textareaRef}
         value={text}
         onChange={(e) => handleTextChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full resize-none overflow-hidden bg-transparent text-sm text-white outline-none placeholder:text-zinc-500"
+        className={feedComposerClassNames.textarea}
         rows={1}
       />
 
       {renderPreviewGrid()}
 
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className={feedComposerClassNames.actionBar}>
+        <div className={feedComposerClassNames.controlGroup}>
           <select
             value={visibility}
             onChange={(e) =>
               setVisibility(e.target.value as "public" | "subscribers")
             }
-            className="h-11 rounded-2xl border border-zinc-800 bg-zinc-900 px-3 text-xs font-medium text-white"
+            className={feedComposerClassNames.visibilitySelect}
           >
             <option value="public">
               {FEED_COMPOSER_ACTIONS.visibilityPublicLabel}
@@ -354,10 +364,7 @@ export function FeedComposer({
           </Button>
 
           {selectedItems.length > 0 ? (
-            <Button
-              variant="secondary"
-              onClick={clearFiles}
-            >
+            <Button variant="secondary" onClick={clearFiles}>
               {FEED_COMPOSER_ACTIONS.clearLabel}
             </Button>
           ) : null}

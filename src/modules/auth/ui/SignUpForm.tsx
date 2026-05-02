@@ -8,11 +8,12 @@ import {
   resolveRedirectTarget,
   VERIFY_PASS_PATH,
 } from "@/modules/auth/lib/redirect-handoff";
-import { AuthFormInput } from "@/modules/auth/ui/AuthFormField";
+import {
+  AuthFormInput,
+  AuthFormNotice,
+  AuthFormSubmitButton,
+} from "@/modules/auth/ui/AuthFormField";
 
-const errorNoticeClassName =
-  "rounded-2xl border border-red-300 bg-red-50 px-4 py-3";
-const errorNoticeTextClassName = "text-sm text-red-600";
 const signUpButtonBaseClassName =
   "w-full rounded-2xl px-5 py-4 text-base transition disabled:opacity-60";
 const oAuthButtonBaseClassName = [
@@ -26,10 +27,6 @@ const googleButtonClassName = [
 const kakaoButtonClassName = [
   oAuthButtonBaseClassName,
   "bg-[#FEE500] text-[#191919] hover:brightness-95",
-].join(" ");
-const emailSubmitButtonClassName = [
-  signUpButtonBaseClassName,
-  "bg-[#C2185B] font-semibold text-white hover:bg-[#D81B60] disabled:cursor-not-allowed",
 ].join(" ");
 
 function GoogleLogo() {
@@ -165,9 +162,7 @@ export function SignUpForm() {
   return (
     <div className="space-y-6">
       {errorMessage ? (
-        <div className={errorNoticeClassName}>
-          <p className={errorNoticeTextClassName}>{errorMessage}</p>
-        </div>
+        <AuthFormNotice tone="error">{errorMessage}</AuthFormNotice>
       ) : null}
 
       {/* 약관 동의 */}
@@ -209,14 +204,13 @@ export function SignUpForm() {
           onChange={(e) => setBirthDate(e.target.value)}
           style={{ colorScheme: "light" }}
         />
-        <button
+        <AuthFormSubmitButton
           type="button"
           onClick={handleEmailSignUp}
           disabled={emailLoading}
-          className={emailSubmitButtonClassName}
         >
           {emailLoading ? "처리중..." : "이메일로 회원가입"}
-        </button>
+        </AuthFormSubmitButton>
       </div>
 
       {/* Google */}

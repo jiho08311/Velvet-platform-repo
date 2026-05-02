@@ -12,7 +12,9 @@ import {
 import type {
   StoryEditorDraft,
   StoryEditorState,
+  StoryEditorTool,
   StoryEditorUiState,
+  StoryMusic,
   StoryMusicSearchItem,
 } from "../types"
 
@@ -21,9 +23,76 @@ type CreateStoryFormProps = {
   onNextStory: (input: StoryEditorDraft) => void
 }
 
+type StoryTool = Extract<StoryEditorTool, "text" | "music" | "filter" | "trim">
+type StoryMusicStyle = NonNullable<StoryMusic["style"]>
+
+const STORY_TOOL_CONTROLS: {
+  tool: StoryTool
+  icon: string
+  label: string
+}[] = [
+  { tool: "music", icon: "♫", label: "오디오" },
+  { tool: "text", icon: "Aa", label: "텍스트" },
+  { tool: "filter", icon: "◌", label: "필터" },
+  { tool: "trim", icon: "🎬", label: "영상 편집" },
+]
+
+const MUSIC_STYLE_CONTROLS: {
+  style: StoryMusicStyle
+  label: string
+}[] = [
+  { style: "default", label: "Default" },
+  { style: "minimal", label: "Minimal" },
+  { style: "bold", label: "Bold" },
+]
+
+const TEXT_COLOR_SWATCHES = [
+  "#FFFFFF",
+  "#000000",
+  "#FF0000",
+  "#00FF00",
+  "#0000FF",
+  "#FFFF00",
+  "#FF00FF",
+  "#00FFFF",
+  "#FFA500",
+  "#800080",
+]
+
+const TOOL_HELP_CARD_CLASS =
+  "rounded-[18px] border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-500"
+const TOOL_HELP_CARD_LOOSE_CLASS =
+  "rounded-[18px] border border-zinc-200 bg-zinc-50 px-4 py-4 text-sm text-zinc-500"
+const TOOL_SHEET_ACTION_BUTTON_CLASS =
+  "rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-black transition hover:bg-zinc-100"
+const TOOL_SHEET_PANEL_CLASS =
+  "space-y-5 rounded-[24px] border border-zinc-200 bg-white p-5"
+const TOOL_SHEET_COMPACT_PANEL_CLASS =
+  "space-y-4 rounded-[24px] border border-zinc-200 bg-white p-5"
+const TOOL_SHEET_RAISED_PANEL_CLASS =
+  "space-y-5 rounded-[24px] border border-zinc-200 bg-white p-5 shadow-sm"
+const TOOL_SHEET_TRIM_PANEL_CLASS =
+  "rounded-[24px] border border-zinc-200 bg-white p-5 shadow-sm"
+
 const FILTER_PRESETS = ["none", "warm", "cool", "mono", "vivid"] as const
 type StoryFilterPreset = (typeof FILTER_PRESETS)[number]
 const FILTER_SWIPE_THRESHOLD = 40
+
+function getStoryToolControlClassName(isActive: boolean) {
+  return `flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
+    isActive
+      ? "border-zinc-300 bg-white text-black shadow-sm"
+      : "border-zinc-200 bg-white text-black backdrop-blur-xl"
+  }`
+}
+
+function getMusicStyleControlClassName(isActive: boolean) {
+  return `rounded-xl border px-3 py-2 text-xs font-medium transition ${
+    isActive
+      ? "border-pink-500 bg-pink-500/10 text-black"
+      : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100"
+  }`
+}
 
 function clampPosition(value: number) {
   return Math.min(0.98, Math.max(0.02, value))
@@ -172,7 +241,7 @@ export function CreateStoryForm({
     }))
   }
 
-  function handleOpenTool(tool: "text" | "music" | "filter" | "trim") {
+  function handleOpenTool(tool: StoryTool) {
     setUiState((prev) => ({
       ...prev,
       activeTool: tool,
@@ -765,7 +834,7 @@ const speed = 1.6 // 🔥 속도 조절
     window.addEventListener("touchcancel", handleTouchEnd)
   }
 
-  function handleChangeMusicStyle(style: "default" | "minimal" | "bold") {
+  function handleChangeMusicStyle(style: StoryMusicStyle) {
     setEditorState((prev) => {
       if (!prev.music) {
         return prev
@@ -791,6 +860,32 @@ const speed = 1.6 // 🔥 속도 조절
       ...prev,
       selectedLayer: null,
     }))
+  }
+
+  function renderMusicArtwork({
+    artworkUrl,
+    title,
+    imageClassName,
+    fallbackClassName,
+    fallbackLabel,
+  }: {
+    artworkUrl?: string | null
+    title?: string | null
+    imageClassName: string
+    fallbackClassName: string
+    fallbackLabel: string
+  }) {
+    if (artworkUrl) {
+      return (
+        <img
+          src={artworkUrl}
+          alt={title ?? "Selected music"}
+          className={imageClassName}
+        />
+      )
+    }
+
+    return <div className={fallbackClassName}>{fallbackLabel}</div>
   }
 
 function handleRemoveSelectedFile() {
@@ -1031,17 +1126,14 @@ function handleRemoveSelectedFile() {
                 <>
                   <div className="absolute left-5 right-5 top-3 z-20">
                     <div className="flex items-center gap-3 rounded-full border border-zinc-200 bg-white/88 px-3 py-2.5 backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
-                      {selectedMusic?.artworkUrl ? (
-                        <img
-                          src={selectedMusic.artworkUrl}
-                          alt={selectedMusic?.title ?? "Selected music"}
-                          className="h-10 w-10 rounded-xl object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-sm text-black">
-                          ♪
-                        </div>
-                      )}
+                      {renderMusicArtwork({
+                        artworkUrl: selectedMusic?.artworkUrl,
+                        title: selectedMusic?.title,
+                        imageClassName: "h-10 w-10 rounded-xl object-cover",
+                        fallbackClassName:
+                          "flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-sm text-black",
+                        fallbackLabel: "♪",
+                      })}
 
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-black">
@@ -1112,27 +1204,21 @@ function handleRemoveSelectedFile() {
                           </div>
                         ) : (
                           <div className="flex items-center gap-3">
-                            {selectedMusic.artworkUrl ? (
-                              <img
-                                src={selectedMusic.artworkUrl}
-                                alt={selectedMusic.title ?? "Selected music"}
-                                className={`object-cover ${
-                                  selectedMusicStyle === "bold"
-                                    ? "h-12 w-12 rounded-2xl"
-                                    : "h-10 w-10 rounded-xl"
-                                }`}
-                              />
-                            ) : (
-                              <div
-                                className={`flex items-center justify-center bg-zinc-100 text-black ${
-                                  selectedMusicStyle === "bold"
-                                    ? "h-12 w-12 rounded-2xl text-base"
-                                    : "h-10 w-10 rounded-xl text-sm"
-                                }`}
-                              >
-                                🎵
-                              </div>
-                            )}
+                            {renderMusicArtwork({
+                              artworkUrl: selectedMusic.artworkUrl,
+                              title: selectedMusic.title,
+                              imageClassName: `object-cover ${
+                                selectedMusicStyle === "bold"
+                                  ? "h-12 w-12 rounded-2xl"
+                                  : "h-10 w-10 rounded-xl"
+                              }`,
+                              fallbackClassName: `flex items-center justify-center bg-zinc-100 text-black ${
+                                selectedMusicStyle === "bold"
+                                  ? "h-12 w-12 rounded-2xl text-base"
+                                  : "h-10 w-10 rounded-xl text-sm"
+                              }`,
+                              fallbackLabel: "🎵",
+                            })}
 
                             <div className="min-w-0">
                               <p
@@ -1175,57 +1261,25 @@ function handleRemoveSelectedFile() {
             <div className="mt-4 w-full px-4 md:mx-auto md:max-w-[420px] md:px-0">
               <div className="flex items-end justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3 overflow-x-auto pb-1">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenTool("music")}
-                    className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
-                      isMusicToolOpen
-                        ? "border-zinc-300 bg-white text-black shadow-sm"
-                        : "border-zinc-200 bg-white text-black backdrop-blur-xl"
-                    }`}
-                  >
-                    <span className="text-lg leading-none">♫</span>
-                    <span className="mt-2 text-[11px] font-medium">오디오</span>
-                  </button>
+                  {STORY_TOOL_CONTROLS.map((control) => {
+                    const isActive = activeTool === control.tool
 
-                  <button
-                    type="button"
-                    onClick={() => handleOpenTool("text")}
-                    className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
-                      isTextToolOpen
-                        ? "border-zinc-300 bg-white text-black shadow-sm"
-                        : "border-zinc-200 bg-white text-black backdrop-blur-xl"
-                    }`}
-                  >
-                    <span className="text-lg leading-none">Aa</span>
-                    <span className="mt-2 text-[11px] font-medium">텍스트</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleOpenTool("filter")}
-                    className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
-                      isFilterToolOpen
-                        ? "border-zinc-300 bg-white text-black shadow-sm"
-                        : "border-zinc-200 bg-white text-black backdrop-blur-xl"
-                    }`}
-                  >
-                    <span className="text-lg leading-none">◌</span>
-                    <span className="mt-2 text-[11px] font-medium">필터</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleOpenTool("trim")}
-                    className={`flex h-[72px] min-w-[72px] shrink-0 flex-col items-center justify-center rounded-[22px] border px-3 transition-all ${
-                      isTrimToolOpen
-                        ? "border-zinc-300 bg-white text-black shadow-sm"
-                        : "border-zinc-200 bg-white text-black backdrop-blur-xl"
-                    }`}
-                  >
-                    <span className="text-lg leading-none">🎬</span>
-                    <span className="mt-2 text-[11px] font-medium">영상 편집</span>
-                  </button>
+                    return (
+                      <button
+                        key={control.tool}
+                        type="button"
+                        onClick={() => handleOpenTool(control.tool)}
+                        className={getStoryToolControlClassName(isActive)}
+                      >
+                        <span className="text-lg leading-none">
+                          {control.icon}
+                        </span>
+                        <span className="mt-2 text-[11px] font-medium">
+                          {control.label}
+                        </span>
+                      </button>
+                    )
+                  })}
                 </div>
 
                 <button
@@ -1267,7 +1321,7 @@ function handleRemoveSelectedFile() {
               <button
                 type="button"
                 onClick={closeToolSheet}
-                className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-black transition hover:bg-zinc-100"
+                className={TOOL_SHEET_ACTION_BUTTON_CLASS}
               >
                 Close
               </button>
@@ -1275,7 +1329,7 @@ function handleRemoveSelectedFile() {
 
             <div className="max-h-[62vh] overflow-y-auto px-4 pb-6">
               {isTextToolOpen ? (
-                <div className="space-y-5 rounded-[24px] border border-zinc-200 bg-white p-5">
+                <div className={TOOL_SHEET_PANEL_CLASS}>
                   <div className="flex items-center justify-between gap-3">
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-black">
@@ -1290,7 +1344,7 @@ function handleRemoveSelectedFile() {
                       <button
                         type="button"
                         onClick={handleRemoveTextOverlay}
-                        className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-black transition hover:bg-zinc-100"
+                        className={TOOL_SHEET_ACTION_BUTTON_CLASS}
                       >
                         Remove
                       </button>
@@ -1298,7 +1352,7 @@ function handleRemoveSelectedFile() {
                       <button
                         type="button"
                         onClick={handleAddTextOverlay}
-                        className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-black transition hover:bg-zinc-100"
+                        className={TOOL_SHEET_ACTION_BUTTON_CLASS}
                       >
                         Add text
                       </button>
@@ -1322,18 +1376,7 @@ function handleRemoveSelectedFile() {
                             Color
                           </p>
                           <div className="flex flex-wrap gap-2">
-                            {[
-                              "#FFFFFF",
-                              "#000000",
-                              "#FF0000",
-                              "#00FF00",
-                              "#0000FF",
-                              "#FFFF00",
-                              "#FF00FF",
-                              "#00FFFF",
-                              "#FFA500",
-                              "#800080",
-                            ].map((color) => {
+                            {TEXT_COLOR_SWATCHES.map((color) => {
                               const isActive =
                                 (selectedTextOverlay.color ?? "#ffffff") ===
                                 color
@@ -1359,7 +1402,7 @@ function handleRemoveSelectedFile() {
                         </div>
                       </div>
 
-                      <div className="rounded-[18px] border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-500">
+                      <div className={TOOL_HELP_CARD_CLASS}>
                         Drag to move. Pinch with two fingers to resize.
                       </div>
 
@@ -1369,7 +1412,7 @@ function handleRemoveSelectedFile() {
                       </p>
                     </>
                   ) : (
-                    <div className="rounded-[18px] border border-zinc-200 bg-zinc-50 px-4 py-4 text-sm text-zinc-500">
+                    <div className={TOOL_HELP_CARD_LOOSE_CLASS}>
                       Tap "Add text" to start, then drag it on the preview.
                     </div>
                   )}
@@ -1377,7 +1420,7 @@ function handleRemoveSelectedFile() {
               ) : null}
 
               {isFilterToolOpen ? (
-                <div className="space-y-4 rounded-[24px] border border-zinc-200 bg-white p-5">
+                <div className={TOOL_SHEET_COMPACT_PANEL_CLASS}>
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-black">Filter</p>
                     <p className="text-sm font-medium text-black">
@@ -1392,7 +1435,7 @@ function handleRemoveSelectedFile() {
               ) : null}
 
               {isMusicToolOpen ? (
-                <div className="space-y-5 rounded-[24px] border border-zinc-200 bg-white p-5 shadow-sm">
+                <div className={TOOL_SHEET_RAISED_PANEL_CLASS}>
                   <div className="flex items-center justify-between gap-3">
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-black">Music</p>
@@ -1405,7 +1448,7 @@ function handleRemoveSelectedFile() {
                       <button
                         type="button"
                         onClick={handleRemoveMusic}
-                        className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-black transition hover:bg-zinc-100"
+                        className={TOOL_SHEET_ACTION_BUTTON_CLASS}
                       >
                         Remove
                       </button>
@@ -1422,13 +1465,13 @@ function handleRemoveSelectedFile() {
 
                     <div className="space-y-2">
                       {!musicQuery.trim() ? (
-                        <div className="rounded-[18px] border border-zinc-200 bg-zinc-50 px-4 py-4 text-sm text-zinc-500">
+                        <div className={TOOL_HELP_CARD_LOOSE_CLASS}>
                           Search music to add, then drag it on the preview.
                         </div>
                       ) : null}
 
                       {isSearchingMusic ? (
-                        <div className="rounded-[18px] border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-500">
+                        <div className={TOOL_HELP_CARD_CLASS}>
                           Searching...
                         </div>
                       ) : null}
@@ -1436,7 +1479,7 @@ function handleRemoveSelectedFile() {
                       {!isSearchingMusic &&
                       musicQuery.trim() &&
                       musicResults.length === 0 ? (
-                        <div className="rounded-[18px] border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-500">
+                        <div className={TOOL_HELP_CARD_CLASS}>
                           No results
                         </div>
                       ) : null}
@@ -1505,17 +1548,14 @@ function handleRemoveSelectedFile() {
                     {selectedMusic ? (
                       <div className="rounded-[20px] border border-zinc-200 bg-zinc-50 px-4 py-3">
                         <div className="flex items-center gap-3">
-                          {selectedMusic?.artworkUrl ? (
-                            <img
-                              src={selectedMusic.artworkUrl}
-                              alt={selectedMusic?.title ?? "Selected music"}
-                              className="h-10 w-10 rounded-xl object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-sm text-zinc-500">
-                              🎵
-                            </div>
-                          )}
+                          {renderMusicArtwork({
+                            artworkUrl: selectedMusic?.artworkUrl,
+                            title: selectedMusic?.title,
+                            imageClassName: "h-10 w-10 rounded-xl object-cover",
+                            fallbackClassName:
+                              "flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-sm text-zinc-500",
+                            fallbackLabel: "🎵",
+                          })}
 
                           <div className="min-w-0">
                             <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-pink-600">
@@ -1533,7 +1573,7 @@ function handleRemoveSelectedFile() {
                     ) : null}
 
                     {selectedMusic ? (
-                      <div className="rounded-[18px] border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-500">
+                      <div className={TOOL_HELP_CARD_CLASS}>
                         Drag the music sticker directly on the preview.
                       </div>
                     ) : null}
@@ -1545,41 +1585,25 @@ function handleRemoveSelectedFile() {
                         </p>
 
                         <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleChangeMusicStyle("default")}
-                            className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
-                              selectedMusicStyle === "default"
-                                ? "border-pink-500 bg-pink-500/10 text-black"
-                                : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100"
-                            }`}
-                          >
-                            Default
-                          </button>
+                          {MUSIC_STYLE_CONTROLS.map((control) => {
+                            const isActive =
+                              selectedMusicStyle === control.style
 
-                          <button
-                            type="button"
-                            onClick={() => handleChangeMusicStyle("minimal")}
-                            className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
-                              selectedMusicStyle === "minimal"
-                                ? "border-pink-500 bg-pink-500/10 text-black"
-                                : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100"
-                            }`}
-                          >
-                            Minimal
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleChangeMusicStyle("bold")}
-                            className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
-                              selectedMusicStyle === "bold"
-                                ? "border-pink-500 bg-pink-500/10 text-black"
-                                : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100"
-                            }`}
-                          >
-                            Bold
-                          </button>
+                            return (
+                              <button
+                                key={control.style}
+                                type="button"
+                                onClick={() =>
+                                  handleChangeMusicStyle(control.style)
+                                }
+                                className={getMusicStyleControlClassName(
+                                  isActive
+                                )}
+                              >
+                                {control.label}
+                              </button>
+                            )
+                          })}
                         </div>
                       </div>
                     ) : null}
@@ -1588,9 +1612,9 @@ function handleRemoveSelectedFile() {
               ) : null}
 
               {isTrimToolOpen ? (
-                <div className="rounded-[24px] border border-zinc-200 bg-white p-5 shadow-sm">
+                <div className={TOOL_SHEET_TRIM_PANEL_CLASS}>
                   {!file ? (
-                    <div className="rounded-[18px] border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-500">
+                    <div className={TOOL_HELP_CARD_CLASS}>
                       Select a video to enable trimming.
                     </div>
                   ) : null}
