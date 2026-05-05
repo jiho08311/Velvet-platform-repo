@@ -9,7 +9,9 @@ import {
   normalizeConversationMessageItem,
   type ConversationMessageItem,
 } from "@/modules/message/types"
-
+import {
+  getMessageMediaRowsByMessageIds,
+} from "@/modules/media/public/get-message-media"
 type ListMessagesParams = {
   conversationId: string
   userId: string
@@ -56,17 +58,9 @@ export async function listMessages({
   let mediaRows: MessageMediaRow[] = []
 
   if (messageIds.length > 0) {
-    const { data: mediaData, error: mediaError } = await supabase
-      .from("media")
-      .select("id, message_id, storage_path, mime_type")
-      .in("message_id", messageIds)
-      .order("created_at", { ascending: true })
-
-    if (mediaError) {
-      throw mediaError
-    }
-
-    mediaRows = (mediaData ?? []) as MessageMediaRow[]
+    mediaRows = (await getMessageMediaRowsByMessageIds(
+      messageIds
+    )) as MessageMediaRow[]
   }
 
   const senderUserIdByMessageId = new Map(

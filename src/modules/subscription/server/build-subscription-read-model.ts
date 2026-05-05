@@ -1,4 +1,4 @@
-import { resolveSubscriptionState } from "@/modules/subscription/lib/resolve-subscription-state"
+import { resolveSubscriptionState } from "@/modules/subscription/services/subscription-state-service"
 import type { SubscriptionStatus } from "@/modules/subscription/server/subscription-status"
 
 export type SubscriptionReadModelState =

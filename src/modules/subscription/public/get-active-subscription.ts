@@ -1,0 +1,1 @@
+export { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 
 import { requireUser } from "@/modules/auth/server/require-user"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
-import { deletePost } from "@/modules/post/server/delete-post"
+import { deletePost } from "@/modules/post/public/delete-post"
 
 type DeletePostRouteParams = {
   params: Promise<{

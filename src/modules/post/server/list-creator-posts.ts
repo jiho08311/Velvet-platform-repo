@@ -1,76 +1,32 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
-import type { PostPublicState } from "@/modules/post/lib/get-post-public-state"
+import { createMediaSignedUrl } from "@/modules/media/public/create-media-signed-url"
 import {
   filterPublicDiscoveryPostCandidates,
   isEligiblePublicDiscoveryCreator,
 } from "@/modules/post/lib/public-discovery-inclusion"
 import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
-import type { PostBlockEditorState, PostRenderListItem } from "../types"
+import {
+  findListCreatorPostBlocksByPostIds,
+  type ListCreatorPostBlockRow,
+} from "../repositories/post-block-repository"
+import {
+  findReadyPostMediaRowsByPostIds,
+  type PostMediaRow,
+} from "../repositories/post-media-repository"
+import {
+  findCreatorForListCreatorPosts,
+  findPostRowsForCreatorPostList,
+  type ListCreatorPostsPostRow,
+} from "../repositories/post-repository"
+import type { PostRenderListItem } from "../types"
 import { buildPostRenderReadModel } from "./post-render-read-model"
 import { buildLockedPreviewPolicy } from "./locked-preview-policy"
 import { resolvePostAccessState } from "./resolve-post-access-state"
-
-type PostRow = {
-  id: string
-  creator_id: string
-  title: string | null
-  content: string | null
-  status: "draft" | "scheduled" | "published" | "archived"
-  visibility: "public" | "subscribers" | "paid"
-  price: number
-  published_at: string | null
-  created_at: string
-  updated_at: string
-  visibility_status: "draft" | "published" | "processing" | "rejected" | null
-  moderation_status: "pending" | "approved" | "rejected" | "needs_review" | null
-  deleted_at: string | null
-}
-
-type CreatorRow = {
-  id: string
-  user_id: string
-  status: "active" | "pending" | "suspended" | "inactive"
-  profiles: {
-    id: string
-    is_deactivated: boolean | null
-    is_delete_pending: boolean | null
-    deleted_at: string | null
-    is_banned: boolean | null
-  } | null
-}
-
-type MediaRow = {
-  id: string
-  post_id: string
-  storage_path: string
-  type: "image" | "video" | "audio" | "file"
-  mime_type?: string | null
-  status: "processing" | "ready" | "failed"
-  sort_order: number
-}
-
-type PostBlockRow = {
-  id: string
-  post_id: string
-  type: "text" | "image" | "video" | "audio" | "file"
-  content: string | null
-  media_id: string | null
-  sort_order: number
-  created_at: string
-  editor_state: PostBlockEditorState | null
-}
 
 type ListCreatorPostsInput = {
   creatorId: string
   userId?: string
   limit?: number
   status?: "draft" | "published" | "archived"
-}
-
-type PostWithPublicState = {
-  post: PostRow
-  publicState: PostPublicState
 }
 
 export async function listCreatorPosts({
@@ -87,32 +43,11 @@ export async function listCreatorPosts({
   const safeLimit = Math.max(1, Math.min(limit, 100))
   const now = new Date().toISOString()
 
-  const { data: creator, error: creatorError } = await supabaseAdmin
-    .from("creators")
-    .select(`
-      id,
-      user_id,
-      status,
-      profiles!inner (
-        id,
-        is_deactivated,
-        is_delete_pending,
-        deleted_at,
-        is_banned
-      )
-    `)
-    .eq("id", creatorId)
-    .maybeSingle<CreatorRow>()
-
-  if (creatorError) {
-    throw creatorError
-  }
+  const creator = await findCreatorForListCreatorPosts(creatorId)
 
   if (!creator) {
     return []
   }
-
-  const isOwner = !!safeUserId && safeUserId === creator.user_id
 
   if (
     !isEligiblePublicDiscoveryCreator({
@@ -125,27 +60,13 @@ export async function listCreatorPosts({
     return []
   }
 
-  let query = supabaseAdmin
-    .from("posts")
-    .select(
-      "id, creator_id, title, content, status, visibility, price, published_at, created_at, updated_at, visibility_status, moderation_status, deleted_at"
-    )
-    .eq("creator_id", creatorId)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false })
-    .limit(safeLimit * 3)
+  const rows = await findPostRowsForCreatorPostList({
+    creatorId,
+    status,
+    limit: safeLimit * 3,
+  })
 
-  if (status) {
-    query = query.eq("status", status)
-  }
-
-  const { data, error } = await query.returns<PostRow[]>()
-
-  if (error) {
-    throw error
-  }
-
-  const posts = filterPublicDiscoveryPostCandidates(data ?? [], now, [
+  const posts = filterPublicDiscoveryPostCandidates(rows, now, [
     "published",
   ])
     .map(({ post }) => post)
@@ -156,7 +77,7 @@ export async function listCreatorPosts({
   }
 
   const filteredPosts: Array<
-    PostRow & {
+    ListCreatorPostsPostRow & {
       isLocked: boolean
       lockReason: PostRenderListItem["lockReason"]
       isSubscribed: boolean
@@ -203,40 +124,20 @@ export async function listCreatorPosts({
 
   const postIds = filteredPosts.map((post) => post.id)
 
-  const { data: mediaRows, error: mediaError } = await supabaseAdmin
-    .from("media")
-    .select("id, post_id, storage_path, type, mime_type, status, sort_order")
-    .in("post_id", postIds)
-    .eq("status", "ready")
-    .order("sort_order", { ascending: true })
-    .returns<MediaRow[]>()
+  const mediaRows = await findReadyPostMediaRowsByPostIds(postIds)
+  const blockRows = await findListCreatorPostBlocksByPostIds(postIds)
 
-  if (mediaError) {
-    throw mediaError
-  }
+  const mediaMap = new Map<string, PostMediaRow[]>()
 
-  const { data: blockRows, error: blockRowsError } = await supabaseAdmin
-    .from("post_blocks")
-    .select("id, post_id, type, content, media_id, sort_order, created_at, editor_state")
-    .in("post_id", postIds)
-    .order("sort_order", { ascending: true })
-    .returns<PostBlockRow[]>()
-
-  if (blockRowsError) {
-    throw blockRowsError
-  }
-
-  const mediaMap = new Map<string, MediaRow[]>()
-
-  for (const media of mediaRows ?? []) {
+  for (const media of mediaRows) {
     const current = mediaMap.get(media.post_id) ?? []
     current.push(media)
     mediaMap.set(media.post_id, current)
   }
 
-  const blocksMap = new Map<string, PostBlockRow[]>()
+  const blocksMap = new Map<string, ListCreatorPostBlockRow[]>()
 
-  for (const block of blockRows ?? []) {
+  for (const block of blockRows) {
     const current = blocksMap.get(block.post_id) ?? []
     current.push(block)
     blocksMap.set(block.post_id, current)

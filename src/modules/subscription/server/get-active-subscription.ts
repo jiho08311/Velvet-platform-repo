@@ -1,17 +1,10 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import {
-  findLatestAccessibleSubscriptionReadModel,
-  type SubscriptionReadModelRow,
-} from "@/modules/subscription/server/build-subscription-read-model"
+  findLatestAccessibleByUserAndCreator,
+} from "@/modules/subscription/repositories/subscription-read-repository"
+import { findLatestAccessibleSubscriptionReadModel } from "@/modules/subscription/server/build-subscription-read-model"
 
 type SubscriptionStatus = "incomplete" | "active" | "canceled" | "expired"
 type SubscriptionProvider = "toss" | "mock"
-
-type SubscriptionRow = SubscriptionReadModelRow & {
-  provider: SubscriptionProvider
-  provider_subscription_id: string | null
-  cancel_at_period_end: boolean
-}
 
 type GetActiveSubscriptionInput = {
   userId: string
@@ -44,21 +37,10 @@ export async function getActiveSubscription({
     return null
   }
 
-  const { data, error } = await supabaseAdmin
-    .from("subscriptions")
-    .select(
-      "id, user_id, creator_id, status, provider, provider_subscription_id, cancel_at_period_end, current_period_start, current_period_end, canceled_at, created_at, updated_at"
-    )
-    .eq("user_id", resolvedUserId)
-    .eq("creator_id", resolvedCreatorId)
-    .order("created_at", { ascending: false })
-    .returns<SubscriptionRow[]>()
-
-  if (error) {
-    throw error
-  }
-
-  const rows = data ?? []
+  const rows = await findLatestAccessibleByUserAndCreator({
+    userId: resolvedUserId,
+    creatorId: resolvedCreatorId,
+  })
 
   const activeReadModel = findLatestAccessibleSubscriptionReadModel(rows)
 

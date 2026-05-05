@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { isCreatorOwner } from "@/modules/creator/lib/creator-identity"
-import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+import { createMediaSignedUrl } from "@/modules/media/public/create-media-signed-url"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import {
   isEligiblePublicDiscoveryCreator,

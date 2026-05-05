@@ -1,29 +1,15 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin";
+import { updatePostRow } from "@/modules/post/repositories/post-repository"
 
 type UpdatePostInput = {
-  postId: string;
-  creatorId: string;
-  title?: string | null;
-  content?: string | null;
-  status?: "draft" | "scheduled" | "published" | "archived";
-  visibility?: "public" | "subscribers" | "paid";
-  price?: number;
-  publishedAt?: string | null;
-};
-
-type PostRow = {
-  id: string;
-  creator_id: string;
-  title: string | null;
-  content: string | null;
-  status: "draft" | "scheduled" | "published" | "archived";
-  visibility: "public" | "subscribers" | "paid";
-  price: number;
-  published_at: string | null;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
-};
+  postId: string
+  creatorId: string
+  title?: string | null
+  content?: string | null
+  status?: "draft" | "scheduled" | "published" | "archived"
+  visibility?: "public" | "subscribers" | "paid"
+  price?: number
+  publishedAt?: string | null
+}
 
 export async function updatePost({
   postId,
@@ -35,67 +21,48 @@ export async function updatePost({
   price,
   publishedAt,
 }: UpdatePostInput): Promise<{
-  id: string;
-  creatorId: string;
-  title?: string;
-  content?: string;
-  status: "draft" | "scheduled" | "published" | "archived";
-  visibility: "public" | "subscribers" | "paid";
-  price: number;
-  publishedAt?: string;
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  creatorId: string
+  title?: string
+  content?: string
+  status: "draft" | "scheduled" | "published" | "archived"
+  visibility: "public" | "subscribers" | "paid"
+  price: number
+  publishedAt?: string
+  createdAt: string
+  updatedAt: string
 }> {
   const updateData: Record<string, unknown> = {
     updated_at: new Date().toISOString(),
-  };
-
-  if (title !== undefined) {
-    updateData.title = title;
   }
 
-  if (content !== undefined) {
-    updateData.content = content;
-  }
+  if (title !== undefined) updateData.title = title
+  if (content !== undefined) updateData.content = content
 
   if (status !== undefined) {
     if (!["draft", "scheduled", "published", "archived"].includes(status)) {
-      throw new Error("Invalid post status");
+      throw new Error("Invalid post status")
     }
 
-    updateData.status = status;
+    updateData.status = status
   }
 
   if (visibility !== undefined) {
     if (!["public", "subscribers", "paid"].includes(visibility)) {
-      throw new Error("Invalid post visibility");
+      throw new Error("Invalid post visibility")
     }
 
-    updateData.visibility = visibility;
+    updateData.visibility = visibility
   }
 
-  if (price !== undefined) {
-    updateData.price = price;
-  }
+  if (price !== undefined) updateData.price = price
+  if (publishedAt !== undefined) updateData.published_at = publishedAt
 
-  if (publishedAt !== undefined) {
-    updateData.published_at = publishedAt;
-  }
-
-  const { data, error } = await supabaseAdmin
-    .from("posts")
-    .update(updateData)
-    .eq("id", postId)
-    .eq("creator_id", creatorId)
-    .is("deleted_at", null)
-    .select(
-      "id, creator_id, title, content, status, visibility, price, published_at, created_at, updated_at, deleted_at"
-    )
-    .single<PostRow>();
-
-  if (error) {
-    throw error;
-  }
+  const data = await updatePostRow({
+    postId,
+    creatorId,
+    updateData,
+  })
 
   return {
     id: data.id,
@@ -108,5 +75,5 @@ export async function updatePost({
     publishedAt: data.published_at ?? undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
-  };
+  }
 }

@@ -1,6 +1,6 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { getPostById } from "@/modules/post/server/get-post-by-id"
-import { createMediaSignedUrl } from "./create-media-signed-url"
+import { getPostById } from "@/modules/post/public/get-post"
+import { createMediaSignedUrl } from "../public/create-media-signed-url"
+import { findReadyPostMediaRowsByPostId } from "../repositories/media-repository"
 
 type SecureMediaItem = {
   id: string
@@ -9,16 +9,6 @@ type SecureMediaItem = {
   url: string
   mimeType: string | null
   sortOrder: number
-}
-
-type MediaRow = {
-  id: string
-  post_id: string
-  type: "image" | "video" | "audio" | "file"
-  storage_path: string
-  mime_type: string | null
-  sort_order: number
-  status: "processing" | "ready" | "failed"
 }
 
 export async function getSecurePostMedia({
@@ -34,18 +24,10 @@ export async function getSecurePostMedia({
     return []
   }
 
-  const { data, error } = await supabaseAdmin
-    .from("media")
-    .select("id, post_id, type, storage_path, mime_type, sort_order, status")
-    .eq("post_id", postId)
-    .eq("status", "ready")
-    .order("sort_order", { ascending: true })
-    .returns<MediaRow[]>()
-
-  if (error) throw error
+  const mediaRows = await findReadyPostMediaRowsByPostId(postId)
 
   return Promise.all(
-    (data ?? []).map(async (media) => {
+    mediaRows.map(async (media) => {
       const url = await createMediaSignedUrl({
         storagePath: media.storage_path,
         viewerUserId: viewerUserId ?? "",

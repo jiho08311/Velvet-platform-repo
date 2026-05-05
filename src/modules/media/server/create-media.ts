@@ -1,7 +1,11 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import type { Media, MediaStatus, MediaType } from "../types"
 import type { CreatePostAuthoringMediaRowInput } from "@/modules/post/types"
 import { buildInitialMediaMutationModerationState } from "./media-mutation-moderation-policy"
+import {
+  buildCreateMediaInsertPayload,
+  mapMediaRowToMedia,
+} from "../mappers/media-mapper"
+import { insertMediaRow } from "../repositories/media-repository"
 
 type CreateMediaInput = {
   postId?: string | null
@@ -13,19 +17,6 @@ type CreateMediaInput = {
   sortOrder?: number
   status?: MediaStatus
   useInitialModerationState?: boolean
-}
-
-type MediaRow = {
-  id: string
-  post_id: string | null
-  message_id: string | null
-  owner_user_id: string | null
-  type: MediaType
-  storage_path: string
-  mime_type: string | null
-  sort_order: number
-  status: MediaStatus
-  created_at: string
 }
 
 type CreatePostAuthoringMediaInput = {
@@ -69,53 +60,20 @@ export async function createMedia({
     ? buildInitialMediaMutationModerationState({ type })
     : null
 
-  const insertPayload: Record<string, unknown> = {
-    post_id: resolvedPostId,
-    message_id: resolvedMessageId,
-    owner_user_id: resolvedOwnerUserId,
+  const insertPayload = buildCreateMediaInsertPayload({
+    postId: resolvedPostId,
+    messageId: resolvedMessageId,
+    ownerUserId: resolvedOwnerUserId,
     type,
-    storage_path: resolvedStoragePath,
-    mime_type: mimeType ?? null,
-    sort_order: sortOrder,
-    status: initialModerationState?.status ?? status,
-  }
+    storagePath: resolvedStoragePath,
+    mimeType,
+    sortOrder,
+    status,
+    initialModerationState,
+  })
+  const row = await insertMediaRow(insertPayload)
 
-  if (initialModerationState?.processingStatus) {
-    insertPayload.processing_status = initialModerationState.processingStatus
-  }
-
-  if (initialModerationState?.moderationStatus) {
-    insertPayload.moderation_status = initialModerationState.moderationStatus
-  }
-
-  if ("moderationSummary" in (initialModerationState ?? {})) {
-    insertPayload.moderation_summary = initialModerationState?.moderationSummary ?? null
-  }
-
-  const { data, error } = await supabaseAdmin
-    .from("media")
-    .insert(insertPayload)
-    .select(
-      "id, post_id, message_id, owner_user_id, type, storage_path, mime_type, sort_order, status, created_at"
-    )
-    .single<MediaRow>()
-
-  if (error) {
-    throw error
-  }
-
-  return {
-    id: data.id,
-    postId: data.post_id,
-    messageId: data.message_id,
-    ownerUserId: data.owner_user_id,
-    type: data.type,
-    storagePath: data.storage_path,
-    mimeType: data.mime_type,
-    sortOrder: data.sort_order,
-    status: data.status,
-    createdAt: data.created_at,
-  }
+  return mapMediaRowToMedia(row)
 }
 
 export async function createPostAuthoringMedia({

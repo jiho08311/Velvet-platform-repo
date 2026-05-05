@@ -1,11 +1,15 @@
 import OpenAI from "openai"
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import {
   createConversationMessageMediaMap,
   type MessageMediaRow,
 } from "@/modules/message/server/create-conversation-message-media"
-
+import {
+  attachMessageMediaRowsToMessage,
+  getMessageMediaRowsByMessageId,
+  getModerationMediaRowsByIds,
+} from "@/modules/media/public/get-message-media"
+import { downloadMediaStorageFile } from "@/modules/media/public/download-media-storage-file"
 import { assertMessageAttachmentEligibility } from "@/modules/message/server/assert-message-attachment-eligibility"
 import {
   createSendMessageOutput,
@@ -18,9 +22,6 @@ import { createMessageReceivedNotification } from "@/modules/notification/server
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
-
-const MEDIA_BUCKET =
-  process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "media"
 
 type SendMessageInput = SendMessagePayload & {
   senderId: string
@@ -36,12 +37,6 @@ type MessageRow = {
   status: string | null
   type: string | null
   price: number | null
-}
-
-type ModerationMediaRow = {
-  id: string
-  storage_path: string
-  mime_type: string | null
 }
 
 async function checkTextSafety(text: string) {
@@ -65,37 +60,18 @@ async function checkTextSafety(text: string) {
   }
 }
 
-
-
-
 async function checkMessageImageSafety(mediaIds: string[]) {
   if (mediaIds.length === 0) return
 
-  const { data: mediaRows, error: mediaRowsError } = await supabaseAdmin
-    .from("media")
-    .select("id, storage_path, mime_type")
-    .in("id", mediaIds)
+  const mediaRows = await getModerationMediaRowsByIds(mediaIds)
 
-  if (mediaRowsError) {
-    throw mediaRowsError
-  }
-
-  for (const media of (mediaRows ?? []) as ModerationMediaRow[]) {
+  for (const media of mediaRows) {
     if (!media.mime_type?.startsWith("image/")) continue
 
-    const { data, error: downloadError } = await supabaseAdmin.storage
-      .from(MEDIA_BUCKET)
-      .download(media.storage_path)
-
-    if (downloadError) {
-      throw downloadError
-    }
-
-    if (!data) {
-      throw new Error("Failed to load image for moderation")
-    }
-
-    const arrayBuffer = await data.arrayBuffer()
+    const arrayBuffer = await downloadMediaStorageFile({
+      storagePath: media.storage_path,
+      missingDataErrorMessage: "Failed to load image for moderation",
+    })
     const base64 = Buffer.from(arrayBuffer).toString("base64")
     const dataUrl = `data:${media.mime_type};base64,${base64}`
 
@@ -170,47 +146,31 @@ export async function sendMessage(input: SendMessageInput) {
   })
 
   if (validatedMediaIds.length > 0) {
-    const { data: updatedMedia, error: mediaUpdateError } = await supabaseAdmin
-      .from("media")
-      .update({
-        message_id: message.id,
-      })
-      .in("id", validatedMediaIds)
-      .select("id, message_id")
-
-    if (mediaUpdateError) {
-      throw mediaUpdateError
-    }
-
-    const updatedMediaList = Array.isArray(updatedMedia) ? updatedMedia : []
+    const updatedMediaList = await attachMessageMediaRowsToMessage({
+      mediaIds: validatedMediaIds,
+      messageId: message.id,
+    })
 
     if (updatedMediaList.length !== validatedMediaIds.length) {
       throw new Error("Failed to attach media to message")
     }
   }
 
-await supabase
-  .from("conversations")
-  .update({
-    updated_at: new Date().toISOString(),
+  await supabase
+    .from("conversations")
+    .update({
+      updated_at: new Date().toISOString(),
 
-    // Conversation list ordering source of truth.
-    // Keep this tied to the persisted message timestamp, not a new client/server now.
-    last_message_at: message.created_at,
-  })
-  .eq("id", input.conversationId)
+      // Conversation list ordering source of truth.
+      // Keep this tied to the persisted message timestamp, not a new client/server now.
+      last_message_at: message.created_at,
+    })
+    .eq("id", input.conversationId)
 
-  const { data: mediaRowsData, error: mediaRowsError } = await supabaseAdmin
-    .from("media")
-    .select("id, message_id, storage_path, mime_type")
-    .eq("message_id", message.id)
-    .order("created_at", { ascending: true })
+  const mediaRows = (await getMessageMediaRowsByMessageId(
+    message.id
+  )) as MessageMediaRow[]
 
-  if (mediaRowsError) {
-    throw mediaRowsError
-  }
-
-  const mediaRows = (mediaRowsData ?? []) as MessageMediaRow[]
   const mediaMap = await createConversationMessageMediaMap({
     mediaRows,
     viewerUserId: input.senderId,

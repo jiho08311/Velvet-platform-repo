@@ -2,7 +2,10 @@ import createPayment from "./create-payment"
 import { hasPurchasedPost } from "./has-purchased-post"
 import { getPaymentProvider } from "./payment-provider-factory"
 import type { PaymentProviderName } from "./payment-provider"
-import { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"
+
+// ✅ 변경된 부분 (server → public)
+import { getActiveSubscription } from "@/modules/subscription/public/get-active-subscription"
+
 import { assertValidSubscriptionPrice } from "@/modules/subscription/lib/subscription-price"
 import { assertValidMessagePrice } from "@/modules/message/lib/message-price"
 
@@ -37,7 +40,7 @@ export async function createPaymentCheckout({
   targetType = null,
   targetId,
   orderId,
-  orderName: _orderName, // ❗ 외부 값 무시
+  orderName: _orderName,
   customerEmail,
   successUrl,
   failUrl,
@@ -95,8 +98,7 @@ export async function createPaymentCheckout({
     ? `${successUrl}&paymentId=${payment.id}`
     : `${successUrl}?paymentId=${payment.id}`
 
-  // 🔥 핵심: 무조건 통일
- const safeOrderName = "크리에이터 멤버십"
+  const safeOrderName = "크리에이터 멤버십"
 
   const checkout = await paymentProvider.createCheckout({
     paymentId: payment.id,

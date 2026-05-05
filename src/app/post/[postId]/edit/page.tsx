@@ -2,7 +2,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
-import { getCreatorStudioPost } from "@/modules/post/server/get-creator-studio-post"
+import { getCreatorStudioPost } from "@/modules/post/public/get-creator-studio-post"
 import { EditPostComposer } from "@/modules/post/ui/EditPostComposer"
 
 type EditPostPageProps = {

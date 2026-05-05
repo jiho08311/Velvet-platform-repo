@@ -1,32 +1,15 @@
-import { createClient } from "@/infrastructure/supabase/server"
+import { listSubscriptionsWithProfilesByCreatorId } from "@/modules/subscription/repositories/subscription-read-repository"
 
 export async function listSubscriptions(creatorId: string) {
-  const supabase = await createClient()
+  let data
 
-  const { data, error } = await supabase
-    .from("subscriptions")
-    .select(
-      `
-        id,
-        status,
-        created_at,
-        user_id,
-        profiles:user_id (
-          id,
-          username,
-          display_name,
-          avatar_url
-        )
-      `
-    )
-    .eq("creator_id", creatorId)
-    .order("created_at", { ascending: false })
-
-  if (error) {
+  try {
+    data = await listSubscriptionsWithProfilesByCreatorId(creatorId)
+  } catch {
     throw new Error("Failed to load subscriptions")
   }
 
-  return (data ?? []).map((subscription: any) => {
+  return data.map((subscription) => {
     const user = Array.isArray(subscription.profiles)
       ? subscription.profiles[0]
       : subscription.profiles

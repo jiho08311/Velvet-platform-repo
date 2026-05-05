@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { findLatestViewerSubscriptionByUserAndCreator } from "@/modules/subscription/repositories/subscription-read-repository"
 import {
   findLatestSubscriptionReadModel,
   toSubscriptionDisplayStatus,
@@ -33,22 +33,10 @@ export async function getViewerSubscription(
     }
   }
 
-  const { data, error } = await supabaseAdmin
-    .from("subscriptions")
-    .select(
-      "id, user_id, creator_id, current_period_start, current_period_end, cancel_at_period_end, status, canceled_at, created_at, updated_at"
-    )
-    .eq("user_id", viewerId)
-    .eq("creator_id", creator)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .returns<SubscriptionRow[]>()
-
-  if (error) {
-    throw error
-  }
-
-  const row = data?.[0]
+  const row = await findLatestViewerSubscriptionByUserAndCreator({
+    userId: viewerId,
+    creatorId: creator,
+  })
 
   if (!row) {
     return {

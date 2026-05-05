@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { checkSubscription } from "@/modules/subscription/server/check-subscription"
+import { checkSubscription } from "@/modules/subscription/public/check-subscription"
 import { getStoryAccessState } from "../lib/get-story-access-state"
 import { getStorySurfaceEligibility } from "../lib/get-story-surface-eligibility"
 import { resolveStoryReadWriteEligibility } from "../lib/story-read-policy"
@@ -169,7 +169,6 @@ async function getStoryReadTarget(params: {
     },
   }
 }
-
 
 export async function getStoryReadStateMap(viewerUserId: string) {
   const { data, error } = await supabaseAdmin

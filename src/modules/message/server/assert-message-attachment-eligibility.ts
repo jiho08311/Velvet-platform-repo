@@ -1,21 +1,13 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { isModerationApproved } from "@/modules/moderation/lib/moderation-outcome-policy"
+import {
+  getMessageAttachmentEligibilityRowsByIds,
+} from "@/modules/media/public/get-message-media"
 import { assertCanSendMessage } from "@/modules/message/server/assert-can-send-message"
+import { isModerationApproved } from "@/modules/moderation/lib/moderation-outcome-policy"
 
 type AssertMessageAttachmentEligibilityInput = {
   conversationId: string
   senderId: string
   mediaIds?: string[]
-}
-
-type ExistingMediaRow = {
-  id: string
-  owner_user_id: string | null
-  post_id: string | null
-  message_id: string | null
-  status: "processing" | "ready" | "failed" | null
-  processing_status: "processing" | "ready" | "failed" | null
-  moderation_status: "pending" | "approved" | "rejected" | "needs_review" | null
 }
 
 type AssertMessageAttachmentEligibilityResult = {
@@ -48,18 +40,9 @@ export async function assertMessageAttachmentEligibility({
     }
   }
 
-  const { data, error } = await supabaseAdmin
-    .from("media")
-    .select(
-      "id, owner_user_id, post_id, message_id, status, processing_status, moderation_status"
-    )
-    .in("id", resolvedMediaIds)
-
-  if (error) {
-    throw error
-  }
-
-  const mediaRows = (data ?? []) as ExistingMediaRow[]
+  const mediaRows = await getMessageAttachmentEligibilityRowsByIds(
+    resolvedMediaIds
+  )
 
   if (mediaRows.length !== resolvedMediaIds.length) {
     throw new Error("Some media files were not found")
@@ -90,10 +73,7 @@ export async function assertMessageAttachmentEligibility({
       throw new Error("Invalid message attachment")
     }
 
-    if (
-      media.processing_status &&
-      media.processing_status !== "ready"
-    ) {
+    if (media.processing_status && media.processing_status !== "ready") {
       throw new Error("Invalid message attachment")
     }
 

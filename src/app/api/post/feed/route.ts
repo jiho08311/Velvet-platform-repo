@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/modules/auth/server/get-current-user";
-import { getCreatorFeed } from "@/modules/post/server/get-creator-feed";
+import { getCreatorFeed } from "@/modules/post/public/get-creator-feed";
 
 export async function GET(request: Request) {
   try {

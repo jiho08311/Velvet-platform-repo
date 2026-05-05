@@ -2,9 +2,9 @@
 
 import { useState, useTransition } from "react"
 import { localDateTimeToUtcIso } from "@/shared/lib/date-time"
-import { createSupabaseBrowserClient } from "@/infrastructure/supabase/client"
+import { uploadPostMedia } from "@/modules/media/public/upload-media"
 
-import { createPostAction } from "../server/create-post-action"
+import { createPostAction } from "../public/create-post-action"
 import type {
   CreateOrEditPostFormBlock,
   CreatePostClientDraftBlock,
@@ -19,23 +19,6 @@ import { resolveCreatePostComposerErrorPresentation } from "./post-composer-ui-s
 type CreatePostComposerProps = {
   creatorId: string
   onCreated?: () => void
-}
-
-const MEDIA_BUCKET =
-  process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "media"
-
-function getFileExtension(fileName: string): string {
-  const parts = fileName.split(".")
-  return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : ""
-}
-
-function buildClientUploadPath(file: File) {
-  const now = Date.now()
-  const random = Math.random().toString(36).slice(2, 10)
-  const extension = getFileExtension(file.name)
-  const safeExtension = extension ? `.${extension}` : ""
-
-  return `creator/${now}-${random}${safeExtension}`
 }
 
 type ClientUploadEntry = {
@@ -60,44 +43,9 @@ function createUploadedFormMediaSource(uploaded: CreatePostUploadedMediaInput) {
 async function uploadFilesDirect(
   files: ClientUploadEntry[]
 ): Promise<Record<string, CreatePostUploadedMediaInput>> {
-  if (files.length === 0) {
-    return {}
-  }
-
-  const supabase = createSupabaseBrowserClient()
-  const uploaded: Record<string, CreatePostUploadedMediaInput> = {}
-
-  for (const entry of files) {
-    const path = buildClientUploadPath(entry.file)
-
-    const { error } = await supabase.storage
-      .from(MEDIA_BUCKET)
-      .upload(path, entry.file, {
-        cacheControl: "3600",
-        contentType: entry.file.type || undefined,
-        upsert: false,
-      })
-
-    if (error) {
-      throw new Error(error.message)
-    }
-
-    uploaded[entry.placeholderId] = {
-      path,
-      type: entry.file.type.startsWith("image/")
-        ? "image"
-        : entry.file.type.startsWith("video/")
-          ? "video"
-          : entry.file.type.startsWith("audio/")
-            ? "audio"
-            : "file",
-      mimeType: entry.file.type || "",
-      size: entry.file.size,
-      originalName: entry.file.name,
-    }
-  }
-
-  return uploaded
+  return uploadPostMedia({
+    files,
+  })
 }
 
 

@@ -3,7 +3,7 @@ import { buildCreatorIdentity } from "@/modules/creator/server/build-creator-ide
 import {
   filterPublicDiscoveryPostCandidates,
   isEligiblePublicDiscoveryCreatorRow,
-} from "@/modules/post/lib/public-discovery-inclusion"
+} from "@/modules/post/public/public-discovery-inclusion"
 
 export type PublicUpcomingFeedItem = {
   id: string

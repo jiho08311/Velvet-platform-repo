@@ -11,7 +11,7 @@ import { getUserById } from "@/modules/user/server/get-user-by-id"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { ProfileContentTabs } from "@/modules/profile/ui/ProfileContentTabs"
 import { getCreatorAnalyticsSummary } from "@/modules/analytics/server/get-creator-analytics"
-import { getCreatorFeed } from "@/modules/post/server/get-creator-feed"
+import { getCreatorFeed } from "@/modules/post/public/get-creator-feed"
 
 type ProfileData = {
   id: string

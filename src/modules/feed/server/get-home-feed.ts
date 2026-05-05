@@ -1,15 +1,15 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { buildCreatorIdentity } from "@/modules/creator/server/build-creator-identity"
-import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+import { createMediaSignedUrl } from "@/modules/media/public/create-media-signed-url"
 import type {
   PostBlock,
   PostBlockEditorState,
   PostCommerceState,
   PostRenderInput,
 } from "@/modules/post/types"
-import { getPostAccess } from "@/modules/post/server/get-post-access"
-import { getBlockedPostCommerceState } from "@/modules/post/lib/post-commerce-policy"
-import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
+import { getPostAccess } from "@/modules/post/public/get-post-access"
+import { getBlockedPostCommerceState } from "@/modules/post/public/get-post-commerce-cta-decision"
+import { buildPostRenderInput } from "@/modules/post/public/post-render-input"
 import {
   buildPostLikeCountMap,
   readPostLikeCount,
@@ -19,6 +19,13 @@ import {
   filterFeedPostCandidates,
   isVisibleFeedCreator,
 } from "./feed-inclusion-policy"
+import {
+  getReadyPostMediaRowsByPostIds,
+} from "@/modules/media/public/get-ready-post-media"
+import type { ReadyPostMediaRow } from "@/modules/media/public/ready-post-media-contract"
+
+
+
 
 type MediaType = "image" | "video" | "audio" | "file"
 
@@ -117,15 +124,7 @@ type PostRow = {
   }>
 }
 
-type MediaRow = {
-  id: string
-  post_id: string
-  storage_path: string
-  type: MediaType | null
-  mime_type: string | null
-  status: "processing" | "ready" | "failed"
-  sort_order: number
-}
+type MediaRow = ReadyPostMediaRow
 
 type PostLikeRow = {
   post_id: string
@@ -374,22 +373,7 @@ export async function getHomeFeed(
     .filter(({ publicState }) => publicState === "published")
     .map(({ post }) => post.id)
 
-  const { data: mediaRows, error: mediaError } = await supabaseAdmin
-    .from("media")
-    .select("id, post_id, storage_path, type, mime_type, status, sort_order")
-    .in(
-      "post_id",
-      publishedPostIds.length > 0
-        ? publishedPostIds
-        : ["00000000-0000-0000-0000-000000000000"]
-    )
-    .eq("status", "ready")
-    .order("sort_order", { ascending: true })
-    .returns<MediaRow[]>()
-
-  if (mediaError) {
-    throw mediaError
-  }
+  const mediaRows = await getReadyPostMediaRowsByPostIds(publishedPostIds)
 
   const mediaMap = new Map<string, MediaRow[]>()
 

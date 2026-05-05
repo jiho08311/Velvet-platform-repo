@@ -2,7 +2,7 @@ import { hasPurchasedPost } from "@/modules/payment/server/has-purchased-post"
 import { isCreatorOwner } from "@/modules/creator/lib/creator-identity"
 import { getPostPurchaseEligibility } from "@/modules/post/lib/can-purchase-post"
 import { getPostCommerceState } from "@/modules/post/lib/post-commerce-policy"
-import { getViewerSubscription } from "@/modules/subscription/server/get-viewer-subscription"
+import { getViewerSubscription } from "@/modules/subscription/public/get-viewer-subscription"
 import type {
   PostAccessResult,
   PostCommerceState,

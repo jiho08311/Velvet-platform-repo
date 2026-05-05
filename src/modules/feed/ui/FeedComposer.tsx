@@ -2,8 +2,8 @@
 
 import { Button } from "@/shared/ui/Button"
 import { useEffect, useRef, useState, useTransition } from "react"
-import { createFeedPostAction } from "@/modules/post/server/create-feed-post-action"
-import { createSupabaseBrowserClient } from "@/infrastructure/supabase/client"
+import { createFeedPostAction } from "@/modules/post/public/create-feed-post-action"
+import { uploadFeedComposerMedia } from "@/modules/media/public/upload-feed-composer-media"
 import { Card } from "@/shared/ui/Card"
 import type { CreatePostUploadedMediaInput } from "@/modules/post/types"
 import { resolveComposerCTA } from "@/shared/ui/cta-state"
@@ -30,23 +30,6 @@ const feedComposerClassNames = {
     "h-11 rounded-2xl border border-zinc-800 bg-zinc-900 px-3 text-xs font-medium text-white",
 }
 
-const MEDIA_BUCKET =
-  process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "media"
-
-function getFileExtension(fileName: string): string {
-  const parts = fileName.split(".")
-  return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : ""
-}
-
-function buildClientUploadPath(file: File) {
-  const now = Date.now()
-  const random = Math.random().toString(36).slice(2, 10)
-  const extension = getFileExtension(file.name)
-  const safeExtension = extension ? `.${extension}` : ""
-
-  return `creator/${now}-${random}${safeExtension}`
-}
-
 function createFileItem(file: File): ComposerFileItem {
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
@@ -56,46 +39,10 @@ function createFileItem(file: File): ComposerFileItem {
 }
 
 async function uploadFilesDirect(
-  files: File[]
+  files: File[],
+  uploaderUserId: string
 ): Promise<CreatePostUploadedMediaInput[]> {
-  if (files.length === 0) {
-    return []
-  }
-
-  const supabase = createSupabaseBrowserClient()
-  const uploaded: CreatePostUploadedMediaInput[] = []
-
-  for (const file of files) {
-    const path = buildClientUploadPath(file)
-
-    const { error } = await supabase.storage
-      .from(MEDIA_BUCKET)
-      .upload(path, file, {
-        cacheControl: "3600",
-        contentType: file.type || undefined,
-        upsert: false,
-      })
-
-    if (error) {
-      throw new Error(error.message)
-    }
-
-    uploaded.push({
-      path,
-      type: file.type.startsWith("image/")
-        ? "image"
-        : file.type.startsWith("video/")
-          ? "video"
-          : file.type.startsWith("audio/")
-            ? "audio"
-            : "file",
-      mimeType: file.type || "",
-      size: file.size,
-      originalName: file.name,
-    })
-  }
-
-  return uploaded
+  return uploadFeedComposerMedia({ files, uploaderUserId })
 }
 
 export function FeedComposer({
@@ -191,7 +138,8 @@ export function FeedComposer({
     startTransition(async () => {
       try {
         const uploadedFiles = await uploadFilesDirect(
-          selectedItems.map((item) => item.file)
+          selectedItems.map((item) => item.file),
+          userId
         )
 
         await createFeedPostAction({

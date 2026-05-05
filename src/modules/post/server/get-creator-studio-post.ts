@@ -1,9 +1,10 @@
-import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { getPostBlocks } from "@/modules/post/server/get-post-blocks"
+import { createMediaSignedUrl } from "@/modules/media/public/create-media-signed-url"
 import { buildPostEditorDraftFromPostBlocks } from "@/modules/post/server/post-editor-draft-normalizer"
 import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
-import type { CreateOrEditPostFormBlock } from "@/modules/post/types"
+import { findCreatorStudioPostById } from "@/modules/post/repositories/post-repository"
+import { findReadyPostMediaRowsByPostId } from "@/modules/post/repositories/post-media-repository"
+import { findPostBlocksByPostId } from "@/modules/post/repositories/post-block-repository"
+import type { CreateOrEditPostFormBlock, PostBlock } from "@/modules/post/types"
 
 export type CreatorStudioPostDetail = {
   id: string
@@ -29,90 +30,49 @@ type GetCreatorStudioPostParams = {
   creatorId: string
 }
 
-type PostRow = {
-  id: string
-  creator_id: string
-  title: string | null
-  content: string | null
-  status: "draft" | "scheduled" | "published" | "archived"
-  visibility: "public" | "subscribers" | "paid"
-  price: number | null
-  created_at: string
-  updated_at: string
-  deleted_at: string | null
-}
-
-type MediaRow = {
-  id: string
-  post_id: string
-  storage_path: string
-  type: "image" | "video" | "audio" | "file"
-  mime_type: string | null
-  status: "processing" | "ready" | "failed"
-  sort_order: number
-}
-
 export async function getCreatorStudioPost({
   postId,
   creatorId,
 }: GetCreatorStudioPostParams): Promise<CreatorStudioPostDetail | null> {
-  const supabase = await createSupabaseServerClient()
+  const post = await findCreatorStudioPostById({ postId, creatorId })
 
-  const { data, error } = await supabase
-    .from("posts")
-    .select(
-      "id, creator_id, title, content, status, visibility, price, created_at, updated_at, deleted_at"
-    )
-    .eq("id", postId)
-    .eq("creator_id", creatorId)
-    .in("status", ["draft", "scheduled", "published", "archived"])
-    .is("deleted_at", null)
-    .maybeSingle()
-
-  if (error) {
-    throw error
-  }
-
-  if (!data) {
+  if (!post) {
     return null
   }
 
-  const post = data as PostRow
-
-  const { data: mediaRows, error: mediaError } = await supabaseAdmin
-    .from("media")
-    .select("id, post_id, storage_path, type, mime_type, status, sort_order")
-    .eq("post_id", post.id)
-    .eq("status", "ready")
-    .order("sort_order", { ascending: true })
-    .returns<MediaRow[]>()
-
-  if (mediaError) {
-    throw mediaError
-  }
-
-  const bucket = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "media"
+  const mediaRows = await findReadyPostMediaRowsByPostId(post.id)
 
   const media = await Promise.all(
-    (mediaRows ?? []).map(async (item) => {
-      const { data: signedUrlData } = await supabaseAdmin.storage
-        .from(bucket)
-        .createSignedUrl(item.storage_path, 60 * 60)
-
+    mediaRows.map(async (item) => {
       return {
         id: item.id,
-        url: signedUrlData?.signedUrl ?? "",
+        url: await createMediaSignedUrl({
+          storagePath: item.storage_path,
+          visibility: post.visibility,
+          canView: true,
+          expiresIn: 60 * 60,
+        }),
         type: item.type,
       }
     })
   )
 
-  const rawBlocks = await getPostBlocks(post.id)
+  const blockRows = await findPostBlocksByPostId(post.id)
+  const rawBlocks: PostBlock[] = blockRows.map((row) => ({
+    id: row.id,
+    postId: row.post_id,
+    type: row.type as PostBlock["type"],
+    content: row.content,
+    mediaId: row.media_id,
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+    editorState: (row.editor_state as PostBlock["editorState"]) ?? null,
+  }))
 
   const renderInput = buildPostRenderInput({
     text: post.content ?? "",
     blocks: rawBlocks,
-    media: (mediaRows ?? []).map((item, index) => ({
+    media: mediaRows.map((item, index) => ({
       id: item.id,
       url: media[index]?.url ?? "",
       type: item.type,

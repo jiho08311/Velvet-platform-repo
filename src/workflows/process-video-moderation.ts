@@ -4,11 +4,20 @@ import os from "os"
 import path from "path"
 import { execFile } from "child_process"
 import { promisify } from "util"
-import { supabaseAdmin } from "../infrastructure/supabase/admin"
+
 import type { VideoModerationJob } from "@/modules/moderation/server/video-moderation-job"
 import { resolveVideoModerationOutcome } from "@/modules/moderation/server/resolve-video-moderation-outcome"
 import { finalizeVideoModerationPost } from "@/modules/moderation/server/finalize-video-moderation-post"
+import {
+  downloadMediaStorageFile,
+} from "@/modules/media/public/download-media-storage-file"
 
+import {
+  getMediaModerationStatusesByPostId,
+  markMediaApprovedForModeration,
+  markMediaNeedsReviewForModeration,
+  markMediaRejectedForModeration,
+} from "@/modules/media/public/video-moderation-media"
 
 
 type ModerationResultShape = {
@@ -23,8 +32,7 @@ const openai = new OpenAI({
 
 const execFileAsync = promisify(execFile)
 
-const MEDIA_BUCKET =
-  process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "media"
+
 
 const VIDEO_FRAME_COUNT = Math.max(
   3,
@@ -113,20 +121,16 @@ async function downloadStorageFile(
 ): Promise<void> {
   console.log("[video-moderation] storage download start", { storagePath })
 
-  const { data, error } = await supabaseAdmin.storage
-    .from(MEDIA_BUCKET)
-    .download(storagePath)
-
-  if (error || !data) {
+  try {
+    const arrayBuffer = await downloadMediaStorageFile({ storagePath })
+    await fs.writeFile(outputPath, Buffer.from(arrayBuffer))
+  } catch (error) {
     console.error("[video-moderation] storage download failed", {
       storagePath,
       error,
     })
-    throw error ?? new Error("Failed to download video from storage")
+    throw error
   }
-
-  const arrayBuffer = await data.arrayBuffer()
-  await fs.writeFile(outputPath, Buffer.from(arrayBuffer))
 
   console.log("[video-moderation] storage download done", {
     storagePath,
@@ -307,71 +311,7 @@ async function moderateText(text: string): Promise<ModerationResultShape> {
 
 
 
-async function markMediaApproved(mediaId: string, summary: Record<string, unknown>) {
-  const now = new Date().toISOString()
 
-  console.log("[video-moderation] mark media approved", { mediaId })
-
-  const { error } = await supabaseAdmin
-    .from("media")
-    .update({
-      status: "ready",
-      processing_status: "ready",
-      moderation_status: "approved",
-      moderation_summary: summary,
-      moderation_completed_at: now,
-    })
-    .eq("id", mediaId)
-
-  if (error) {
-    throw error
-  }
-}
-
-async function markMediaRejected(mediaId: string, summary: Record<string, unknown>) {
-  const now = new Date().toISOString()
-
-  console.log("[video-moderation] mark media rejected", { mediaId })
-
-  const { error } = await supabaseAdmin
-    .from("media")
-    .update({
-      status: "failed",
-      processing_status: "failed",
-      moderation_status: "rejected",
-      moderation_summary: summary,
-      moderation_completed_at: now,
-    })
-    .eq("id", mediaId)
-
-  if (error) {
-    throw error
-  }
-}
-
-async function markMediaNeedsReview(
-  mediaId: string,
-  summary: Record<string, unknown>
-) {
-  const now = new Date().toISOString()
-
-  console.log("[video-moderation] mark media needs_review", { mediaId })
-
-  const { error } = await supabaseAdmin
-    .from("media")
-    .update({
-      status: "failed",
-      processing_status: "failed",
-      moderation_status: "needs_review",
-      moderation_summary: summary,
-      moderation_completed_at: now,
-    })
-    .eq("id", mediaId)
-
-  if (error) {
-    throw error
-  }
-}
 
 
 
@@ -440,7 +380,7 @@ async function processSingleVideo({
           frameResults,
         }
 
-        await markMediaRejected(mediaId, summary)
+    await markMediaRejectedForModeration(mediaId, summary)
         return
       }
     }
@@ -467,8 +407,8 @@ async function processSingleVideo({
           frameResults,
         }
 
-        await markMediaRejected(mediaId, summary)
-        return
+await markMediaRejectedForModeration(mediaId, summary)
+return
       }
     }
 
@@ -483,7 +423,7 @@ async function processSingleVideo({
       frameResults,
     }
 
-    await markMediaApproved(mediaId, approvedSummary)
+  await markMediaApprovedForModeration(mediaId, approvedSummary)
   } finally {
     await safeRm(tempRoot)
   }
@@ -526,17 +466,7 @@ if (videoMedia.length === 0) {
       })
     }
 
-    const { data, error } = await supabaseAdmin
-      .from("media")
-      .select("moderation_status")
-      .eq("post_id", postId)
-      .returns<Array<{ moderation_status: string | null }>>()
-
-    if (error) {
-      throw error
-    }
-
-const statuses = (data ?? []).map((item) => item.moderation_status)
+const statuses = await getMediaModerationStatusesByPostId(postId)
 
 console.log("[video-moderation] final statuses", { statuses })
 
@@ -553,7 +483,7 @@ await finalizeVideoModerationPost({
     console.error("[video-moderation] failed", error)
 
     for (const item of videoMedia) {
-      await markMediaNeedsReview(item.id, {
+  await markMediaNeedsReviewForModeration(item.id, {
         provider: "openai",
         decision: "needs_review",
         reason:
@@ -562,17 +492,7 @@ await finalizeVideoModerationPost({
       })
     }
 
-    const { data, error: statusReadError } = await supabaseAdmin
-      .from("media")
-      .select("moderation_status")
-      .eq("post_id", postId)
-      .returns<Array<{ moderation_status: string | null }>>()
-
-    if (statusReadError) {
-      throw statusReadError
-    }
-
-const statuses = (data ?? []).map((item) => item.moderation_status)
+const statuses = await getMediaModerationStatusesByPostId(postId)
 
 const outcome = resolveVideoModerationOutcome({ statuses })
 

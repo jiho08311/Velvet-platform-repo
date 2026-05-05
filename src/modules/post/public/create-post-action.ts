@@ -1,0 +1,1 @@
+export { createPostAction } from "../server/create-post-action"

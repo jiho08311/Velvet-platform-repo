@@ -1,15 +1,15 @@
 import OpenAI from "openai"
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { createPost } from "@/modules/post/server/create-post"
-import { createPostAuthoringMedia } from "@/modules/media/server/create-media"
-import { updatePostStatus } from "@/modules/post/server/update-post-status"
+import { createPost } from "@/modules/post/public/create-post"
+import { createPostAuthoringMedia } from "@/modules/media/public/create-post-authoring-media"
+import { updatePostStatus } from "@/modules/post/public/update-post-status"
 import { enqueueVideoModeration } from "@/modules/moderation/server/enqueue-video-moderation"
-import { createPostBlocks } from "@/modules/post/server/create-post-blocks"
+import { createPostBlocks } from "@/modules/post/public/create-post-blocks"
 import {
   extractCreatePostModerationFiles,
   projectCreatePostDraft,
   resolveCreatePostPersistenceFromProjection,
-} from "@/modules/post/server/create-post-draft-policy"
+} from "@/modules/post/public/create-post-draft-policy"
 
 import type {
   CreatePostDraftBlock,

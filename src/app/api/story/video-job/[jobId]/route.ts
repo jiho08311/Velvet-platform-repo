@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
-import { getStoryVideoJobForUser } from "@/modules/media/server/story-video-job.service"
+import { getStoryVideoJobForUser } from "@/modules/media/public/story-video-job"
 
 type Context = {
   params: Promise<{

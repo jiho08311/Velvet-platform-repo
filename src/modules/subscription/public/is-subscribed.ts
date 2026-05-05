@@ -1,0 +1,1 @@
+export { isSubscribed } from "@/modules/subscription/server/is-subscribed"

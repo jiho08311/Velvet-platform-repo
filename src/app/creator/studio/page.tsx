@@ -1,7 +1,7 @@
 import Link from "next/link"
 
 import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
-import { listCreatorStudioPosts } from "@/modules/post/server/list-creator-studio-posts"
+import { listCreatorStudioPosts } from "@/modules/post/public/list-creator-studio-posts"
 
 async function deletePostAction(postId: string) {
   "use server"

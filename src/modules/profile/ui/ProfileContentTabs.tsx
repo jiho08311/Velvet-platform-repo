@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import type { MyPostListItem } from "@/modules/post/server/get-my-posts"
+import type { MyPostListItem } from "@/modules/post/public/get-my-posts"
 
 type ProfileContentTab = "posts" | "updates"
 type PreviewMediaItem = {

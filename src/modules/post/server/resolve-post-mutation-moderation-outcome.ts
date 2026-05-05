@@ -1,23 +1,17 @@
+// src/modules/post/server/resolve-post-mutation-moderation-outcome.ts
+
 import {
-  resolveModerationOutcomeFromStatuses,
-  type ModerationOutcome,
-} from "@/modules/moderation/lib/moderation-outcome-policy"
+  resolvePostMutationModerationOutcome as resolveInternal,
+} from "@/modules/post/services/post-mutation-moderation-service"
 
-export type PostMutationModerationOutcome = ModerationOutcome
+export type PostMutationModerationOutcome =
+  ReturnType<typeof resolveInternal>
 
-type ResolvePostMutationModerationOutcomeInput = {
-  statuses: Array<string | null>
-}
+type ResolvePostMutationModerationOutcomeInput =
+  Parameters<typeof resolveInternal>[0]
 
-/**
- * Post edit mutation(remove-only 등) 이후 남아 있는 media moderation 상태를 기준으로
- * post의 후속 moderation outcome을 계산한다.
- *
- * 이 resolver는 worker 기반 video moderation finalize 용도가 아니라,
- * synchronous post mutation recompute 용도다.
- */
-export function resolvePostMutationModerationOutcome({
-  statuses,
-}: ResolvePostMutationModerationOutcomeInput): PostMutationModerationOutcome {
-  return resolveModerationOutcomeFromStatuses({ statuses })
+export function resolvePostMutationModerationOutcome(
+  input: ResolvePostMutationModerationOutcomeInput
+): PostMutationModerationOutcome {
+  return resolveInternal(input)
 }

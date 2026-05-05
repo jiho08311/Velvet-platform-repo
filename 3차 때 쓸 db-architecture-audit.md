@@ -644,3 +644,5 @@ Notes
 지금은 DB를 고칠 시점이 아니다.
 현재 DB의 복잡함은 repository/mappers 안에 가두고, public/use-case/types는 미래 지향적인 도메인 계약으로 정리한다.
 DB schema migration은 코드가 DB 직접 의존에서 분리된 후 진행한다.
+
+허락맡기 전까지 파일 변경하지마 

@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server"
 
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import {
+  createComment,
+  findCommentAuthorProfile,
+  findCreatorUser,
+  findPostOwner,
+} from "@/modules/post/public/comment-data"
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { createNotification } from "@/modules/notification/server/create-notification"
 import { createInteractionNotificationInput } from "@/modules/notification/server/create-interaction-notification-input"
@@ -8,8 +13,8 @@ import {
   createCommentItem,
   type CommentItemProfile,
   type CommentRow,
-} from "@/modules/post/lib/comment-item"
-import { canDeleteComment } from "@/modules/post/lib/comment-permissions"
+} from "@/modules/post/public/comment-item"
+import { canDeleteComment } from "@/modules/post/public/comment-permissions"
 
 export const dynamic = "force-dynamic"
 
@@ -19,19 +24,6 @@ type RouteContext = {
   }>
 }
 
-type PostOwnerRow = {
-  id: string
-  creator_id: string
-}
-
-type CreatorRow = {
-  id: string
-  user_id: string
-}
-
-type ProfileRow = {
-  id: string
-} & CommentItemProfile
 
 export async function POST(
   request: Request,
@@ -83,48 +75,37 @@ export async function POST(
     )
   }
 
-  const { data: insertedComment, error: insertError } = await supabaseAdmin
-    .from("comments")
-    .insert({
-      post_id: postId,
-      user_id: user.id,
-      content,
-    })
-    .select("id, post_id, user_id, content, created_at")
-    .single<CommentRow>()
+let insertedComment: CommentRow
 
-  if (insertError) {
-    return NextResponse.json(
-      { error: insertError.message },
-      { status: 500 }
-    )
-  }
+try {
+  insertedComment = await createComment({
+    postId,
+    userId: user.id,
+    content,
+  })
+} catch (error) {
+  return NextResponse.json(
+    { error: error instanceof Error ? error.message : "Failed to create comment" },
+    { status: 500 }
+  )
+}
 
-  const { data: profile, error: profileError } = await supabaseAdmin
-    .from("profiles")
-    .select("id, username, avatar_url")
-    .eq("id", user.id)
-    .single<ProfileRow>()
+let profile: CommentItemProfile
 
-  if (profileError) {
-    return NextResponse.json(
-      { error: profileError.message },
-      { status: 500 }
-    )
-  }
+try {
+  profile = await findCommentAuthorProfile(user.id)
+} catch (error) {
+  return NextResponse.json(
+    { error: error instanceof Error ? error.message : "Failed to load profile" },
+    { status: 500 }
+  )
+}
 
-  const { data: post } = await supabaseAdmin
-    .from("posts")
-    .select("id, creator_id")
-    .eq("id", postId)
-    .single<PostOwnerRow>()
+try {
+  const post = await findPostOwner(postId)
 
   if (post?.creator_id) {
-    const { data: creator } = await supabaseAdmin
-      .from("creators")
-      .select("id, user_id")
-      .eq("id", post.creator_id)
-      .single<CreatorRow>()
+    const creator = await findCreatorUser(post.creator_id)
 
     if (creator?.user_id) {
       const notificationInput = createInteractionNotificationInput({
@@ -141,6 +122,9 @@ export async function POST(
       }
     }
   }
+} catch {
+  // Preserve comment creation success even if notification lookup fails.
+}
 
   const item = createCommentItem({
     comment: insertedComment,

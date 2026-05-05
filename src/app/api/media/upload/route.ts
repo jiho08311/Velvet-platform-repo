@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
 
 import { requireUser } from "@/modules/auth/server/require-user"
-import { createMedia } from "@/modules/media/server/create-media"
-import { uploadMedia } from "@/modules/media/server/upload-media"
+import { createMedia } from "@/modules/media/public/create-media"
+import { uploadMediaFile as uploadMedia } from "@/modules/media/public/upload-media-file"
 
 function getMediaTypeFromMimeType(mimeType: string) {
   if (mimeType.startsWith("image/")) {

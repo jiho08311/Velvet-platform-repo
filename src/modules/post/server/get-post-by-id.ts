@@ -1,24 +1,36 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+
 import { isCreatorOwner } from "@/modules/creator/lib/creator-identity"
 import type {
   PostBlock,
   PostCommerceState,
   PostRenderInput,
 } from "../types"
-import type { LockedPreviewRenderableBlock } from "./locked-preview-policy"
+import {
+  mapPostBlocksToRenderableBlocks,
+  selectPostRenderableBlocks,
+} from "@/modules/post/mappers/post-render-mapper"
 import { getPostBlocks } from "@/modules/post/server/get-post-blocks"
 import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
-import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+import { createMediaSignedUrl } from "@/modules/media/public/create-media-signed-url"
 import { buildLockedPreviewPolicy } from "./locked-preview-policy"
 import { resolvePostAccessState } from "./resolve-post-access-state"
 import {
   getPublicDiscoveryPostState,
   isEligiblePublicDiscoveryCreator,
 } from "@/modules/post/lib/public-discovery-inclusion"
+import { normalizeLikeCount } from "@/shared/lib/like-interaction-result"
 import {
-  createPostLikeCompatibilityFields,
-  normalizeLikeCount,
-} from "@/shared/lib/like-interaction-result"
+  countPostLikes,
+  hasUserLikedPost,
+} from "@/modules/post/repositories/post-like-repository"
+import { countCommentsByPostId } from "@/modules/post/repositories/comment-repository"
+import { findPostMediaRowsByPostId } from "@/modules/post/repositories/post-media-repository"
+import {
+  findPostById,
+  findPostCreatorById,
+} from "@/modules/post/repositories/post-repository"
+import { mapPostDetail } from "@/modules/post/mappers/post-mapper"
+
 
 type PostRow = {
   id: string
@@ -50,15 +62,7 @@ type CreatorRow = {
   } | null
 }
 
-type MediaRow = {
-  id: string
-  post_id: string
-  type: "image" | "video" | "audio" | "file"
-  storage_path: string
-  mime_type: string | null
-  sort_order: number
-  status: "processing" | "ready" | "failed"
-}
+
 
 export type PostDetail = {
   id: string
@@ -95,15 +99,15 @@ export type PostDetail = {
   renderInput: PostRenderInput
 }
 
-function sortBlocks(
-  blocks: LockedPreviewRenderableBlock[]
-): LockedPreviewRenderableBlock[] {
-  return [...blocks].sort((a, b) => a.sortOrder - b.sortOrder)
-}
 
-function sortMediaRows(rows: MediaRow[]): MediaRow[] {
-  return [...rows].sort((a, b) => a.sort_order - b.sort_order)
-}
+import {
+  mapPostDetailMediaToRenderMedia,
+  mapPostMediaRowsToPreviewMedia,
+  mapSignedPostMediaItem,
+  selectPostMediaRowsForAccess,
+  sortPostMediaRows,
+} from "@/modules/post/mappers/post-media-mapper"
+
 
 export async function getPostById(
   postId: string,
@@ -119,49 +123,21 @@ export async function getPostById(
     throw new Error("postId is required")
   }
 
-  const { data: post, error: postError } = await supabaseAdmin
-    .from("posts")
-    .select(
-      "id, creator_id, title, content, visibility, price, status, visibility_status, moderation_status, created_at, published_at, deleted_at"
-    )
-    .eq("id", resolvedPostId)
-    .is("deleted_at", null)
-    .maybeSingle<PostRow>()
+ const post = await findPostById(resolvedPostId)
 
-  if (postError) {
-    throw postError
-  }
+if (!post) {
+  return null
+}
 
-  if (!post) {
-    return null
-  }
 
-  const { data: creator, error: creatorError } = await supabaseAdmin
-    .from("creators")
-    .select(`
-      id,
-      user_id,
-      username,
-      display_name,
-      status,
-      profiles!inner (
-        id,
-        is_deactivated,
-        is_delete_pending,
-        deleted_at,
-        is_banned
-      )
-    `)
-    .eq("id", post.creator_id)
-    .maybeSingle<CreatorRow>()
 
-  if (creatorError) {
-    throw creatorError
-  }
+const creator = await findPostCreatorById(post.creator_id)
 
-  if (!creator) {
-    throw new Error("Creator not found")
-  }
+if (!creator) {
+  throw new Error("Creator not found")
+}
+
+
 
   const isOwner = isCreatorOwner({
     viewerUserId: resolvedViewerUserId,
@@ -189,39 +165,21 @@ export async function getPostById(
     }
   }
 
-  const [{ count: likesCount }, { count: commentsCount }] = await Promise.all([
-    supabaseAdmin
-      .from("post_likes")
-      .select("*", { count: "exact", head: true })
-      .eq("post_id", post.id),
-    supabaseAdmin
-      .from("comments")
-      .select("*", { count: "exact", head: true })
-      .eq("post_id", post.id)
-      .is("deleted_at", null),
-  ])
+const [likesCount, commentsCount] = await Promise.all([
+  countPostLikes(post.id),
+  countCommentsByPostId(post.id),
+])
 
   const resolvedLikesCount = normalizeLikeCount(likesCount)
 
   const viewerHasLiked = resolvedViewerUserId
-    ? await supabaseAdmin
-        .from("post_likes")
-        .select("*", { count: "exact", head: true })
-        .eq("post_id", post.id)
-        .eq("user_id", resolvedViewerUserId)
-        .then(({ count, error }) => {
-          if (error) {
-            throw error
-          }
-
-          return normalizeLikeCount(count) > 0
-        })
+    ? await hasUserLikedPost({
+        postId: post.id,
+        userId: resolvedViewerUserId,
+      })
     : false
 
-  const likeState = {
-    likesCount: resolvedLikesCount,
-    viewerHasLiked,
-  }
+
 
   const {
     isSubscribed,
@@ -245,53 +203,30 @@ export async function getPostById(
     },
   })
 
-  const [allBlockRows, allMediaRows] = await Promise.all([
-    getPostBlocks(post.id),
-    supabaseAdmin
-      .from("media")
-      .select("id, post_id, type, storage_path, mime_type, sort_order, status")
-      .eq("post_id", post.id)
-      .in("status", ["processing", "ready"])
-      .order("sort_order", { ascending: true })
-      .returns<MediaRow[]>(),
-  ])
+ const [allBlockRows, allMediaRows] = await Promise.all([
+  getPostBlocks(post.id),
+  findPostMediaRowsByPostId(post.id),
+])
 
-  const sortedBlocks = sortBlocks(
-    allBlockRows.map((block): LockedPreviewRenderableBlock => ({
-      id: block.id,
-      postId: block.postId,
-      type: block.type === "carousel" ? "text" : block.type,
-      content: block.content,
-      mediaId: block.mediaId,
-      sortOrder: block.sortOrder,
-      createdAt: block.createdAt,
-      editorState: block.editorState ?? null,
-    }))
-  )
+const sortedBlocks = mapPostBlocksToRenderableBlocks(allBlockRows)
 
-  const sortedMediaRows = sortMediaRows(allMediaRows.data ?? [])
+const sortedMediaRows = sortPostMediaRows(allMediaRows)
 
   const previewPolicy = buildLockedPreviewPolicy({
     access,
     publicState,
     text: post.content ?? "",
     blocks: sortedBlocks,
-    media: sortedMediaRows.map((item) => ({
-      id: item.id,
-      url: "",
-      type: item.type,
-      mimeType: item.mime_type,
-      sortOrder: item.sort_order,
-    })),
+media: mapPostMediaRowsToPreviewMedia(sortedMediaRows),
   })
 
-  const selectedMediaRows = access.canView
-    ? sortedMediaRows
-    : sortedMediaRows.filter((item) =>
-        previewPolicy.previewMedia.some((preview) => preview.id === item.id)
-      )
+const selectedMediaRows = selectPostMediaRowsForAccess({
+  canView: access.canView,
+  sortedMediaRows,
+  previewMedia: previewPolicy.previewMedia,
+})
 
-  const selectedMedia = await Promise.all(
+   const selectedMedia = await Promise.all(
     selectedMediaRows.map(async (item) => {
       const url = await createMediaSignedUrl({
         storagePath: item.storage_path,
@@ -304,57 +239,37 @@ export async function getPostById(
         allowPreview: !access.canView && previewPolicy.allowPreviewMediaSigning,
       })
 
-      return {
-        id: item.id,
-        postId: item.post_id,
-        type: item.type,
+      return mapSignedPostMediaItem({
+        row: item,
         url,
-        mimeType: item.mime_type,
-        sortOrder: item.sort_order,
-      }
+      })
     })
   )
 
-  const selectedBlocks = access.canView
-    ? sortedBlocks
-    : previewPolicy.previewBlocks
+const selectedBlocks = selectPostRenderableBlocks({
+  canView: access.canView,
+  sortedBlocks,
+  previewBlocks: previewPolicy.previewBlocks,
+})
 
   const renderInput = buildPostRenderInput({
     text: access.canView ? (post.content ?? "") : previewPolicy.renderTextSeed,
     blocks: selectedBlocks,
-    media: selectedMedia.map((item) => ({
-      id: item.id,
-      url: item.url,
-      type: item.type,
-      mimeType: item.mimeType,
-      sortOrder: item.sortOrder,
-    })),
+media: mapPostDetailMediaToRenderMedia(selectedMedia),
   })
 
-  return {
-    id: post.id,
-    creatorId: post.creator_id,
-    creatorUserId: creator.user_id,
-    creator: {
-      username: creator.username,
-      displayName: creator.display_name,
-    },
-    title: post.title,
-    content: access.canView ? (renderInput.blockText || null) : null,
-    visibility: post.visibility,
-    price: post.price,
-    status: post.status,
-    createdAt: post.created_at,
-    publishedAt: post.published_at,
-    canView: access.canView,
-    isLocked: access.isLocked,
-    lockReason: access.lockReason,
-    commerce,
-    ...likeState,
-    ...createPostLikeCompatibilityFields(likeState),
-    commentsCount: commentsCount ?? 0,
-    media: access.canView ? selectedMedia : [],
-    blocks: access.canView ? selectedBlocks : [],
-    renderInput,
-  }
+return mapPostDetail({
+  post,
+  creator,
+  canView: access.canView,
+  isLocked: access.isLocked,
+  lockReason: access.lockReason,
+  commerce,
+  likesCount: resolvedLikesCount,
+  viewerHasLiked,
+  commentsCount,
+  selectedMedia,
+  selectedBlocks,
+  renderInput,
+})
 }

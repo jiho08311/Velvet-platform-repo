@@ -2,10 +2,10 @@ import { notFound } from "next/navigation"
 import PostPurchaseButton from "@/modules/post/ui/PostPurchaseButton"
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { getCreatorByUsername } from "@/modules/creator/server/get-creator-by-username"
-import { getCreatorFeed } from "@/modules/post/server/get-creator-feed"
+import { getCreatorFeed } from "@/modules/post/public/get-creator-feed"
 import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
 import { CreatePostComposer } from "@/modules/post/ui/CreatePostComposer"
-import { getPostCommerceCtaDecision } from "@/modules/post/lib/post-commerce-policy"
+import { getPostCommerceCtaDecision } from "@/modules/post/public/get-post-commerce-cta-decision"
 
 type CreatorPageProps = {
   params: Promise<{

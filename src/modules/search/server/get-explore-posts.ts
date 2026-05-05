@@ -1,5 +1,9 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+import { createMediaSignedUrl } from "@/modules/media/public/create-media-signed-url"
+import {
+  getReadyExplorePostMediaRowsByPostIds,
+} from "@/modules/media/public/get-ready-post-media"
+import type { ReadyExplorePostMediaRow } from "@/modules/media/public/ready-post-media-contract"
 import {
   buildPostLikeCountMap,
   readPostLikeCount,
@@ -25,14 +29,7 @@ type PostRow = {
   deleted_at: string | null
 }
 
-type MediaRow = {
-  id: string
-  post_id: string
-  storage_path: string
-  mime_type: string | null
-  sort_order: number
-  type: "image" | "video" | "audio" | "file" | null
-}
+type MediaRow = ReadyExplorePostMediaRow
 
 type CreatorRow = {
   id: string
@@ -175,20 +172,11 @@ export async function getExplorePosts(
 
   const visiblePostIds = visiblePosts.map((post) => post.id)
 
-  const { data: mediaRows, error: mediaError } = await supabaseAdmin
-    .from("media")
-    .select("id, post_id, storage_path, mime_type, sort_order, type")
-    .in("post_id", visiblePostIds)
-    .in("type", ["image", "video"])
-    .eq("status", "ready")
-    .order("sort_order", { ascending: true })
-    .returns<MediaRow[]>()
-
-  if (mediaError) throw mediaError
+  const mediaRows = await getReadyExplorePostMediaRowsByPostIds(visiblePostIds)
 
   const mediaMap = new Map<string, MediaRow[]>()
 
-  for (const media of mediaRows ?? []) {
+  for (const media of mediaRows) {
     const current = mediaMap.get(media.post_id) ?? []
     current.push(media)
     mediaMap.set(media.post_id, current)
@@ -196,7 +184,7 @@ export async function getExplorePosts(
 
   const firstMediaMap = new Map<string, MediaRow>()
 
-  for (const media of mediaRows ?? []) {
+  for (const media of mediaRows) {
     if (!firstMediaMap.has(media.post_id)) {
       firstMediaMap.set(media.post_id, media)
     }

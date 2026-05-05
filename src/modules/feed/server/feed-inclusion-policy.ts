@@ -1,8 +1,8 @@
-import type { PostPublicState } from "@/modules/post/lib/get-post-public-state"
+import type { PostPublicState } from "@/modules/post/public/public-discovery-inclusion"
 import {
   getPublicDiscoveryPostState,
   isEligiblePublicDiscoveryCreator,
-} from "@/modules/post/lib/public-discovery-inclusion"
+} from "@/modules/post/public/public-discovery-inclusion"
 
 type FeedCreatorVisibilityProfile = {
   is_deactivated: boolean | null

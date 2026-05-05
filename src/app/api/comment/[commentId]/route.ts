@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server"
-import { canDeleteComment } from "@/modules/post/lib/comment-permissions"
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { canDeleteComment } from "@/modules/post/public/comment-permissions"
+import {
+  findCommentForDelete,
+  softDeleteComment,
+} from "@/modules/post/public/comment-data"
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 
 type RouteContext = {
@@ -30,16 +33,16 @@ export async function DELETE(
     return NextResponse.json({ error: "Comment id is required" }, { status: 400 })
   }
 
-  const { data: comment, error: commentError } = await supabaseAdmin
-    .from("comments")
-    .select("id, user_id")
-    .eq("id", commentId)
-    .is("deleted_at", null)
-    .single()
+let comment: {
+  id: string
+  user_id: string
+}
 
-  if (commentError || !comment) {
-    return NextResponse.json({ error: "Comment not found" }, { status: 404 })
-  }
+try {
+  comment = await findCommentForDelete(commentId)
+} catch {
+  return NextResponse.json({ error: "Comment not found" }, { status: 404 })
+}
 
   if (
     !canDeleteComment({
@@ -50,16 +53,14 @@ export async function DELETE(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
-  const { error: deleteError } = await supabaseAdmin
-    .from("comments")
-    .update({
-      deleted_at: new Date().toISOString(),
-    })
-    .eq("id", commentId)
-
-  if (deleteError) {
-    return NextResponse.json({ error: deleteError.message }, { status: 500 })
-  }
+try {
+  await softDeleteComment(commentId)
+} catch (error) {
+  return NextResponse.json(
+    { error: error instanceof Error ? error.message : "Failed to delete comment" },
+    { status: 500 }
+  )
+}
 
   return NextResponse.json({ ok: true })
 }

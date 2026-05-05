@@ -4,9 +4,9 @@ export {
   isEligiblePublicDiscoveryCreator,
   isEligiblePublicDiscoveryCreatorRow,
   isEligiblePublicDiscoveryPost,
-} from "@/modules/post/lib/public-discovery-inclusion"
+} from "@/modules/post/public/public-discovery-inclusion"
 
 export type {
   PublicDiscoveryCreatorEligibilityInput,
   PublicDiscoveryPostEligibilityInput,
-} from "@/modules/post/lib/public-discovery-inclusion"
+} from "@/modules/post/public/public-discovery-inclusion"

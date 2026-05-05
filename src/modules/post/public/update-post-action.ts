@@ -1,0 +1,1 @@
+export { updatePostAction } from "../server/update-post-action"

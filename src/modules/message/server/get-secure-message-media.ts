@@ -4,7 +4,9 @@ import {
   type MessageMediaRow,
 } from "@/modules/message/server/create-conversation-message-media"
 import { requireConversationAccess } from "@/modules/message/server/get-conversation-access"
-
+import {
+  getMessageMediaRowsByMessageIdOrEmpty,
+} from "@/modules/media/public/get-message-media"
 export async function getSecureMessageMedia({
   messageId,
   userId,
@@ -27,13 +29,10 @@ export async function getSecureMessageMedia({
     userId,
   })
 
-  const { data: mediaRows } = await supabase
-    .from("media")
-    .select("id, message_id, storage_path, mime_type")
-    .eq("message_id", messageId)
+  const mediaRows = await getMessageMediaRowsByMessageIdOrEmpty(messageId)
 
   const mediaMap = await createConversationMessageMediaMap({
-    mediaRows: (mediaRows ?? []) as MessageMediaRow[],
+    mediaRows: mediaRows as MessageMediaRow[],
     viewerUserId: userId,
     senderUserIdByMessageId: new Map([[messageId, message.sender_id]]),
   })

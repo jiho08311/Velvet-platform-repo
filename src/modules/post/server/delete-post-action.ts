@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache"
 
 import { getCurrentUser } from "@/modules/auth/server/get-current-user"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
-import { deletePost } from "@/modules/post/server/delete-post"
+import { deletePost } from "@/modules/post/public/delete-post"
 
 export async function deletePostAction(postId: string) {
   const user = await getCurrentUser()

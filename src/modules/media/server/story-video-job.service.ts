@@ -1,9 +1,4 @@
-import { createClient } from "@supabase/supabase-js"
-import type {
-  StoryEditorState,
-  StoryVideoJobPayload,
-  StoryVisibility,
-} from "@/modules/story/types"
+import type { StoryVideoJobPayload } from "@/modules/story/types"
 import {
   buildProcessedStoryVideoCreateInput,
   buildStoryVideoJobInsertValues,
@@ -15,7 +10,6 @@ import {
   buildStoryVideoJobPollResponse,
   pickStoryVideoJobPollRow,
   STORY_VIDEO_JOB_POLL_SELECT,
-  type StoryVideoJobStatus,
 } from "@/modules/media/lib/story-video-job-contract"
 import {
   buildClaimedStoryVideoJob,
@@ -28,58 +22,24 @@ import {
   removeTempStoryVideo,
   uploadTempStoryVideo,
 } from "@/modules/media/server/story-video-storage.service"
+import { findCreatorIdByUserId } from "@/modules/media/repositories/story-video-creator-repository"
+import {
+  claimStoryVideoJobRow,
+  findStoryVideoJobPollRowForCreator,
+  insertStoryVideoJobRow,
+  updateStoryVideoJobCompletedRow,
+  updateStoryVideoJobFailedRow,
+  type StoryVideoJobRow,
+} from "@/modules/media/repositories/story-video-job-repository"
 
-export type StoryVideoJob = {
-  id: string
-  creator_id: string
-  temp_storage_path: string
-  trimmed_storage_path: string | null
-  story_id: string | null
-  visibility: StoryVisibility
-  start_time: number
-  expires_at: string
-  editor_state: StoryEditorState | null
-  status: StoryVideoJobStatus
-  attempts: number
-  error_message: string | null
-  locked_at: string | null
-  created_at: string
-  updated_at: string
-}
+export type StoryVideoJob = StoryVideoJobRow
 
 export type ClaimedStoryVideoJob = {
   processorInput: StoryVideoProcessorInput
 }
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error("Missing Supabase environment variables")
-}
-
-function createAdminClient() {
-  return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  })
-}
-
 async function getCreatorIdByUserId(params: { userId: string }) {
-  const admin = createAdminClient()
-
-  const { data: creator, error: creatorError } = await admin
-    .from("creators")
-    .select("id")
-    .eq("user_id", params.userId)
-    .single()
-
-  if (creatorError || !creator) {
-    throw new Error("Creator not found")
-  }
-
-  return creator.id
+  return findCreatorIdByUserId(params.userId)
 }
 
 async function insertStoryVideoJob(params: {
@@ -88,42 +48,14 @@ async function insertStoryVideoJob(params: {
   story: StoryVideoJobPayload
   expiresAt: string
 }) {
-  const admin = createAdminClient()
-
-  const { data, error } = await admin
-    .from("story_video_jobs")
-    .insert(
-      buildStoryVideoJobInsertValues({
-        creatorId: params.creatorId,
-        tempStoragePath: params.tempStoragePath,
-        story: params.story,
-        expiresAt: params.expiresAt,
-      })
-    )
-    .select("*")
-    .single()
-
-  if (error || !data) {
-    throw new Error(error?.message || "Failed to create job")
-  }
-
-  return data as StoryVideoJob
-}
-
-async function claimStoryVideoJobRow() {
-  const admin = createAdminClient()
-
-  const { data, error } = await admin.rpc("claim_story_video_job")
-
-  if (error) {
-    throw new Error(error.message)
-  }
-
-  if (!data) {
-    return null
-  }
-
-  return data as StoryVideoJob
+  return insertStoryVideoJobRow(
+    buildStoryVideoJobInsertValues({
+      creatorId: params.creatorId,
+      tempStoragePath: params.tempStoragePath,
+      story: params.story,
+      expiresAt: params.expiresAt,
+    })
+  )
 }
 
 async function updateStoryVideoJobCompleted(params: {
@@ -131,61 +63,38 @@ async function updateStoryVideoJobCompleted(params: {
   storyId: string
   trimmedStoragePath: string
 }) {
-  const admin = createAdminClient()
-
-  const { error } = await admin
-    .from("story_video_jobs")
-    .update(
-      buildCompletedStoryVideoJobValues({
-        storyId: params.storyId,
-        trimmedStoragePath: params.trimmedStoragePath,
-      })
-    )
-    .eq("id", params.jobId)
-
-  if (error) {
-    throw new Error(error.message)
-  }
+  return updateStoryVideoJobCompletedRow({
+    jobId: params.jobId,
+    values: buildCompletedStoryVideoJobValues({
+      storyId: params.storyId,
+      trimmedStoragePath: params.trimmedStoragePath,
+    }),
+  })
 }
 
 async function updateStoryVideoJobFailed(params: {
   jobId: string
   errorMessage: string
 }) {
-  const admin = createAdminClient()
-
-  const { error } = await admin
-    .from("story_video_jobs")
-    .update(
-      buildFailedStoryVideoJobValues({
-        errorMessage: params.errorMessage,
-      })
-    )
-    .eq("id", params.jobId)
-
-  if (error) {
-    throw new Error(error.message)
-  }
+  return updateStoryVideoJobFailedRow({
+    jobId: params.jobId,
+    values: buildFailedStoryVideoJobValues({
+      errorMessage: params.errorMessage,
+    }),
+  })
 }
 
 async function getStoryVideoJobPollRowForCreator(params: {
   jobId: string
   creatorId: string
 }) {
-  const admin = createAdminClient()
+  const job = await findStoryVideoJobPollRowForCreator({
+    jobId: params.jobId,
+    creatorId: params.creatorId,
+    selectColumns: STORY_VIDEO_JOB_POLL_SELECT,
+  })
 
-  const { data, error } = await admin
-    .from("story_video_jobs")
-    .select(STORY_VIDEO_JOB_POLL_SELECT)
-    .eq("id", params.jobId)
-    .eq("creator_id", params.creatorId)
-    .single()
-
-  if (error || !data) {
-    throw new Error("Job not found")
-  }
-
-  return pickStoryVideoJobPollRow(data)
+  return pickStoryVideoJobPollRow(job)
 }
 
 async function createFinalStoryFromProcessedVideo(params: {

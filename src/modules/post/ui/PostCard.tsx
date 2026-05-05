@@ -26,7 +26,7 @@ import PostPurchaseButton from "./PostPurchaseButton"
 import { ReportButton } from "@/modules/report/ui/ReportButton"
 import { LockedPostCard } from "./LockedPostCard"
 import { PostMoreMenu } from "./PostMoreMenu"
-import { getPostCommerceCtaDecision } from "@/modules/post/lib/post-commerce-policy"
+import { getPostCommerceCtaDecision } from "@/modules/post/public/get-post-commerce-cta-decision"
 import {
   createCommentLikeCompatibilityFields,
   readLikeInteractionResult,

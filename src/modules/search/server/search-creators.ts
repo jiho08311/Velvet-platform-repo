@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { buildCreatorIdentity } from "@/modules/creator/server/build-creator-identity"
-import { isEligiblePublicDiscoveryCreator } from "@/modules/post/lib/public-discovery-inclusion"
+import { isEligiblePublicDiscoveryCreator } from "@/modules/post/public/public-discovery-inclusion"
 
 import type {
   CreatorSearchConnection,

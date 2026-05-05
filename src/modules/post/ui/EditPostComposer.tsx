@@ -7,7 +7,7 @@ import type {
   CreateOrEditPostFormBlock,
   PostVisibility,
 } from "../types"
-import { updatePostAction } from "../server/update-post-action"
+import { updatePostAction } from "../public/update-post-action"
 import { CreatePostForm } from "./CreatePostForm"
 import { resolveCreatePostComposerErrorPresentation } from "./post-composer-ui-state"
 

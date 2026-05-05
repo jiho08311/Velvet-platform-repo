@@ -1,6 +1,19 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+import { createMediaSignedUrl } from "@/modules/media/public/create-media-signed-url"
 import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
+import {
+  findPostBlocksByPostIds,
+  type CreatorStudioPostBlockRow,
+} from "@/modules/post/repositories/post-block-repository"
+import { findPostLikeRowsByPostIds } from "@/modules/post/repositories/post-like-repository"
+import {
+  findMyPostMediaRowsByPostIds,
+  type MyPostsMediaRow,
+} from "@/modules/post/repositories/post-media-repository"
+import {
+  findCreatorForMyPosts,
+  findMyPostRowsByCreatorId,
+  type MyPostsPostRow,
+} from "@/modules/post/repositories/post-repository"
 import type { PostCommerceState, PostRenderListItem } from "../types"
 import { buildPostRenderReadModel } from "./post-render-read-model"
 import { getBlockedPostCommerceState } from "@/modules/post/lib/post-commerce-policy"
@@ -8,6 +21,7 @@ import {
   createPostLikeCompatibilityFields,
   normalizeLikeCount,
 } from "@/shared/lib/like-interaction-result"
+
 export type MyPostListItem = PostRenderListItem & {
   commerce: PostCommerceState
 }
@@ -24,48 +38,9 @@ export type GetMyPostsResult = {
   nextCursor: string | null
 }
 
-type CreatorRow = {
-  id: string
-  user_id: string
-}
-
-type PostLikeRow = {
-  post_id: string
-  user_id: string
-}
-
-type PostRow = {
-  id: string
-  creator_id: string
-  content: string | null
-  status: "draft" | "scheduled" | "published" | "archived"
-  visibility: "public" | "subscribers" | "paid"
-  created_at: string
-  published_at: string | null
-}
-
-type MediaRow = {
-  id: string
-  post_id: string
-  storage_path: string
-  type: "image" | "video" | "audio" | "file" | null
-  mime_type: string | null
-  sort_order: number
-  status: "processing" | "ready" | "failed"
-}
-
-type PostBlockRow = {
-  id: string
-  post_id: string
-  type: "text" | "image" | "video" | "audio" | "file"
-  content: string | null
-  media_id: string | null
-  sort_order: number
-  created_at: string
-  editor_state: unknown | null
-}
-
-function resolveMediaType(row: MediaRow): "image" | "video" | "audio" | "file" {
+function resolveMediaType(
+  row: MyPostsMediaRow
+): "image" | "video" | "audio" | "file" {
   if (
     row.type === "image" ||
     row.type === "video" ||
@@ -85,7 +60,7 @@ function resolveMediaType(row: MediaRow): "image" | "video" | "audio" | "file" {
 }
 
 function getOwnedPostCommerceState(
-  visibility: PostRow["visibility"]
+  visibility: MyPostsPostRow["visibility"]
 ): PostCommerceState {
   const isPaidPost = visibility === "paid"
 
@@ -107,15 +82,7 @@ export async function getMyPosts(
 
   const limit = Math.max(1, Math.min(input.limit ?? 20, 100))
 
-  const { data: creator, error: creatorError } = await supabaseAdmin
-    .from("creators")
-    .select("id, user_id")
-    .or(`id.eq.${rawCreatorId},user_id.eq.${rawCreatorId}`)
-    .maybeSingle<CreatorRow>()
-
-  if (creatorError) {
-    throw creatorError
-  }
+  const creator = await findCreatorForMyPosts(rawCreatorId)
 
   if (!creator) {
     return {
@@ -124,29 +91,13 @@ export async function getMyPosts(
     }
   }
 
-  let postQuery = supabaseAdmin
-    .from("posts")
-    .select(
-      "id, creator_id, content, status, visibility, created_at, published_at"
-    )
-    .eq("creator_id", creator.id)
-    .is("deleted_at", null)
+  const posts = await findMyPostRowsByCreatorId({
+    creatorId: creator.id,
+    status: input.status,
+    limit,
+  })
 
-  if (input.status) {
-    postQuery = postQuery.eq("status", input.status)
-  }
-
-  postQuery = postQuery
-    .order("created_at", { ascending: false })
-    .limit(limit)
-
-  const { data: posts, error: postsError } = await postQuery
-
-  if (postsError) {
-    throw postsError
-  }
-
-  const postIds = (posts ?? []).map((post) => post.id)
+  const postIds = posts.map((post) => post.id)
 
   if (postIds.length === 0) {
     return {
@@ -155,16 +106,7 @@ export async function getMyPosts(
     }
   }
 
-
-  const { data: likeRows, error: likeRowsError } = await supabaseAdmin
-    .from("post_likes")
-    .select("post_id, user_id")
-    .in("post_id", postIds)
-    .returns<PostLikeRow[]>()
-
-  if (likeRowsError) {
-    throw likeRowsError
-  }
+  const likeRows = await findPostLikeRowsByPostIds(postIds)
 
   const likeCountMap = new Map<string, number>()
 
@@ -181,32 +123,10 @@ export async function getMyPosts(
       .map((row) => row.post_id)
   )
 
+  const mediaRows = await findMyPostMediaRowsByPostIds(postIds)
+  const blockRows = await findPostBlocksByPostIds(postIds)
 
-
-  const { data: mediaRows, error: mediaError } = await supabaseAdmin
-    .from("media")
-    .select("id, post_id, storage_path, type, mime_type, sort_order, status")
-    .in("post_id", postIds)
-    .in("status", ["processing", "ready"])
-    .order("sort_order", { ascending: true })
-    .returns<MediaRow[]>()
-
-  if (mediaError) {
-    throw mediaError
-  }
-
-  const { data: blockRows, error: blockRowsError } = await supabaseAdmin
-    .from("post_blocks")
-    .select("id, post_id, type, content, media_id, sort_order, created_at, editor_state")
-    .in("post_id", postIds)
-    .order("sort_order", { ascending: true })
-    .returns<PostBlockRow[]>()
-
-  if (blockRowsError) {
-    throw blockRowsError
-  }
-
-  const mediaMap = new Map<string, MediaRow[]>()
+  const mediaMap = new Map<string, MyPostsMediaRow[]>()
 
   for (const media of mediaRows ?? []) {
     const current = mediaMap.get(media.post_id) ?? []
@@ -214,7 +134,7 @@ export async function getMyPosts(
     mediaMap.set(media.post_id, current)
   }
 
-  const blocksMap = new Map<string, PostBlockRow[]>()
+  const blocksMap = new Map<string, CreatorStudioPostBlockRow[]>()
 
   for (const block of blockRows ?? []) {
     const current = blocksMap.get(block.post_id) ?? []
@@ -223,7 +143,7 @@ export async function getMyPosts(
   }
 
   const items = await Promise.all(
-    (posts ?? []).map(async (post) => {
+    posts.map(async (post) => {
       const mediaRowsForPost = mediaMap.get(post.id) ?? []
 
       const media = await Promise.all(
@@ -237,9 +157,6 @@ export async function getMyPosts(
             isSubscribed: true,
             hasPurchased: true,
           })
-
-
-  
 
           return {
             id: item.id,
@@ -262,7 +179,7 @@ export async function getMyPosts(
         media: renderReadModel.media,
       })
 
-            const likeState = {
+      const likeState = {
         likesCount: normalizeLikeCount(likeCountMap.get(post.id)),
         viewerHasLiked: likedPostIdSet.has(post.id),
       }
@@ -279,7 +196,7 @@ export async function getMyPosts(
         isLocked: false,
         lockReason: "none" as const,
         commerce: getOwnedPostCommerceState(post.visibility),
-                ...likeState,
+        ...likeState,
         ...createPostLikeCompatibilityFields(likeState),
         createdAt: post.created_at,
         publishedAt: post.published_at,

@@ -1,5 +1,5 @@
-import { canViewPost } from "./can-view-post"
-import type { PostAccessLockReason, PostAccessResult } from "../types"
+import { resolvePostAccessPolicy } from "@/modules/post/policies/post-access-policy"
+import type { PostAccessResult } from "../types"
 
 type GetPostAccessInput = {
   viewerUserId: string | null
@@ -25,25 +25,11 @@ export async function getPostAccess({
   isSubscribedResult,
   hasPurchasedResult,
 }: GetPostAccessInput): Promise<PostAccessResult> {
-  const canView = canViewPost({
-    viewerUserId: viewerUserId ?? null,
+  return resolvePostAccessPolicy({
+    viewerUserId,
     creatorUserId: creator.userId,
     visibility: post.visibility,
     isSubscribed: isSubscribedResult,
     hasPurchased: hasPurchasedResult,
   })
-
-  const lockReason: PostAccessLockReason = canView
-    ? "none"
-    : post.visibility === "paid"
-      ? "purchase"
-      : post.visibility === "subscribers"
-        ? "subscription"
-        : "none"
-
-  return {
-    canView,
-    isLocked: !canView,
-    lockReason,
-  }
 }

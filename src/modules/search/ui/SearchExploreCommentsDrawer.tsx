@@ -5,7 +5,7 @@ import { XMarkIcon } from "@heroicons/react/24/outline"
 import {
   isCommentItem,
   type CommentItem,
-} from "@/modules/post/lib/comment-item"
+} from "@/modules/post/public/comment-item"
 
 type SearchExploreCommentsDrawerProps = {
   postId: string | null

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { createPaymentCheckout } from "@/modules/payment/server/create-payment-checkout"
-import { getPostById } from "@/modules/post/server/get-post-by-id"
+import { getPostById } from "@/modules/post/public/get-post"
 import { getCreatorById } from "@/modules/creator/server/get-creator-by-id"
 import { createClient } from "@/infrastructure/supabase/server"
 import type { PostPurchaseBlockingReason } from "@/modules/post/types"

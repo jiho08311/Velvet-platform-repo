@@ -1,15 +1,9 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { findSubscriptionWithCreatorById } from "@/modules/subscription/repositories/subscription-read-repository"
 import {
   buildSubscriptionIdentity,
   buildSubscriptionReadModel,
   toSubscriptionDisplayStatus,
 } from "@/modules/subscription/server/build-subscription-read-model"
-
-type SubscriptionStatus =
-  | "incomplete"
-  | "active"
-  | "canceled"
-  | "expired"
 
 type SubscriptionView = {
   id: string
@@ -28,58 +22,10 @@ type SubscriptionView = {
   }
 }
 
-type CreatorRow = {
-  id: string
-  username: string | null
-  display_name: string | null
-  avatar_url: string | null
-}
-
-type SubscriptionRow = {
-  id: string
-  user_id: string
-  creator_id: string
-  status: SubscriptionStatus
-  current_period_start: string | null
-  current_period_end: string | null
-  cancel_at_period_end?: boolean | null
-  canceled_at?: string | null
-  created_at: string
-  updated_at?: string
-  creator: CreatorRow | CreatorRow[] | null
-}
-
 export async function getSubscriptionById(
   subscriptionId: string
 ): Promise<SubscriptionView | null> {
-  const { data, error } = await supabaseAdmin
-    .from("subscriptions")
-    .select(
-      `
-      id,
-      user_id,
-      creator_id,
-      status,
-      current_period_start,
-      current_period_end,
-      cancel_at_period_end,
-      canceled_at,
-      created_at,
-      updated_at,
-      creator:creators(
-        id,
-        username,
-        display_name,
-        avatar_url
-      )
-    `
-    )
-    .eq("id", subscriptionId)
-    .maybeSingle<SubscriptionRow>()
-
-  if (error) {
-    throw error
-  }
+  const data = await findSubscriptionWithCreatorById(subscriptionId)
 
   if (!data) {
     return null

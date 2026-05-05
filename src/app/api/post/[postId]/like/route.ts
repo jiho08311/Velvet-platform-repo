@@ -1,38 +1,21 @@
 import { NextResponse } from "next/server"
 
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import { createNotification } from "@/modules/notification/server/create-notification"
 import { createInteractionNotificationInput } from "@/modules/notification/server/create-interaction-notification-input"
+import {
+  countPostLikes,
+  deletePostLike,
+  findCreatorUser,
+  findPostOwner,
+  insertPostLike,
+} from "@/modules/post/public/post-like"
 import { createLikeInteractionResult } from "@/shared/lib/like-interaction-result"
 
 type RouteContext = {
   params: Promise<{
     postId: string
   }>
-}
-
-type PostOwnerRow = {
-  id: string
-  creator_id: string
-}
-
-type CreatorRow = {
-  id: string
-  user_id: string
-}
-
-async function getPostLikesCount(postId: string) {
-  const { count, error } = await supabaseAdmin
-    .from("post_likes")
-    .select("*", { count: "exact", head: true })
-    .eq("post_id", postId)
-
-  if (error) {
-    throw error
-  }
-
-  return count
 }
 
 export async function POST(
@@ -56,46 +39,43 @@ export async function POST(
     return NextResponse.json({ error: "Post id is required" }, { status: 400 })
   }
 
-  const { error } = await supabaseAdmin
-    .from("post_likes")
-    .insert({
-      post_id: postId,
-      user_id: user.id,
+  try {
+    await insertPostLike({
+      postId,
+      userId: user.id,
     })
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to like post" },
+      { status: 500 }
+    )
   }
 
-  const { data: post } = await supabaseAdmin
-    .from("posts")
-    .select("id, creator_id")
-    .eq("id", postId)
-    .single<PostOwnerRow>()
+  try {
+    const post = await findPostOwner(postId)
 
-  if (post?.creator_id) {
-    const { data: creator } = await supabaseAdmin
-      .from("creators")
-      .select("id, user_id")
-      .eq("id", post.creator_id)
-      .single<CreatorRow>()
+    if (post?.creator_id) {
+      const creator = await findCreatorUser(post.creator_id)
 
-    if (creator?.user_id) {
-      const notificationInput = createInteractionNotificationInput({
-        type: "post_liked",
-        actorUserId: user.id,
-        recipientUserId: creator.user_id,
-        postId,
-        creatorId: post.creator_id,
-      })
+      if (creator?.user_id) {
+        const notificationInput = createInteractionNotificationInput({
+          type: "post_liked",
+          actorUserId: user.id,
+          recipientUserId: creator.user_id,
+          postId,
+          creatorId: post.creator_id,
+        })
 
-      if (notificationInput) {
-        await createNotification(notificationInput)
+        if (notificationInput) {
+          await createNotification(notificationInput)
+        }
       }
     }
+  } catch {
+    // Preserve like success even if notification lookup fails.
   }
 
-  const likesCount = await getPostLikesCount(postId)
+  const likesCount = await countPostLikes(postId)
 
   return NextResponse.json(
     createLikeInteractionResult({
@@ -128,17 +108,19 @@ export async function DELETE(
     return NextResponse.json({ error: "Post id is required" }, { status: 400 })
   }
 
-  const { error } = await supabaseAdmin
-    .from("post_likes")
-    .delete()
-    .eq("post_id", postId)
-    .eq("user_id", user.id)
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  try {
+    await deletePostLike({
+      postId,
+      userId: user.id,
+    })
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to unlike post" },
+      { status: 500 }
+    )
   }
 
-  const likesCount = await getPostLikesCount(postId)
+  const likesCount = await countPostLikes(postId)
 
   return NextResponse.json(
     createLikeInteractionResult({

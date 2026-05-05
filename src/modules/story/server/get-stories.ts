@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+import { createMediaSignedUrl } from "@/modules/media/public/create-media-signed-url"
 import { checkSubscription } from "@/modules/subscription/server/check-subscription"
 import { getStoryAccessState } from "../lib/get-story-access-state"
 import { getStorySurfaceEligibility } from "../lib/get-story-surface-eligibility"

@@ -1,4 +1,4 @@
-import { updatePostStatus } from "@/modules/post/server/update-post-status"
+import { updatePostStatus } from "@/modules/post/public/update-post-status"
 
 type VideoModerationPostOutcome =
   | "approved"

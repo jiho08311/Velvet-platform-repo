@@ -214,3 +214,5 @@ public boundary만 먼저 생성
 "직접 접근하지 말고, 요청하라"
 
 (DB, domain, storage 모두 동일)
+
+허락맡기 전까지 파일 변경하지마 

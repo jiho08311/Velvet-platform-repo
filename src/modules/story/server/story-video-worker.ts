@@ -2,8 +2,8 @@ import {
   claimStoryVideoJobForProcessing,
   completeStoryVideoJobFromProcessorResult,
   markStoryVideoJobFailed,
-} from "@/modules/media/server/story-video-job.service"
-import { processStoryVideoJob } from "@/modules/media/server/story-video-processor.server"
+} from "@/modules/media/public/story-video-worker-job"
+import { processStoryVideoJob } from "@/modules/media/public/process-story-video-job"
 
 const POLL_INTERVAL_MS = Number(process.env.STORY_VIDEO_WORKER_POLL_MS ?? 2000)
 

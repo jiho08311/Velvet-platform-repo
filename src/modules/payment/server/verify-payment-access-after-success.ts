@@ -1,7 +1,7 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { getCreatorById } from "@/modules/creator/server/get-creator-by-id"
-import { getPostById } from "@/modules/post/server/get-post-by-id"
-import { getViewerSubscription } from "@/modules/subscription/server/get-viewer-subscription"
+import { getPostById } from "@/modules/post/public/get-post"
+import { getViewerSubscription } from "@/modules/subscription/public/get-viewer-subscription"
 import type { PaymentAccessVerification } from "@/modules/payment/types"
 
 type PaymentRow = {

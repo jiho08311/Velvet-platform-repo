@@ -1,4 +1,7 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin";
+import {
+  findCreatorForPostCreate,
+  insertPostRow,
+} from "../repositories/post-repository";
 import type {
   CreatePostPersistedRowInput,
   Post,
@@ -40,19 +43,11 @@ export async function createPost({
     throw new Error("Invalid post visibility");
   }
 
-  const { data: creator, error: creatorError } = await supabaseAdmin
-    .from("creators")
-    .select("id")
-    .eq("id", creatorId)
-    .maybeSingle<CreatorRow>();
+const creator = await findCreatorForPostCreate(creatorId);
 
-  if (creatorError) {
-    throw creatorError;
-  }
-
-  if (!creator) {
-    throw new Error("Only creators can create posts");
-  }
+if (!creator) {
+  throw new Error("Only creators can create posts");
+}
 
   const resolvedPrice = visibility === "paid" ? price : 0;
 
@@ -68,28 +63,17 @@ export async function createPost({
       : status === "published"
         ? now
         : null;
-
-  const { data, error } = await supabaseAdmin
-    .from("posts")
-    .insert({
-      creator_id: creatorId,
-      title,
-      content,
-      status,
-      visibility,
-      price: resolvedPrice,
-      published_at: resolvedPublishedAt,
-      created_at: now,
-      updated_at: now,
-    })
-    .select(
-      "id, creator_id, title, content, status, visibility, price, published_at, created_at, updated_at"
-    )
-    .single<PostRow>();
-
-  if (error) {
-    throw error;
-  }
+const data = await insertPostRow({
+  creatorId,
+  title,
+  content,
+  status,
+  visibility,
+  price: resolvedPrice,
+  publishedAt: resolvedPublishedAt,
+  createdAt: now,
+  updatedAt: now,
+});
 
   return {
     id: data.id,

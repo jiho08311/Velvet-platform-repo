@@ -1,0 +1,1 @@
+export { getViewerSubscription } from "@/modules/subscription/server/get-viewer-subscription"

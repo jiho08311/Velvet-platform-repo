@@ -1,30 +1,24 @@
 import { NextResponse } from "next/server"
-import { canDeleteComment } from "@/modules/post/lib/comment-permissions"
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { canDeleteComment } from "@/modules/post/public/comment-permissions"
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
 import {
   createCommentItem,
   type CommentRow,
   type CommentItemProfile,
-} from "@/modules/post/lib/comment-item"
+} from "@/modules/post/public/comment-item"
 import {
   incrementLikeCountMap,
   readLikeCountFromMap,
 } from "@/shared/lib/like-interaction-result"
-
+import { findCommentLikesByCommentIds } from "@/modules/post/public/comment-data"
+import {
+  findCommentAuthorProfiles,
+  findCommentsByPostId,
+} from "@/modules/post/public/comment-data"
 type RouteContext = {
   params: Promise<{
     postId: string
   }>
-}
-
-type ProfileRow = {
-  id: string
-} & CommentItemProfile
-
-type CommentLikeRow = {
-  comment_id: string
-  user_id: string
 }
 
 
@@ -47,35 +41,29 @@ export async function GET(
 
   const currentUserId = user?.id ?? null
 
-  const { data: comments, error: commentsError } = await supabaseAdmin
-    .from("comments")
-    .select("id, post_id, user_id, content, created_at")
-    .eq("post_id", postId)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false })
-    .returns<CommentRow[]>()
+let comments: CommentRow[]
 
-  if (commentsError) {
-    return NextResponse.json(
-      { error: commentsError.message },
-      { status: 500 }
-    )
-  }
+try {
+  comments = await findCommentsByPostId(postId)
+} catch (error) {
+  return NextResponse.json(
+    { error: error instanceof Error ? error.message : "Failed to load comments" },
+    { status: 500 }
+  )
+}
 
   const commentIds = (comments ?? []).map((comment) => comment.id)
 
-  const { data: likeRows, error: likeRowsError } = await supabaseAdmin
-    .from("comment_likes")
-    .select("comment_id, user_id")
-    .in("comment_id", commentIds.length > 0 ? commentIds : ["00000000-0000-0000-0000-000000000000"])
-    .returns<CommentLikeRow[]>()
+let likeRows = []
 
-  if (likeRowsError) {
-    return NextResponse.json(
-      { error: likeRowsError.message },
-      { status: 500 }
-    )
-  }
+try {
+  likeRows = await findCommentLikesByCommentIds(commentIds)
+} catch (error) {
+  return NextResponse.json(
+    { error: error instanceof Error ? error.message : "Failed to load comment likes" },
+    { status: 500 }
+  )
+}
 
   const likeCountMap = new Map<string, number>()
 
@@ -95,24 +83,17 @@ export async function GET(
     new Set((comments ?? []).map((comment) => comment.user_id).filter(Boolean))
   )
 
-  let profileMap = new Map<string, ProfileRow>()
+let profileMap = new Map<string, CommentItemProfile & { id: string }>()
 
-  if (userIds.length > 0) {
-    const { data: profiles, error: profilesError } = await supabaseAdmin
-      .from("profiles")
-      .select("id, username, avatar_url")
-      .in("id", userIds)
-      .returns<ProfileRow[]>()
-
-    if (profilesError) {
-      return NextResponse.json(
-        { error: profilesError.message },
-        { status: 500 }
-      )
-    }
-
-    profileMap = new Map((profiles ?? []).map((profile) => [profile.id, profile]))
-  }
+try {
+  const profiles = await findCommentAuthorProfiles(userIds)
+  profileMap = new Map(profiles.map((profile) => [profile.id, profile]))
+} catch (error) {
+  return NextResponse.json(
+    { error: error instanceof Error ? error.message : "Failed to load profiles" },
+    { status: 500 }
+  )
+}
 
   const items = (comments ?? []).map((comment) => {
     const profile = profileMap.get(comment.user_id)

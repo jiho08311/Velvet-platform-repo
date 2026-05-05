@@ -4,8 +4,8 @@ import { NextResponse } from "next/server"
 import {
   buildStoryVideoJobPollResponse,
   pickStoryVideoJobPollRow,
-} from "@/modules/media/lib/story-video-job-contract"
-import { enqueueStoryVideoJob } from "@/modules/media/server/story-video-job.service"
+} from "@/modules/media/public/story-video-job-contract"
+import { enqueueStoryVideoJob } from "@/modules/media/public/story-video-job"
 import {
   parseStoryVideoJobFormData,
   StoryPayloadValidationError,

@@ -1,18 +1,18 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+import { createMediaSignedUrl } from "@/modules/media/public/create-media-signed-url"
 import { isModerationApprovedForPublicConsumption } from "@/modules/moderation/lib/moderation-outcome-policy"
 import { buildPublicCreatorProfileVisibilityInput } from "@/modules/creator/lib/build-public-creator-profile-visibility-input"
-import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
+import { buildPostRenderInput } from "@/modules/post/public/post-render-input"
 import {
   filterPublicDiscoveryPostCandidates,
   type PublicDiscoveryPostEligibilityInput,
-} from "@/modules/post/lib/public-discovery-inclusion"
-import { buildPostRenderReadModel } from "@/modules/post/server/post-render-read-model"
+} from "@/modules/post/public/public-discovery-inclusion"
+import { buildPostRenderReadModel } from "@/modules/post/public/post-render-read-model"
 import { checkSubscription } from "@/modules/subscription/server/check-subscription"
 import { isPublicCreatorProfileVisible } from "@/modules/creator/lib/is-public-creator-profile-visible"
-import { getPostLockedPreviewPresentation } from "@/modules/post/lib/get-post-locked-preview-presentation"
+import { getPostLockedPreviewPresentation } from "@/modules/post/public/get-post-locked-preview-presentation"
 import type { PostBlockEditorState } from "@/modules/post/types"
-import { getPostAccess } from "@/modules/post/server/get-post-access"
+import { getPostAccess } from "@/modules/post/public/get-post-access"
 import {
   buildPostLikeCountMap,
   readPostLikeCount,
@@ -20,6 +20,13 @@ import {
 import { createPostLikeCompatibilityFields } from "@/shared/lib/like-interaction-result"
 
 import { buildCreatorIdentity } from "./build-creator-identity"
+
+import {
+  getReadyPostMediaRowsByPostIds,
+} from "@/modules/media/public/get-ready-post-media"
+import type { ReadyPostMediaRow } from "@/modules/media/public/ready-post-media-contract"
+
+
 
 type GetCreatorPageInput = {
   username: string
@@ -60,15 +67,7 @@ type PostRow = {
   deleted_at: string | null
 }
 
-type MediaRow = {
-  id: string
-  post_id: string
-  storage_path: string
-  type: "image" | "video" | "audio" | "file" | null
-  mime_type: string | null
-  status: "ready"
-  sort_order: number
-}
+type MediaRow = ReadyPostMediaRow
 
 type PostBlockRow = {
   id: string
@@ -244,18 +243,7 @@ export async function getCreatorPage({
     .filter((post) => post.status === "published")
     .map((post) => post.id)
 
-  const { data: mediaRows } = await supabaseAdmin
-    .from("media")
-    .select("id, post_id, storage_path, type, mime_type, status, sort_order")
-    .in(
-      "post_id",
-      publishedPostIds.length > 0
-        ? publishedPostIds
-        : ["00000000-0000-0000-0000-000000000000"]
-    )
-    .eq("status", "ready")
-    .order("sort_order", { ascending: true })
-    .returns<MediaRow[]>()
+  const mediaRows = await getReadyPostMediaRowsByPostIds(publishedPostIds)
 
   const { data: blockRows, error: blockRowsError } = await supabaseAdmin
     .from("post_blocks")

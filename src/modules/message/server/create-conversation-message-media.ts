@@ -1,4 +1,4 @@
-import { createMediaSignedUrl } from "@/modules/media/server/create-media-signed-url"
+import { createMediaSignedUrl } from "@/modules/media/public/create-media-signed-url"
 import type { ConversationMessageMedia } from "@/modules/message/types"
 
 export type MessageMediaRow = {

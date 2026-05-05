@@ -3,7 +3,7 @@ import { requireUser } from "@/modules/auth/server/require-user"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 import { getProfileByUserId } from "@/modules/profile/server/get-profile-by-user-id"
 import { createPostWithMediaWorkflow } from "@/workflows/create-post-with-media-workflow"
-import { assertValidPpvPrice } from "@/modules/post/lib/ppv-price"
+import { assertValidPpvPrice } from "@/modules/post/public/ppv-price"
 import type { CreatePostUploadedMediaInput } from "@/modules/post/types"
 
 type PostStatus = "draft" | "published" | "archived"

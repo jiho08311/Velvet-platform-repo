@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createPpvPostPayment } from "@/modules/payment/server/create-ppv-post-payment";
-import { getPostById } from "@/modules/post/server/get-post-by-id";
+import { getPostById } from "@/modules/post/public/get-post";
 import { getCreatorById } from "@/modules/creator/server/get-creator-by-id";
 import { createClient } from "@/infrastructure/supabase/server";
 

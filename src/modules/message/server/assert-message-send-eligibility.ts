@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
-import { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"
+import { getActiveSubscription } from "@/modules/subscription/public/get-active-subscription"
 
 type CreatorRow = {
   id: string

@@ -1,5 +1,5 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { resolveSubscriptionState } from "@/modules/subscription/lib/resolve-subscription-state"
+import { listCreatorSubscriberRows } from "@/modules/subscription/repositories/subscription-read-repository"
 
 export type CreatorSubscriber = {
   subscriptionId: string
@@ -22,21 +22,6 @@ export type GetCreatorSubscribersResult = {
   nextCursor: string | null
 }
 
-type SubscriptionRow = {
-  id: string
-  user_id: string
-  created_at: string
-  status: "incomplete" | "active" | "canceled" | "expired"
-  current_period_end: string | null
-  cancel_at_period_end: boolean | null
-  canceled_at: string | null
-  profiles: {
-    username: string | null
-    display_name: string | null
-    avatar_url: string | null
-  } | null
-}
-
 export async function getCreatorSubscribers(
   input: GetCreatorSubscribersInput
 ): Promise<GetCreatorSubscribersResult> {
@@ -48,39 +33,13 @@ export async function getCreatorSubscribers(
 
   const limit = Math.max(1, Math.min(input.limit ?? 20, 100))
 
-let query = supabaseAdmin
-  .from("subscriptions")
-  .select(
-    `
-    id,
-    user_id,
-    created_at,
-    status,
-    current_period_end,
-    cancel_at_period_end,
-    canceled_at,
-    profiles:user_id (
-      username,
-      display_name,
-      avatar_url
-    )
-  `
-  )
-  .eq("creator_id", creatorId)
-  .order("created_at", { ascending: false })
-  .limit(limit + 20)
+  const data = await listCreatorSubscriberRows({
+    creatorId,
+    limit,
+    cursor: input.cursor,
+  })
 
-if (input.cursor) {
-  query = query.lt("created_at", input.cursor)
-}
-
-const { data, error } = await query.returns<SubscriptionRow[]>()
-
-  if (error) {
-    throw error
-  }
-
-  const rows = (data ?? []).filter((row) => {
+  const rows = data.filter((row) => {
     const resolved = resolveSubscriptionState({
       status: row.status,
       currentPeriodEndAt: row.current_period_end,
@@ -102,10 +61,10 @@ const { data, error } = await query.returns<SubscriptionRow[]>()
     subscribedAt: row.created_at,
   }))
 
-const nextCursor =
-  rows.length > limit && sliced.length > 0
-    ? sliced[sliced.length - 1].created_at
-    : null
+  const nextCursor =
+    rows.length > limit && sliced.length > 0
+      ? sliced[sliced.length - 1].created_at
+      : null
 
   return {
     items,

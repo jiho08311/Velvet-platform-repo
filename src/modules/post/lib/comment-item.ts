@@ -2,6 +2,9 @@ import {
   createCommentLikeCompatibilityFields,
   readViewerHasLikedFromCompatibility,
 } from "@/shared/lib/like-interaction-result"
+import type { CommentRow } from "@/modules/post/types"
+
+export type { CommentRow } from "@/modules/post/types"
 
 export type CommentItemProfile = {
   username: string | null
@@ -60,13 +63,7 @@ export type CommentItemViewModel = {
 export type CommentItem = CommentItemViewModel
 
 
-export type CommentRow = {
-  id: string
-  post_id: string
-  user_id: string
-  content: string
-  created_at: string
-}
+
 
 export function createCommentItem(input: {
   comment: CommentRow

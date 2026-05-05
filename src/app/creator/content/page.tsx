@@ -1,6 +1,6 @@
 import { getSession } from "@/modules/auth/server/get-session"
 import { CreatorPostList } from "@/modules/post/ui/CreatorPostList"
-import { getMyPosts } from "@/modules/post/server/get-my-posts"
+import { getMyPosts } from "@/modules/post/public/get-my-posts"
 import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
 
 export default async function CreatorContentPage() {

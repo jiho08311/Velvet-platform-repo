@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 
-import { createSupabaseBrowserClient } from "@/infrastructure/supabase/client"
 import { CreateStoryForm } from "./CreateStoryForm"
 import {
   buildStoryCreatePayloadFromDraft,
@@ -13,7 +12,8 @@ import {
 import {
   queueStoryVideoJob,
   waitForStoryVideoJob,
-} from "@/modules/media/lib/queue-story-video-job"
+} from "@/modules/media/public/queue-story-video-job"
+import { uploadStoryMediaFile } from "@/modules/media/public/upload-story-media-file"
 import type { StoryEditorDraft } from "../types"
 
 type CreateStoryComposerProps = {
@@ -27,42 +27,6 @@ type StorySubmitPhase =
   | "publishing"
 
 type StoryComposerStep = "editor" | "publish"
-
-const MEDIA_BUCKET =
-  process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "media"
-
-function getFileExtension(fileName: string): string {
-  const parts = fileName.split(".")
-  return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : ""
-}
-
-function buildClientUploadPath(file: File) {
-  const now = Date.now()
-  const random = Math.random().toString(36).slice(2, 10)
-  const extension = getFileExtension(file.name)
-  const safeExtension = extension ? `.${extension}` : ""
-
-  return `story/${now}-${random}${safeExtension}`
-}
-
-async function uploadStoryFile(file: File): Promise<string> {
-  const supabase = createSupabaseBrowserClient()
-  const path = buildClientUploadPath(file)
-
-  const { error } = await supabase.storage
-    .from(MEDIA_BUCKET)
-    .upload(path, file, {
-      cacheControl: "3600",
-      contentType: file.type || undefined,
-      upsert: false,
-    })
-
-  if (error) {
-    throw new Error(error.message)
-  }
-
-  return path
-}
 
 function getPhaseLabel(phase: StorySubmitPhase) {
   if (phase === "uploading") {
@@ -189,7 +153,7 @@ export function CreateStoryComposer({
       }
 
       setPhase("uploading")
-      const storagePath = await uploadStoryFile(file)
+      const storagePath = await uploadStoryMediaFile({ file })
 
       setPhase("publishing")
       const res = await fetch("/api/story/create", {
