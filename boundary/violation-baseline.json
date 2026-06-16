@@ -1,0 +1,1542 @@
+{
+  "generatedFrom": "audit-cross-module-runtime-dependencies",
+  "generatedAt": "2026-06-16T12:57:01.953Z",
+  "allowedViolations": [
+    {
+      "fromFile": "src/app/api/account/onboarding/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/account/onboarding/route.ts",
+      "toImport": "@/modules/identity/runtime/execute-profile-onboarding-completion-runtime",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/account/reactivate/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/account/reactivate/route.ts",
+      "toImport": "@/modules/identity/runtime/execute-account-reactivation-runtime",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/admin/ban-user/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/admin/banned-users/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/admin/payout/requests/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/admin/unban-user/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/analytics/admin-dashboard/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/analytics/admin-dashboard/route.ts",
+      "toImport": "@/modules/analytics/runtime/get-platform-analytics",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/analytics/creator-dashboard/route.ts",
+      "toImport": "@/modules/analytics/runtime/get-creator-analytics",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/analytics/creator-dashboard/route.ts",
+      "toImport": "@/modules/auth/runtime/require-active-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/analytics/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/analytics/route.ts",
+      "toImport": "@/modules/analytics/runtime/get-platform-analytics",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/auth/me/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/auth/pass/callback/route.ts",
+      "toImport": "@/modules/auth/runtime/complete-pass-verification",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/auth/pass/callback/route.ts",
+      "toImport": "@/modules/auth/runtime/assert-pass-verified",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/auth/pass/start/route.ts",
+      "toImport": "@/modules/auth/runtime/assert-pass-verified",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/auth/sign-up/route.ts",
+      "toImport": "@/modules/auth/runtime/sign-up-with-adult-check",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/auth/start/route.ts",
+      "toImport": "@/modules/auth/runtime/assert-pass-verified",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/comment/[commentId]/like/route.ts",
+      "toImport": "@/modules/post/runtime/execute-post-interaction-runtime",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/conversations/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/creator/analytics/route.ts",
+      "toImport": "@/modules/analytics/runtime/get-creator-analytics",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/creator/analytics/route.ts",
+      "toImport": "@/modules/auth/runtime/require-active-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/creator/me/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/feed/route.ts",
+      "toImport": "@/modules/auth/runtime/get-session",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/feed/route.ts",
+      "toImport": "@/modules/feed/runtime/get-home-feed",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/jobs/publish-posts/route.ts",
+      "toImport": "@/modules/post/runtime/execute-scheduled-post-publication-runtime",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/media/upload/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/message/conversation-by-message/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/messages/[conversationId]/send/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/messages/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/notifications/[notificationId]/delete/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/notifications/[notificationId]/read/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/notifications/badge/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/notifications/read/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/notifications/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/payment/checkout/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/payment/confirm/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/payment/confirm-message/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/payment/mock/confirm/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/payment/mock/confirm-post/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/payout/request/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/payout/request/route.ts",
+      "toImport": "@/modules/payout/runtime/revalidate-payout-surfaces",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/payout/requests/[payoutRequestId]/approve/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/payout/requests/[payoutRequestId]/reject/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/payout/requests/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/post/[postId]/comment/route.ts",
+      "toImport": "@/modules/post/runtime/execute-post-interaction-runtime",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/post/[postId]/delete/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/post/[postId]/like/route.ts",
+      "toImport": "@/modules/post/runtime/execute-post-interaction-runtime",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/post/create/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/post/create/route.ts",
+      "toImport": "@/modules/profile/runtime/get-profile-by-user-id",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/post/feed/route.ts",
+      "toImport": "@/modules/auth/runtime/get-current-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/reports/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/settings/deactivate/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/settings/deactivate/route.ts",
+      "toImport": "@/modules/user/runtime/deactivate-account",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/settings/delete-account/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/settings/delete-account/route.ts",
+      "toImport": "@/modules/identity/runtime/execute-account-deletion-schedule-runtime",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/story/create/route.ts",
+      "toImport": "@/modules/auth/runtime/get-current-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/story/create/route.ts",
+      "toImport": "@/modules/story/runtime/story-create-payload",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/story/create/route.ts",
+      "toImport": "@/modules/story/runtime/create-story",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/story/music/search/route.ts",
+      "toImport": "@/modules/story/runtime/search-story-music",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/story/video-job/route.ts",
+      "toImport": "@/modules/story/runtime/story-create-payload",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/story-read/route.ts",
+      "toImport": "@/modules/story/runtime/story-read-state",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/subscription/cancel/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/subscription/check/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/api/subscription/unsubscribe/route.ts",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/become-creator/actions.ts",
+      "toImport": "@/modules/auth/runtime/require-onboarding-ready-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/become-creator/actions.ts",
+      "toImport": "@/modules/creator/runtime/create-creator-profile",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/become-creator/page.tsx",
+      "toImport": "@/modules/auth/runtime/require-onboarding-ready-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/creator/[username]/page.tsx",
+      "toImport": "@/modules/auth/runtime/get-current-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/creator/[username]/page.tsx",
+      "toImport": "@/modules/analytics/runtime/get-creator-analytics",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/creator/analytics/page.tsx",
+      "toImport": "@/modules/analytics/runtime/get-creator-analytics",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/creator/content/new/page.tsx",
+      "toImport": "@/modules/auth/runtime/get-session",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/creator/content/new/page.tsx",
+      "toImport": "@/modules/user/runtime/get-user-by-id",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/creator/content/page.tsx",
+      "toImport": "@/modules/auth/runtime/get-session",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/creator/dashboard/page.tsx",
+      "toImport": "@/modules/analytics/runtime/get-creator-analytics",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/creator/earnings/page.tsx",
+      "toImport": "@/modules/auth/runtime/get-session",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/creator/earnings/page.tsx",
+      "toImport": "@/modules/analytics/runtime/get-creator-analytics",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/creator/media/page.tsx",
+      "toImport": "@/modules/auth/runtime/get-session",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/creator/payout/page.tsx",
+      "toImport": "@/modules/payout/runtime/revalidate-payout-surfaces",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/creator/settings/page.tsx",
+      "toImport": "@/modules/auth/runtime/get-session",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/dashboard/page.tsx",
+      "toImport": "@/modules/analytics/runtime/get-dashboard-main-read-model",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/dashboard/page.tsx",
+      "toImport": "@/modules/creator/runtime/update-creator-settings",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/dashboard/page.tsx",
+      "toImport": "@/modules/payout/runtime/revalidate-payout-surfaces",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/dashboard/payments/page.tsx",
+      "toImport": "@/modules/analytics/runtime/get-dashboard-payments-read-model",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/dashboard/subscribers/page.tsx",
+      "toImport": "@/modules/analytics/runtime/get-dashboard-subscribers-read-model",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/feed/page.tsx",
+      "toImport": "@/modules/auth/runtime/assert-pass-verified",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/feed/page.tsx",
+      "toImport": "@/modules/auth/runtime/get-session",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/feed/page.tsx",
+      "toImport": "@/modules/auth/runtime/require-active-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/feed/page.tsx",
+      "toImport": "@/modules/feed/runtime/get-home-feed",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/feed/page.tsx",
+      "toImport": "@/modules/feed/runtime/get-public-upcoming-posts",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/feed/page.tsx",
+      "toImport": "@/modules/search/runtime/get-recommended-creators",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/feed/page.tsx",
+      "toImport": "@/modules/story/runtime/get-stories",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/feed/page.tsx",
+      "toImport": "@/modules/identity/runtime/read-onboarding-readiness-runtime",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/feed/page.tsx",
+      "toImport": "@/modules/story/runtime/story-read-state",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/messages/[conversationId]/page.tsx",
+      "toImport": "@/modules/identity/runtime/read-onboarding-readiness-runtime",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/messages/[conversationId]/page.tsx",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/messages/[conversationId]/page.tsx",
+      "toImport": "@/modules/auth/runtime/assert-pass-verified",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/messages/new/page.tsx",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/messages/page.tsx",
+      "toImport": "@/modules/auth/runtime/assert-pass-verified",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/messages/page.tsx",
+      "toImport": "@/modules/auth/runtime/require-active-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/messages/page.tsx",
+      "toImport": "@/modules/identity/runtime/read-onboarding-readiness-runtime",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/onboarding/page.tsx",
+      "toImport": "@/modules/auth/runtime/read-onboarding-readiness",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/page.tsx",
+      "toImport": "@/modules/auth/runtime/assert-pass-verified",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/page.tsx",
+      "toImport": "@/modules/identity/runtime/read-account-lifecycle-state-runtime",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/page.tsx",
+      "toImport": "@/modules/identity/runtime/read-adult-verification-status-runtime",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/page.tsx",
+      "toImport": "@/modules/identity/runtime/read-onboarding-readiness-runtime",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/post/[postId]/page.tsx",
+      "toImport": "@/modules/auth/runtime/get-current-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/post/new/page.tsx",
+      "toImport": "@/modules/auth/runtime/assert-pass-verified",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/profile/[username]/page.tsx",
+      "toImport": "@/modules/auth/runtime/get-current-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/profile/edit/page.tsx",
+      "toImport": "@/modules/auth/runtime/get-session",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/profile/edit/page.tsx",
+      "toImport": "@/modules/profile/runtime/update-profile",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/profile/page.tsx",
+      "toImport": "@/modules/auth/runtime/get-session",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/profile/page.tsx",
+      "toImport": "@/modules/profile/runtime/get-profile-by-user-id",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/profile/page.tsx",
+      "toImport": "@/modules/user/runtime/get-user-by-id",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/profile/page.tsx",
+      "toImport": "@/modules/analytics/runtime/get-creator-analytics",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/reactivate-account/page.tsx",
+      "toImport": "@/modules/auth/runtime/require-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/reactivate-account/page.tsx",
+      "toImport": "@/modules/identity/runtime/read-account-lifecycle-state-runtime",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/reactivate-account/page.tsx",
+      "toImport": "@/modules/identity/repositories/legacy-profile-bridge-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/search/page.tsx",
+      "toImport": "@/modules/auth/runtime/require-active-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/search/page.tsx",
+      "toImport": "@/modules/auth/runtime/assert-pass-verified",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/search/page.tsx",
+      "toImport": "@/modules/search/runtime/search-creators",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/search/page.tsx",
+      "toImport": "@/modules/search/runtime/get-explore-posts",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/search/page.tsx",
+      "toImport": "@/modules/search/runtime/get-explore-creators",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/settings/page.tsx",
+      "toImport": "@/modules/auth/runtime/require-active-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/sign-in/page.tsx",
+      "toImport": "@/modules/auth/runtime/get-current-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/sign-in/page.tsx",
+      "toImport": "@/modules/identity/runtime/read-account-lifecycle-state-runtime",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/sign-in/page.tsx",
+      "toImport": "@/modules/identity/repositories/legacy-profile-bridge-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/story/new/page.tsx",
+      "toImport": "@/modules/auth/runtime/assert-pass-verified",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/subscriptions/page.tsx",
+      "toImport": "@/modules/auth/runtime/get-session",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/verifiy-pass-required/page.tsx",
+      "toImport": "@/modules/auth/runtime/assert-pass-verified",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/verify-pass/page.tsx",
+      "toImport": "@/modules/auth/runtime/assert-pass-verified",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/verify-pass/page.tsx",
+      "toImport": "@/modules/identity/runtime/read-adult-verification-status-runtime",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/auth/runtime/read-active-user-state.ts",
+      "toImport": "@/modules/identity/repositories/identity-read-model-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/auth/runtime/read-onboarding-readiness.ts",
+      "toImport": "@/modules/identity/repositories/identity-read-model-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/commerce/internal/adapters/commerce-analytics-adapter.ts",
+      "toImport": "@/modules/subscription/services/subscription-state-service",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/commerce/internal/adapters/payment-adapter.ts",
+      "toImport": "@/modules/payment/repositories/payment-read-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/commerce/internal/adapters/payout-adapter.ts",
+      "toImport": "@/modules/payout/repositories/payout-read-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/commerce/internal/adapters/subscription-adapter.ts",
+      "toImport": "@/modules/subscription/repositories/subscription-read-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/creator/runtime/get-creator-page-runtime.ts",
+      "toImport": "@/modules/post/repositories/post-feed-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/creator/runtime/get-creator-page-runtime.ts",
+      "toImport": "@/modules/post/repositories/post-feed-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/creator/runtime/update-creator-settings.ts",
+      "toImport": "@/modules/identity/repositories/legacy-creator-bridge-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/feed/runtime/get-home-feed-runtime.ts",
+      "toImport": "@/modules/post/repositories/feed-projection-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/identity/public/read-profile-identity.ts",
+      "toImport": "@/modules/profile/repositories/profile-read-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/post/repositories/post-media-repository.ts",
+      "toImport": "@/modules/media/repositories/post-media-binding-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/post/repositories/post-media-repository.ts",
+      "toImport": "@/modules/media/repositories/media-asset-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/profile/runtime/is-username-taken.ts",
+      "toImport": "@/modules/identity/repositories/legacy-profile-bridge-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/search/runtime/get-explore-posts-runtime.ts",
+      "toImport": "@/modules/post/repositories/feed-projection-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/search/runtime/get-explore-posts-runtime.ts",
+      "toImport": "@/modules/post/repositories/post-feed-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/search/runtime/search-creators-runtime.ts",
+      "toImport": "@/modules/creator/repositories/creator-read-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/search/runtime/search-creators-runtime.ts",
+      "toImport": "@/modules/profile/repositories/profile-read-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/story/runtime/create-story.ts",
+      "toImport": "@/modules/media/repositories/story-media-binding-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/story/runtime/update-story-action.ts",
+      "toImport": "@/modules/media/repositories/story-media-binding-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/modules/user/runtime/deactivate-account.ts",
+      "toImport": "@/modules/identity/repositories/legacy-creator-bridge-repository",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/workflows/create-user-signup-workflow.ts",
+      "toImport": "@/modules/auth/runtime/sign-up",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/workflows/create-user-signup-workflow.ts",
+      "toImport": "@/modules/user/runtime/create-user",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/workflows/create-user-signup-workflow.ts",
+      "toImport": "@/modules/profile/runtime/create-profile",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/workflows/subscription/handle-subscription-created.ts",
+      "toImport": "@/modules/subscription/runtime/upsert-subscription",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/workflows/subscription/handle-subscription-created.ts",
+      "toImport": "@/modules/subscription/services/subscription-state-service",
+      "severity": "HIGH",
+      "reason": "cross-module internal implementation dependency"
+    },
+    {
+      "fromFile": "src/app/_components/AppHeader.tsx",
+      "toImport": "@/modules/auth/ui/SignOutButton",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/admin/admins/page.tsx",
+      "toImport": "@/modules/admin/ui/AdminEmptyState",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/admin/admins/page.tsx",
+      "toImport": "@/modules/admin/ui/AdminSectionCard",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/admin/admins/page.tsx",
+      "toImport": "@/modules/admin/ui/AdminStatCard",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/admin/analytics/page.tsx",
+      "toImport": "@/modules/admin/ui/AdminStatCard",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/admin/moderation/page.tsx",
+      "toImport": "@/modules/admin/ui/AdminBadge",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/admin/payout-requests/page.tsx",
+      "toImport": "@/modules/admin/ui/PayoutRequestAdminList",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/admin/reports/page.tsx",
+      "toImport": "@/modules/admin/ui/AdminReportTable",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/admin/users/page.tsx",
+      "toImport": "@/modules/admin/policies/admin-user-operational-policy",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/creator/[username]/page.tsx",
+      "toImport": "@/modules/creator/ui/SubscribeButton",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/creator/[username]/page.tsx",
+      "toImport": "@/modules/post/ui/CreatePostComposer",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/creator/[username]/page.tsx",
+      "toImport": "@/modules/report/ui/ReportButton",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/creator/[username]/page.tsx",
+      "toImport": "@/modules/subscription/ui/SubscriptionStatusCard",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/creator/[username]/page.tsx",
+      "toImport": "@/modules/creator/ui/CreatorContentTabs",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/creator/[username]/page.tsx",
+      "toImport": "@/modules/creator/ui/creator-surface-policy",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/creator/analytics/page.tsx",
+      "toImport": "@/modules/analytics/policies/creator-analytics-summary-metrics",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/creator/analytics/page.tsx",
+      "toImport": "@/modules/analytics/policies/creator-analytics-period",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/creator/analytics/page.tsx",
+      "toImport": "@/modules/analytics/ui/DashboardStats",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/creator/content/page.tsx",
+      "toImport": "@/modules/post/ui/CreatorPostList",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/creator/dashboard/page.tsx",
+      "toImport": "@/modules/analytics/ui/DashboardStats",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/creator/dashboard/page.tsx",
+      "toImport": "@/modules/analytics/policies/creator-analytics-summary-metrics",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/creator/earnings/page.tsx",
+      "toImport": "@/modules/analytics/policies/creator-analytics-summary-metrics",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/creator/payout/page.tsx",
+      "toImport": "@/modules/payout/ui/PayoutHistoryList",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/creator/studio/posts/[postId]/edit/page.tsx",
+      "toImport": "@/modules/post/ui/EditPostComposer",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/dashboard/page.tsx",
+      "toImport": "@/modules/subscription/policies/subscription-price",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/dashboard/page.tsx",
+      "toImport": "@/modules/payout/ui/PayoutEmptyState",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/dashboard/page.tsx",
+      "toImport": "@/modules/payout/ui/PayoutHistoryList",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/feed/loading.tsx",
+      "toImport": "@/modules/feed/ui/FeedListSkeleton",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/feed/loading.tsx",
+      "toImport": "@/modules/feed/ui/FeedComposer",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/feed/page.tsx",
+      "toImport": "@/modules/creator/mappers/creator-identity",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/feed/page.tsx",
+      "toImport": "@/modules/feed/ui/FeedComposer",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/feed/page.tsx",
+      "toImport": "@/modules/feed/ui/FeedInfiniteList",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/feed/page.tsx",
+      "toImport": "@/modules/story/ui/StoryList",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/forgot-password/page.tsx",
+      "toImport": "@/modules/auth/ui/ForgotPasswordForm",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/messages/[conversationId]/page.tsx",
+      "toImport": "@/modules/message/ui/MessageThreadSection",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/messages/page.tsx",
+      "toImport": "@/modules/message/ui/ConversationList",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/notifications/[id]/page.tsx",
+      "toImport": "@/modules/notification/ui/NotificationListSurface",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/notifications/page.tsx",
+      "toImport": "@/modules/notification/ui/NotificationListSurface",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/onboarding/page.tsx",
+      "toImport": "@/modules/profile/ui/OnboardingForm",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/payment/cancel/page.tsx",
+      "toImport": "@/modules/payment/ui/PaymentStateNotice",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/payment/fail/page.tsx",
+      "toImport": "@/modules/payment/ui/PaymentStateNotice",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/payment/success/page.tsx",
+      "toImport": "@/modules/payment/ui/payment-success-content",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/post/[postId]/edit/page.tsx",
+      "toImport": "@/modules/post/ui/EditPostComposer",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/post/[postId]/page.tsx",
+      "toImport": "@/modules/post/ui/PostCard",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/post/[postId]/page.tsx",
+      "toImport": "@/modules/post/ui/LockedPostCard",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/post/[postId]/page.tsx",
+      "toImport": "@/modules/creator/mappers/creator-identity",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/post/[postId]/page.tsx",
+      "toImport": "@/modules/creator/ui/SubscribeButton",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/post/[postId]/page.tsx",
+      "toImport": "@/modules/post/ui/PostPurchaseButton",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/post/new/page.tsx",
+      "toImport": "@/modules/post/ui/CreatePostComposer",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/profile/[username]/page.tsx",
+      "toImport": "@/modules/post/ui/PostPurchaseButton",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/profile/[username]/page.tsx",
+      "toImport": "@/modules/creator/ui/SubscribeButton",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/profile/[username]/page.tsx",
+      "toImport": "@/modules/post/ui/CreatePostComposer",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/profile/edit/page.tsx",
+      "toImport": "@/modules/profile/ui/EditProfileForm",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/profile/page.tsx",
+      "toImport": "@/modules/profile/ui/ProfileContentTabs",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/reset-password/page.tsx",
+      "toImport": "@/modules/auth/ui/ResetPasswordForm",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/search/page.tsx",
+      "toImport": "@/modules/search/ui/SearchInfiniteList",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/search/page.tsx",
+      "toImport": "@/modules/search/ui/ExplorePostGrid",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/search/page.tsx",
+      "toImport": "@/modules/search/ui/ExploreCreatorGrid",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/search/page.tsx",
+      "toImport": "@/modules/search/ui/SearchInput",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/sign-in/page.tsx",
+      "toImport": "@/modules/auth/ui/SignInForm",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/sign-up/page.tsx",
+      "toImport": "@/modules/auth/ui/SignUpForm",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/story/new/page.tsx",
+      "toImport": "@/modules/story/ui/CreateStoryComposer",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/app/verify-pass/page.tsx",
+      "toImport": "@/modules/auth/ui/VerifyPassPage",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/commerce/application/subscription/get-subscription-use-case.ts",
+      "toImport": "@/modules/subscription/mappers/subscription-read-model-mapper",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/creator/runtime/get-creator-page-runtime.ts",
+      "toImport": "@/modules/moderation/policies/moderation-outcome-policy",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/feed/ui/FeedList.tsx",
+      "toImport": "@/modules/post/ui/PostCard",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/feed/ui/FeedList.tsx",
+      "toImport": "@/modules/post/ui/PostCard",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/feed/ui/UpcomingCard.tsx",
+      "toImport": "@/modules/creator/mappers/creator-identity",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/message/runtime/policies/assert-message-attachment-eligibility.ts",
+      "toImport": "@/modules/moderation/policies/moderation-outcome-policy",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/message/ui/MessageBubble.tsx",
+      "toImport": "@/modules/report/ui/ReportButton",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/message/ui/MessageItem.tsx",
+      "toImport": "@/modules/report/ui/ReportButton",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/payment/services/payment-checkout-service.ts",
+      "toImport": "@/modules/subscription/policies/subscription-price",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/payout/public/list-admin-payout-request-items.ts",
+      "toImport": "@/modules/admin/policies/payout-request-admin-policy",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/post/policies/is-post-public-base-visible.ts",
+      "toImport": "@/modules/moderation/policies/moderation-outcome-policy",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/post/policies/post-visibility-policy.ts",
+      "toImport": "@/modules/creator/mappers/creator-identity",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/post/policies/public-discovery-inclusion.ts",
+      "toImport": "@/modules/creator/policies/build-public-creator-profile-visibility-input",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/post/policies/public-discovery-inclusion.ts",
+      "toImport": "@/modules/creator/policies/is-public-creator-profile-visible",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/post/runtime/get-creator-feed.ts",
+      "toImport": "@/modules/feed/policies/feed-inclusion-policy",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/post/runtime/get-post-by-id-runtime.ts",
+      "toImport": "@/modules/creator/mappers/creator-identity",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/post/runtime/resolve-post-access-entitlement.ts",
+      "toImport": "@/modules/creator/mappers/creator-identity",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/post/services/post-mutation-moderation-service.ts",
+      "toImport": "@/modules/moderation/policies/moderation-outcome-policy",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/post/ui/CreatePostForm.tsx",
+      "toImport": "@/modules/media/ui/StoryVideoTrimField",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/post/ui/CreatorPostList.tsx",
+      "toImport": "@/modules/creator/ui/creator-surface-policy",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/post/ui/PostCard.tsx",
+      "toImport": "@/modules/creator/ui/SubscribeButton",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/post/ui/PostCard.tsx",
+      "toImport": "@/modules/creator/mappers/creator-identity",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/post/ui/PostCard.tsx",
+      "toImport": "@/modules/report/ui/ReportButton",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/post/ui/PostMoreMenu.tsx",
+      "toImport": "@/modules/report/ui/ReportButton",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/profile/runtime/get-profile-by-username.ts",
+      "toImport": "@/modules/creator/policies/is-public-profile-visible",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/search/runtime/get-recommended-creators.ts",
+      "toImport": "@/modules/creator/policies/is-public-creator-profile-visible",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/search/runtime/search-users.ts",
+      "toImport": "@/modules/creator/policies/is-public-profile-visible",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/search/ui/ExploreCreatorGrid.tsx",
+      "toImport": "@/modules/creator/mappers/creator-identity",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/search/ui/ExplorePostGrid.tsx",
+      "toImport": "@/modules/creator/mappers/creator-identity",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/search/ui/SearchResultList.tsx",
+      "toImport": "@/modules/creator/mappers/creator-identity",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/story/policies/get-story-surface-eligibility.ts",
+      "toImport": "@/modules/creator/policies/is-public-creator-profile-visible",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/story/ui/CreateStoryForm.tsx",
+      "toImport": "@/modules/media/ui/StoryVideoTrimField",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    },
+    {
+      "fromFile": "src/modules/subscription/ui/SubscriptionStatusCard.tsx",
+      "toImport": "@/modules/creator/ui/creator-surface-policy",
+      "severity": "MEDIUM",
+      "reason": "cross-module semi-internal dependency"
+    }
+  ]
+}

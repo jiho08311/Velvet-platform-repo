@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "worker": "node dist/modules/moderation/server/video-moderation-worker.js",
     "worker:video-moderation": "tsx src/modules/moderation/server/video-moderation-worker.ts",
-    "worker:story-video": "tsx src/modules/story/server/story-video-worker.ts"
+    "worker:story-video": "tsx src/modules/story/server/story-video-worker.ts",
+       "boundary:audit": "node scripts/audit-cross-module-runtime-dependencies.mjs",
+    "boundary:check": "node scripts/check-boundaries.mjs"
   },
   "dependencies": {
     "@google-cloud/vision": "^5.3.5",
@@ -38,6 +40,8 @@
     "@types/react": "^18.3.28",
     "@types/react-dom": "^18.3.7",
     "autoprefixer": "^10.4.27",
+    "dependency-cruiser": "^17.4.3",
+    "madge": "^8.0.0",
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.2",
     "ts-node": "^10.9.2",
@@ -45,3 +49,4 @@
     "typescript": "^5.9.3"
   }
 }
+
