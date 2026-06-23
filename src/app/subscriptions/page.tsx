@@ -1,15 +1,12 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 
-import { getSession } from "@/modules/auth/server/get-session"
 import {
   buildPathWithNext,
   SIGN_IN_PATH,
-} from "@/modules/auth/lib/redirect-handoff"
-import {
-  listUserSubscriptions,
-  type UserSubscriptionListItem,
-} from "@/modules/subscription/server/list-user-subscriptions"
+} from "@/modules/auth/utils/redirect-handoff"
+import { readSession } from "@/modules/auth/public/read-session"
+import { listViewerSubscriptions } from "@/modules/commerce/public/subscription-contract"
 import { EmptyState } from "@/shared/ui/EmptyState"
 
 function formatDate(value?: string | null) {
@@ -20,7 +17,7 @@ function formatDate(value?: string | null) {
   }).format(new Date(value))
 }
 
-function getStatusClassName(status: UserSubscriptionListItem["status"]) {
+function getStatusClassName(status: string) {
   if (status === "active") {
     return "border-emerald-500/20 bg-emerald-500/15 text-emerald-300"
   }
@@ -32,31 +29,11 @@ function getStatusClassName(status: UserSubscriptionListItem["status"]) {
   return "border-zinc-700 bg-zinc-800/70 text-zinc-300"
 }
 
-function getSessionUserId(session: unknown) {
-  if (!session || typeof session !== "object") {
-    return null
-  }
 
-  if ("userId" in session && typeof session.userId === "string") {
-    return session.userId
-  }
-
-  if (
-    "user" in session &&
-    session.user &&
-    typeof session.user === "object" &&
-    "id" in session.user &&
-    typeof session.user.id === "string"
-  ) {
-    return session.user.id
-  }
-
-  return null
-}
 
 export default async function SubscriptionsPage() {
   const nextPath = "/subscriptions"
-  const session = await getSession()
+  const session = await readSession()
 
   if (!session) {
     redirect(
@@ -67,7 +44,7 @@ export default async function SubscriptionsPage() {
     )
   }
 
-  const userId = getSessionUserId(session)
+  const userId = session?.userId ?? null
 
   if (!userId) {
     redirect(
@@ -78,7 +55,11 @@ export default async function SubscriptionsPage() {
     )
   }
 
-  const subscriptions = await listUserSubscriptions(userId)
+  const subscriptions = await listViewerSubscriptions({
+    viewerUserId: userId,
+  })
+
+  type SubscriptionListItem = (typeof subscriptions)[number]
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -104,7 +85,7 @@ export default async function SubscriptionsPage() {
           />
         ) : (
           <section className="grid gap-4">
-            {subscriptions.map((subscription) => (
+            {subscriptions.map((subscription: SubscriptionListItem) => (
               <article
                 key={subscription.id}
                 className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-5 shadow-2xl shadow-black/20"

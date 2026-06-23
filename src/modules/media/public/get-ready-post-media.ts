@@ -1,4 +1,5 @@
 "use server"
+// PUBLIC_CONTRACT
 
 import {
   getReadyExplorePostMediaRowsByPostIds as getReadyExplorePostMediaRowsByPostIdsUseCase,

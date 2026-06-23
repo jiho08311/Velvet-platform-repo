@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation"
-import PostPurchaseButton from "@/modules/post/ui/PostPurchaseButton"
-import { getCurrentUser } from "@/modules/auth/server/get-current-user"
-import { getCreatorByUsername } from "@/modules/creator/server/get-creator-by-username"
+import { PostPurchaseButton } from "@/modules/post/public/post-detail-ui"
+import { getCurrentUser } from "@/modules/auth/public/get-current-user"
+import { getCreatorByUsername } from "@/modules/creator/public/get-creator-by-username"
 import { getCreatorFeed } from "@/modules/post/public/get-creator-feed"
-import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
-import { CreatePostComposer } from "@/modules/post/ui/CreatePostComposer"
+import { SubscribeButton } from "@/modules/creator/public/creator-page-ui"
+import { CreatePostComposer } from "@/modules/post/public/create-post-composer-ui"
 import { getPostCommerceCtaDecision } from "@/modules/post/public/get-post-commerce-cta-decision"
 
 type CreatorPageProps = {
@@ -65,7 +65,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
             <div className="rounded-3xl border border-dashed border-zinc-200 bg-zinc-50 p-10 text-center">
               <p className="text-lg font-semibold text-zinc-900">No posts yet</p>
               <p className="mt-2 text-sm text-zinc-500">
-                This creator has not published any posts yet.
+                This creator has no published posts yet.
               </p>
             </div>
           ) : (

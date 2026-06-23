@@ -2,18 +2,24 @@
   "name": "creator-platform",
   "private": true,
   "type": "module",
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit",
-    "worker": "node dist/modules/moderation/server/video-moderation-worker.js",
-    "worker:video-moderation": "tsx src/modules/moderation/server/video-moderation-worker.ts",
-    "worker:story-video": "tsx src/modules/story/server/story-video-worker.ts",
-       "boundary:audit": "node scripts/audit-cross-module-runtime-dependencies.mjs",
-    "boundary:check": "node scripts/check-boundaries.mjs"
-  },
+"scripts": {
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+  "lint": "next lint",
+  "typecheck": "tsc --noEmit",
+  "test:critical": "node --import tsx --test src/critical-flows/*.test.ts",
+  "check:critical": "npm run typecheck && npm run test:critical && npm run boundary:audit",
+  "worker": "node dist/modules/moderation/server/video-moderation-worker.js",
+  "worker:video-moderation": "tsx src/modules/moderation/server/video-moderation-worker.ts",
+  "worker:story-video": "tsx src/modules/story/server/story-video-worker.ts",
+  "boundary:audit": "node scripts/audit-cross-module-runtime-dependencies.mjs",
+  "boundary:check": "node scripts/check-boundaries.mjs",
+  "projection:rebuild:dry": "tsx scripts/rebuild-projections.ts --dry-run",
+  "projection:rebuild": "tsx scripts/rebuild-projections.ts",
+  "projection:drift": "tsx scripts/check-projection-drift.ts",
+  "quality:audit": "node scripts/quality/audit-code-quality.mjs"
+},
   "dependencies": {
     "@google-cloud/vision": "^5.3.5",
     "@heroicons/react": "^2.2.0",
@@ -22,6 +28,7 @@
     "@tosspayments/payment-sdk": "^1.9.2",
     "@tosspayments/tosspayments-sdk": "^2.6.0",
     "bullmq": "^5.72.1",
+    "dotenv": "^17.4.2",
     "ffmpeg-static": "^5.3.0",
     "ffprobe-static": "^3.1.0",
     "ioredis": "^5.10.1",
@@ -49,4 +56,3 @@
     "typescript": "^5.9.3"
   }
 }
-

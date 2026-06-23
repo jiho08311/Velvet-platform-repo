@@ -1,9 +1,10 @@
 import {
   getPostById as getPostByIdInternal,
-  type PostDetail,
-} from "@/modules/post/server/get-post-by-id"
+} from "@/modules/post/runtime/get-post-by-id"
 
-export type { PostDetail }
+export const PUBLIC_CONTRACT = true
+
+export type PostDetail = NonNullable<Awaited<ReturnType<typeof getPostByIdInternal>>>
 
 export async function getPostById(
   postId: string,

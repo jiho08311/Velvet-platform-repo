@@ -1,6 +1,7 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { createNotification } from "@/modules/notification/server/create-notification"
-import { createSubscriptionCanceledNotificationInput } from "@/modules/notification/server/create-notification-inputs"
+import {
+  emitSubscriptionCanceledNotificationEvent,
+} from "@/modules/subscription/public/subscription-domain-events"
+import { readCreatorIdentityByCreatorId } from "@/modules/identity/public/creator-identity-read-model"
 
 type NotifySubscriptionCanceledWorkflowInput = {
   subscriptionId: string
@@ -9,37 +10,23 @@ type NotifySubscriptionCanceledWorkflowInput = {
   mode: "period_end" | "immediate"
 }
 
-type CreatorRow = {
-  user_id: string
-}
-
 export async function notifySubscriptionCanceledWorkflow({
   subscriptionId,
   creatorId,
   subscriberId,
   mode,
 }: NotifySubscriptionCanceledWorkflowInput): Promise<void> {
-  const { data: creator, error } = await supabaseAdmin
-    .from("creators")
-    .select("user_id")
-    .eq("id", creatorId)
-    .maybeSingle<CreatorRow>()
+  const creator = await readCreatorIdentityByCreatorId(creatorId)
 
-  if (error) {
-    throw error
-  }
-
-  if (!creator?.user_id) {
+  if (!creator?.userId) {
     return
   }
 
-  await createNotification(
-    createSubscriptionCanceledNotificationInput({
-      userId: creator.user_id,
-      creatorId,
-      subscriberId,
-      subscriptionId,
-      mode,
-    }),
-  )
+  await emitSubscriptionCanceledNotificationEvent({
+    subscriptionId,
+    creatorId,
+    subscriberId,
+    recipientUserId: creator.userId,
+    mode,
+  })
 }

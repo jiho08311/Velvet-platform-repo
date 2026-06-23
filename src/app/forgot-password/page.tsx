@@ -1,4 +1,4 @@
-import { ForgotPasswordForm } from "@/modules/auth/ui/ForgotPasswordForm"
+import { ForgotPasswordForm } from "@/modules/auth/public/auth-ui"
 
 export default function ForgotPasswordPage() {
   return (

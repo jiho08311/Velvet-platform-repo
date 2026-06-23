@@ -1,1 +1,1 @@
-export { cancelSubscription } from "../server/cancel-subscription"
+export { cancelSubscription } from "../runtime/cancel-subscription"

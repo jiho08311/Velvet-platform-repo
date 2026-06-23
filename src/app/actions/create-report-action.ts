@@ -2,13 +2,13 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { createReport } from "@/modules/report/server/create-report"
+import { createReportCase } from "@/modules/governance/public/report-governance-contract"
 import { parseReportFormData } from "@/modules/report/report-form"
 
 export async function createReportAction(formData: FormData) {
   const { payload, pathname } = parseReportFormData(formData)
 
-  await createReport(payload)
+  await createReportCase(payload)
 
   revalidatePath(pathname)
 

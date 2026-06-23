@@ -1,4 +1,4 @@
-import { ReportButton } from "@/modules/report/ui/ReportButton"
+import { ReportButton } from "@/modules/report/public/report-button-ui"
 
 type MessageItemMedia = {
   id: string

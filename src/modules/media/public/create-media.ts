@@ -1,5 +1,7 @@
-import { createMedia as createMediaServer } from "@/modules/media/server/create-media"
+import { createMedia as createMediaServer } from "@/modules/media/runtime/create-media"
 import type { Media, MediaStatus, MediaType } from "@/modules/media/types"
+
+export const PUBLIC_CONTRACT = true
 
 export type CreateMediaInput = {
   postId?: string | null

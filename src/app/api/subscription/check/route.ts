@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { requireUser } from "@/modules/auth/server/require-user"
-import { getViewerSubscription } from "@/modules/subscription/server/get-viewer-subscription"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { canAccessCreator } from "@/modules/commerce/public/entitlement-contract"
 
 type SubscriptionCheckState = "active" | "ending" | "expired" | "inactive"
 
@@ -23,34 +23,29 @@ export async function GET(request: Request) {
   }
 
   try {
-    const user = await requireUser()
+ const session = await requireSession()
 
-    const viewerSubscription = await getViewerSubscription(user.id, creatorId)
+const { decision } = await canAccessCreator({
+  viewerUserId: session.userId,
+  creatorId,
+})
 
-    const subscription = viewerSubscription.subscription
-    const isEnding =
-      viewerSubscription.isActive && subscription?.cancelAtPeriodEnd === true
+const state: SubscriptionCheckState = decision.allowed
+  ? decision.reason === "ending_subscription"
+    ? "ending"
+    : "active"
+  : "inactive"
 
-    const state: SubscriptionCheckState = !subscription
-      ? "inactive"
-      : subscription.status === "expired"
-        ? "expired"
-        : isEnding
-          ? "ending"
-          : viewerSubscription.isActive
-            ? "active"
-            : "inactive"
-
-    return NextResponse.json(
-      {
-        subscribed: viewerSubscription.isActive,
-        cancelAtPeriodEnd: subscription?.cancelAtPeriodEnd ?? false,
-        hasAccess: viewerSubscription.isActive,
-        state,
-        isCancelScheduled: isEnding,
-      },
-      { status: 200 }
-    )
+return NextResponse.json(
+  {
+    subscribed: decision.allowed,
+    cancelAtPeriodEnd: decision.reason === "ending_subscription",
+    hasAccess: decision.allowed,
+    state,
+    isCancelScheduled: decision.reason === "ending_subscription",
+  },
+  { status: 200 }
+)
   } catch {
     return NextResponse.json(buildEmptyResponse(), { status: 200 })
   }

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { getConversationIdByMessage } from "@/modules/message/server/get-conversation-id-by-message"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { getConversationIdByMessage } from "@/modules/message/public/get-conversation-id-by-message"
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireUser()
+    const session = await requireSession()
     const { searchParams } = new URL(request.url)
 
     const messageId = searchParams.get("messageId")
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     const conversationId = await getConversationIdByMessage({
       messageId,
-      userId: user.id,
+      userId: session.userId,
     })
 
     if (!conversationId) {

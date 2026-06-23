@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server"
-import { requireUser } from "@/modules/auth/server/require-user"
-import { listReports } from "@/modules/report/server/list-reports"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { listReports } from "@/modules/report/public/list-reports"
 
 export async function GET() {
   try {
-    await requireUser()
+   await requireSession()
 
     const reports = await listReports()
 

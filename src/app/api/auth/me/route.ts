@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server"
 
-import { requireUser } from "@/modules/auth/server/require-user"
+import { requireSession } from "@/modules/auth/public/require-session"
 
 export async function HEAD() {
   try {
-    await requireUser()
+  await requireSession()
 
     return new Response(null, { status: 200 })
   } catch {
@@ -14,13 +14,13 @@ export async function HEAD() {
 
 export async function GET() {
   try {
-    const user = await requireUser()
+    const session = await requireSession()
 
     return NextResponse.json(
       {
         isAuthenticated: true,
         user: {
-          id: user.id,
+          id: session.userId,
         },
       },
       { status: 200 },

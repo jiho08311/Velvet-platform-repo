@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server"
 
-import { requireUser } from "@/modules/auth/server/require-user"
+import { requireSession } from "@/modules/auth/public/require-session"
 import { createMedia } from "@/modules/media/public/create-media"
 import { uploadMediaFile as uploadMedia } from "@/modules/media/public/upload-media-file"
+import { logger } from "@/shared/observability/structured-logger"
 
 function getMediaTypeFromMimeType(mimeType: string) {
   if (mimeType.startsWith("image/")) {
@@ -22,7 +23,7 @@ function getMediaTypeFromMimeType(mimeType: string) {
 
 export async function POST(request: Request) {
   try {
-    const user = await requireUser()
+    const session = await requireSession()
     const formData = await request.formData()
     const files = formData
       .getAll("files")
@@ -39,13 +40,13 @@ export async function POST(request: Request) {
 
     for (const file of files) {
       const storagePath = await uploadMedia({
-        uploaderUserId: user.id,
+        uploaderUserId: session.userId,
         file,
         purpose: "message",
       })
 
       const media = await createMedia({
-        ownerUserId: user.id,
+        ownerUserId: session.userId,
         type: getMediaTypeFromMimeType(file.type || ""),
         storagePath,
         mimeType: file.type || undefined,
@@ -64,7 +65,11 @@ export async function POST(request: Request) {
       { status: 200 }
     )
   } catch (error) {
-    console.error("media upload route error:", error)
+    logger.error({
+      event: "api.media.upload.failed",
+      message: "Media upload route failed",
+      error,
+    })
 
     return NextResponse.json(
       { error: "Failed to upload media" },

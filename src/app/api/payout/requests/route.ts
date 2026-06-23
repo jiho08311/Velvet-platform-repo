@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server"
-import { requireUser } from "@/modules/auth/server/require-user"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
-import { listPayoutRequests } from "@/modules/payout/server/list-payout-requests"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { getCreatorByUserId } from "@/modules/creator/public/get-creator-by-user-id"
+import { listCreatorPayoutRequests } from "@/modules/commerce/public/payout-contract"
 
 export async function GET() {
   try {
-    const user = await requireUser()
+   const session = await requireSession()
 
-    const creator = await getCreatorByUserId(user.id)
+    const creator = await getCreatorByUserId(session.userId)
 
     if (!creator) {
       return NextResponse.json(
@@ -16,9 +16,9 @@ export async function GET() {
       )
     }
 
-    const payoutRequests = await listPayoutRequests({
-      creatorId: creator.id,
-    })
+ const payoutRequests = await listCreatorPayoutRequests({
+  creatorId: creator.id,
+})
 
     return NextResponse.json(
       { payoutRequests },

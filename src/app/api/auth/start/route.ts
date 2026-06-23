@@ -1,16 +1,18 @@
 // src/app/api/auth/pass/start/route.ts
 import { NextResponse } from "next/server";
-import { normalizePassVerificationNext } from "@/modules/auth/server/assert-pass-verified";
+import { getCurrentUser } from "@/modules/auth/public/get-current-user";
+import { normalizePassVerificationNext } from "@/modules/auth/public/assert-pass-verified";
 
 export async function GET(request: Request) {
+  const user = await getCurrentUser();
   const { searchParams, origin } = new URL(request.url);
   const profileId = searchParams.get("profileId");
   const next = searchParams.get("next");
   const normalizedNext = next ? normalizePassVerificationNext(next) : null;
 
-  if (!profileId) {
+  if (!user || !profileId || profileId !== user.id) {
     return NextResponse.redirect(
-      new URL("/verify-pass?error=missing_profile_id", origin)
+      new URL("/verify-pass?error=unauthorized_profile", origin)
     );
   }
 

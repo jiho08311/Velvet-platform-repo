@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/modules/auth/server/get-current-user";
+import { getCurrentUser } from "@/modules/auth/public/get-current-user";
 import { getCreatorFeed } from "@/modules/post/public/get-creator-feed";
 
 export async function GET(request: Request) {

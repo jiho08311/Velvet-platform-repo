@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/client";
-import { resolveRedirectTarget } from "@/modules/auth/lib/redirect-handoff";
+import { resolveRedirectTarget } from "@/modules/auth/utils/redirect-handoff";
 import {
   AuthFormField,
   AuthFormInput,

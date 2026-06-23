@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server"
-import { requireUser } from "@/modules/auth/server/require-user"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
-import { getProfileByUserId } from "@/modules/profile/server/get-profile-by-user-id"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { getCreatorByUserId } from "@/modules/creator/public/get-creator-by-user-id"
+import { getProfileByUserId } from "@/modules/profile/public/get-profile-by-user-id"
 import { createPostWithMediaWorkflow } from "@/workflows/create-post-with-media-workflow"
 import { assertValidPpvPrice } from "@/modules/post/public/ppv-price"
-import type { CreatePostUploadedMediaInput } from "@/modules/post/types"
+import type {
+  CreatePostDraftBlock,
+  CreatePostUploadedMediaInput,
+} from "@/modules/post/types"
 
 type PostStatus = "draft" | "published" | "archived"
 type PostVisibility = "public" | "subscribers" | "paid"
@@ -30,6 +33,7 @@ function isUploadedMediaType(
 
 export async function POST(request: Request) {
   try {
+    const session = await requireSession()
     const formData = await request.formData()
 
     const textValue = formData.get("text")
@@ -71,14 +75,13 @@ export async function POST(request: Request) {
       }
     }
 
-    const user = await requireUser()
-    const creator = await getCreatorByUserId(user.id)
+    const creator = await getCreatorByUserId(session.userId)
 
     if (!creator) {
       return NextResponse.json({ error: "Creator not found" }, { status: 404 })
     }
 
-    const profile = await getProfileByUserId(user.id)
+    const profile = await getProfileByUserId(session.userId)
 
     if (!profile) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 })
@@ -110,14 +113,39 @@ export async function POST(request: Request) {
           typeof value.originalName === "string"
       )
 
-    await createPostWithMediaWorkflow({
-      creatorId: creator.id,
-      content: text,
-  
-      status,
-      visibility,
-      price: finalPrice,
-    })
+
+const blocks: CreatePostDraftBlock[] = []
+
+if (text) {
+  blocks.push({
+    type: "text",
+    sortOrder: blocks.length,
+    content: text,
+  })
+}
+
+for (const file of files) {
+  blocks.push({
+    type: file.type,
+    sortOrder: blocks.length,
+    media: {
+      kind: "uploaded",
+      uploaded: file,
+    },
+    content: null,
+  })
+}
+
+
+
+await createPostWithMediaWorkflow({
+  creatorId: creator.id,
+  content: text,
+  blocks,
+  status,
+  visibility,
+  price: finalPrice,
+})
 
     return NextResponse.json(
       {

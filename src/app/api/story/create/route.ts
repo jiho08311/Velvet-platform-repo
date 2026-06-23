@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server"
-import { getCurrentUser } from "@/modules/auth/server/get-current-user"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
+import { getCurrentUser } from "@/modules/auth/public/get-current-user"
+import { getCreatorByUserId } from "@/modules/creator/public/get-creator-by-user-id"
 import {
   parseStoryCreateRequestBody,
   StoryPayloadValidationError,
-} from "@/modules/story/lib/story-create-payload"
-import { createStory } from "@/modules/story/server/create-story"
+} from "@/modules/story/public/create-story-use-case"
+import { createStory } from "@/modules/story/public/create-story-use-case"
 
 type CreateStoryRouteBody = {
   storagePath?: unknown

@@ -1,0 +1,44 @@
+{
+  "generatedAt": "2026-06-23T00:53:18.854Z",
+  "score": {
+    "overall": 81,
+    "architecture": 92,
+    "dbLayer": 82,
+    "maintainability": 86,
+    "testing": 70,
+    "securityReadiness": 76,
+    "msaReadiness": 84,
+    "operationsReadiness": 63
+  },
+  "strictHardeningScore": 100,
+  "summary": {
+    "filesScanned": 1672,
+    "codeFiles": 1636,
+    "testFiles": 36,
+    "totalLoc": 100171,
+    "totalImports": 3986,
+    "totalAny": 0,
+    "totalTodo": 0,
+    "totalConsole": 0,
+    "largeFiles": 0,
+    "highImportFiles": 0,
+    "boundaryFindings": 0,
+    "appRuntimeFindings": 0,
+    "crossRepoFindings": 0,
+    "publicInternalFindings": 0,
+    "directDbFindings": 0,
+    "routeAuthFindings": 0
+  },
+  "findings": {
+    "boundaryFindings": [],
+    "appRuntimeFindings": [],
+    "crossRepoFindings": [],
+    "publicInternalFindings": [],
+    "directDbFindings": [],
+    "routeAuthFindings": [],
+    "largeFiles": [],
+    "highImportFiles": [],
+    "anyHotspots": [],
+    "consoleHotspots": []
+  }
+}

@@ -1,9 +1,14 @@
 import {
   getPostAccess as getPostAccessInternal,
-} from "@/modules/post/server/get-post-access"
+} from "@/modules/post/policies/get-post-access"
 
-type GetPostAccessInput = Parameters<typeof getPostAccessInternal>[0]
+export const PUBLIC_CONTRACT = true
 
-export async function getPostAccess(input: GetPostAccessInput) {
+export type GetPostAccessInput = Parameters<typeof getPostAccessInternal>[0]
+export type GetPostAccessResult = Awaited<ReturnType<typeof getPostAccessInternal>>
+
+export async function getPostAccess(
+  input: GetPostAccessInput
+): Promise<GetPostAccessResult> {
   return getPostAccessInternal(input)
 }

@@ -1,3 +1,5 @@
+// PUBLIC_CONTRACT
+
 export type {
   AttachmentEligibilityMediaRow,
   MessageMediaRow,

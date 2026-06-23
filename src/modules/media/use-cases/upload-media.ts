@@ -1,8 +1,6 @@
-import { uploadMediaFileToStorage } from "@/modules/media/repositories/media-storage-repository"
-import {
-  buildMediaStoragePath,
-  type MediaStoragePurpose,
-} from "@/modules/media/services/media-storage-path-service"
+import type { MediaStoragePurpose } from "@/modules/media/services/media-storage-path-service"
+import { toUploadMediaResponse } from "@/modules/media/contracts/upload-media-contract"
+import { executeUploadMediaRuntime } from "@/modules/media/runtime/execute-upload-media-runtime"
 
 type UploadMediaInput = {
   uploaderUserId: string
@@ -10,32 +8,8 @@ type UploadMediaInput = {
   purpose?: MediaStoragePurpose
 }
 
-export async function uploadMediaUseCase({
-  uploaderUserId,
-  file,
-  purpose = "post",
-}: UploadMediaInput): Promise<string> {
-  const resolvedUploaderUserId = uploaderUserId.trim()
+export async function uploadMediaUseCase(input: UploadMediaInput): Promise<string> {
+  const contract = await executeUploadMediaRuntime(input)
 
-  if (!resolvedUploaderUserId) {
-    throw new Error("uploaderUserId is required")
-  }
-
-  if (!(file instanceof File)) {
-    throw new Error("file is required")
-  }
-
-  if (file.size <= 0) {
-    throw new Error("file is empty")
-  }
-
-  const storagePath = buildMediaStoragePath(
-    resolvedUploaderUserId,
-    file,
-    purpose
-  )
-
-  await uploadMediaFileToStorage({ storagePath, file })
-
-  return storagePath
+  return toUploadMediaResponse(contract)
 }

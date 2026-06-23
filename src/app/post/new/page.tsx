@@ -3,12 +3,13 @@ import { redirect } from "next/navigation"
 import {
   assertPassVerified,
   getPassVerificationRedirectPath,
-} from "@/modules/auth/server/assert-pass-verified"
-import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
-import { CreatePostComposer } from "@/modules/post/ui/CreatePostComposer"
-
+} from "@/modules/auth/public/assert-pass-verified"
+import { requireCreatorReadyUser } from "@/modules/creator/public/require-creator-ready-user"
+import { CreatePostComposer } from "@/modules/post/public/create-post-composer-ui"
+import { canCreatePost } from "@/modules/authorization/public"
 export default async function NewPostPage() {
   const nextPath = "/post/new"
+
   const { user, creator } = await requireCreatorReadyUser({
     signInNext: nextPath,
   })
@@ -17,6 +18,14 @@ export default async function NewPostPage() {
     await assertPassVerified({ profileId: user.id })
   } catch {
     redirect(getPassVerificationRedirectPath({ next: nextPath }))
+  }
+
+  const createPostPermission = await canCreatePost({
+    actorId: user.id,
+  })
+
+  if (!createPostPermission.allowed) {
+    redirect("/become-creator")
   }
 
   return (

@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server"
 
-import { getCreatorPayoutHistory } from "@/modules/payout/server/get-creator-payout-history"
+import { getCreatorPayoutHistory } from "@/modules/commerce/public/payout-contract"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { logger } from "@/shared/observability/structured-logger"
 
 export async function GET() {
   try {
+    await requireSession()
     const payouts = await getCreatorPayoutHistory()
 
     return NextResponse.json({
@@ -11,7 +14,10 @@ export async function GET() {
       data: payouts,
     })
   } catch (error) {
-    console.error("GET CREATOR PAYOUTS ERROR:", error)
+    logger.error({
+      event: "creator.payouts_fetch_failed",
+      error,
+    })
 
     return NextResponse.json(
       {

@@ -1,7 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { updateReportStatus } from "@/modules/report/server/update-report-status"
+import { updateReportStatus } from "@/modules/report/public/update-report-status"
 import { isReportStatus } from "@/modules/report/types"
 
 export async function updateReportStatusAction(formData: FormData) {

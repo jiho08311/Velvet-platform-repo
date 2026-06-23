@@ -6,8 +6,9 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { PaymentStateNotice } from "@/modules/payment/ui/PaymentStateNotice"
 import { Card } from "@/shared/ui/Card"
 import { Skeleton } from "@/shared/ui/Skeleton"
-import type { PaymentResultPageState } from "@/modules/payment/server/payment-result-state"
+import type { PaymentResultPageState } from "@/modules/payment/public/payment-result-state"
 import type { PaymentAccessVerification } from "@/modules/payment/types"
+import { clientLogger } from "@/shared/observability/client-logger"
 
 type ConfirmInput = {
   paymentId: string
@@ -228,7 +229,14 @@ export function PaymentSuccessContent({
 
         router.replace(destination.href)
       } catch (error) {
-        console.error("confirm failed:", error)
+        clientLogger.error({
+          event: "payment.success_confirmation_failed",
+          context: {
+            destinationType: destination.type,
+            paymentId: confirmInput.paymentId,
+          },
+          error,
+        })
         router.replace("/payment/fail?reason=verification_failed")
       }
     }

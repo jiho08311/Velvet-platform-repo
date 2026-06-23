@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server"
-import { requireUser } from "@/modules/auth/server/require-user"
-import { listConversations } from "@/modules/message/server/list-conversations"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { listConversations } from "@/modules/message/public/list-conversations"
 
 export async function GET() {
   try {
-    const user = await requireUser()
+   const session = await requireSession()
 
     const conversations = await listConversations({
-      userId: user.id,
+      userId: session.userId,
     })
 
     return NextResponse.json(

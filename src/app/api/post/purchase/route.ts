@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server"
-import { createPaymentCheckout } from "@/modules/payment/server/create-payment-checkout"
+import { createCheckout } from "@/modules/commerce/public/payment-contract"
 import { getPostById } from "@/modules/post/public/get-post"
-import { getCreatorById } from "@/modules/creator/server/get-creator-by-id"
-import { createClient } from "@/infrastructure/supabase/server"
+import { getCreatorById } from "@/modules/creator/public/get-creator-by-id"
+
+import { getCurrentUser } from "@/modules/auth/public/get-current-user"
 import type { PostPurchaseBlockingReason } from "@/modules/post/types"
 
 function getPurchaseBlockingError(
@@ -38,11 +39,7 @@ function getPurchaseBlockingError(
 }
 
 export async function POST(request: Request) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -97,20 +94,24 @@ export async function POST(request: Request) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
 
   try {
-    const result = await createPaymentCheckout({
-      userId: user.id,
-      creatorId: post.creatorId,
-      type: "ppv_post",
-      amount: post.price,
-      currency: "KRW",
-      provider: "toss",
-      targetType: "post",
-      targetId: post.id,
-      orderId: `ppv_${post.id}_${user.id}_${Date.now()}`,
-      orderName: post.title || "Paid Post",
-      successUrl: `${appUrl}/payment/success?postId=${post.id}&creatorUsername=${creator.username}`,
-      failUrl: `${appUrl}/payment/fail`,
-    })
+  const result = await createCheckout({
+  payerUserId: user.id,
+  creatorId: post.creatorId,
+  purpose: "ppv_post",
+  money: {
+    amount: post.price,
+    currency: "KRW",
+  },
+  provider: "toss",
+  target: {
+    type: "post",
+    id: post.id,
+  },
+  orderId: `ppv_${post.id}_${user.id}_${Date.now()}`,
+  orderName: post.title || "Paid Post",
+  successUrl: `${appUrl}/payment/success?postId=${post.id}&creatorUsername=${creator.username}`,
+  failUrl: `${appUrl}/payment/fail`,
+})
 
     return NextResponse.json(result)
   } catch (error) {

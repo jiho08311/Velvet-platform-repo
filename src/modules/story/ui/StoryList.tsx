@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { resolveCreatorStoryReadState } from "../lib/story-read-policy"
+import { resolveCreatorStoryReadState } from "@/modules/story/policies/story-read-policy"
 import type {
   Story,
   StoryReadStateApiResponse,

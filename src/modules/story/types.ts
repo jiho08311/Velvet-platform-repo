@@ -179,8 +179,11 @@ export type StoryVisibilityPolicyInput = {
   }
   creator: {
     status: string | null | undefined
+    creatorVisibilityState?: string | null | undefined
   } | null
   profile: {
+    profileLifecycleState?: string | null | undefined
+    identityVisibilityState?: string | null | undefined
     isDeactivated: boolean | null | undefined
     isDeletePending: boolean | null | undefined
     deletedAt: string | null | undefined

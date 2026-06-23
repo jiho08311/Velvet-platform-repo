@@ -3,9 +3,15 @@
 import { loadTossPayments } from "@tosspayments/payment-sdk"
 import { useEffect, useMemo, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { Button } from "@/shared/ui/Button"
 import { resolveSubscribeCTA } from "@/shared/ui/cta-state"
 import { getCreatorSubscriptionPresentation } from "./creator-surface-policy"
+import { SubscribeButtonView } from "./SubscribeButtonView"
+import {
+  getSubscribeErrorMessage,
+  resolveSubscriptionFlags,
+  type CheckoutResponse,
+  type SubscriptionCheckResponse,
+} from "./subscribe-button-model"
 
 type SubscribeButtonProps = {
   creatorId: string
@@ -13,65 +19,6 @@ type SubscribeButtonProps = {
   currentUserId?: string
   creatorUsername?: string
   embedded?: boolean
-}
-
-type SubscriptionCheckState = "active" | "ending" | "expired" | "inactive"
-
-type SubscriptionCheckResponse = {
-  subscribed?: boolean
-  cancelAtPeriodEnd?: boolean
-  hasAccess?: boolean
-  state?: SubscriptionCheckState
-  isCancelScheduled?: boolean
-}
-
-type CheckoutResponse = {
-  payment?: {
-    id?: string
-    amount?: number
-  }
-  checkout?: {
-    orderId?: string
-    orderName?: string
-  }
-  error?: string
-}
-
-function getSubscribeErrorMessage(message: string) {
-  if (message === "You already have an active subscription") {
-    return "이미 구독 중입니다"
-  }
-
-  if (message === "You cannot subscribe to your own creator page") {
-    return "본인 페이지는 구독할 수 없습니다"
-  }
-
-  if (message === "Invalid subscription price") {
-    return "구독 가격이 올바르지 않습니다"
-  }
-
-  if (message === "Creator not found") {
-    return "페이지를 찾을 수 없습니다"
-  }
-
-  return "구독 처리에 실패했습니다"
-}
-
-function resolveSubscriptionFlags(data: SubscriptionCheckResponse) {
-  const state = data.state
-
-  if (state) {
-    return {
-      subscribed: data.hasAccess ?? (state === "active" || state === "ending"),
-      cancelAtPeriodEnd:
-        data.isCancelScheduled ?? (state === "ending"),
-    }
-  }
-
-  return {
-    subscribed: Boolean(data.subscribed),
-    cancelAtPeriodEnd: Boolean(data.cancelAtPeriodEnd),
-  }
 }
 
 export default function SubscribeButton({
@@ -261,79 +208,20 @@ export default function SubscribeButton({
     loading,
   })
 
-  if (checking || isOwner) {
-    return (
-      <Button
-        variant={cta.primary.variant}
-        disabled={cta.primary.disabled}
-        loading={cta.primary.loading}
-        loadingLabel={cta.primary.loadingLabel}
-        embedded
-        className={
-          isOwner
-            ? "bg-zinc-800 text-zinc-400 border-zinc-800 hover:bg-zinc-800"
-            : undefined
-        }
-      >
-        {cta.primary.label}
-      </Button>
-    )
-  }
-
-  if (subscribed) {
-    return (
-      <div className="flex w-full flex-col gap-2">
-        <Button
-          variant={cta.primary.variant}
-          disabled={cta.primary.disabled}
-          fullWidth
-          className="border-zinc-700 bg-zinc-950 text-zinc-100 hover:bg-zinc-950"
-        >
-          {cta.primary.label}
-        </Button>
-
-        {cta.secondary ? (
-          <Button
-            type="button"
-            onClick={handleCancel}
-            variant={cta.secondary.variant}
-            loading={cta.secondary.loading}
-            loadingLabel={cta.secondary.loadingLabel}
-          >
-            {cta.secondary.label}
-          </Button>
-        ) : null}
-
-        {cancelAtPeriodEnd ? (
-          <p className="text-center text-xs text-zinc-500">
-            {subscriptionPresentation.cancelAtPeriodEndMessage}
-          </p>
-        ) : null}
-
-        {errorMessage ? (
-          <p className="text-center text-xs text-red-400">{errorMessage}</p>
-        ) : null}
-      </div>
-    )
-  }
-
   return (
-    <div className="w-full">
-      <Button
-        onClick={handleSubscribe}
-        loading={cta.primary.loading}
-        loadingLabel={cta.primary.loadingLabel}
-        embedded={embedded}
-        fullWidth={!embedded}
-      >
-        {cta.primary.label}
-      </Button>
-
-      {errorMessage ? (
-        <p className="mt-2 text-center text-xs text-red-400">
-          {errorMessage}
-        </p>
-      ) : null}
-    </div>
+    <SubscribeButtonView
+      cta={cta}
+      checking={checking}
+      isOwner={isOwner}
+      subscribed={subscribed}
+      cancelAtPeriodEnd={cancelAtPeriodEnd}
+      embedded={embedded}
+      errorMessage={errorMessage}
+      cancelAtPeriodEndMessage={
+        subscriptionPresentation.cancelAtPeriodEndMessage
+      }
+      onSubscribe={handleSubscribe}
+      onCancel={handleCancel}
+    />
   )
 }

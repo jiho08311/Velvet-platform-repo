@@ -1,20 +1,20 @@
-import { getSession } from "@/modules/auth/server/get-session"
-import { CreatorPostList } from "@/modules/post/ui/CreatorPostList"
+import { readSession } from "@/modules/auth/public/read-session"
+import { CreatorPostList } from "@/modules/post/public/post-detail-ui"
 import { getMyPosts } from "@/modules/post/public/get-my-posts"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
+import { getCreatorByUserId } from "@/modules/creator/public/get-creator-by-user-id"
 
 export default async function CreatorContentPage() {
-  const session = await getSession()
+  const session = await readSession()
 
-  if (!session) {
-    return (
-      <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6">
-        <section className="rounded-2xl border border-white/10 bg-neutral-950 p-8 text-center text-sm text-white/60">
-          Sign in to manage your content.
-        </section>
-      </main>
-    )
-  }
+if (!session) {
+  return (
+    <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6">
+      <section className="rounded-2xl border border-white/10 bg-neutral-950 p-8 text-center text-sm text-white/60">
+        Sign in to manage your content.
+      </section>
+    </main>
+  )
+}
 
   const creator = await getCreatorByUserId(session.userId)
 
@@ -56,7 +56,7 @@ export default async function CreatorContentPage() {
           previewText: post.content ?? "",
         }))}
         isSubscribed
-        emptyMessage="You have not created any posts yet."
+        emptyMessage="You have no created posts yet."
       />
     </main>
   )

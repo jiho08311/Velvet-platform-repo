@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js"
 
+
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const STORIES_BUCKET =
@@ -25,34 +26,34 @@ export async function uploadTempStoryVideoToStorage(params: {
   fileBuffer: Buffer
   contentType: string
 }) {
-  const admin = createAdminClient()
+    const admin = createAdminClient()
 
-  const { error } = await admin.storage
-    .from(STORIES_TEMP_BUCKET)
-    .upload(params.storagePath, params.fileBuffer, {
-      contentType: params.contentType,
-      upsert: false,
-    })
+        const { error } = await admin.storage
+          .from(STORIES_TEMP_BUCKET)
+          .upload(params.storagePath, params.fileBuffer, {
+            contentType: params.contentType,
+            upsert: false,
+          })
 
-  if (error) {
-    throw new Error(error.message)
-  }
+        if (error) {
+          throw new Error(error.message)
+        }
 }
 
 export async function downloadTempStoryVideoFromStorage(
   tempStoragePath: string
 ) {
-  const admin = createAdminClient()
+    const admin = createAdminClient()
 
-  const { data, error } = await admin.storage
-    .from(STORIES_TEMP_BUCKET)
-    .download(tempStoragePath)
+        const { data, error } = await admin.storage
+          .from(STORIES_TEMP_BUCKET)
+          .download(tempStoragePath)
 
-  if (error || !data) {
-    throw new Error(error?.message || "Failed to download temp story video")
-  }
+        if (error || !data) {
+          throw new Error(error?.message || "Failed to download temp story video")
+        }
 
-  return Buffer.from(await data.arrayBuffer())
+        return Buffer.from(await data.arrayBuffer())
 }
 
 export async function uploadProcessedStoryVideoToStorage(params: {
@@ -60,24 +61,26 @@ export async function uploadProcessedStoryVideoToStorage(params: {
   localFileBuffer: Buffer
   contentType: string
 }) {
-  const admin = createAdminClient()
+    const admin = createAdminClient()
 
-  const { error } = await admin.storage
-    .from(STORIES_BUCKET)
-    .upload(params.storagePath, params.localFileBuffer, {
-      contentType: params.contentType,
-      upsert: false,
-    })
+        const { error } = await admin.storage
+          .from(STORIES_BUCKET)
+          .upload(params.storagePath, params.localFileBuffer, {
+            contentType: params.contentType,
+            upsert: false,
+          })
 
-  if (error) {
-    throw new Error(error.message)
-  }
+        if (error) {
+          throw new Error(error.message)
+        }
 }
 
 export async function removeTempStoryVideoFromStorage(
   tempStoragePath: string
 ) {
-  const admin = createAdminClient()
+    const admin = createAdminClient()
 
-  await admin.storage.from(STORIES_TEMP_BUCKET).remove([tempStoragePath])
+        const { error } = await admin.storage
+          .from(STORIES_TEMP_BUCKET)
+          .remove([tempStoragePath])
 }

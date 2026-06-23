@@ -1,4 +1,7 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { listPostMedia } from "@/modules/media/public/list-post-media"
+import { deletePostMediaBinding } from "@/modules/media/public/post-media-binding"
+import { findMediaAssetsByLegacyMediaIds } from "@/modules/media/public/media-asset-lookup"
+import { getMediaModerationDecision } from "@/modules/media/public/media-moderation"
 
 export type PostMediaRow = {
   id: string
@@ -14,7 +17,6 @@ export type PostMediaModerationStatusRow = {
   moderation_status: string | null
 }
 
-
 export type MyPostsMediaRow = {
   id: string
   post_id: string
@@ -25,30 +27,47 @@ export type MyPostsMediaRow = {
   status: "processing" | "ready" | "failed"
 }
 
+function toPostMediaRow(item: Awaited<ReturnType<typeof listPostMedia>>[number]): PostMediaRow {
+  return {
+    id: item.media.id,
+    post_id: item.postId,
+    type: item.media.mediaType,
+    storage_path: item.media.storagePath,
+    mime_type: item.media.mimeType,
+    sort_order: item.sortOrder,
+    status: item.media.processingStatus === "failed" ? "failed" : item.media.processingStatus === "ready" ? "ready" : "processing",
+  }
+}
+
+function toMyPostsMediaRow(item: Awaited<ReturnType<typeof listPostMedia>>[number]): MyPostsMediaRow {
+  const row = toPostMediaRow(item)
+
+  return {
+    id: row.id,
+    post_id: row.post_id,
+    storage_path: row.storage_path,
+    type: row.type,
+    mime_type: row.mime_type,
+    sort_order: row.sort_order,
+    status: row.status,
+  }
+}
+
 export async function findMyPostMediaRowsByPostIds(
   postIds: string[]
 ): Promise<MyPostsMediaRow[]> {
-  if (postIds.length === 0) {
-    return []
-  }
+  const rows = await listPostMedia({
+    postIds,
+    requireReadyAsset: false,
+  })
 
-  const { data, error } = await supabaseAdmin
-    .from("media")
-    .select("id, post_id, storage_path, type, mime_type, sort_order, status")
-    .in("post_id", postIds)
-    .in("status", ["processing", "ready"])
-    .order("sort_order", { ascending: true })
-    .returns<MyPostsMediaRow[]>()
-
-  if (error) {
-    throw error
-  }
-
-  return data ?? []
+  return rows
+    .filter((item) =>
+      item.media.processingStatus === "processing" ||
+      item.media.processingStatus === "ready"
+    )
+    .map(toMyPostsMediaRow)
 }
-
-
-
 
 export async function deletePostMediaRowsByIds({
   postId,
@@ -61,47 +80,81 @@ export async function deletePostMediaRowsByIds({
     return
   }
 
-  const { error } = await supabaseAdmin
-    .from("media")
-    .delete()
-    .eq("post_id", postId)
-    .in("id", mediaIds)
+  const assets = await findMediaAssetsByLegacyMediaIds(mediaIds)
+  const legacyMediaIdSet = new Set(
+    assets
+      .map((asset) => asset.legacy_media_id)
+      .filter((id): id is string => typeof id === "string")
+  )
 
-  if (error) {
-    throw error
+  const mediaAssetIds = [
+    ...assets.map((asset) => asset.id),
+    ...mediaIds.filter((mediaId) => !legacyMediaIdSet.has(mediaId)),
+  ]
+
+  for (const mediaId of Array.from(new Set(mediaAssetIds))) {
+    await deletePostMediaBinding({
+      postId,
+      mediaId,
+    })
   }
 }
 
 export async function findPostMediaModerationStatusesByPostId(
   postId: string
 ): Promise<PostMediaModerationStatusRow[]> {
-  const { data, error } = await supabaseAdmin
-    .from("media")
-    .select("moderation_status")
-    .eq("post_id", postId)
-    .returns<PostMediaModerationStatusRow[]>()
+  const rows = await listPostMedia({
+    postIds: [postId],
+    requireReadyAsset: false,
+  })
 
-  if (error) {
-    throw error
-  }
+  return Promise.all(
+    rows.map(async (item) => {
+      const decision = await getMediaModerationDecision({
+        mediaId: item.media.id,
+      })
 
-  return data ?? []
+      return {
+        moderation_status: decision.decision,
+      }
+    })
+  )
 }
 
 export async function findPostMediaRowsByPostId(
   postId: string
 ): Promise<PostMediaRow[]> {
-  const { data, error } = await supabaseAdmin
-    .from("media")
-    .select("id, post_id, type, storage_path, mime_type, sort_order, status")
-    .eq("post_id", postId)
-    .in("status", ["processing", "ready"])
-    .order("sort_order", { ascending: true })
-    .returns<PostMediaRow[]>()
+  const rows = await listPostMedia({
+    postIds: [postId],
+    requireReadyAsset: false,
+  })
 
-  if (error) {
-    throw error
-  }
+  return rows
+    .filter((item) =>
+      item.media.processingStatus === "processing" ||
+      item.media.processingStatus === "ready"
+    )
+    .map(toPostMediaRow)
+}
 
-  return data ?? []
+export async function findReadyPostMediaRowsByPostId(
+  postId: string
+): Promise<PostMediaRow[]> {
+  const rows = await listPostMedia({
+    postIds: [postId],
+    requireReadyAsset: true,
+  })
+
+  return rows.map(toPostMediaRow)
+}
+
+export async function findReadyPostMediaRowsByPostIds(
+  postIds: string[]
+): Promise<PostMediaRow[]> {
+  const rows = await listPostMedia({
+    postIds,
+    requireReadyAsset: true,
+  })
+
+  return rows.map(toPostMediaRow)
 }

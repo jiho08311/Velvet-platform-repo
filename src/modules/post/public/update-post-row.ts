@@ -2,10 +2,15 @@
 
 import {
   updatePost as updatePostInternal,
-} from "@/modules/post/server/update-post"
+} from "@/modules/post/runtime/update-post"
+
+export const PUBLIC_CONTRACT = true
+
+export type UpdatePostInput = Parameters<typeof updatePostInternal>[0]
+export type UpdatePostResult = Awaited<ReturnType<typeof updatePostInternal>>
 
 export function updatePost(
-  input: Parameters<typeof updatePostInternal>[0]
+  input: UpdatePostInput
 ): ReturnType<typeof updatePostInternal> {
   return updatePostInternal(input)
 }

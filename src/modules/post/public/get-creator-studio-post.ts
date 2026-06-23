@@ -1,12 +1,18 @@
 import {
   getCreatorStudioPost as getCreatorStudioPostInternal,
-  type CreatorStudioPostDetail,
-} from "@/modules/post/server/get-creator-studio-post"
+} from "@/modules/post/runtime/get-creator-studio-post"
 
-export type { CreatorStudioPostDetail }
+export const PUBLIC_CONTRACT = true
+
+export type CreatorStudioPostDetail = NonNullable<
+  Awaited<ReturnType<typeof getCreatorStudioPostInternal>>
+>
+export type GetCreatorStudioPostInput = Parameters<
+  typeof getCreatorStudioPostInternal
+>[0]
 
 export function getCreatorStudioPost(
-  params: Parameters<typeof getCreatorStudioPostInternal>[0]
+  params: GetCreatorStudioPostInput
 ): ReturnType<typeof getCreatorStudioPostInternal> {
   return getCreatorStudioPostInternal(params)
 }

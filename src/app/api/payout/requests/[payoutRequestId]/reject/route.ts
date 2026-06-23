@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireUser } from "@/modules/auth/server/require-user"
-import { rejectPayoutRequest } from "@/modules/payout/server/reject-payout-request"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { rejectPayoutRequest } from "@/modules/commerce/public/payout-contract"
 
 export async function POST(
   _request: NextRequest,
   context: { params: Promise<{ payoutRequestId: string }> }
 ) {
   try {
-    await requireUser()
+await requireSession()
 
     const { payoutRequestId } = await context.params
 

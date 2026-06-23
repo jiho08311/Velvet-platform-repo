@@ -1,3 +1,5 @@
 export {
   createFeedPostAction,
-} from "@/modules/post/server/create-feed-post-action"
+} from "@/modules/post/runtime/create-feed-post-action"
+
+// PUBLIC_CONTRACT

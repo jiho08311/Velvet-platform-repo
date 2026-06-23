@@ -1,6 +1,6 @@
 import { Card } from "@/shared/ui/Card"
-import { getAnalytics } from "@/modules/payment/server/get-analytics"
-import { AdminStatCard } from "@/modules/admin/ui/AdminStatCard"
+import { getAdminCommerceAnalytics } from "@/modules/commerce/public/commerce-analytics-contract"
+import { AdminStatCard } from "@/modules/admin/public/admin-ui"
 
 function formatMoney(amount: number) {
   return new Intl.NumberFormat("ko-KR", {
@@ -11,7 +11,7 @@ function formatMoney(amount: number) {
 }
 
 export default async function AdminAnalyticsPage() {
-  const analytics = await getAnalytics()
+const analytics = await getAdminCommerceAnalytics()
 
   return (
     <div className="space-y-6">

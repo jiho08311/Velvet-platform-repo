@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { markNotificationRead } from "@/modules/notification/server/mark-notification-read"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { markNotificationRead } from "@/modules/notification/public/mark-notification-read"
 
 type RequestBody = {
   notificationId?: string
@@ -9,7 +9,7 @@ type RequestBody = {
 
 export async function POST(request: Request) {
   try {
-    const user = await requireUser()
+    const session = await requireSession()
     const body = (await request.json()) as RequestBody
 
     if (!body.notificationId) {
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
     const notification = await markNotificationRead(
       body.notificationId,
-      user.id,
+      session.userId,
     )
 
     if (!notification) {

@@ -1,6 +1,8 @@
-import { createPostAuthoringMedia as createPostAuthoringMediaServer } from "@/modules/media/server/create-media"
+import { createPostAuthoringMedia as createPostAuthoringMediaServer } from "@/modules/media/runtime/create-media"
 import type { Media, MediaStatus } from "@/modules/media/types"
 import type { CreatePostAuthoringMediaRowInput } from "@/modules/post/types"
+
+export const PUBLIC_CONTRACT = true
 
 export type CreatePostAuthoringMediaInput = {
   postId: string

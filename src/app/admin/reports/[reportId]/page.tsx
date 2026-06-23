@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { getReportById } from "@/modules/report/server/get-report-by-id"
+import { getReportById } from "@/modules/report/public/get-report-by-id"
 import { Card } from "@/shared/ui/Card"
 import { StatusBadge } from "@/shared/ui/StatusBadge"
 

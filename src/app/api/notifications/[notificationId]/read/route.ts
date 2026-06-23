@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { markNotificationRead } from "@/modules/notification/server/mark-notification-read"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { markNotificationRead } from "@/modules/notification/public/mark-notification-read"
 
 type MarkNotificationReadRouteParams = {
   params: Promise<{
@@ -15,9 +15,9 @@ export async function POST(
 ) {
   try {
     const { notificationId } = await params
-    const user = await requireUser()
+    const session = await requireSession()
 
-    const notification = await markNotificationRead(notificationId, user.id)
+    const notification = await markNotificationRead(notificationId, session.userId)
 
     if (!notification) {
       return NextResponse.json(

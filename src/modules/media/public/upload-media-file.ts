@@ -1,4 +1,5 @@
 "use server"
+// PUBLIC_CONTRACT
 
 import { uploadMediaUseCase } from "@/modules/media/use-cases/upload-media"
 

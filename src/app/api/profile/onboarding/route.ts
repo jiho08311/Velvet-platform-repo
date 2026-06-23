@@ -1,15 +1,11 @@
 // src/app/api/profile/onboarding/route.ts
 import { NextResponse } from "next/server"
-import { createClient } from "@/infrastructure/supabase/server"
-import { updateOnboardingProfile } from "@/modules/profile/server/update-onboarding-profile"
+import { getCurrentUser } from "@/modules/auth/public/get-current-user"
+import { updateOnboardingProfile } from "@/modules/profile/public/update-onboarding-profile"
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getCurrentUser()
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

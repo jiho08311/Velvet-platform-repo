@@ -1,17 +1,20 @@
-import { requireActiveUser } from "@/modules/auth/server/require-active-user"
+import { requireActiveSession } from "@/modules/auth/public/require-active-session"
 import {
   assertPassVerified,
   getPassVerificationRedirectPath,
-} from "@/modules/auth/server/assert-pass-verified"
+} from "@/modules/auth/public/assert-pass-verified"
 import { redirect } from "next/navigation"
-import { searchCreators } from "@/modules/search/server/search-creators"
-import { SearchInfiniteList } from "@/modules/search/ui/SearchInfiniteList"
-import { getExplorePosts } from "@/modules/search/server/get-explore-posts"
-import { getExploreCreators } from "@/modules/search/server/get-explore-creators"
+import { searchCreators } from "@/modules/search/public/search-creators"
+import { getExplorePosts } from "@/modules/search/public/get-explore-posts"
+import { getExploreCreators } from "@/modules/search/public/get-explore-creators"
 
-import { ExplorePostGrid } from "@/modules/search/ui/ExplorePostGrid"
-import { ExploreCreatorGrid } from "@/modules/search/ui/ExploreCreatorGrid"
-import { SearchInput } from "@/modules/search/ui/SearchInput"
+import {
+  ExploreCreatorGrid,
+  ExplorePostGrid,
+  SearchInfiniteList,
+  SearchInput,
+} from "@/modules/search/public/search-page-ui"
+import { logger } from "@/shared/observability/structured-logger"
 import type {
   CreatorSearchConnection,
 } from "@/modules/search/creator-search-contract"
@@ -45,7 +48,11 @@ async function loadSearchResult(
       limit: 20,
     })
   } catch (error) {
-    console.error("[search/page] searchCreators failed:", error)
+    logger.error({
+      event: "search.page_creator_search_failed",
+      context: { hasQuery: true },
+      error,
+    })
     return EMPTY_SEARCH_RESULT
   }
 }
@@ -56,28 +63,31 @@ async function loadExploreData(): Promise<{
 }> {
   const [posts, creators] = await Promise.all([
     getExplorePosts(24).catch((error) => {
-      console.error("[search/page] getExplorePosts failed:", error)
+      logger.error({
+        event: "search.page_explore_posts_failed",
+        error,
+      })
       return EMPTY_EXPLORE_POSTS
     }),
     getExploreCreators(6).catch((error) => {
-      console.error("[search/page] getExploreCreators failed:", error)
+      logger.error({
+        event: "search.page_explore_creators_failed",
+        error,
+      })
       return EMPTY_EXPLORE_CREATORS
     }),
   ])
-
-  console.log("[search/page] explorePosts count:", posts.length)
-  console.log("[search/page] exploreCreators count:", creators.length)
 
   return { posts, creators }
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
-  const user = await requireActiveUser()
+  const session = await requireActiveSession()
   const { q = "" } = await searchParams
   const query = q.trim()
 
   try {
-    await assertPassVerified({ profileId: user.id })
+    await assertPassVerified({ profileId: session.userId })
   } catch {
     const nextSearchParams = new URLSearchParams()
 

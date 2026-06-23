@@ -1,15 +1,16 @@
 import OpenAI from "openai"
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import { createPost } from "@/modules/post/public/create-post"
 import { createPostAuthoringMedia } from "@/modules/media/public/create-post-authoring-media"
 import { updatePostStatus } from "@/modules/post/public/update-post-status"
-import { enqueueVideoModeration } from "@/modules/moderation/server/enqueue-video-moderation"
+import { requestVideoModeration } from "@/modules/governance/public/moderation-governance-contract"
 import { createPostBlocks } from "@/modules/post/public/create-post-blocks"
+import { withWorkflowCorrelation } from "@/shared/observability/propagate-correlation-id"
 import {
   extractCreatePostModerationFiles,
   projectCreatePostDraft,
   resolveCreatePostPersistenceFromProjection,
 } from "@/modules/post/public/create-post-draft-policy"
+import { readCreatorIdentityByCreatorId } from "@/modules/identity/public/creator-identity-read-model"
 
 import type {
   CreatePostDraftBlock,
@@ -54,8 +55,6 @@ async function checkTextSafety(text: string) {
     throw new Error("TEXT_BLOCKED")
   }
 }
-
-
 
 async function checkPostSafety({
   text,
@@ -121,17 +120,12 @@ export async function createPostWithMediaWorkflow({
 }) {
   const resolvedPrice = visibility === "paid" ? price : 0
 
-  const { data: creatorRow } = await supabaseAdmin
-    .from("creators")
-    .select("user_id")
-    .eq("id", creatorId)
-    .single()
+  const creator = await readCreatorIdentityByCreatorId(creatorId)
 
-  if (!creatorRow?.user_id) {
+  if (!creator?.userId) {
     throw new Error("Creator user not found")
   }
 
-  // ✅ draft → projection
   const projectedDraft = projectCreatePostDraft({ blocks })
 
   const resolvedContent = projectedDraft.content ?? content ?? null
@@ -157,13 +151,12 @@ export async function createPostWithMediaWorkflow({
     await applyInitialVideoModerationTransition(post.id)
   }
 
-  // ✅ media 생성
   const persistedMedia: CreatePostPersistedMediaMappingItem[] = []
 
   for (const mediaItem of projectedDraft.mediaToCreate) {
     const mediaRow = await createPostAuthoringMedia({
       postId: post.id,
-      ownerUserId: creatorRow.user_id,
+      ownerUserId: creator.userId,
       media: mediaItem,
     })
 
@@ -184,11 +177,17 @@ export async function createPostWithMediaWorkflow({
   const media = persistencePlan.resolvedMedia
 
   if (hasVideo) {
-    await enqueueVideoModeration({
+    const correlation = withWorkflowCorrelation(
+      undefined,
+      "create-post-with-media"
+    )
+
+    await requestVideoModeration({
       postId: post.id,
       publishIntent: status === "scheduled" ? "scheduled" : "published",
       publishedAt,
       media,
+      correlation,
     })
   } else {
     await moderatePostAndApplyTransition({

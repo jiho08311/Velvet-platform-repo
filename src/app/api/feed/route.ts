@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { getSession } from "@/modules/auth/server/get-session"
-import { getHomeFeed } from "@/modules/feed/server/get-home-feed"
+import { readSession } from "@/modules/auth/public/read-session"
+import { getHomeFeed } from "@/modules/feed/public/get-home-feed"
 
 export async function GET(request: Request) {
   try {
@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     const limitParam = searchParams.get("limit")
 
     const limit = limitParam ? Number(limitParam) : 10
-    const session = await getSession()
+    const session = await readSession()
 
     const feed = await getHomeFeed({
       viewerUserId: session?.userId ?? "",

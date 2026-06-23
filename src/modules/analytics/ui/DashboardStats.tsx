@@ -1,10 +1,10 @@
-import type { CreatorAnalyticsSummary } from "@/modules/analytics/server/build-creator-analytics-summary"
+import type { CreatorAnalyticsSummary } from "@/modules/analytics/mappers/build-creator-analytics-summary"
 import {
   formatCreatorAnalyticsSummaryMetricValue,
   getCreatorAnalyticsSummaryMetrics,
   type CreatorAnalyticsSummaryMetric,
   type CreatorAnalyticsSummaryMetricKey,
-} from "@/modules/analytics/lib/creator-analytics-summary-metrics"
+} from "@/modules/analytics/policies/creator-analytics-summary-metrics"
 
 type DashboardStatsProps = {
   summary: CreatorAnalyticsSummary

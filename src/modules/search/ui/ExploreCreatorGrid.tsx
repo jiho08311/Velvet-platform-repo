@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { buildCreatorRoutePath } from "@/modules/creator/lib/creator-identity"
+import { buildCreatorRoutePath } from "@/modules/creator/public/creator-identity"
 import type { DiscoveryCreatorLinkItem } from "../discovery-contract"
 
 type ExploreCreatorGridProps = {

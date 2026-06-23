@@ -1,0 +1,1 @@
+export { getCreatorPayoutHistory } from "../runtime/get-creator-payout-history"

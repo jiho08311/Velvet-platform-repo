@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/infrastructure/supabase/server"
+import { signOut } from "@/modules/auth/public/sign-out"
+
+export const routeAccess = "public"
 
 export async function POST() {
-  const supabase = await createClient()
-
-  await supabase.auth.signOut()
+  await signOut()
 
   return NextResponse.json({ success: true })
 }

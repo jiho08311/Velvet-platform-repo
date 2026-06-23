@@ -1,9 +1,10 @@
 import {
   canViewPost as canViewPostInternal,
-  type CanViewPostInput,
-} from "@/modules/post/server/can-view-post"
+} from "@/modules/post/policies/can-view-post"
 
-export type { CanViewPostInput }
+export const PUBLIC_CONTRACT = true
+
+export type CanViewPostInput = Parameters<typeof canViewPostInternal>[0]
 
 export function canViewPost(input: CanViewPostInput): boolean {
   return canViewPostInternal(input)

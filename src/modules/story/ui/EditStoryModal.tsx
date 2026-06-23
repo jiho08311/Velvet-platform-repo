@@ -4,8 +4,8 @@ import { useEffect, useRef, useState, useTransition } from "react"
 
 import type { Story, StoryEditorState } from "../types"
 import { uploadStoryMediaFile } from "@/modules/media/public/upload-story-media-file"
-import { updateStoryAction } from "../server/update-story-action"
-import { deleteStoryAction } from "../server/delete-story-action"
+import { updateStoryAction } from "../runtime/update-story-action"
+import { deleteStoryAction } from "../runtime/delete-story-action"
 
 type EditStoryModalProps = {
   open: boolean

@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { signUpWithAdultCheck } from "@/modules/auth/server/sign-up-with-adult-check";
+import { signUpWithAdultCheck } from "@/modules/auth/public/sign-up-with-adult-check";
+import { logger } from "@/shared/observability/structured-logger";
+
+export const routeAccess = "public";
 
 export async function POST(request: Request) {
   try {
@@ -43,7 +46,10 @@ export async function POST(request: Request) {
 
     return response;
   } catch (e) {
-    console.error("SIGN UP ERROR", e);
+    logger.error({
+      event: "auth.sign_up_route_failed",
+      error: e,
+    });
 
     const message = e instanceof Error ? e.message : "sign up failed";
 

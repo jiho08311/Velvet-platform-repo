@@ -1,1 +1,1 @@
-export { upsertSubscription } from "../server/upsert-subscription"
+export { upsertSubscription } from "../runtime/upsert-subscription"

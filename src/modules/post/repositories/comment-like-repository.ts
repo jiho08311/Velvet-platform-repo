@@ -13,10 +13,16 @@ export async function createCommentLike(input: {
 }) {
   const { error } = await supabaseAdmin
     .from("comment_likes")
-    .insert({
-      comment_id: input.commentId,
-      user_id: input.userId,
-    })
+    .upsert(
+      {
+        comment_id: input.commentId,
+        user_id: input.userId,
+      },
+      {
+        onConflict: "comment_id,user_id",
+        ignoreDuplicates: true,
+      }
+    )
 
   if (error) {
     throw error

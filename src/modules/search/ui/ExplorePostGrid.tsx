@@ -2,123 +2,24 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import {
-  ArrowLeftIcon,
-  HeartIcon as HeartOutline,
-  ChatBubbleOvalLeftIcon,
-  PaperAirplaneIcon,
-} from "@heroicons/react/24/outline"
-import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid"
-import { SearchExploreCommentsDrawer } from "./SearchExploreCommentsDrawer"
 import type { DiscoveryPostLinkItem } from "../discovery-contract"
 import {
   createPostLikeCompatibilityFields,
   readLikeInteractionResult,
-  readViewerHasLikedFromCompatibility,
 } from "@/shared/lib/like-interaction-result"
-import { buildCreatorMessageHref } from "@/modules/creator/lib/creator-identity"
+import { buildCreatorMessageHref } from "@/modules/creator/public/creator-identity"
+import { ExplorePostViewerOverlay } from "./ExplorePostViewerOverlay"
+import {
+  type ExplorePostViewerBlock,
+  readDiscoveryPostViewerHasLiked,
+} from "./explore-post-viewer-model"
+import {
+  ExplorePostGridEmptyState,
+  ExplorePostGridTile,
+} from "./ExplorePostGridTile"
 
 type ExplorePostGridProps = {
   posts: DiscoveryPostLinkItem[]
-}
-
-const mediaTileFrameClassName = "relative aspect-square overflow-hidden bg-zinc-950"
-const mediaTileContentClassName = "h-full w-full object-cover"
-const creatorOverlayClassName =
-  "pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-2"
-
-function readDiscoveryPostViewerHasLiked(post: DiscoveryPostLinkItem): boolean {
-  return readViewerHasLikedFromCompatibility({
-    viewerHasLiked: post.viewerHasLiked,
-    isLiked: post.isLiked,
-  })
-}
-
-type ViewerBlock =
-  | {
-      kind: "text"
-      id: string
-      content: string
-    }
-  | {
-      kind: "media"
-      id: string
-      items: Array<{
-        id: string
-        type: "image" | "video"
-        url: string
-      }>
-    }
-
-type ExplorePostGridEmptyStateProps = {
-  title: string
-  description: string
-}
-
-function ExplorePostGridEmptyState({
-  title,
-  description,
-}: ExplorePostGridEmptyStateProps) {
-  return (
-    <section className="flex flex-col items-center justify-center rounded-3xl bg-zinc-900 p-10 text-center">
-      <div className="text-4xl">🖼️</div>
-
-      <p className="mt-4 text-base font-semibold text-white">{title}</p>
-
-      <p className="mt-1 text-sm text-zinc-400">{description}</p>
-    </section>
-  )
-}
-
-type ExplorePostGridTileProps = {
-  post: DiscoveryPostLinkItem
-  onOpen: (post: DiscoveryPostLinkItem) => void
-}
-
-function ExplorePostGridTile({ post, onOpen }: ExplorePostGridTileProps) {
-  const creatorName = post.creatorDisplayName ?? post.creatorUsername
-
-  return (
-    <button
-      type="button"
-      onClick={() => onOpen(post)}
-      className="group block w-full cursor-pointer overflow-hidden bg-zinc-900 p-0 text-left"
-    >
-      <div className={mediaTileFrameClassName}>
-        {post.mediaType === "video" ? (
-          <video
-            src={post.imageUrl}
-            autoPlay
-            muted
-            loop
-            playsInline
-            className={mediaTileContentClassName}
-          />
-        ) : (
-          <img
-            src={post.imageUrl}
-            alt={creatorName}
-            className={`${mediaTileContentClassName} transition duration-300 group-hover:scale-[1.05]`}
-          />
-        )}
-
-        {post.mediaCount && post.mediaCount > 1 ? (
-          <div className="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
-            +{post.mediaCount - 1}
-          </div>
-        ) : null}
-
-        <div className={creatorOverlayClassName}>
-          <p className="truncate text-xs font-medium text-white">
-            {creatorName}
-          </p>
-          <p className="truncate text-[11px] text-zinc-300">
-            @{post.creatorUsername}
-          </p>
-        </div>
-      </div>
-    </button>
-  )
 }
 
 export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
@@ -165,8 +66,8 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
     return []
   }, [selected])
 
-  const viewerBlocks = useMemo<ViewerBlock[]>(() => {
-    const next: ViewerBlock[] = []
+  const viewerBlocks = useMemo<ExplorePostViewerBlock[]>(() => {
+    const next: ExplorePostViewerBlock[] = []
 
     for (const block of selectedBlocks) {
       if (block.type === "text") {
@@ -301,6 +202,21 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
     setIsCommentsOpen(false)
   }
 
+  function handleCloseViewer() {
+    setIsCommentsOpen(false)
+    setIsViewerVisible(false)
+    setTimeout(() => {
+      setSelected(null)
+    }, 180)
+  }
+
+  const selectedIsLiked = selected
+    ? likedPostIds[selected.postId] ?? readDiscoveryPostViewerHasLiked(selected)
+    : false
+  const selectedLikesCount = selected
+    ? likeCounts[selected.postId] ?? selected.likesCount
+    : 0
+
   return (
     <>
       <section className="grid grid-cols-2 gap-1 md:grid-cols-3">
@@ -314,146 +230,27 @@ export function ExplorePostGrid({ posts }: ExplorePostGridProps) {
       </section>
 
       {selected ? (
-        <div
-          className={`fixed inset-0 z-[70] bg-black transition duration-200 ${
-            isViewerVisible ? "bg-black/95" : "bg-black/0"
-          }`}
-        >
-          <button
-            type="button"
-            onClick={() => {
-              setIsCommentsOpen(false)
-              setIsViewerVisible(false)
-              setTimeout(() => {
-                setSelected(null)
-              }, 180)
-            }}
-            className={`absolute left-4 top-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur transition duration-200 ${
-              isViewerVisible
-                ? "translate-y-0 opacity-100"
-                : "-translate-y-2 opacity-0"
-            }`}
-          >
-            <ArrowLeftIcon className="h-7 w-7" />
-          </button>
-
-          <div
-            className={`h-full overflow-y-auto transition duration-300 ease-out ${
-              isViewerVisible
-                ? "translate-y-0 opacity-100"
-                : "translate-y-4 opacity-0"
-            }`}
-          >
-            <div className="mx-auto flex min-h-full max-w-3xl flex-col bg-black px-4 pb-5 pt-20">
-              <div className="space-y-4">
-                {viewerBlocks.map((block) => {
-                  if (block.kind === "text") {
-                    return (
-                      <p
-                        key={block.id}
-                        className="whitespace-pre-wrap text-sm leading-6 text-zinc-300"
-                      >
-                        {block.content}
-                      </p>
-                    )
-                  }
-
-                  const item = block.items[0]
-
-                  if (!item) {
-                    return null
-                  }
-
-                  return (
-                    <div
-                      key={block.id}
-                      className="overflow-hidden rounded-2xl bg-zinc-950"
-                    >
-                      {item.type === "video" ? (
-                        <video
-                          src={item.url}
-                          controls
-                          playsInline
-                          className="w-full"
-                        />
-                      ) : (
-                        <img
-                          src={item.url}
-                          alt={
-                            selected.creatorDisplayName ??
-                            selected.creatorUsername
-                          }
-                          className="w-full object-cover"
-                        />
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-
-              <div className="mt-6 border-t border-zinc-800 pt-4">
-                <div className="flex items-center gap-4 text-zinc-200">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleLike(selected.postId, selected.likesCount)
-                    }
-                    disabled={isLikeLoading}
-                    className="flex items-center gap-1.5"
-                  >
-                    {(likedPostIds[selected.postId] ??
-                      readDiscoveryPostViewerHasLiked(selected)) ? (
-                      <HeartSolid className="h-6 w-6 text-pink-500" />
-                    ) : (
-                      <HeartOutline className="h-6 w-6 stroke-[2.2]" />
-                    )}
-                    <span className="text-sm font-semibold">
-                      {likeCounts[selected.postId] ?? selected.likesCount}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsCommentsOpen(true)}
-                    className="flex items-center gap-1.5"
-                  >
-                    <ChatBubbleOvalLeftIcon className="h-6 w-6 stroke-[2.2]" />
-                    <span className="text-sm font-semibold">
-                      {selected.commentsCount}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      router.push(
-                        buildCreatorMessageHref({
-                          creatorUserId: selected.creatorUserId,
-                        })
-                      )
-                    }
-                    className="flex items-center gap-1.5"
-                  >
-                    <PaperAirplaneIcon className="h-6 w-6 stroke-[2.2]" />
-                  </button>
-                </div>
-
-                <div className="mt-4">
-                  <p className="text-sm font-semibold text-white">
-                    {selected.creatorDisplayName ?? selected.creatorUsername}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <SearchExploreCommentsDrawer
-            postId={selected.postId}
-            isOpen={isCommentsOpen}
-            onClose={() => setIsCommentsOpen(false)}
-            onCommentCreated={handleCommentCreated}
-          />
-        </div>
+        <ExplorePostViewerOverlay
+          selected={selected}
+          viewerBlocks={viewerBlocks}
+          isViewerVisible={isViewerVisible}
+          isLiked={selectedIsLiked}
+          likesCount={selectedLikesCount}
+          isLikeLoading={isLikeLoading}
+          isCommentsOpen={isCommentsOpen}
+          onClose={handleCloseViewer}
+          onLike={() => handleLike(selected.postId, selected.likesCount)}
+          onOpenComments={() => setIsCommentsOpen(true)}
+          onMessage={() =>
+            router.push(
+              buildCreatorMessageHref({
+                creatorUserId: selected.creatorUserId,
+              })
+            )
+          }
+          onCommentsClose={() => setIsCommentsOpen(false)}
+          onCommentCreated={handleCommentCreated}
+        />
       ) : null}
     </>
   )

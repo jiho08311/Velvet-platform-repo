@@ -1,4 +1,4 @@
-import { isCreatorOwner } from "@/modules/creator/lib/creator-identity"
+import { isCreatorOwner } from "@/modules/creator/public/creator-identity"
 
 export type CanViewPostInput = {
   visibility: "public" | "subscribers" | "paid"

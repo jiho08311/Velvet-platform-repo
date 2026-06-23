@@ -4,9 +4,30 @@ export type MediaStoragePurpose =
   | "story"
   | "feed-composer"
 
+export type MediaStoragePathLineageStatus =
+  | "explicit_in_path"
+  | "runtime_only"
+
+export type MediaStoragePathLineage = {
+  uploaderUserId: string
+  purpose: MediaStoragePurpose
+  storagePath: string
+  status: MediaStoragePathLineageStatus
+}
+
 function getFileExtension(fileName: string): string {
   const segments = fileName.split(".")
   return segments.length > 1 ? segments[segments.length - 1].toLowerCase() : ""
+}
+
+export function resolveMediaStoragePathLineageStatus(
+  purpose: MediaStoragePurpose
+): MediaStoragePathLineageStatus {
+  if (purpose === "message" || purpose === "post") {
+    return "explicit_in_path"
+  }
+
+  return "runtime_only"
 }
 
 export function buildMediaStoragePath(
@@ -32,4 +53,23 @@ export function buildMediaStoragePath(
   }
 
   return `creator/${uploaderUserId}/posts/${now}-${random}${safeExtension}`
+}
+
+export function buildMediaStoragePathLineage({
+  uploaderUserId,
+  file,
+  purpose,
+}: {
+  uploaderUserId: string
+  file: File
+  purpose: MediaStoragePurpose
+}): MediaStoragePathLineage {
+  const storagePath = buildMediaStoragePath(uploaderUserId, file, purpose)
+
+  return {
+    uploaderUserId,
+    purpose,
+    storagePath,
+    status: resolveMediaStoragePathLineageStatus(purpose),
+  }
 }

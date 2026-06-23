@@ -1,6 +1,6 @@
 import { Suspense } from "react"
-import { getPaymentResultPageState } from "@/modules/payment/server/payment-result-state"
-import { PaymentSuccessContent } from "@/modules/payment/ui/payment-success-content"
+import { getPaymentResultPageState } from "@/modules/payment/public/payment-result-state"
+import { PaymentSuccessContent } from "@/modules/payment/public/payment-ui"
 
 export default function PaymentSuccessPage() {
   const resultState = getPaymentResultPageState("success")

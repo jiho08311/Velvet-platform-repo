@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { logger } from "@/shared/observability/structured-logger";
+
+export const routeAccess = "public";
 
 export async function POST(request: Request) {
   try {
@@ -38,7 +41,10 @@ export async function POST(request: Request) {
 
     return response;
   } catch (error) {
-    console.error("SIGN IN ERROR", error);
+    logger.error({
+      event: "auth.sign_in_route_failed",
+      error,
+    });
 
     return NextResponse.json({ error: "login failed" }, { status: 500 });
   }

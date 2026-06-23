@@ -2,10 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import {
-  rejectPayoutRequestAction,
-  type RejectPayoutRequestActionState,
-} from "../server/reject-payout-request-action";
+import { rejectPayoutRequestAction } from "../public/reject-payout-request-action";
 import { getPayoutActionButtonClassName } from "./payoutActionButtonClassName";
 
 type PayoutRequestRejectButtonProps = {
@@ -13,9 +10,9 @@ type PayoutRequestRejectButtonProps = {
   disabled?: boolean;
 };
 
-const initialState: RejectPayoutRequestActionState = {
+const initialState = {
   error: null,
-};
+} satisfies { error: string | null };
 
 function SubmitButton({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus();

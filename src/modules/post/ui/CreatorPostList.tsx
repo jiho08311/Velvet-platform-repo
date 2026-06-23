@@ -1,5 +1,5 @@
 import { EmptyState } from "@/shared/ui/EmptyState"
-import { CREATOR_SURFACE_EMPTY_STATE } from "@/modules/creator/ui/creator-surface-policy"
+import { CREATOR_SURFACE_EMPTY_STATE } from "@/modules/creator/public/creator-surface-ui"
 import { PostCard } from "./PostCard"
 import type { PostCardCreator } from "./PostCard"
 import type { PostCommerceState, PostRenderInput } from "../types"

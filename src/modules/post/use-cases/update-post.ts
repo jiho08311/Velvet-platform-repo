@@ -4,24 +4,29 @@ import { updatePost } from "@/modules/post/public/update-post-row"
 import { updatePostStatus } from "@/modules/post/public/update-post-status"
 import { createMedia } from "@/modules/media/public/create-media"
 import { uploadMediaFile as uploadMedia } from "@/modules/media/public/upload-media-file"
-import { enqueueVideoModeration } from "@/modules/moderation/server/enqueue-video-moderation"
-import { applyVideoModerationOutcome } from "@/modules/moderation/server/apply-video-moderation-outcome"
+import {
+  applyModerationOutcomeToPost,
+  requestVideoModeration,
+} from "@/modules/governance/public/moderation-governance-contract"
 import { resolvePostMutationModerationOutcome } from "@/modules/post/services/post-mutation-moderation-service"
 import {
   deletePostMediaRowsByIds,
   findPostMediaModerationStatusesByPostId,
-} from "@/modules/post/repositories/post-media-repository"
-import {
-  deletePostBlocksByPostId,
-  insertPostBlocks,
-} from "@/modules/post/repositories/post-block-repository"
+} from "@/modules/media/public/get-post-media-bindings"
+import { replaceCanonicalPostBlocksForPost } from "@/modules/post/repositories/post-canonical-write-repository"
 import type { EditPostPlan } from "@/modules/post/services/post-edit-service"
+import type { Media } from "@/modules/media/types"
+
+type EditablePostSnapshot = {
+  visibility: "public" | "subscribers" | "paid"
+  price?: number | null
+}
 
 export async function executeUpdatePostUseCase(params: {
   postId: string
   creatorId: string
   userId: string
-  currentPost: any
+  currentPost: EditablePostSnapshot
   plan: EditPostPlan
 }) {
   const {
@@ -43,7 +48,7 @@ export async function executeUpdatePostUseCase(params: {
     visibility: params.currentPost.visibility,
     price:
       params.currentPost.visibility === "paid"
-        ? params.currentPost.price
+        ? params.currentPost.price ?? 0
         : 0,
   })
 
@@ -54,7 +59,7 @@ export async function executeUpdatePostUseCase(params: {
     })
   }
 
-  const createdMedia: any[] = []
+  const createdMedia: Media[] = []
 
   if (hasNewMedia) {
     for (const file of validFiles) {
@@ -86,7 +91,7 @@ export async function executeUpdatePostUseCase(params: {
   }
 
   if (hasNewMedia && createdMedia.length > 0) {
-    await enqueueVideoModeration({
+    await requestVideoModeration({
       postId: params.postId,
       publishIntent,
       media: createdMedia,
@@ -100,24 +105,21 @@ export async function executeUpdatePostUseCase(params: {
       statuses: data.map((i) => i.moderation_status),
     })
 
-    await applyVideoModerationOutcome({
+    await applyModerationOutcomeToPost({
       postId: params.postId,
       outcome,
     })
   }
 
-  await deletePostBlocksByPostId(params.postId)
-
-  if (persistedBlocks.length > 0) {
-    await insertPostBlocks(
-      persistedBlocks.map((b) => ({
-        post_id: params.postId,
-        type: b.type,
-        content: b.content ?? null,
-        media_id: b.mediaId ?? null,
-        sort_order: b.sortOrder,
-        editor_state: b.editorState ?? null,
-      }))
-    )
-  }
+  await replaceCanonicalPostBlocksForPost({
+    postId: params.postId,
+    blocks: persistedBlocks.map((block) => ({
+      post_id: params.postId,
+      type: block.type,
+      content: block.content ?? null,
+      media_id: block.mediaId ?? null,
+      sort_order: block.sortOrder,
+      editor_state: block.editorState ?? null,
+    })),
+  })
 }

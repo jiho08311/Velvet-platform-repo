@@ -1,3 +1,6 @@
+import type { MessageSentEventContract } from "@/modules/message/contracts/message-event-contracts"
+
+
 export type MessageId = string
 export type MessageUserId = string
 
@@ -78,18 +81,15 @@ export type SendMessageResult = {
   message: ConversationMessageItem
 }
 
-export type MessageSentEvent = {
-  type: "message.sent"
-  messageId: string
-  conversationId: string
-  senderId: string
-  recipientUserId: string
-}
+export type MessageSentEvent = MessageSentEventContract
 
 export type SendMessageOutput = {
   message: ConversationMessageItem
   messageSentEvent: MessageSentEvent
 }
+
+
+
 
 type ConversationMessageRowInput = {
   id: string
@@ -291,7 +291,7 @@ export type ConversationSummary = {
    * Do not use this for rendering the visible timestamp.
    */
   lastMessageAt: string | null
-
+unreadCount: number
   participant: ConversationParticipantIdentity | null
 
   /**

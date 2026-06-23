@@ -1,8 +1,8 @@
 import Link from "next/link"
 
-import { getPaymentResultPageState } from "@/modules/payment/server/payment-result-state"
+import { getPaymentResultPageState } from "@/modules/payment/public/payment-result-state"
 import { Card } from "@/shared/ui/Card"
-import { PaymentStateNotice } from "@/modules/payment/ui/PaymentStateNotice"
+import { PaymentStateNotice } from "@/modules/payment/public/payment-ui"
 export default function PaymentCancelPage() {
   const resultState = getPaymentResultPageState("canceled")
 

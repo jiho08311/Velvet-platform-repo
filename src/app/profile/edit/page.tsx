@@ -2,15 +2,16 @@
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 
-import { getSession } from "@/modules/auth/server/get-session"
+import { readSession } from "@/modules/auth/public/read-session"
 import {
   buildPathWithNext,
   SIGN_IN_PATH,
-} from "@/modules/auth/lib/redirect-handoff"
-import { getProfileByUserId } from "@/modules/profile/server/get-profile-by-user-id"
-import { updateProfile } from "@/modules/profile/server/update-profile"
-import { createClient } from "@/infrastructure/supabase/server"
-import { EditProfileForm } from "@/modules/profile/ui/EditProfileForm"
+} from "@/modules/auth/utils/redirect-handoff"
+import { getProfileByUserId } from "@/modules/profile/public/get-profile-by-user-id"
+import { updateProfile } from "@/modules/profile/public/update-profile"
+import { uploadProfileAvatar } from "@/modules/profile/public/upload-profile-avatar"
+import { EditProfileForm } from "@/modules/profile/public/profile-ui"
+import { logger } from "@/shared/observability/structured-logger"
 
 type ProfileEditFormData = {
   displayName: string
@@ -18,25 +19,7 @@ type ProfileEditFormData = {
   avatarUrl: string | null
 }
 
-function getSessionUserId(session: unknown) {
-  if (!session || typeof session !== "object") return null
 
-  if ("userId" in session && typeof session.userId === "string") {
-    return session.userId
-  }
-
-  if (
-    "user" in session &&
-    session.user &&
-    typeof session.user === "object" &&
-    "id" in session.user &&
-    typeof session.user.id === "string"
-  ) {
-    return session.user.id
-  }
-
-  return null
-}
 
 function getStringValue(record: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
@@ -65,17 +48,9 @@ function normalizeProfileData(profileData: unknown): ProfileEditFormData {
   }
 }
 
-function sanitizeFileName(fileName: string) {
-  const extension = fileName.includes(".")
-    ? fileName.split(".").pop()?.toLowerCase() ?? "png"
-    : "png"
-
-  return `avatar.${extension.replace(/[^a-z0-9]/g, "") || "png"}`
-}
-
 export default async function ProfileEditPage() {
   const nextPath = "/profile/edit"
-  const session = await getSession()
+  const session = await readSession()
   if (!session) {
     redirect(
       buildPathWithNext({
@@ -85,7 +60,7 @@ export default async function ProfileEditPage() {
     )
   }
 
-  const userId = getSessionUserId(session)
+  const userId = session?.userId ?? null
   if (!userId) {
     redirect(
       buildPathWithNext({
@@ -101,8 +76,8 @@ export default async function ProfileEditPage() {
   async function updateProfileAction(formData: FormData) {
     "use server"
 
-    const session = await getSession()
-    const userId = getSessionUserId(session)
+    const session = await readSession()
+    const userId = session?.userId ?? null
     if (!userId) {
       redirect(
         buildPathWithNext({
@@ -112,8 +87,6 @@ export default async function ProfileEditPage() {
       )
     }
 
-    const supabase = await createClient()
-
     const displayName = String(formData.get("displayName") || "").trim()
     const bio = String(formData.get("bio") || "").trim()
     const file = formData.get("avatar") as File | null
@@ -122,20 +95,7 @@ export default async function ProfileEditPage() {
 
     try {
       if (file && file.size > 0) {
-        const safeFileName = sanitizeFileName(file.name)
-        const filePath = `${userId}/${Date.now()}-${safeFileName}`
-
-        const { error: uploadError } = await supabase.storage
-          .from("avatars")
-          .upload(filePath, file, { upsert: true })
-
-        if (uploadError) {
-          console.error("PROFILE AVATAR UPLOAD ERROR:", uploadError)
-          redirect("/profile/edit?error=profile_update_failed")
-        }
-
-        const { data } = supabase.storage.from("avatars").getPublicUrl(filePath)
-        avatarUrl = data.publicUrl
+        avatarUrl = await uploadProfileAvatar({ userId, file })
       }
 
       await updateProfile({
@@ -145,7 +105,11 @@ export default async function ProfileEditPage() {
         avatarUrl,
       })
     } catch (error) {
-      console.error("PROFILE UPDATE ACTION ERROR:", error)
+      logger.error({
+        event: "profile.edit_action_failed",
+        context: { userId },
+        error,
+      })
       redirect("/profile/edit?error=profile_update_failed")
     }
 

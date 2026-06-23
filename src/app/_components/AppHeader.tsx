@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useMemo, useState } from "react"
 import { usePathname } from "next/navigation"
-import { SignOutButton } from "@/modules/auth/ui/SignOutButton"
+import { SignOutButton } from "@/modules/auth/public/auth-ui"
 
 type AppHeaderProps = {
   title?: string

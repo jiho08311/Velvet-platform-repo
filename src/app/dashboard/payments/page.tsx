@@ -1,6 +1,6 @@
-import { getDashboardPaymentsReadModel } from "@/modules/analytics/server/get-dashboard-payments-read-model"
-import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
-import { readCreatorOperationalReadiness } from "@/modules/creator/server/read-creator-operational-readiness"
+import { getDashboardPaymentsReadModel } from "@/modules/analytics/public/get-dashboard-payments-read-model"
+import { requireCreatorReadyUser } from "@/modules/creator/public/require-creator-ready-user"
+import { readCreatorOperationalReadiness } from "@/modules/creator/public/read-creator-operational-readiness"
 
 import { Card } from "@/shared/ui/Card"
 import { EmptyState } from "@/shared/ui/EmptyState"

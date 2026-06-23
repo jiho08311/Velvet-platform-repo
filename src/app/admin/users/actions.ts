@@ -1,8 +1,8 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { toggleUserStatus } from "@/modules/admin/server/toggle-user-status"
-import { toggleUserBan } from "@/modules/admin/server/toggle-user-ban"
+import { toggleUserStatus } from "@/modules/admin/public/toggle-user-status"
+import { toggleUserBan } from "@/modules/admin/public/toggle-user-ban"
 
 export async function toggleUserStatusAction(formData: FormData) {
   const userId = String(formData.get("userId"))

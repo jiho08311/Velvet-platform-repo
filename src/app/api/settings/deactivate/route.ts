@@ -2,13 +2,13 @@ import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { createServerClient } from "@supabase/ssr"
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { deactivateAccount } from "@/modules/user/server/deactivate-account"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { deactivateAccount } from "@/modules/user/public/deactivate-account"
 
 export async function POST(request: Request) {
-  const user = await requireUser()
+  const session = await requireSession()
 
-  await deactivateAccount(user.id)
+  await deactivateAccount(session.userId)
 
   const cookieStore = await cookies()
   const response = NextResponse.redirect(new URL("/sign-in", request.url), {

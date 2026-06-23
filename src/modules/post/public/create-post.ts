@@ -1,9 +1,14 @@
 import {
   createPost as createPostInternal,
-} from "@/modules/post/server/create-post"
+} from "@/modules/post/runtime/create-post"
+
+export const PUBLIC_CONTRACT = true
+
+export type CreatePostInput = Parameters<typeof createPostInternal>[0]
+export type CreatePostResult = Awaited<ReturnType<typeof createPostInternal>>
 
 export function createPost(
-  input: Parameters<typeof createPostInternal>[0]
+  input: CreatePostInput
 ): ReturnType<typeof createPostInternal> {
   return createPostInternal(input)
 }

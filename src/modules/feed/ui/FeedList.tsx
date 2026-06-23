@@ -1,7 +1,7 @@
 import { FeedEmptyState } from "./FeedEmptyState"
 import { UpcomingCard } from "@/modules/feed/ui/UpcomingCard"
-import { PostCard } from "@/modules/post/ui/PostCard"
-import type { PostCardSurfaceProps } from "@/modules/post/ui/PostCard"
+import { PostCard } from "@/modules/post/public/post-card-ui"
+import type { PostCardSurfaceProps } from "@/modules/post/public/post-card-ui"
 import {
   FEED_LIST_EMPTY_STATE,
   FEED_UPCOMING_STATE,

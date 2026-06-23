@@ -4,9 +4,30 @@ import { useState } from "react"
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk"
 import { Button } from "@/shared/ui/Button"
 import { resolvePurchaseCTA } from "@/shared/ui/cta-state"
+import { clientLogger } from "@/shared/observability/client-logger"
 
 const PURCHASE_ERROR_MESSAGE = "콘텐츠 이용 처리에 실패했습니다"
 const INVALID_PRICE_ERROR_MESSAGE = "콘텐츠 가격이 올바르지 않습니다"
+
+type TossPaymentRequest = {
+  method: "CARD"
+  amount: {
+    currency: "KRW"
+    value: number
+  }
+  orderId: string
+  orderName: string
+  successUrl: string
+  failUrl: string
+}
+
+type TossPaymentInstance = {
+  requestPayment(input: TossPaymentRequest): Promise<void>
+}
+
+type TossPaymentsClient = {
+  payment(input: { customerKey: string }): TossPaymentInstance
+}
 
 const purchaseErrorMessages: Record<string, string> = {
   POST_ALREADY_PURCHASED: "이미 이용한 콘텐츠입니다",
@@ -97,7 +118,7 @@ export default function PostPurchaseButton({
         return
       }
 
-      const tossPayments = (await loadTossPayments(clientKey)) as any
+      const tossPayments = (await loadTossPayments(clientKey)) as TossPaymentsClient
 
       const paymentInstance = tossPayments.payment({
         customerKey: payment.id,
@@ -115,7 +136,11 @@ export default function PostPurchaseButton({
         failUrl: `${window.location.origin}/payment/fail`,
       })
     } catch (error) {
-      console.error("post purchase error:", error)
+      clientLogger.error({
+        event: "post.purchase_flow_failed",
+        context: { postId, creatorUsername },
+        error,
+      })
       setError(PURCHASE_ERROR_MESSAGE)
     } finally {
       setLoading(false)

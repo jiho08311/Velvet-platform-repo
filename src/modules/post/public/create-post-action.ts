@@ -1,1 +1,1 @@
-export { createPostAction } from "../server/create-post-action"
+export { createPostAction } from "../runtime/create-post-action"

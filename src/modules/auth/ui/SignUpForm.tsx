@@ -7,7 +7,7 @@ import {
   buildPathWithNext,
   resolveRedirectTarget,
   VERIFY_PASS_PATH,
-} from "@/modules/auth/lib/redirect-handoff";
+} from "@/modules/auth/utils/redirect-handoff";
 import {
   AuthFormInput,
   AuthFormNotice,

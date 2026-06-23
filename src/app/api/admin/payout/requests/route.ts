@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server"
-import { requireUser } from "@/modules/auth/server/require-user"
-import { listAllPayoutRequests } from "@/modules/payout/server/list-all-payout-requests"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { listAdminPayoutRequests } from "@/modules/commerce/public/payout-contract"
 
 export async function GET() {
   try {
-    await requireUser()
+    await requireSession()
 
-    const payoutRequests = await listAllPayoutRequests()
+    const payoutRequests = await listAdminPayoutRequests()
 
     return NextResponse.json(
       { payoutRequests },

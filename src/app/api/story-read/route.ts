@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
-import { cookies } from "next/headers"
-import { createServerClient } from "@supabase/ssr"
-import { markStoryReadState } from "@/modules/story/server/story-read-state"
+import { getCurrentUser } from "@/modules/auth/public/get-current-user"
+import { markStoryReadState } from "@/modules/story/public/story-read-state"
 import type {
   StoryReadStateApiRequest,
   StoryReadStateApiResponse,
@@ -32,25 +31,7 @@ export async function POST(req: Request) {
     )
   }
 
-  const cookieStore = await cookies()
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name) {
-          return cookieStore.get(name)?.value
-        },
-        set() {},
-        remove() {},
-      },
-    }
-  )
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
 
   if (!user) {
     return NextResponse.json<StoryReadStateApiResponse>(

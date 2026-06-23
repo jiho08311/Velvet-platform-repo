@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { getCreatorByUserId } from "@/modules/creator/public/get-creator-by-user-id"
 import { deletePost } from "@/modules/post/public/delete-post"
 
 type DeletePostRouteParams = {
@@ -17,8 +17,8 @@ export async function POST(
   try {
     const { postId } = await params
 
-    const user = await requireUser()
-    const creator = await getCreatorByUserId(user.id)
+    const session = await requireSession()
+    const creator = await getCreatorByUserId(session.userId)
 
     if (!creator) {
       return NextResponse.json(

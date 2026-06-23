@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { becomeCreatorAction } from "./actions";
-import { resolveRedirectTarget } from "@/modules/auth/lib/redirect-handoff";
-import { requireOnboardingReadyUser } from "@/modules/auth/server/require-onboarding-ready-user";
-import { readCreatorReadiness } from "@/modules/creator/server/read-creator-readiness";
+import { resolveRedirectTarget } from "@/modules/auth/utils/redirect-handoff";
+import { requireOnboardingReadyUser } from "@/modules/auth/public/require-onboarding-ready-user";
+import { readCreatorReadiness } from "@/modules/creator/public/read-creator-readiness"
 
 type BecomeCreatorPageProps = {
   searchParams: Promise<{

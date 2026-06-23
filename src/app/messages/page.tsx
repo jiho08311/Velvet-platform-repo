@@ -3,28 +3,27 @@ import { Card } from "@/shared/ui/Card"
 import {
   assertPassVerified,
   getPassVerificationRedirectPath,
-} from "@/modules/auth/server/assert-pass-verified"
+} from "@/modules/auth/public/assert-pass-verified"
 import {
   buildPathWithNext,
   ONBOARDING_PATH,
   SIGN_IN_PATH,
-} from "@/modules/auth/lib/redirect-handoff"
-import { requireActiveUser } from "@/modules/auth/server/require-active-user"
-import { listConversations } from "@/modules/message/server/list-conversations"
-import { ConversationList } from "@/modules/message/ui/ConversationList"
-import { getOrCreateConversation } from "@/modules/message/server/get-or-create-conversation"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+} from "@/modules/auth/utils/redirect-handoff"
+import {
+  requireActiveSession,
+  type ActiveSessionContext,
+} from "@/modules/auth/public/require-active-session"
+import { listConversations } from "@/modules/message/public/list-conversations"
+import { ConversationList } from "@/modules/message/public/message-ui"
+import { getOrCreateConversation } from "@/modules/message/public/get-or-create-conversation"
+import { getCreatorByUserId } from "@/modules/creator/public/get-creator-by-user-id"
+import { readOnboardingReadinessRuntime } from "@/modules/identity/public/onboarding-readiness"
 
 type MessagesPageProps = {
   searchParams: Promise<{
     creatorId?: string
     userId?: string
   }>
-}
-
-type ProfileRow = {
-  username: string | null
 }
 
 export default async function MessagesPage({
@@ -34,6 +33,7 @@ export default async function MessagesPage({
     creatorId: legacyCreatorMessageTargetUserId,
     userId,
   } = await searchParams
+
   const nextSearchParams = new URLSearchParams()
 
   if (legacyCreatorMessageTargetUserId) {
@@ -46,10 +46,11 @@ export default async function MessagesPage({
 
   const nextQuery = nextSearchParams.toString()
   const nextPath = nextQuery ? `/messages?${nextQuery}` : "/messages"
-  let user: Awaited<ReturnType<typeof requireActiveUser>>
+
+  let session: ActiveSessionContext
 
   try {
-    user = await requireActiveUser()
+    session = await requireActiveSession()
   } catch {
     redirect(
       buildPathWithNext({
@@ -60,7 +61,7 @@ export default async function MessagesPage({
   }
 
   try {
-    await assertPassVerified({ profileId: user.id })
+    await assertPassVerified({ profileId: session.userId })
   } catch {
     redirect(
       getPassVerificationRedirectPath({
@@ -69,17 +70,11 @@ export default async function MessagesPage({
     )
   }
 
-  const { data: profile, error: profileError } = await supabaseAdmin
-    .from("profiles")
-    .select("username")
-    .eq("id", user.id)
-    .maybeSingle<ProfileRow>()
+  const onboarding = await readOnboardingReadinessRuntime({
+    userId: session.userId,
+  })
 
-  if (profileError) {
-    throw profileError
-  }
-
-  if (!profile?.username) {
+  if (!onboarding.ok) {
     redirect(
       buildPathWithNext({
         path: ONBOARDING_PATH,
@@ -90,7 +85,7 @@ export default async function MessagesPage({
 
   if (userId) {
     const conversation = await getOrCreateConversation({
-      userAId: user.id,
+      userAId: session.userId,
       userBId: userId,
     })
 
@@ -102,7 +97,7 @@ export default async function MessagesPage({
 
     if (creator) {
       const conversation = await getOrCreateConversation({
-        userAId: user.id,
+        userAId: session.userId,
         userBId: creator.userId,
       })
 
@@ -111,8 +106,9 @@ export default async function MessagesPage({
   }
 
   const conversations = await listConversations({
-    userId: user.id,
+    userId: session.userId,
   })
+
   const visibleConversations = conversations.filter(
     (
       conversation

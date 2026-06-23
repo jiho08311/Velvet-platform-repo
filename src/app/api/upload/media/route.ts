@@ -1,8 +1,10 @@
 export const runtime = "nodejs"
 
 import { NextResponse } from "next/server"
+import { requireSession } from "@/modules/auth/public/require-session"
 
 export async function POST(req: Request) {
+  await requireSession()
   const contentType = req.headers.get("content-type") || ""
 
   if (!contentType.includes("multipart/form-data")) {

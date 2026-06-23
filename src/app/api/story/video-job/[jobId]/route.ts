@@ -1,6 +1,5 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
+import { getCurrentUser } from "@/modules/auth/public/get-current-user"
 import { getStoryVideoJobForUser } from "@/modules/media/public/story-video-job"
 
 type Context = {
@@ -11,29 +10,11 @@ type Context = {
 
 export async function GET(_request: Request, context: Context) {
   try {
-    const cookieStore = await cookies()
     const { jobId } = await context.params
 
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set() {},
-          remove() {},
-        },
-      }
-    )
+    const user = await getCurrentUser()
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

@@ -25,16 +25,9 @@ export function ConversationList({
       ) : (
         <div className="divide-y divide-white/10">
           {conversations.map((conversation) => {
-            /**
-             * Conversation list preview only.
-             *
-             * This UI renders participant identity, preview content, and display
-             * timestamp. It does not render unread badge/count and does not derive
-             * summary unread-state from message readAt.
-             */
-
             const displayTimestamp =
               conversation.lastMessage?.createdAt ?? conversation.updatedAt
+            const unreadCount = conversation.unreadCount ?? 0
 
             return (
               <Link
@@ -67,9 +60,18 @@ export function ConversationList({
                     <p className="truncate text-sm font-medium text-white">
                       {conversation.participant?.displayName ?? "Unknown user"}
                     </p>
-                    <span className="shrink-0 text-xs text-white/45">
-                      {displayTimestamp}
-                    </span>
+
+                    <div className="flex shrink-0 items-center gap-2">
+                      {unreadCount > 0 ? (
+                        <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[#C2185B] px-1.5 py-0.5 text-xs font-semibold text-white">
+                          {unreadCount}
+                        </span>
+                      ) : null}
+
+                      <span className="text-xs text-white/45">
+                        {displayTimestamp}
+                      </span>
+                    </div>
                   </div>
 
                   <p className="mt-1 truncate text-sm text-white/60">

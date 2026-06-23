@@ -1,5 +1,7 @@
-import { FeedListSkeleton } from "@/modules/feed/ui/FeedListSkeleton"
-import { FeedComposer } from "@/modules/feed/ui/FeedComposer"
+import {
+  FeedComposer,
+  FeedListSkeleton,
+} from "@/modules/feed/public/feed-page-ui"
 
 export default function FeedLoading() {
   return (

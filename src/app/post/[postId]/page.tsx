@@ -1,12 +1,14 @@
 import Link from "next/link"
-import { PostCard } from "@/modules/post/ui/PostCard"
-import { LockedPostCard } from "@/modules/post/ui/LockedPostCard"
-import { getCurrentUser } from "@/modules/auth/server/get-current-user"
-import { isCreatorOwner } from "@/modules/creator/lib/creator-identity"
-import SubscribeButton from "@/modules/creator/ui/SubscribeButton"
+import {
+  LockedPostCard,
+  PostCard,
+  PostPurchaseButton,
+} from "@/modules/post/public/post-detail-ui"
+import { getCurrentUser } from "@/modules/auth/public/get-current-user"
+import { isCreatorOwner } from "@/modules/creator/public/creator-identity"
+import { SubscribeButton } from "@/modules/creator/public/creator-page-ui"
 import { getPostById } from "@/modules/post/public/get-post"
 import { deletePostAction } from "@/modules/post/public/delete-post-action"
-import PostPurchaseButton from "@/modules/post/ui/PostPurchaseButton"
 import { getPostLockedPreviewPresentation } from "@/modules/post/public/get-post-locked-preview-presentation"
 import { getPostCommerceCtaDecision } from "@/modules/post/public/get-post-commerce-cta-decision"
 import { EmptyState } from "@/shared/ui/EmptyState"

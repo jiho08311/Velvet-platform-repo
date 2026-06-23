@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { requireUser } from "@/modules/auth/server/require-user"
-import { sendMessage } from "@/modules/message/server/send-message"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { sendMessage } from "@/modules/message/public/send-message"
 import {
   createSendMessageResult,
   normalizeSendMessagePayload,
@@ -14,7 +14,7 @@ type RouteContext = {
 
 export async function POST(request: Request, context: RouteContext) {
   try {
-    const user = await requireUser()
+    const session = await requireSession()
     const body = await request.json()
 
     const { conversationId } = await context.params
@@ -32,7 +32,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     const message = await sendMessage({
       ...payload,
-      senderId: user.id,
+      senderId: session.userId,
     })
 
     return NextResponse.json(createSendMessageResult(message), { status: 200 })

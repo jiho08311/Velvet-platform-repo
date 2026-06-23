@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server"
-import { requireUser } from "@/modules/auth/server/require-user"
-import { getPlatformAnalytics } from "@/modules/analytics/server/get-platform-analytics"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { readAdminDashboard } from "@/modules/analytics/public/read-admin-dashboard"
 
 export async function GET() {
   try {
-    await requireUser()
+    await requireSession()
 
-    const analytics = await getPlatformAnalytics()
+   const analytics = await readAdminDashboard("platform")
 
     return NextResponse.json(
       { analytics },

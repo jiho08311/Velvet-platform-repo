@@ -1,0 +1,58 @@
+src/modules/post/repositories/comment-repository.ts:23:    .select("id, post_id, user_id, content, created_at")
+src/modules/post/repositories/comment-repository.ts:33:    .select("profile_id, username, avatar_url")
+src/modules/post/repositories/comment-repository.ts:53:    .select("post_id, creator_id")
+src/modules/post/repositories/comment-repository.ts:84:    .select("id, post_id, user_id, content, created_at")
+src/modules/post/repositories/comment-repository.ts:99:    .select("profile_id, username, avatar_url")
+src/modules/post/repositories/comment-repository.ts:121:    .select("id, user_id")
+src/modules/post/repositories/comment-repository.ts:133:    .select("id, user_id, post_id")
+src/modules/post/repositories/comment-repository.ts:155:    .select("*", { count: "exact", head: true })
+src/modules/post/repositories/comment-repository.ts:168:    .select("post_id")
+src/modules/post/repositories/post-repository.ts:51:    .select(
+src/modules/post/repositories/post-repository.ts:79:    .select(
+src/modules/post/repositories/post-repository.ts:107:    .select(
+src/modules/post/repositories/post-repository.ts:136:    .select(
+src/modules/post/repositories/post-repository.ts:160:    .select(
+src/modules/post/repositories/post-bookmark-repository.ts:25:    .select(
+src/modules/post/repositories/post-analytics-repository.ts:8:    .select("*", { count: "exact", head: true })
+src/modules/post/repositories/post-creator-read-repository.ts:76:    .select("creator_id, user_id")
+src/modules/post/repositories/post-block-repository.ts:61:    .select(
+src/modules/post/repositories/post-block-repository.ts:80:    .select("block_id, media_id")
+src/modules/post/repositories/feed-projection-repository.ts:10:    .select("*")
+src/modules/post/repositories/feed-projection-repository.ts:40:    .select("*")
+src/modules/post/repositories/canonical-post-repository.ts:82:    .select(
+src/modules/post/repositories/post-feed-repository.ts:77:    .select("creator_id, user_id, creator_lifecycle_state, creator_visibility_state")
+src/modules/post/repositories/post-feed-repository.ts:89:    .select("profile_id, profile_lifecycle_state, identity_visibility_state")
+src/modules/post/repositories/post-feed-repository.ts:121:    .select(
+src/modules/post/repositories/post-feed-repository.ts:143:    .select("creator_id, user_id, creator_lifecycle_state, creator_visibility_state")
+src/modules/post/repositories/post-feed-repository.ts:155:    .select("profile_id, profile_lifecycle_state, identity_visibility_state")
+src/modules/post/repositories/post-feed-repository.ts:196:    .select(
+src/modules/post/repositories/comment-like-repository.ts:50:    .select("*", { count: "exact", head: true })
+src/modules/post/repositories/comment-like-repository.ts:63:    .select("comment_id, user_id")
+src/modules/post/repositories/post-like-repository.ts:11:    .select("*", { count: "exact", head: true })
+src/modules/post/repositories/post-like-repository.ts:64:    .select("*", { count: "exact", head: true })
+src/modules/post/repositories/post-like-repository.ts:82:    .select("post_id, user_id")
+src/modules/post/repositories/post-like-repository.ts:100:    .select("post_id, user_id")
+src/modules/post/repositories/post-canonical-write-repository.ts:92:    .select(
+src/modules/post/repositories/post-canonical-write-repository.ts:143:    .select(
+src/modules/post/repositories/canonical-post-interaction-count-repository.ts:10:        .select("*", { count: "exact", head: true })
+src/modules/post/repositories/canonical-post-interaction-count-repository.ts:15:        .select("*", { count: "exact", head: true })
+src/modules/post/repositories/post-cutover-authority-repository.ts:18:    .select("*")
+src/modules/post/repositories/canonical-post-block-repository.ts:20:    .select(
+src/modules/post/repositories/canonical-post-block-repository.ts:39:    .select("block_id, media_id")
+src/modules/post/repositories/canonical-post-block-repository.ts:103:    .select("block_id, post_id, sort_order")
+src/modules/post/repositories/feed-visibility-projection-repository.ts:9:    .select("*")
+src/modules/post/projections/rebuild-feed-projection.ts:88:    .select(
+src/modules/search/repositories/creator-public-card-search-repository.ts:36:    .select(SELECT_CREATOR_PUBLIC_CARD)
+src/modules/search/repositories/creator-public-card-search-repository.ts:56:    .select(SELECT_CREATOR_PUBLIC_CARD)
+src/modules/search/repositories/creator-public-card-search-repository.ts:80:    .select(SELECT_CREATOR_PUBLIC_CARD)
+src/modules/search/repositories/creator-public-card-search-repository.ts:97:    .select(SELECT_CREATOR_PUBLIC_CARD)
+src/modules/search/repositories/search-document-repository.ts:36:    .select("*")
+src/modules/search/repositories/search-document-repository.ts:51:    .select("*")
+src/modules/search/repositories/search-document-repository.ts:82:    .select("*")
+src/modules/search/projections/rebuild-search-documents.ts:39:      .select("*")
+src/modules/search/projections/rebuild-search-documents.ts:45:      .select("*")
+src/modules/search/projections/rebuild-search-documents.ts:51:      .select(
+src/modules/entitlement/repositories/entitlement-access-read-repository.ts:30:    .select(
+src/modules/entitlement/repositories/access-aware-projection-read-repository.ts:22:    .select("id, subject_id, grant_type, grant_id, can_access, expires_at, revoked_at")
+src/modules/entitlement/repositories/message-access-grant-repository.ts:41:    .select("id")
+src/modules/entitlement/repositories/content-access-grant-repository.ts:41:    .select("id")

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { confirmPayment } from "@/modules/payment/server/confirm-payment"
-import { verifyPaymentAccessAfterSuccess } from "@/modules/payment/server/verify-payment-access-after-success"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { confirmPayment } from "@/modules/commerce/public/payment-contract"
+import { logger } from "@/shared/observability/structured-logger"
 
 function parseAmount(value: unknown): number | undefined {
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -11,7 +11,6 @@ function parseAmount(value: unknown): number | undefined {
 
   if (typeof value === "string" && value.trim().length > 0) {
     const parsed = Number(value)
-
     return Number.isFinite(parsed) ? parsed : undefined
   }
 
@@ -20,12 +19,10 @@ function parseAmount(value: unknown): number | undefined {
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireUser()
-
+    const session = await requireSession()
     const body = await req.json()
 
     let paymentId = body.paymentId as string | undefined
-
     const paymentKey = body.paymentKey as string | undefined
     const orderId = body.orderId as string | undefined
     const amount = parseAmount(body.amount)
@@ -41,33 +38,36 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const result = await confirmPayment({
-      paymentId,
-      paymentKey,
-      orderId,
-      amount,
-    })
-
-    if (!result) {
+    if (typeof amount !== "number") {
       return NextResponse.json(
-        { error: "Payment not found or already processed" },
-        { status: 404 }
+        { error: "Missing amount" },
+        { status: 400 }
       )
     }
 
-    const accessVerification = await verifyPaymentAccessAfterSuccess({
-      paymentId: result.id,
-      viewerUserId: user.id,
-    })
+const result = await confirmPayment({
+  paymentId,
+  paymentKey,
+  orderId,
+  amount,
+})
 
-    return NextResponse.json({
-      ok: true,
-      paymentId: result.id,
-      status: result.status,
-      accessVerification,
-    })
+return NextResponse.json({
+  ok: true,
+  paymentId: result.payment.paymentId,
+  status: "succeeded",
+  accessVerification: {
+    allowed: result.payment.status === "succeeded",
+    source: result.payment.purpose,
+    target: result.payment.target,
+  },
+})
   } catch (error) {
-    console.error("payment confirm route error:", error)
+    logger.error({
+      event: "api.payment.confirm.failed",
+      message: "Payment confirmation route failed",
+      error,
+    })
 
     return NextResponse.json(
       { error: "Failed to confirm payment" },

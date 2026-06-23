@@ -1,17 +1,14 @@
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import {
+  readCreatorIdentityByUserId,
+} from "@/modules/identity/public/read-creator-identity"
 
-type CreatorIdRow = {
-  id: string
-}
+export async function findCreatorIdByUserId(
+  userId: string
+): Promise<string> {
+  const creator =
+    await readCreatorIdentityByUserId(userId)
 
-export async function findCreatorIdByUserId(userId: string): Promise<string> {
-  const { data: creator, error: creatorError } = await supabaseAdmin
-    .from("creators")
-    .select("id")
-    .eq("user_id", userId)
-    .single<CreatorIdRow>()
-
-  if (creatorError || !creator) {
+  if (!creator) {
     throw new Error("Creator not found")
   }
 

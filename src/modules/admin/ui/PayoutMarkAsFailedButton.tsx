@@ -2,10 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import {
-  markPayoutAsFailedAction,
-  type MarkPayoutAsFailedActionState,
-} from "../server/mark-payout-as-failed-action";
+import { markPayoutAsFailedAction } from "../public/mark-payout-as-failed-action";
 import { getPayoutActionButtonClassName } from "./payoutActionButtonClassName";
 
 type PayoutMarkAsFailedButtonProps = {
@@ -13,9 +10,9 @@ type PayoutMarkAsFailedButtonProps = {
   disabled?: boolean;
 };
 
-const initialState: MarkPayoutAsFailedActionState = {
+const initialState = {
   error: null,
-};
+} satisfies { error: string | null };
 
 function SubmitButton({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus();

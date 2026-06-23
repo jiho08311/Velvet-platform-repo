@@ -4,14 +4,14 @@ export const dynamic = "force-dynamic"
 
 export async function POST(request: Request) {
   try {
-    const [{ requireUser }, { getCreatorById }, { createPaymentCheckout }] =
-      await Promise.all([
-        import("@/modules/auth/server/require-user"),
-        import("@/modules/creator/server/get-creator-by-id"),
-        import("@/modules/payment/server/create-payment-checkout"),
-      ])
+const [{ requireSession }, { getCreatorById }, { createCheckout }] =
+  await Promise.all([
+    import("@/modules/auth/public/require-session"),
+    import("@/modules/creator/public/get-creator-by-id"),
+    import("@/modules/commerce/public/payment-contract"),
+  ])
 
-    const user = await requireUser()
+  const session = await requireSession()
     const body = await request.json()
 
     const creatorId =
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       )
     }
 
-    if (creator.userId === user.id) {
+    if (creator.userId === session.userId) {
       return NextResponse.json(
         { error: "You cannot subscribe to your own creator page" },
         { status: 400 }
@@ -49,18 +49,20 @@ export async function POST(request: Request) {
       )
     }
 
-    const result = await createPaymentCheckout({
-      userId: user.id,
-      creatorId: creator.id,
-      type: "subscription",
-      amount: creator.subscriptionPrice,
-      currency: "KRW",
-      provider: "toss",
-      orderId: `subscription_${creator.id}_${user.id}_${Date.now()}`,
-      orderName: "크리에이터 멤버십",
-      successUrl: `${appUrl}/payment/success?creatorUsername=${creator.username}`,
-      failUrl: `${appUrl}/payment/fail`,
-    })
+const result = await createCheckout({
+  payerUserId: session.userId,
+  creatorId: creator.id,
+  purpose: "subscription",
+  money: {
+    amount: creator.subscriptionPrice,
+    currency: "KRW",
+  },
+  provider: "toss",
+  orderId: `subscription_${creator.id}_${session.userId}_${Date.now()}`,
+  orderName: "크리에이터 멤버십",
+  successUrl: `${appUrl}/payment/success?creatorUsername=${creator.username}`,
+  failUrl: `${appUrl}/payment/fail`,
+})
 
     return NextResponse.json(result, { status: 200 })
   } catch (error) {

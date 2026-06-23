@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { buildCreatorRoutePath } from "@/modules/creator/lib/creator-identity"
+import { buildCreatorRoutePath } from "@/modules/creator/public/creator-identity"
 import { Avatar } from "@/shared/ui/Avatar"
 import { Card } from "@/shared/ui/Card"
 import { StatusBadge } from "@/shared/ui/StatusBadge"

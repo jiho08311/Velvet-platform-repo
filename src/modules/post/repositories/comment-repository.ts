@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/infrastructure/supabase/admin"
 import type { CommentRow } from "@/modules/post/types"
+import { readCreatorIdentityByCreatorId } from "@/modules/identity/public/creator-identity-read-model"
 
 type ProfileRow = {
   id: string
@@ -28,35 +29,53 @@ export async function createComment(input: {
 
 export async function findCommentAuthorProfile(userId: string) {
   const { data, error } = await supabaseAdmin
-    .from("profiles")
-    .select("id, username, avatar_url")
-    .eq("id", userId)
-    .single<ProfileRow>()
+    .from("canonical_profiles")
+    .select("profile_id, username, avatar_url")
+    .eq("profile_id", userId)
+    .single<{
+      profile_id: string
+      username: string | null
+      avatar_url: string | null
+    }>()
 
   if (error) throw error
-  return data
+
+  return {
+    id: data.profile_id,
+    username: data.username,
+    avatar_url: data.avatar_url,
+  } satisfies ProfileRow
 }
 
 export async function findPostOwner(postId: string) {
   const { data, error } = await supabaseAdmin
-    .from("posts")
-    .select("id, creator_id")
-    .eq("id", postId)
-    .single()
+    .from("canonical_posts")
+    .select("post_id, creator_id")
+    .eq("post_id", postId)
+    .single<{
+      post_id: string
+      creator_id: string
+    }>()
 
   if (error) throw error
-  return data
+
+  return {
+    id: data.post_id,
+    creator_id: data.creator_id,
+  }
 }
 
 export async function findCreatorUser(creatorId: string) {
-  const { data, error } = await supabaseAdmin
-    .from("creators")
-    .select("id, user_id")
-    .eq("id", creatorId)
-    .single()
+  const creator = await readCreatorIdentityByCreatorId(creatorId)
 
-  if (error) throw error
-  return data
+  if (!creator) {
+    throw new Error("Creator not found")
+  }
+
+  return {
+    id: creator.id,
+    user_id: creator.userId,
+  }
 }
 
 export async function findCommentsByPostId(postId: string) {
@@ -76,12 +95,24 @@ export async function findCommentAuthorProfiles(userIds: string[]) {
   if (userIds.length === 0) return []
 
   const { data, error } = await supabaseAdmin
-    .from("profiles")
-    .select("id, username, avatar_url")
-    .in("id", userIds)
+    .from("canonical_profiles")
+    .select("profile_id, username, avatar_url")
+    .in("profile_id", userIds)
+    .returns<
+      Array<{
+        profile_id: string
+        username: string | null
+        avatar_url: string | null
+      }>
+    >()
 
   if (error) throw error
-  return data ?? []
+
+  return (data ?? []).map((row) => ({
+    id: row.profile_id,
+    username: row.username,
+    avatar_url: row.avatar_url,
+  }))
 }
 
 export async function findCommentForDelete(commentId: string) {

@@ -55,3 +55,9 @@ export type CreatorEarningsBalance = {
   paidOutamount: number
   reversedamount: number
 }
+
+export type PlatformRevenueSummary = {
+  totalNetrevenue: number
+  availablerevenue: number
+  paidOutrevenue: number
+}

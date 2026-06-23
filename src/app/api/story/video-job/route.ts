@@ -1,6 +1,5 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
+import { getCurrentUser } from "@/modules/auth/public/get-current-user"
 import {
   buildStoryVideoJobPollResponse,
   pickStoryVideoJobPollRow,
@@ -9,32 +8,13 @@ import { enqueueStoryVideoJob } from "@/modules/media/public/story-video-job"
 import {
   parseStoryVideoJobFormData,
   StoryPayloadValidationError,
-} from "@/modules/story/lib/story-create-payload"
+} from "@/modules/story/public/story-create-payload"
 
 export async function POST(request: Request) {
   try {
-    const cookieStore = await cookies()
+    const user = await getCurrentUser()
 
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set() {},
-          remove() {},
-        },
-      }
-    )
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

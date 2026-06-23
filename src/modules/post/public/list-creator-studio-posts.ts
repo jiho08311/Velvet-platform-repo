@@ -1,12 +1,18 @@
 import {
   listCreatorStudioPosts as listCreatorStudioPostsInternal,
-  type CreatorStudioPost,
-} from "@/modules/post/server/list-creator-studio-posts"
+} from "@/modules/post/runtime/list-creator-studio-posts"
 
-export type { CreatorStudioPost }
+export const PUBLIC_CONTRACT = true
+
+export type ListCreatorStudioPostsInput = Parameters<
+  typeof listCreatorStudioPostsInternal
+>[0]
+export type CreatorStudioPost = Awaited<
+  ReturnType<typeof listCreatorStudioPostsInternal>
+>[number]
 
 export function listCreatorStudioPosts(
-  params: Parameters<typeof listCreatorStudioPostsInternal>[0]
+  params: ListCreatorStudioPostsInput
 ): ReturnType<typeof listCreatorStudioPostsInternal> {
   return listCreatorStudioPostsInternal(params)
 }

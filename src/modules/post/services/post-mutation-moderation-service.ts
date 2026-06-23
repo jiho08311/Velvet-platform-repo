@@ -3,7 +3,7 @@
 import {
   resolveModerationOutcomeFromStatuses,
   type ModerationOutcome,
-} from "@/modules/moderation/lib/moderation-outcome-policy"
+} from "@/modules/moderation/public/moderation-outcome-policy"
 
 export type PostMutationModerationOutcome = ModerationOutcome
 

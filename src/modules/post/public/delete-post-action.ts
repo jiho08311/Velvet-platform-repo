@@ -1,3 +1,5 @@
 export {
   deletePostAction,
-} from "@/modules/post/server/delete-post-action"
+} from "@/modules/post/runtime/delete-post-action"
+
+// PUBLIC_CONTRACT

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-import { buildPathWithNext } from "@/modules/auth/lib/redirect-handoff"
+import { buildPathWithNext } from "@/modules/auth/utils/redirect-handoff"
 
 export type AuthGuardOptions = {
   getSession?: (req: NextRequest) => Promise<{ userId: string } | null>

@@ -1,4 +1,5 @@
 "use server"
+// PUBLIC_CONTRACT
 
 import {
   attachMessageMediaRowsToMessage as attachMessageMediaRowsToMessageUseCase,

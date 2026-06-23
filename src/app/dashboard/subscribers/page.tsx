@@ -1,13 +1,13 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-
-import { getDashboardSubscribersReadModel } from "@/modules/analytics/server/get-dashboard-subscribers-read-model"
-import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
-import { readCreatorOperationalReadiness } from "@/modules/creator/server/read-creator-operational-readiness"
-import { getOrCreateConversation } from "@/modules/message/server/get-or-create-conversation"
-import { sendMessage } from "@/modules/message/server/send-message"
+import { listCreatorSubscribers } from "@/modules/commerce/public/subscription-contract"
+import { getDashboardSubscribersReadModel } from "@/modules/analytics/public/get-dashboard-subscribers-read-model"
+import { requireCreatorReadyUser } from "@/modules/creator/public/require-creator-ready-user"
+import { readCreatorOperationalReadiness } from "@/modules/creator/public/read-creator-operational-readiness"
+import { getOrCreateConversation } from "@/modules/message/public/get-or-create-conversation"
+import { sendMessage } from "@/modules/message/public/send-message"
 import { normalizeSendMessagePayload } from "@/modules/message/types"
-import { getCreatorSubscribers } from "@/modules/subscription/server/get-creator-subscribers"
+
 import { Card } from "@/shared/ui/Card"
 
 async function broadcastMessageAction(formData: FormData) {
@@ -30,10 +30,10 @@ async function broadcastMessageAction(formData: FormData) {
     throw new Error("Creator is not active")
   }
 
-  const { items: subscribers } = await getCreatorSubscribers({
-    creatorId: readiness.creator.id,
-    limit: 100,
-  })
+const { items: subscribers } = await listCreatorSubscribers({
+  creatorId: readiness.creator.id,
+  limit: 100,
+})
 
   for (const subscriber of subscribers) {
     const conversation = await getOrCreateConversation({

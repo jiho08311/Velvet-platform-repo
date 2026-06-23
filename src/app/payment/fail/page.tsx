@@ -1,6 +1,6 @@
 import Link from "next/link"
-import { PaymentStateNotice } from "@/modules/payment/ui/PaymentStateNotice"
-import { getPaymentResultPageState } from "@/modules/payment/server/payment-result-state"
+import { PaymentStateNotice } from "@/modules/payment/public/payment-ui"
+import { getPaymentResultPageState } from "@/modules/payment/public/payment-result-state"
 import { Card } from "@/shared/ui/Card"
 
 type PaymentFailPageProps = {

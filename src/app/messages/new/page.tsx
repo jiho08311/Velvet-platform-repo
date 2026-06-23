@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation"
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { getCreatorByUsername } from "@/modules/creator/server/get-creator-by-username"
-import { getOrCreateConversation } from "@/modules/message/server/get-or-create-conversation"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { getCreatorByUsername } from "@/modules/creator/public/get-creator-by-username"
+import { getOrCreateConversation } from "@/modules/message/public/get-or-create-conversation"
 
 type NewMessagePageProps = {
   searchParams: Promise<{
@@ -13,7 +13,7 @@ type NewMessagePageProps = {
 export default async function NewMessagePage({
   searchParams,
 }: NewMessagePageProps) {
-  const user = await requireUser()
+  const session = await requireSession()
   const { creatorUsername } = await searchParams
 
   if (!creatorUsername) {
@@ -26,13 +26,13 @@ export default async function NewMessagePage({
     redirect("/messages")
   }
 
-  if (creator.userId === user.id) {
+  if (creator.userId === session.userId) {
     redirect("/messages")
   }
 
   try {
     const conversation = await getOrCreateConversation({
-      userAId: user.id,
+      userAId: session.userId,
       userBId: creator.userId,
     })
 

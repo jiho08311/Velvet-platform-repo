@@ -1,9 +1,11 @@
 
 import { NextResponse } from "next/server"
-import { searchStoryMusic } from "@/modules/story/server/search-story-music"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { searchStoryMusic } from "@/modules/story/public/search-story-music"
 
 export async function GET(request: Request) {
   try {
+    await requireSession()
     const { searchParams } = new URL(request.url)
 
     const query = searchParams.get("q") ?? ""

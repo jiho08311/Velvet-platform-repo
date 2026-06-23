@@ -1,37 +1,28 @@
-import { requireActiveUser } from "@/modules/auth/server/require-active-user"
-import { getProfileByUserId } from "@/modules/profile/server/get-profile-by-user-id"
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { requireActiveSession } from "@/modules/auth/public/require-active-session"
+import { getProfileByUserId } from "@/modules/profile/public/get-profile-by-user-id"
+import { canDeleteAccount } from "@/modules/authorization/public"
 
 type ProfileView = {
   username?: string | null
+  email?: string | null
 } | null
 
-type AdminRoleAssignmentRow = {
-  role: "super_admin" | "moderator" | "analytics_viewer"
-}
-
 export default async function SettingsPage() {
-  const user = await requireActiveUser()
-  const profileResult = await getProfileByUserId(user.id)
+  const session = await requireActiveSession()
+  const profileResult = await getProfileByUserId(session.userId)
   const profile = profileResult as ProfileView
 
-  const { data: adminRoles, error: adminRolesError } = await supabaseAdmin
-    .from("admin_role_assignments")
-    .select("role")
-    .eq("profile_id", user.id)
-    .returns<AdminRoleAssignmentRow[]>()
+const deleteAccountPermission = await canDeleteAccount({
+  actorId: session.userId,
+  targetUserId: session.userId,
+})
 
-  if (adminRolesError) {
-    throw adminRolesError
-  }
-
-  const isSuperAdmin = (adminRoles ?? []).some(
-    (assignment) => assignment.role === "super_admin"
-  )
+const isDeleteAccountForbidden = !deleteAccountPermission.allowed
 
   const username =
     profile?.username ??
-    (user.email ? user.email.split("@")[0] : "user")
+    profile?.email?.split("@")[0] ??
+    "user"
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6">
@@ -48,7 +39,7 @@ export default async function SettingsPage() {
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-white/80">Email</label>
               <input
-                value={user.email ?? ""}
+                value={profile?.email ?? ""}
                 disabled
                 className="h-11 rounded-xl border border-white/10 bg-black/20 px-4 text-sm text-white/60 outline-none"
               />
@@ -71,12 +62,12 @@ export default async function SettingsPage() {
       <section className="rounded-2xl border border-red-400/20 bg-neutral-950 p-6 text-white">
         <h2 className="text-lg font-semibold text-red-300">Danger zone</h2>
         <p className="mt-2 text-sm text-white/60">
-          Deactivate your account temporarily or schedule it for deletion. Deleted
-          accounts will be blocked permanently after 7 days.
+          Deactivate your account temporarily or schedule it for deletion.
+          Deleted accounts will be blocked permanently after 7 days.
         </p>
 
         <div className="mt-4 flex flex-wrap gap-3">
-          {!isSuperAdmin ? (
+          {!isDeleteAccountForbidden ? (
             <form action="/api/settings/deactivate" method="post">
               <button
                 type="submit"
@@ -91,7 +82,7 @@ export default async function SettingsPage() {
             </div>
           )}
 
-          {!isSuperAdmin ? (
+          {!isDeleteAccountForbidden ? (
             <form action="/api/settings/delete-account" method="post">
               <button
                 type="submit"

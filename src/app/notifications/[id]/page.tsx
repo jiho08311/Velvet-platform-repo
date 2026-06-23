@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation"
+import { getNotificationBadgeSummary } from "@/modules/notification/public/get-notification-badge-summary"
+import { getNotificationById } from "@/modules/notification/public/get-notification-by-id"
+import { listNotificationItems } from "@/modules/notification/public/list-notifications"
+import { requireNotificationPageAccess } from "@/modules/notification/public/require-notification-page-access"
 
-import { getNotificationById } from "@/modules/notification/server/get-notification-by-id"
-import { listNotificationItems } from "@/modules/notification/server/list-notifications"
-import { requireNotificationPageAccess } from "@/modules/notification/server/require-notification-page-access"
-import { getUnreadNotificationCount } from "@/modules/notification/types"
-import { NotificationListSurface } from "@/modules/notification/ui/NotificationListSurface"
+import { NotificationListSurface } from "@/modules/notification/public/notification-ui"
 
 type NotificationsPageProps = {
   params: Promise<{
@@ -17,17 +17,23 @@ export default async function NotificationsPage({
 }: NotificationsPageProps) {
   const { id } = await params
   const nextPath = `/notifications/${id}`
-  const user = await requireNotificationPageAccess(nextPath)
+ const session = await requireNotificationPageAccess("/notifications")
   const selectedNotification = await getNotificationById({
     notificationId: id,
-    userId: user.id,
+    userId: session.userId,
   })
 
   const notificationItems = await listNotificationItems({
-    userId: user.id,
+    userId: session.userId,
   })
 
-  const unreadCount = getUnreadNotificationCount(notificationItems)
+const badgeSummary =
+  await getNotificationBadgeSummary({
+    userId: session.userId,
+  })
+
+const unreadCount =
+  badgeSummary.unreadCount
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white">

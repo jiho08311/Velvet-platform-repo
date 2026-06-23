@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { canDeleteComment } from "@/modules/post/public/comment-permissions"
-import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
+import { getCurrentUser } from "@/modules/auth/public/get-current-user"
 import {
   createCommentItem,
   type CommentRow,
@@ -33,11 +33,7 @@ export async function GET(
     return NextResponse.json({ error: "Post id is required" }, { status: 400 })
   }
 
-  const supabase = await createSupabaseServerClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
 
   const currentUserId = user?.id ?? null
 

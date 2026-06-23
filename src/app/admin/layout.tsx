@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { requireAdmin } from "@/modules/admin/server/require-admin"
+import { requireAdmin } from "@/modules/admin/public/require-admin"
 import { AdminSidebar } from "./_components/AdminSidebar"
 
 export default async function AdminLayout({

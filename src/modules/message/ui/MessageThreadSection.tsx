@@ -18,7 +18,7 @@ type MessageThreadSectionProps = {
   /**
    * Thread rendering source of truth.
    *
-   * This is independent from ConversationSummary.lastMessage and any
+   * This is independent from ConversationSummary.lastMessage and all
    * conversation summary unread-state. The thread UI must render only the
    * messages provided by the detail page.
    *

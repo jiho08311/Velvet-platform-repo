@@ -22,10 +22,18 @@ export async function insertPostLike(params: {
   postId: string
   userId: string
 }): Promise<void> {
-  const { error } = await supabaseAdmin.from("post_likes").insert({
-    post_id: params.postId,
-    user_id: params.userId,
-  })
+  const { error } = await supabaseAdmin
+    .from("post_likes")
+    .upsert(
+      {
+        post_id: params.postId,
+        user_id: params.userId,
+      },
+      {
+        onConflict: "post_id,user_id",
+        ignoreDuplicates: true,
+      }
+    )
 
   if (error) {
     throw error
@@ -89,8 +97,7 @@ export async function findUserPostLikeRowsByPostIds(params: {
 
   const { data, error } = await supabaseAdmin
     .from("post_likes")
-    .select("post_id")
-    .select("post_id, user_id") // 👈 이거 추가
+    .select("post_id, user_id")
     .eq("user_id", params.userId)
     .in("post_id", params.postIds)
 

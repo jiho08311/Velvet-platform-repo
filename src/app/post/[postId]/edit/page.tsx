@@ -1,9 +1,9 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
-import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
+import { requireCreatorReadyUser } from "@/modules/creator/public/require-creator-ready-user"
 import { getCreatorStudioPost } from "@/modules/post/public/get-creator-studio-post"
-import { EditPostComposer } from "@/modules/post/ui/EditPostComposer"
+import { EditPostComposer } from "@/modules/post/public/post-detail-ui"
 
 type EditPostPageProps = {
   params: Promise<{

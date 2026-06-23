@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server"
-import { requireUser } from "@/modules/auth/server/require-user"
-import { banUser } from "@/modules/moderation/server/ban-user"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { banUser } from "@/modules/moderation/public/ban-user"
 
 export async function POST(request: Request) {
   try {
-    await requireUser()
+    await requireSession()
 
     const body = await request.json()
     const userId = body?.userId

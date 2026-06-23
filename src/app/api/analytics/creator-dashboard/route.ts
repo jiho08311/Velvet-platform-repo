@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server"
-import { getCreatorAnalyticsSummary } from "@/modules/analytics/server/get-creator-analytics"
-import { requireActiveUser } from "@/modules/auth/server/require-active-user"
-import { readCreatorOperationalReadiness } from "@/modules/creator/server/read-creator-operational-readiness"
+import { readCreatorDashboard } from "@/modules/analytics/public/read-creator-dashboard"
+import { requireActiveSession } from "@/modules/auth/public/require-active-session"
+import { readCreatorOperationalReadiness } from "@/modules/creator/public/read-creator-operational-readiness"
 
 export async function GET() {
   try {
-    const user = await requireActiveUser()
-    const readiness = await readCreatorOperationalReadiness({
-      userId: user.id,
-    })
-
+    const session = await requireActiveSession()
+ const readiness = await readCreatorOperationalReadiness({
+  userId: session.userId,
+})
     if (!readiness.ok) {
       return NextResponse.json(
         {
@@ -22,7 +21,22 @@ export async function GET() {
       )
     }
 
-    const analytics = await getCreatorAnalyticsSummary(readiness.creator.id)
+const analytics = await readCreatorDashboard(readiness.creator.id)
+
+
+if (!analytics) {
+  return NextResponse.json(
+    { error: "Creator dashboard snapshot not found" },
+    { status: 404 }
+  )
+}
+
+if (!analytics) {
+  return NextResponse.json(
+    { error: "Creator dashboard snapshot not found" },
+    { status: 404 }
+  )
+}
 
     return NextResponse.json(
       { analytics },

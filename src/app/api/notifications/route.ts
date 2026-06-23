@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server"
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { listNotificationItems } from "@/modules/notification/server/list-notifications"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { listNotificationItems } from "@/modules/notification/public/list-notifications"
 
 export async function GET() {
   try {
-    const user = await requireUser()
+    const session = await requireSession()
 
     const notificationItems = await listNotificationItems({
-      userId: user.id,
+      userId: session.userId,
     })
 
     return NextResponse.json(

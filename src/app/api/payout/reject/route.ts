@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server"
 
-import { rejectPayoutRequest } from "@/modules/payout/server/reject-payout-request"
+import { rejectPayoutRequest } from "@/modules/commerce/public/payout-contract"
+import { requireAdmin } from "@/modules/admin/public/require-admin"
+import { logger } from "@/shared/observability/structured-logger"
 
 export async function POST(request: Request) {
   try {
+    await requireAdmin()
     const body = await request.json()
 
     const payoutRequestId = body.payoutRequestId
@@ -19,7 +22,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true }, { status: 200 })
   } catch (error) {
-    console.error("REJECT PAYOUT ERROR:", error)
+    logger.error({
+      event: "payout.reject_failed",
+      error,
+    })
 
     const message =
       error instanceof Error ? error.message : JSON.stringify(error)

@@ -1,20 +1,7 @@
 import { NextResponse } from "next/server"
 
-import {
-  createComment,
-  findCommentAuthorProfile,
-  findCreatorUser,
-  findPostOwner,
-} from "@/modules/post/public/comment-data"
-import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
-import { createNotification } from "@/modules/notification/server/create-notification"
-import { createInteractionNotificationInput } from "@/modules/notification/server/create-interaction-notification-input"
-import {
-  createCommentItem,
-  type CommentItemProfile,
-  type CommentRow,
-} from "@/modules/post/public/comment-item"
-import { canDeleteComment } from "@/modules/post/public/comment-permissions"
+import { getCurrentUser } from "@/modules/auth/public/get-current-user"
+import { executeCreatePostComment } from "@/modules/post/public/execute-post-interaction"
 
 export const dynamic = "force-dynamic"
 
@@ -24,21 +11,15 @@ type RouteContext = {
   }>
 }
 
-
 export async function POST(
   request: Request,
   context: RouteContext
 ) {
   const { postId } = await context.params
 
-  const supabase = await createSupabaseServerClient()
+  const user = await getCurrentUser()
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
@@ -54,7 +35,6 @@ export async function POST(
     return NextResponse.json({ error: "Content is required" }, { status: 400 })
   }
 
-  // 🔥 여기로 이동
   const { default: OpenAI } = await import("openai")
 
   const openai = new OpenAI({
@@ -75,70 +55,23 @@ export async function POST(
     )
   }
 
-let insertedComment: CommentRow
+  try {
+    const result = await executeCreatePostComment({
+      postId,
+      userId: user.id,
+      content,
+    })
 
-try {
-  insertedComment = await createComment({
-    postId,
-    userId: user.id,
-    content,
-  })
-} catch (error) {
-  return NextResponse.json(
-    { error: error instanceof Error ? error.message : "Failed to create comment" },
-    { status: 500 }
-  )
-}
-
-let profile: CommentItemProfile
-
-try {
-  profile = await findCommentAuthorProfile(user.id)
-} catch (error) {
-  return NextResponse.json(
-    { error: error instanceof Error ? error.message : "Failed to load profile" },
-    { status: 500 }
-  )
-}
-
-try {
-  const post = await findPostOwner(postId)
-
-  if (post?.creator_id) {
-    const creator = await findCreatorUser(post.creator_id)
-
-    if (creator?.user_id) {
-      const notificationInput = createInteractionNotificationInput({
-        type: "comment_created",
-        actorUserId: user.id,
-        recipientUserId: creator.user_id,
-        postId,
-        commentId: insertedComment.id,
-        creatorId: post.creator_id,
-      })
-
-      if (notificationInput) {
-        await createNotification(notificationInput)
-      }
-    }
+    return NextResponse.json(result)
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to create comment",
+      },
+      { status: 500 }
+    )
   }
-} catch {
-  // Preserve comment creation success even if notification lookup fails.
-}
-
-  const item = createCommentItem({
-    comment: insertedComment,
-    profile,
-    likesCount: 0,
-    viewerHasLiked: false,
-    canDelete: canDeleteComment({
-      currentUserId: user.id,
-      commentUserId: insertedComment.user_id,
-    }),
-  })
-
-  return NextResponse.json({
-    ok: true,
-    item,
-  })
 }

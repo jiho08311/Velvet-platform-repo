@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server"
-import { listCreators } from "@/modules/admin/server/list-creators"
+import { listCreators } from "@/modules/admin/public/list-creators"
+import { requireAdmin } from "@/modules/admin/public/require-admin"
 
 export async function GET() {
   try {
+    await requireAdmin()
     const creators = await listCreators()
 
     return NextResponse.json(

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { getCreatorById } from "@/modules/creator/server/get-creator-by-id"
-import createPayment from "@/modules/payment/server/create-payment"
-import { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"
-import { upsertSubscription } from "@/modules/subscription/server/upsert-subscription"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { getCreatorById } from "@/modules/creator/public/get-creator-by-id"
+import createPayment from "@/modules/payment/public/create-payment"
+import { canAccessCreator } from "@/modules/commerce/public/entitlement-contract"
+import { logger } from "@/shared/observability/structured-logger"
 
 function addMonths(date: Date, months: number) {
   const next = new Date(date)
@@ -14,7 +14,7 @@ function addMonths(date: Date, months: number) {
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireUser()
+    const session = await requireSession()
     const body = await req.json()
 
     const creatorId = body.creatorId as string | undefined
@@ -29,24 +29,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Creator not found" }, { status: 404 })
     }
 
-    if (creator.userId === user.id) {
+    if (creator.userId === session.userId) {
       return NextResponse.json(
         { error: "You cannot subscribe to your own creator page" },
         { status: 400 }
       )
     }
 
-    const activeSubscription = await getActiveSubscription({
-      userId: user.id,
-      creatorId: creator.id,
-    })
+   const { decision } = await canAccessCreator({
+  viewerUserId: session.userId,
+  creatorId: creator.id,
+})
 
-    if (activeSubscription) {
-      return NextResponse.json(
-        { error: "You already have an active subscription" },
-        { status: 400 }
-      )
-    }
+if (decision.allowed) {
+  return NextResponse.json(
+    { error: "You already have an active subscription" },
+    { status: 400 }
+  )
+}
 
     if (!creator.subscriptionPrice || creator.subscriptionPrice <= 0) {
       return NextResponse.json(
@@ -55,11 +55,10 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const currentPeriodStart = new Date()
-    const currentPeriodEnd = addMonths(currentPeriodStart, 1)
+
 
     const payment = await createPayment({
-      userId: user.id,
+      userId: session.userId,
       creatorId: creator.id,
       type: "subscription",
       status: "succeeded",
@@ -68,22 +67,18 @@ export async function POST(req: NextRequest) {
       provider: "mock",
     })
 
-    const subscription = await upsertSubscription({
-      userId: user.id,
-      creatorId: creator.id,
-      status: "active",
-      provider: "mock",
-      currentPeriodStart: currentPeriodStart.toISOString(),
-      currentPeriodEnd: currentPeriodEnd.toISOString(),
-    })
 
-    return NextResponse.json({
-      success: true,
-      payment,
-      subscription,
-    })
+
+  return NextResponse.json({
+  success: true,
+  payment,
+  subscription: null,
+})
   } catch (error) {
-    console.error("mock confirm route error:", error)
+    logger.error({
+      event: "payment.mock_confirm_route_failed",
+      error,
+    })
 
     return NextResponse.json(
       { error: "Failed to confirm mock payment" },

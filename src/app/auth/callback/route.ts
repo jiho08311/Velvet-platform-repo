@@ -7,7 +7,8 @@ import {
   DEFAULT_AUTH_RESUME_PATH,
   resolveRedirectTarget,
   SIGN_IN_PATH,
-} from "@/modules/auth/lib/redirect-handoff";
+} from "@/modules/auth/utils/redirect-handoff";
+import { logger } from "@/shared/observability/structured-logger";
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
@@ -46,7 +47,11 @@ export async function GET(request: NextRequest) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
-    console.error("GOOGLE CALLBACK EXCHANGE ERROR >>>", error);
+    logger.error({
+      event: "auth.oauth_callback_exchange_failed",
+      context: { provider: "google" },
+      error,
+    });
     return NextResponse.redirect(new URL(signInRedirectPath, request.url));
   }
 

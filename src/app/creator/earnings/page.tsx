@@ -1,24 +1,25 @@
 import { redirect } from "next/navigation"
 
-import { getSession } from "@/modules/auth/server/get-session"
+import { readSession } from "@/modules/auth/public/read-session"
 import {
   buildPathWithNext,
   SIGN_IN_PATH,
-} from "@/modules/auth/lib/redirect-handoff"
-import {
-  formatCreatorAnalyticsSummaryMetricValue,
-  getCreatorAnalyticsSummaryMetrics,
-  type CreatorAnalyticsSummaryMetricKey,
-} from "@/modules/analytics/lib/creator-analytics-summary-metrics"
-import { getCreatorAnalyticsSummary } from "@/modules/analytics/server/get-creator-analytics"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
-import { listPayments } from "@/modules/payment/server/list-payments"
+} from "@/modules/auth/utils/redirect-handoff"
+import { readCreatorDashboard } from "@/modules/analytics/public/read-creator-dashboard"
+import { getCreatorByUserId } from "@/modules/creator/public/get-creator-by-user-id"
+import { listCommercePayments } from "@/modules/commerce/public/payment-contract"
 
 type EarningHistoryItem = {
   id: string
   amount: string
   createdAt: string
   type: "subscription" | "tip" | "purchase"
+}
+
+type SummaryMetric = {
+  id: string
+  label: string
+  value: string
 }
 
 function formatDate(value: string) {
@@ -37,26 +38,8 @@ function formatCurrency(value: number) {
   }).format(value)
 }
 
-function getSessionUserId(session: unknown) {
-  if (!session || typeof session !== "object") {
-    return null
-  }
-
-  if ("userId" in session && typeof session.userId === "string") {
-    return session.userId
-  }
-
-  if (
-    "user" in session &&
-    session.user &&
-    typeof session.user === "object" &&
-    "id" in session.user &&
-    typeof session.user.id === "string"
-  ) {
-    return session.user.id
-  }
-
-  return null
+function readNumber(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0
 }
 
 function getStringValue(record: Record<string, unknown>, keys: string[]) {
@@ -91,24 +74,30 @@ function getNumberValue(record: Record<string, unknown>, keys: string[]) {
   return null
 }
 
-function normalizeHistoryItem(item: unknown, index: number): EarningHistoryItem | null {
+function normalizeHistoryItem(
+  item: unknown,
+  index: number
+): EarningHistoryItem | null {
   if (!item || typeof item !== "object") {
     return null
   }
 
   const source = item as Record<string, unknown>
 
-  const id = getStringValue(source, ["id", "paymentId"]) ?? `earning_${index + 1}`
+  const id =
+    getStringValue(source, ["id", "paymentId"]) ?? `earning_${index + 1}`
 
   const createdAt =
     getStringValue(source, ["createdAt", "created_at", "paidAt", "paid_at"]) ??
     new Date().toISOString()
 
   const rawType =
-    getStringValue(source, ["type", "paymentType", "kind", "source"]) ?? "subscription"
+    getStringValue(source, ["type", "paymentType", "kind", "source"]) ??
+    "subscription"
 
   const amountNumber =
-    getNumberValue(source, ["netAmount", "amount", "grossAmount", "totalAmount"]) ?? 0
+    getNumberValue(source, ["netAmount", "amount", "grossAmount", "totalAmount"]) ??
+    0
 
   const loweredType = rawType.toLowerCase()
 
@@ -132,12 +121,6 @@ function normalizeHistoryItem(item: unknown, index: number): EarningHistoryItem 
   }
 }
 
-const CREATOR_EARNINGS_SUMMARY_METRICS: CreatorAnalyticsSummaryMetricKey[] = [
-  "grossRevenue",
-  "netRevenue",
-  "fees",
-]
-
 function normalizeHistory(data: unknown) {
   if (!Array.isArray(data)) {
     return []
@@ -148,9 +131,33 @@ function normalizeHistory(data: unknown) {
     .filter((item): item is EarningHistoryItem => item !== null)
 }
 
+function buildSummaryMetrics(
+  analytics: Awaited<ReturnType<typeof readCreatorDashboard>>
+): SummaryMetric[] {
+  const revenue = analytics?.revenue ?? {}
+
+  return [
+    {
+      id: "grossRevenue",
+      label: "Gross revenue",
+      value: formatCurrency(readNumber(revenue.grossRevenue)),
+    },
+    {
+      id: "netRevenue",
+      label: "Net revenue",
+      value: formatCurrency(readNumber(revenue.netRevenue)),
+    },
+    {
+      id: "fees",
+      label: "Fees",
+      value: formatCurrency(readNumber(revenue.fees)),
+    },
+  ]
+}
+
 export default async function CreatorEarningsPage() {
   const nextPath = "/creator/earnings"
-  const session = await getSession()
+  const session = await readSession()
 
   if (!session) {
     redirect(
@@ -161,7 +168,7 @@ export default async function CreatorEarningsPage() {
     )
   }
 
-  const userId = getSessionUserId(session)
+  const userId = session?.userId ?? null
 
   if (!userId) {
     redirect(
@@ -184,14 +191,11 @@ export default async function CreatorEarningsPage() {
   }
 
   const [analytics, paymentsData] = await Promise.all([
-    getCreatorAnalyticsSummary(creator.id),
-    listPayments(),
+    readCreatorDashboard(creator.id),
+    listCommercePayments(),
   ])
 
-  const summaryMetrics = getCreatorAnalyticsSummaryMetrics(
-    analytics,
-    CREATOR_EARNINGS_SUMMARY_METRICS
-  )
+  const summaryMetrics = buildSummaryMetrics(analytics)
   const earnings = normalizeHistory(paymentsData)
 
   return (
@@ -217,7 +221,7 @@ export default async function CreatorEarningsPage() {
                 {metric.label}
               </p>
               <p className="mt-4 text-3xl font-semibold text-white">
-                {formatCreatorAnalyticsSummaryMetricValue(metric)}
+                {metric.value}
               </p>
             </div>
           ))}
@@ -260,7 +264,7 @@ export default async function CreatorEarningsPage() {
                     </p>
                   </div>
 
-                  <p className="text-2xl font-semibold text-white">
+                  <p className="text-lg font-semibold text-white">
                     {earning.amount}
                   </p>
                 </article>

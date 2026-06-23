@@ -1,9 +1,14 @@
-import { NextRequest, NextResponse } from "next/server"
 
-import { sendPayout } from "@/modules/payout/server/send-payout"
+import { NextRequest, NextResponse } from "next/server"
+import { sendPayout } from "@/modules/commerce/public/payout-contract"
+import { requireAdmin } from "@/modules/admin/public/require-admin"
+import { logger } from "@/shared/observability/structured-logger"
+
+
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAdmin()
     const body = await req.json()
 
     const payoutId = body.payoutId
@@ -15,14 +20,23 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const result = await sendPayout({ payoutId })
+
+
+
+    const result = await sendPayout({
+      payoutId,
+   
+    })
 
     return NextResponse.json({
       success: true,
       data: result,
     })
   } catch (error) {
-    console.error("RETRY PAYOUT ERROR:", error)
+    logger.error({
+      event: "admin.payout.retry_failed",
+      error,
+    })
 
     return NextResponse.json(
       { error: "Failed to retry payout" },

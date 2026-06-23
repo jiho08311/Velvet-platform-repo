@@ -1,6 +1,6 @@
 import Link from "next/link"
 
-import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
+import { requireCreatorReadyUser } from "@/modules/creator/public/require-creator-ready-user"
 
 export default async function NewPostPage() {
   await requireCreatorReadyUser({

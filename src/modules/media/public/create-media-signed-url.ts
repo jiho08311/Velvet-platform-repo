@@ -1,53 +1,16 @@
-import { canCreateMediaSignedUrl } from "@/modules/media/policies/media-access-policy"
-import { createMediaStorageSignedUrl } from "@/modules/media/repositories/media-storage-repository"
+import { toMediaSignedUrlResponse } from "@/modules/media/contracts/media-signed-url-contract"
+import { executeMediaSignedUrlRuntime } from "@/modules/media/runtime/execute-media-signed-url-runtime"
 
-type CreateMediaSignedUrlInput = {
-  storagePath: string
-  viewerUserId?: string | null
-  creatorUserId?: string | null
-  visibility: "public" | "subscribers" | "paid"
-  canView?: boolean
-  isSubscribed?: boolean
-  hasPurchased?: boolean
-  expiresIn?: number
-  allowPreview?: boolean
-}
+export const PUBLIC_CONTRACT = true
 
-export async function createMediaSignedUrl({
-  storagePath,
-  viewerUserId,
-  creatorUserId,
-  visibility,
-  canView,
-  isSubscribed = false,
-  hasPurchased = false,
-  expiresIn = 60 * 60,
-  allowPreview = false,
-}: CreateMediaSignedUrlInput): Promise<string> {
-  const resolvedStoragePath = storagePath?.trim() ?? ""
-  const resolvedViewerUserId = viewerUserId?.trim() ?? ""
-  const resolvedCreatorUserId = creatorUserId?.trim() ?? ""
+export type CreateMediaSignedUrlInput = Parameters<
+  typeof executeMediaSignedUrlRuntime
+>[0]
 
-  if (!resolvedStoragePath) {
-    return ""
-  }
+export async function createMediaSignedUrl(
+  input: CreateMediaSignedUrlInput
+): Promise<string> {
+  const contract = await executeMediaSignedUrlRuntime(input)
 
-  const canSignUrl = canCreateMediaSignedUrl({
-    viewerUserId: resolvedViewerUserId,
-    creatorUserId: resolvedCreatorUserId,
-    visibility,
-    canView,
-    isSubscribed,
-    hasPurchased,
-    allowPreview,
-  })
-
-  if (!canSignUrl) {
-    return ""
-  }
-
-  return createMediaStorageSignedUrl({
-    storagePath: resolvedStoragePath,
-    expiresIn,
-  })
+  return toMediaSignedUrlResponse(contract)
 }

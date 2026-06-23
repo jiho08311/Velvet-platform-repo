@@ -1,4 +1,5 @@
-import type { SubscriptionStatus } from "@/modules/subscription/server/subscription-status"
+import { canAccessSubscription } from "@/modules/subscription/policies/subscription-access-policy"
+import type { SubscriptionStatus } from "@/modules/subscription/contracts/subscription-status"
 
 type ResolveSubscriptionStateInput = {
   status: SubscriptionStatus
@@ -63,6 +64,8 @@ export function resolveSubscriptionState(
 
   const hasFuturePeriod = isFutureDate(endsAt, now)
   const isExpiredByDate = isPastOrNow(endsAt, now)
+  const activeAccess = canAccessSubscription({ accessState: "active" })
+  const inactiveAccess = canAccessSubscription({ accessState: "inactive" })
 
   if (status === "active") {
     if (hasFuturePeriod) {
@@ -70,7 +73,7 @@ export function resolveSubscriptionState(
         return {
           accessState: "active",
           displayState: "ending",
-          hasAccess: true,
+          hasAccess: activeAccess,
           isExpired: false,
           isCancelScheduled: true,
           endsAt,
@@ -80,7 +83,7 @@ export function resolveSubscriptionState(
       return {
         accessState: "active",
         displayState: "active",
-        hasAccess: true,
+        hasAccess: activeAccess,
         isExpired: false,
         isCancelScheduled: false,
         endsAt,
@@ -90,7 +93,7 @@ export function resolveSubscriptionState(
     return {
       accessState: "inactive",
       displayState: "expired",
-      hasAccess: false,
+      hasAccess: inactiveAccess,
       isExpired: true,
       isCancelScheduled: false,
       endsAt,
@@ -101,7 +104,7 @@ export function resolveSubscriptionState(
     return {
       accessState: "inactive",
       displayState: "expired",
-      hasAccess: false,
+      hasAccess: inactiveAccess,
       isExpired: true,
       isCancelScheduled: false,
       endsAt,
@@ -113,7 +116,7 @@ export function resolveSubscriptionState(
       return {
         accessState: "active",
         displayState: "ending",
-        hasAccess: true,
+        hasAccess: activeAccess,
         isExpired: false,
         isCancelScheduled: true,
         endsAt,
@@ -124,7 +127,7 @@ export function resolveSubscriptionState(
       return {
         accessState: "inactive",
         displayState: "expired",
-        hasAccess: false,
+        hasAccess: inactiveAccess,
         isExpired: true,
         isCancelScheduled: false,
         endsAt,
@@ -134,7 +137,7 @@ export function resolveSubscriptionState(
     return {
       accessState: "inactive",
       displayState: "inactive",
-      hasAccess: false,
+      hasAccess: inactiveAccess,
       isExpired: false,
       isCancelScheduled: false,
       endsAt,
@@ -144,7 +147,7 @@ export function resolveSubscriptionState(
   return {
     accessState: "inactive",
     displayState: "inactive",
-    hasAccess: false,
+    hasAccess: inactiveAccess,
     isExpired: false,
     isCancelScheduled: false,
     endsAt,

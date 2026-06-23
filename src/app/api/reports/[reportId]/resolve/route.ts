@@ -1,18 +1,20 @@
-import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin } from "@/modules/admin/server/require-admin"
-import { resolveReport } from "@/modules/report/server/resolve-report"
+import { NextResponse } from "next/server"
+import { resolveReportCase } from "@/modules/governance/public/report-governance-contract"
+import { requireAdmin } from "@/modules/admin/public/require-admin"
 
-export async function POST(
-  _request: NextRequest,
-  context: { params: Promise<{ reportId: string }> }
-) {
+type RouteParams = {
+  params: Promise<{
+    reportId: string
+  }>
+}
+
+export async function POST(_request: Request, { params }: RouteParams) {
   try {
     await requireAdmin()
+    const { reportId } = await params
 
-    const { reportId } = await context.params
-
-    const result = await resolveReport({
-      reportId,
+    const result = await resolveReportCase({
+      reportCaseKey: reportId,
     })
 
     return NextResponse.json(

@@ -1,7 +1,8 @@
 "use server"
+// PUBLIC_CONTRACT
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { uploadMedia } from "@/modules/media/server/upload-media"
+import { requireUser } from "@/modules/auth/public/require-user"
+import { uploadMedia } from "@/modules/media/runtime/upload-media"
 
 type UploadStoryMediaFileInput = {
   file: File

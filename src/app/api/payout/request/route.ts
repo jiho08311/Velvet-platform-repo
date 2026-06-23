@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server"
-import { requireUser } from "@/modules/auth/server/require-user"
-import { getCreatorByUserId } from "@/modules/creator/server/get-creator-by-user-id"
-import { createPayoutRequest } from "@/modules/payout/server/create-payout-request"
-import { revalidatePayoutSurfaces } from "@/modules/payout/server/revalidate-payout-surfaces"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { getCreatorByUserId } from "@/modules/creator/public/get-creator-by-user-id"
+import { createPayoutRequest } from "@/modules/commerce/public/payout-contract"
+import { revalidatePayoutSurfaces } from "@/modules/payout/public/revalidate-payout-surfaces"
+import { logger } from "@/shared/observability/structured-logger"
 
 async function readPayoutRequestPayload(request: Request) {
   const contentType = request.headers.get("content-type") ?? ""
@@ -43,9 +44,9 @@ async function readPayoutRequestPayload(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const user = await requireUser()
+    const session = await requireSession()
 
-    const creator = await getCreatorByUserId(user.id)
+    const creator = await getCreatorByUserId(session.userId)
 
     if (!creator) {
       return NextResponse.json(
@@ -68,7 +69,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ payoutRequest }, { status: 200 })
   } catch (error) {
-    console.error("PAYOUT REQUEST ERROR:", error)
+    logger.error({
+      event: "api.payout.request.failed",
+      message: "Payout request route failed",
+      error,
+    })
 
     const message =
       error instanceof Error ? error.message : JSON.stringify(error)

@@ -1,11 +1,12 @@
 import {
   getMyPosts as getMyPostsInternal,
-  type GetMyPostsInput,
-  type GetMyPostsResult,
-  type MyPostListItem,
-} from "@/modules/post/server/get-my-posts"
+} from "@/modules/post/runtime/get-my-posts"
 
-export type { GetMyPostsInput, GetMyPostsResult, MyPostListItem }
+export const PUBLIC_CONTRACT = true
+
+export type GetMyPostsInput = Parameters<typeof getMyPostsInternal>[0]
+export type GetMyPostsResult = Awaited<ReturnType<typeof getMyPostsInternal>>
+export type MyPostListItem = GetMyPostsResult["items"][number]
 
 export function getMyPosts(
   input: GetMyPostsInput

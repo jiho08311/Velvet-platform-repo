@@ -1,14 +1,16 @@
 import Link from "next/link"
 
-import { requireAdmin } from "@/modules/admin/server/require-admin"
-import { AdminEmptyState } from "@/modules/admin/ui/AdminEmptyState"
-import { AdminSectionCard } from "@/modules/admin/ui/AdminSectionCard"
-import { AdminStatCard } from "@/modules/admin/ui/AdminStatCard"
-import { listUsers } from "@/modules/admin/server/list-users"
-import { listCreators } from "@/modules/admin/server/list-creators"
-import { listPayoutRequests } from "@/modules/admin/server/list-payout-requests"
-import { listPayments } from "@/modules/payment/server/list-payments"
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { requireAdmin } from "@/modules/admin/public/require-admin"
+import {
+  AdminEmptyState,
+  AdminSectionCard,
+  AdminStatCard,
+} from "@/modules/admin/public/admin-ui"
+import { listUsers } from "@/modules/admin/public/list-users"
+import { listCreators } from "@/modules/admin/public/list-creators"
+import { listPayoutRequests } from "@/modules/admin/public/list-payout-requests"
+import { listCommercePayments } from "@/modules/commerce/public/payment-contract"
+import { countActiveSubscriptions } from "@/modules/commerce/public/subscription-contract"
 
 function formatCurrency(amount: number, currency = "KRW") {
   return new Intl.NumberFormat("ko-KR", {
@@ -38,11 +40,8 @@ export default async function AdminDashboardPage() {
     listUsers({ limit: 5 }),
     listCreators(),
     listPayoutRequests(),
-    listPayments(),
-    supabaseAdmin
-      .from("subscriptions")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "active"),
+listCommercePayments(),
+countActiveSubscriptions(),
   ])
 
   const totalUsers = users.length

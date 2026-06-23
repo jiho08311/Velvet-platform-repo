@@ -1,9 +1,3 @@
-import { resolveNotificationReadState } from "./server/notification-read-state-policy"
-import {
-  NOTIFICATION_DATA_KEYS,
-  getNotificationTypePolicy,
-} from "./server/notification-type-policy"
-
 export const NOTIFICATION_TYPES = [
   "subscription_started",
   "subscription_canceled",
@@ -111,22 +105,6 @@ export type NotificationListRow = Pick<
   "id" | "type" | "status" | "body" | "created_at" | "read_at"
 >
 
-export function mapNotificationListRow(
-  row: NotificationListRow,
-): NotificationListItem {
-  const resolvedReadState = resolveNotificationReadState(row)
-  const presentation = getNotificationPresentation(row.type)
-
-  return {
-    id: row.id,
-    body: row.body,
-    label: presentation.label,
-    tone: presentation.tone,
-    isRead: resolvedReadState.isRead,
-    createdAt: row.created_at,
-  }
-}
-
 export function isNotificationType(
   value: string,
 ): value is NotificationType {
@@ -137,114 +115,4 @@ export function isNotificationStatus(
   value: string,
 ): value is NotificationStatus {
   return (NOTIFICATION_STATUSES as readonly string[]).includes(value)
-}
-
-function isNotificationDataRecord(
-  value: unknown,
-): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
-}
-
-export function normalizeNotificationData(
-  data: unknown,
-  type?: NotificationType,
-): NotificationData {
-  if (!isNotificationDataRecord(data)) {
-    return {}
-  }
-
-  const allowedKeys = type
-    ? getNotificationTypePolicy(type).dataKeys
-    : NOTIFICATION_DATA_KEYS
-
-  const normalized: NotificationData = {}
-
-  for (const key of allowedKeys) {
-    const value = data[key]
-
-    if (typeof value === "string" && value.length > 0) {
-      normalized[key] = value
-    }
-  }
-
-  return normalized
-}
-
-export function buildNotificationReadModel(
-  row: NotificationRow,
-): Notification {
-  const resolvedReadState = resolveNotificationReadState(row)
-  const presentation = getNotificationPresentation(row.type)
-  const data = normalizeNotificationData(row.data, row.type)
-
-  return {
-    id: row.id,
-    userId: row.user_id,
-    type: row.type,
-    status: resolvedReadState.status,
-    title: row.title,
-    body: row.body,
-    data,
-    createdAt: row.created_at,
-    readAt: resolvedReadState.readAt,
-    isRead: resolvedReadState.isRead,
-    label: presentation.label,
-    tone: presentation.tone,
-  }
-}
-
-export function mapNotificationRow(row: NotificationRow): Notification {
-  return buildNotificationReadModel(row)
-}
-
-export function toNotificationItemViewModel(
-  notification: Notification,
-): NotificationItemViewModel {
-  return {
-    id: notification.id,
-    body: notification.body,
-    label: notification.label,
-    tone: notification.tone,
-    isRead: notification.isRead,
-    createdAt: notification.createdAt,
-  }
-}
-
-export function getUnreadNotificationCount(
-  notifications: readonly Pick<Notification, "isRead">[],
-): number {
-  return notifications.reduce((count, notification) => {
-    return notification.isRead ? count : count + 1
-  }, 0)
-}
-
-export function hasUnreadNotifications(
-  notifications: readonly Pick<Notification, "isRead">[],
-): boolean {
-  return getUnreadNotificationCount(notifications) > 0
-}
-
-export function buildNotificationBadgeSummary(
-  notifications: readonly Pick<Notification, "isRead">[],
-): NotificationBadgeSummaryViewModel {
-  const unreadCount = getUnreadNotificationCount(notifications)
-
-  return {
-    unreadCount,
-    hasUnread: unreadCount > 0,
-  }
-}
-
-export function getNotificationPresentation(
-  type: NotificationType,
-): {
-  label: string
-  tone: NotificationBadgeTone
-} {
-  const policy = getNotificationTypePolicy(type)
-
-  return {
-    label: policy.label,
-    tone: policy.tone,
-  }
 }

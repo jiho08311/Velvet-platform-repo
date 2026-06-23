@@ -1,14 +1,14 @@
 // src/app/onboarding/page.tsx
 import { redirect } from "next/navigation"
-import { createClient } from "@/infrastructure/supabase/server"
-import { readOnboardingReadiness } from "@/modules/auth/server/read-onboarding-readiness"
+import { getCurrentUser } from "@/modules/auth/public/get-current-user"
+import { readOnboardingReadiness } from "@/modules/auth/public/read-onboarding-readiness"
 import {
   buildPathWithNext,
   ONBOARDING_PATH,
   resolveRedirectTarget,
   SIGN_IN_PATH,
-} from "@/modules/auth/lib/redirect-handoff"
-import { OnboardingForm } from "@/modules/profile/ui/OnboardingForm"
+} from "@/modules/auth/utils/redirect-handoff"
+import { OnboardingForm } from "@/modules/profile/public/profile-ui"
 
 type OnboardingPageProps = {
   searchParams: Promise<{
@@ -28,11 +28,7 @@ export default async function OnboardingPage({
     path: ONBOARDING_PATH,
     next: resolvedNext,
   })
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
 
   if (!user) {
     redirect(

@@ -1,7 +1,7 @@
-import { signUp } from "@/modules/auth/server/sign-up"
-import { createUser } from "@/modules/user/server/create-user"
-import { createProfile } from "@/modules/profile/server/create-profile"
-import { isUsernameTaken } from "@/modules/profile/server/is-username-taken"
+import { signUp } from "@/modules/auth/public/sign-up"
+import { createUser } from "@/modules/user/public/create-user"
+import { createProfile } from "@/modules/profile/public/create-profile"
+import { isUsernameTaken } from "@/modules/profile/public/is-username-taken"
 
 type CreateUserSignupWorkflowInput = {
   email: string

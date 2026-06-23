@@ -1,11 +1,7 @@
 import { redirect } from "next/navigation"
 
-import { getSession } from "@/modules/auth/server/get-session"
-import {
-  buildPathWithNext,
-  SIGN_IN_PATH,
-} from "@/modules/auth/lib/redirect-handoff"
-import { listSubscriptions } from "@/modules/subscription/server/list-subscriptions"
+import { requireCreatorReadyUser } from "@/modules/creator/public/require-creator-ready-user"
+import { listCreatorSubscribers } from "@/modules/commerce/public/subscription-contract"
 
 type SubscriberListItem = {
   id: string
@@ -36,27 +32,7 @@ function getStatusClassName(status: SubscriberListItem["status"]) {
   return "bg-zinc-700/40 text-zinc-300 border-zinc-700"
 }
 
-function getSessionUserId(session: unknown) {
-  if (!session || typeof session !== "object") {
-    return null
-  }
 
-  if ("userId" in session && typeof session.userId === "string") {
-    return session.userId
-  }
-
-  if (
-    "user" in session &&
-    session.user &&
-    typeof session.user === "object" &&
-    "id" in session.user &&
-    typeof session.user.id === "string"
-  ) {
-    return session.user.id
-  }
-
-  return null
-}
 
 function getStringValue(record: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
@@ -153,31 +129,17 @@ function normalizeSubscribers(data: unknown) {
 }
 
 export default async function CreatorSubscribersPage() {
-  const nextPath = "/creator/subscribers"
-  const session = await getSession()
 
-  if (!session) {
-    redirect(
-      buildPathWithNext({
-        path: SIGN_IN_PATH,
-        next: nextPath,
-      })
-    )
-  }
+const { creator } = await requireCreatorReadyUser({
+  signInNext: "/creator/subscribers",
+})
 
-  const userId = getSessionUserId(session)
 
-  if (!userId) {
-    redirect(
-      buildPathWithNext({
-        path: SIGN_IN_PATH,
-        next: nextPath,
-      })
-    )
-  }
-
-  const subscriptionsData = await listSubscriptions(userId)
-  const subscribers = normalizeSubscribers(subscriptionsData)
+const result = await listCreatorSubscribers({
+  creatorId: creator.id,
+  limit: 100,
+})
+const subscribers = normalizeSubscribers(result.items ?? [])
 
   return (
     <main className="min-h-screen bg-zinc-950 px-6 py-10 text-zinc-100">

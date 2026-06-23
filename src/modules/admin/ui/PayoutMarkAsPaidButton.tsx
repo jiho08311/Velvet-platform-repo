@@ -2,10 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import {
-  markPayoutAsPaidAction,
-  type MarkPayoutAsPaidActionState,
-} from "../server/mark-payout-as-paid-action";
+import { markPayoutAsPaidAction } from "../public/mark-payout-as-paid-action";
 import { getPayoutActionButtonClassName } from "./payoutActionButtonClassName";
 
 type PayoutMarkAsPaidButtonProps = {
@@ -13,9 +10,9 @@ type PayoutMarkAsPaidButtonProps = {
   disabled?: boolean;
 };
 
-const initialState: MarkPayoutAsPaidActionState = {
+const initialState = {
   error: null,
-};
+} satisfies { error: string | null };
 
 function SubmitButton({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();

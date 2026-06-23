@@ -1,15 +1,11 @@
 import { NextResponse } from "next/server";
-import { createPpvPostPayment } from "@/modules/payment/server/create-ppv-post-payment";
+import { createPpvPostPayment } from "@/modules/payment/public/create-ppv-post-payment";
 import { getPostById } from "@/modules/post/public/get-post";
-import { getCreatorById } from "@/modules/creator/server/get-creator-by-id";
-import { createClient } from "@/infrastructure/supabase/server";
+import { getCreatorById } from "@/modules/creator/public/get-creator-by-id"
+import { getCurrentUser } from "@/modules/auth/public/get-current-user";
 
 export async function POST(request: Request) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

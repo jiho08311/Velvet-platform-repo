@@ -1,22 +1,23 @@
 import { NextRequest, NextResponse } from "next/server"
 
-import { releasePendingEarnings } from "@/modules/payout/server/release-pending-earnings"
-
-function isAuthorized(request: NextRequest) {
-  const secret = process.env.CRON_SECRET
-
-  if (!secret) {
-    throw new Error("Missing CRON_SECRET")
-  }
-
-  const authHeader = request.headers.get("authorization")
-  return authHeader === `Bearer ${secret}`
-}
+import { releasePendingEarnings } from "@/modules/commerce/public/settlement-contract"
+import {
+  withJobCorrelation,
+  withWorkflowCorrelation,
+} from "@/shared/observability/propagate-correlation-id"
+import { logger } from "@/shared/observability/structured-logger"
+import {
+  isRouteGuardError,
+  requireCronSecret,
+} from "@/shared/security/route-guards"
 
 async function handleRelease(request: NextRequest) {
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  requireCronSecret(request)
+
+  const correlation = withJobCorrelation(
+    withWorkflowCorrelation(undefined, "earning-release-cron"),
+    `earning-release-cron:${crypto.randomUUID()}`
+  )
 
   const holdDays = Number(process.env.EARNINGS_HOLD_DAYS ?? "7")
   const batchSize = Number(process.env.EARNINGS_RELEASE_BATCH_SIZE ?? "100")
@@ -37,7 +38,15 @@ export async function GET(request: NextRequest) {
   try {
     return await handleRelease(request)
   } catch (error) {
-    console.error("release earnings cron error:", error)
+    if (isRouteGuardError(error)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    logger.error({
+      event: "cron.release_earnings_failed",
+      context: { method: "GET" },
+      error,
+    })
 
     return NextResponse.json(
       { error: "Failed to release earnings" },
@@ -50,7 +59,15 @@ export async function POST(request: NextRequest) {
   try {
     return await handleRelease(request)
   } catch (error) {
-    console.error("release earnings cron error:", error)
+    if (isRouteGuardError(error)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    logger.error({
+      event: "cron.release_earnings_failed",
+      context: { method: "POST" },
+      error,
+    })
 
     return NextResponse.json(
       { error: "Failed to release earnings" },

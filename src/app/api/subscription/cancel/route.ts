@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { cancelSubscription } from "@/modules/subscription/server/cancel-subscription"
-import { getActiveSubscription } from "@/modules/subscription/server/get-active-subscription"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { cancelSubscription } from "@/modules/commerce/public/subscription-contract"
 import { notifySubscriptionCanceledWorkflow } from "@/workflows/subscription/notify-subscription-canceled-workflow"
 
 export async function POST(request: NextRequest) {
-  const user = await requireUser()
+  const session = await requireSession()
 
   let body: { creatorId?: string } = {}
 
@@ -24,37 +23,21 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     )
   }
+const { subscription } = await cancelSubscription({
+  subscriberUserId: session.userId,
+  creatorId,
+  mode: "period_end",
+})
 
-  const subscription = await getActiveSubscription({
-    userId: user.id,
-    creatorId,
-  })
 
-  if (!subscription) {
-    return NextResponse.json(
-      { error: "No active subscription" },
-      { status: 400 }
-    )
-  }
 
-  const updated = await cancelSubscription({
-    userId: subscription.userId,
-    creatorId: subscription.creatorId,
-  })
 
-  if (!updated) {
-    return NextResponse.json(
-      { error: "Failed to cancel subscription" },
-      { status: 500 }
-    )
-  }
-
-  await notifySubscriptionCanceledWorkflow({
-    subscriptionId: subscription.id,
-    creatorId: subscription.creatorId,
-    subscriberId: subscription.userId,
-    mode: "period_end",
-  })
+await notifySubscriptionCanceledWorkflow({
+  subscriptionId: subscription.subscriptionId,
+  creatorId: subscription.creatorId,
+  subscriberId: subscription.subscriberUserId,
+  mode: "period_end",
+})
 
   return NextResponse.json({ success: true })
 }

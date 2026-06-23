@@ -1,8 +1,8 @@
 import { EmptyState } from "@/shared/ui/EmptyState"
 import { StatusBadge } from "@/shared/ui/StatusBadge"
-import { formatPayoutHistoryAmount } from "@/modules/payout/lib/payout-display-format"
-import { getPayoutExecutionLabel } from "@/modules/payout/lib/get-payout-execution-label"
-import type { PayoutExecutionLifecycleState } from "@/modules/payout/lib/resolve-payout-state"
+import { formatPayoutHistoryAmount } from "@/modules/payout/formatters/payout-display-format"
+import { getPayoutExecutionLabel } from "@/modules/payout/formatters/get-payout-execution-label"
+import type { PayoutExecutionLifecycleState } from "@/modules/payout/policies/resolve-payout-state"
 
 type PayoutHistoryListItem = {
   id: string

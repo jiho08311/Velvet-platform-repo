@@ -6,10 +6,10 @@ import {
   projectPersistedEditBlocksFromDraft,
   shouldReenterPostModerationOnEdit,
 } from "@/modules/post/policies/post-edit-policy"
-import type { CreatePostClientDraftBlock } from "../types"
+import type { CreateOrEditPostFormBlock, CreatePostClientDraftBlock } from "../types"
 
 export type BuildEditPostPlanInput = {
-  currentBlocks: any[]
+  currentBlocks: CreateOrEditPostFormBlock[]
   nextBlocks: CreatePostClientDraftBlock[]
   files: File[]
   price: number

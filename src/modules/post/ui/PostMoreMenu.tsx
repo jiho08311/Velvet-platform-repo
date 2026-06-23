@@ -3,7 +3,7 @@
 import { useState } from "react"
 
 import { buildReportTriggerPayload } from "@/modules/report/report-trigger"
-import { ReportButton } from "@/modules/report/ui/ReportButton"
+import { ReportButton } from "@/modules/report/public/report-button-ui"
 
 type PostMoreMenuProps = {
   postId: string

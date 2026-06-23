@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { confirmProviderPayment } from "@/modules/payment/server/confirm-provider-payment"
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { confirmPayment } from "@/modules/commerce/public/payment-contract"
+import { getPaymentById } from "@/modules/commerce/public/payment-contract"
+import { logger } from "@/shared/observability/structured-logger"
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireUser()
+    const session = await requireSession()
     const body = await req.json()
 
     const { paymentId, postId } = body as {
@@ -21,52 +22,46 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { data: payment, error: paymentError } = await supabaseAdmin
-      .from("payments")
-      .select("id, user_id, type, target_type, target_id, provider")
-      .eq("id", paymentId)
-      .maybeSingle()
+const { payment } = await getPaymentById({
+  paymentId,
+})
 
-    if (paymentError || !payment) {
-      return NextResponse.json({ error: "Payment not found" }, { status: 404 })
-    }
+    if (!payment) {
+  return NextResponse.json({ error: "Payment not found" }, { status: 404 })
+}
 
-    if (payment.user_id !== user.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-    }
+if (payment.payerUserId !== session.userId) {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+}
 
-    if (payment.type !== "ppv_post") {
-      return NextResponse.json(
-        { error: "Invalid payment type" },
-        { status: 400 }
-      )
-    }
+if (payment.purpose !== "ppv_post") {
+  return NextResponse.json(
+    { error: "Invalid payment type" },
+    { status: 400 }
+  )
+}
 
-    if (payment.target_type !== "post" || payment.target_id !== postId) {
-      return NextResponse.json(
-        { error: "Payment target mismatch" },
-        { status: 400 }
-      )
-    }
+if (payment.target?.type !== "post" || payment.target.id !== postId) {
+  return NextResponse.json(
+    { error: "Payment target mismatch" },
+    { status: 400 }
+  )
+}
 
-    const result = await confirmProviderPayment({
-      paymentId,
-      provider: payment.provider,
-    })
+const result = await confirmPayment({
+  paymentId,
+})
+ return NextResponse.json({
+  success: true,
+  payment: result.payment,
+})
 
-    if (result.status !== "succeeded") {
-      return NextResponse.json(
-        { error: "Payment confirmation failed" },
-        { status: 400 }
-      )
-    }
 
-    return NextResponse.json({
-      success: true,
-      payment: result.payment,
-    })
   } catch (error) {
-    console.error("mock confirm post route error:", error)
+    logger.error({
+      event: "payment.mock_confirm_post_route_failed",
+      error,
+    })
 
     return NextResponse.json(
       { error: "Failed to confirm mock post payment" },

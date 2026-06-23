@@ -1,4 +1,4 @@
-import { getUserDetail } from "@/modules/admin/server/get-user-detail"
+import { getUserDetail } from "@/modules/admin/public/get-user-detail"
 import { Card } from "@/shared/ui/Card"
 import { StatusBadge } from "@/shared/ui/StatusBadge"
 

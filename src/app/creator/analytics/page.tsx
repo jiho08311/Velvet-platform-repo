@@ -1,28 +1,25 @@
 import { redirect } from "next/navigation"
+import { canAccessCreatorAnalytics } from "@/modules/authorization/public"
+import { buildPathWithNext } from "@/modules/auth/utils/redirect-handoff"
+import { CREATOR_ANALYTICS_PERIOD } from "@/modules/analytics/public/creator-analytics-period"
+import { readCreatorDashboard } from "@/modules/analytics/public/read-creator-dashboard"
+import { requireCreatorReadyUser } from "@/modules/creator/public/require-creator-ready-user"
+import { readCreatorOperationalReadiness } from "@/modules/creator/public/read-creator-operational-readiness"
 
-import { buildPathWithNext } from "@/modules/auth/lib/redirect-handoff"
-import {
-  getCreatorAnalyticsSummaryMetrics,
-  type CreatorAnalyticsSummaryMetricKey,
-} from "@/modules/analytics/lib/creator-analytics-summary-metrics"
-import { CREATOR_ANALYTICS_PERIOD } from "@/modules/analytics/lib/creator-analytics-period"
-import { getCreatorAnalyticsSummary } from "@/modules/analytics/server/get-creator-analytics"
-import { CreatorAnalyticsMetricCards } from "@/modules/analytics/ui/DashboardStats"
-import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
-import { readCreatorOperationalReadiness } from "@/modules/creator/server/read-creator-operational-readiness"
+function readNumber(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0
+}
 
-const CREATOR_ANALYTICS_PAGE_METRICS: CreatorAnalyticsSummaryMetricKey[] = [
-  "totalRevenue",
-  "subscribers",
-  "posts",
-  "engagement",
-]
+function formatCurrency(value: number): string {
+  return `₩${value.toLocaleString()}`
+}
 
 export default async function CreatorAnalyticsPage() {
   const nextPath = "/creator/analytics"
   const { user } = await requireCreatorReadyUser({
     signInNext: nextPath,
   })
+
   const readiness = await readCreatorOperationalReadiness({
     userId: user.id,
   })
@@ -36,11 +33,53 @@ export default async function CreatorAnalyticsPage() {
     )
   }
 
-  const analytics = await getCreatorAnalyticsSummary(readiness.creator.id)
-  const metrics = getCreatorAnalyticsSummaryMetrics(
-    analytics,
-    CREATOR_ANALYTICS_PAGE_METRICS
-  )
+  const analyticsPermission = await canAccessCreatorAnalytics({
+    actorId: user.id,
+    creatorId: readiness.creator.id,
+  })
+
+  if (!analyticsPermission.allowed) {
+    redirect(
+      buildPathWithNext({
+        path: "/dashboard",
+        next: nextPath,
+      })
+    )
+  }
+
+  const analytics = await readCreatorDashboard(readiness.creator.id)
+
+  if (!analytics) {
+    redirect(
+      buildPathWithNext({
+        path: "/dashboard",
+        next: nextPath,
+      })
+    )
+  }
+
+  const metrics = [
+    {
+      id: "totalRevenue",
+      label: "Total revenue",
+      value: formatCurrency(readNumber(analytics.revenue.totalRevenue)),
+    },
+    {
+      id: "subscribers",
+      label: "Subscribers",
+      value: readNumber(analytics.audience.subscriberCount).toLocaleString(),
+    },
+    {
+      id: "posts",
+      label: "Posts",
+      value: readNumber(analytics.content.posts).toLocaleString(),
+    },
+    {
+      id: "engagement",
+      label: "Engagement",
+      value: `${readNumber(analytics.content.engagementRate).toLocaleString()}%`,
+    },
+  ]
 
   return (
     <main className="min-h-screen bg-zinc-950 px-6 py-10 text-zinc-100">
@@ -69,10 +108,19 @@ export default async function CreatorAnalyticsPage() {
           </div>
         </div>
 
-        <CreatorAnalyticsMetricCards
-          metrics={metrics}
-          variant="analyticsPage"
-        />
+        <section className="grid gap-4 md:grid-cols-4">
+          {metrics.map((metric) => (
+            <article
+              key={metric.id}
+              className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-6"
+            >
+              <p className="text-sm text-zinc-500">{metric.label}</p>
+              <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
+                {metric.value}
+              </p>
+            </article>
+          ))}
+        </section>
 
         <section className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]">
           <div className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-6">

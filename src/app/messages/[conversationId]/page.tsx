@@ -1,22 +1,22 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-
-import { requireUser } from "@/modules/auth/server/require-user"
+import { readOnboardingReadinessRuntime } from "@/modules/identity/public/onboarding-readiness"
+import { requireSession } from "@/modules/auth/public/require-session"
 import {
   assertPassVerified,
   getPassVerificationRedirectPath,
-} from "@/modules/auth/server/assert-pass-verified"
+} from "@/modules/auth/public/assert-pass-verified"
 import {
   buildPathWithNext,
   ONBOARDING_PATH,
   SIGN_IN_PATH,
-} from "@/modules/auth/lib/redirect-handoff"
-import { getConversationById } from "@/modules/message/server/get-conversation-by-id"
-import { listMessages } from "@/modules/message/server/list-messages"
-import { markConversationRead } from "@/modules/message/server/mark-conversation-read"
-import { MessageThreadSection } from "@/modules/message/ui/MessageThreadSection"
+} from "@/modules/auth/utils/redirect-handoff"
+import { getConversationById } from "@/modules/message/public/get-conversation-by-id"
+import { listMessages } from "@/modules/message/public/list-messages"
+import { markConversationRead } from "@/modules/message/public/mark-conversation-read"
+import { MessageThreadSection } from "@/modules/message/public/message-ui"
 import { toConversationMessageListItem } from "@/modules/message/types"
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+
 
 type ConversationDetailPageProps = {
   params: Promise<{
@@ -24,19 +24,17 @@ type ConversationDetailPageProps = {
   }>
 }
 
-type ProfileRow = {
-  username: string | null
-}
+
 
 export default async function ConversationDetailPage({
   params,
 }: ConversationDetailPageProps) {
   const { conversationId } = await params
   const pathname = `/messages/${conversationId}`
-  let user: Awaited<ReturnType<typeof requireUser>>
+let session: Awaited<ReturnType<typeof requireSession>>
 
   try {
-    user = await requireUser()
+ session = await requireSession()
   } catch {
     redirect(
       buildPathWithNext({
@@ -47,33 +45,30 @@ export default async function ConversationDetailPage({
   }
 
   try {
-    await assertPassVerified({ profileId: user.id })
+    await assertPassVerified({ profileId: session.userId })
   } catch {
     redirect(getPassVerificationRedirectPath({ next: pathname }))
   }
 
-  const { data: profile, error: profileError } = await supabaseAdmin
-    .from("profiles")
-    .select("username")
-    .eq("id", user.id)
-    .maybeSingle<ProfileRow>()
 
-  if (profileError) {
-    throw profileError
-  }
+const onboarding = await readOnboardingReadinessRuntime({
+  userId: session.userId,
+})
 
-  if (!profile?.username) {
-    redirect(
-      buildPathWithNext({
-        path: ONBOARDING_PATH,
-        next: pathname,
-      })
-    )
-  }
+if (!onboarding.ok) {
+  redirect(
+    buildPathWithNext({
+      path: ONBOARDING_PATH,
+      next: pathname,
+    })
+  )
+}
+
+
 
   const conversation = await getConversationById({
     conversationId,
-    userId: user.id,
+    userId: session.userId,
   })
 
   if (!conversation) {
@@ -82,7 +77,7 @@ export default async function ConversationDetailPage({
 
    const messages = await listMessages({
     conversationId,
-    userId: user.id,
+    userId: session.userId,
   })
 
   /**
@@ -94,7 +89,7 @@ export default async function ConversationDetailPage({
   const messageListItems = messages.map((message) =>
     toConversationMessageListItem({
       message,
-      currentUserId: user.id,
+      currentUserId: session.userId,
       reportPathname: pathname,
     })
   )
@@ -109,7 +104,7 @@ export default async function ConversationDetailPage({
    */
   await markConversationRead({
     conversationId,
-    userId: user.id,
+    userId: session.userId,
   })
 
   const participant = conversation.participant
@@ -152,7 +147,7 @@ export default async function ConversationDetailPage({
       <section className="flex flex-1 flex-col rounded-2xl border border-white/10 bg-neutral-950 p-4">
         <MessageThreadSection
           conversationId={conversation.id}
-          currentUserId={user.id}
+          currentUserId={session.userId}
           reportPathname={pathname}
           initialMessages={messageListItems}
         />

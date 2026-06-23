@@ -1,4 +1,4 @@
-import { ResetPasswordForm } from "@/modules/auth/ui/ResetPasswordForm"
+import { ResetPasswordForm } from "@/modules/auth/public/auth-ui"
 
 export default function ResetPasswordPage() {
   return (

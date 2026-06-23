@@ -1,8 +1,8 @@
-import { listReports } from "@/modules/report/server/list-reports"
+import { listReports } from "@/modules/report/public/list-reports"
 import { Card } from "@/shared/ui/Card"
 import { EmptyState } from "@/shared/ui/EmptyState"
 import { updateReportStatusAction } from "./actions"
-import { AdminReportTable } from "@/modules/admin/ui/AdminReportTable"
+import { AdminReportTable } from "@/modules/admin/public/admin-ui"
 
 type Props = {
   searchParams: Promise<{

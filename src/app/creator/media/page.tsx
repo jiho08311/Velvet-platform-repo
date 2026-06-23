@@ -1,36 +1,16 @@
 import { redirect } from "next/navigation"
 
-import { getSession } from "@/modules/auth/server/get-session"
+import { readSession } from "@/modules/auth/public/read-session"
 import {
   buildPathWithNext,
   SIGN_IN_PATH,
-} from "@/modules/auth/lib/redirect-handoff"
+} from "@/modules/auth/utils/redirect-handoff"
 
-function getSessionUserId(session: unknown) {
-  if (!session || typeof session !== "object") {
-    return null
-  }
 
-  if ("userId" in session && typeof session.userId === "string") {
-    return session.userId
-  }
-
-  if (
-    "user" in session &&
-    session.user &&
-    typeof session.user === "object" &&
-    "id" in session.user &&
-    typeof session.user.id === "string"
-  ) {
-    return session.user.id
-  }
-
-  return null
-}
 
 export default async function CreatorMediaPage() {
   const nextPath = "/creator/media"
-  const session = await getSession()
+  const session = await readSession()
 
   if (!session) {
     redirect(
@@ -41,7 +21,7 @@ export default async function CreatorMediaPage() {
     )
   }
 
-  const userId = getSessionUserId(session)
+  const userId = session?.userId ?? null
 
   if (!userId) {
     redirect(

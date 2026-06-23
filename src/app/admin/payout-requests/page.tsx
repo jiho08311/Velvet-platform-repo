@@ -1,6 +1,6 @@
-import { listPayoutRequests } from "@/modules/admin/server/list-payout-requests";
-import { requireAdmin } from "@/modules/admin/server/require-admin";
-import { PayoutRequestAdminList } from "@/modules/admin/ui/PayoutRequestAdminList";
+import { listPayoutRequests } from "@/modules/admin/public/list-payout-requests";
+import { requireAdmin } from "@/modules/admin/public/require-admin";
+import { PayoutRequestAdminList } from "@/modules/admin/public/admin-ui";
 
 export default async function AdminPayoutRequestsPage() {
   await requireAdmin();

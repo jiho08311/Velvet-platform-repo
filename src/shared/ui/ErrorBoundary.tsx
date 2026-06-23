@@ -1,5 +1,6 @@
 import React from "react"
 import { RestrictedStateShell } from "./RestrictedStateShell"
+import { clientLogger } from "@/shared/observability/client-logger"
 
 type Props = {
   children: React.ReactNode
@@ -17,7 +18,10 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: unknown) {
-    console.error("UI ErrorBoundary caught error:", error)
+    clientLogger.error({
+      event: "ui.error_boundary_caught",
+      error,
+    })
   }
 
   render() {

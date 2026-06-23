@@ -1,23 +1,34 @@
-import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
-import { formatPayoutAmountWithCurrencyCode } from "@/modules/payout/lib/payout-display-format"
-import { createPayoutRequest } from "@/modules/payout/server/create-payout-request"
+import { requireCreatorReadyUser } from "@/modules/creator/public/require-creator-ready-user"
 import {
-  getPayoutSummary,
-  type PayoutSummary,
-} from "@/modules/payout/server/get-payout-summary"
-import {
-  listCreatorPayouts,
-  type CreatorPayout,
-} from "@/modules/payout/server/list-creator-payouts"
-import { revalidatePayoutSurfaces } from "@/modules/payout/server/revalidate-payout-surfaces"
-import { PayoutHistoryList } from "@/modules/payout/ui/PayoutHistoryList"
+  createPayoutRequest,
+  getCreatorPayoutSummary,
+  listCreatorPayoutExecutions,
+} from "@/modules/commerce/public/payout-contract"
+import { formatPayoutAmountWithCurrencyCode } from "@/modules/payout/formatters/payout-display-format"
+import { revalidatePayoutSurfaces } from "@/modules/payout/public/revalidate-payout-surfaces"
+import { PayoutList as PayoutHistoryList } from "@/modules/payout/public/payout-dashboard-ui"
+import { canRequestPayout } from "@/modules/authorization/public"
+
+
+type PayoutSummary = Awaited<ReturnType<typeof getCreatorPayoutSummary>>
+type CreatorPayout = Awaited<
+  ReturnType<typeof listCreatorPayoutExecutions>
+>[number]
 
 async function requestPayoutAction(formData: FormData) {
   "use server"
 
-  const { creator } = await requireCreatorReadyUser({
+  const { user, creator } = await requireCreatorReadyUser({
     signInNext: "/creator/payout",
   })
+
+  
+ const payoutPermission = await canRequestPayout({
+    actorId: user.id,
+    creatorId: creator.id,
+  })
+
+  
 
   const currencyValue = formData.get("currency")
   const currency =
@@ -36,25 +47,34 @@ async function requestPayoutAction(formData: FormData) {
 }
 
 export default async function CreatorPayoutPage() {
-  const { creator } = await requireCreatorReadyUser({
+  const { user, creator } = await requireCreatorReadyUser({
     signInNext: "/creator/payout",
   })
 
+  const payoutAccessPermission = await canRequestPayout({
+    actorId: user.id,
+    creatorId: creator.id,
+  })
+
+  if (!payoutAccessPermission.allowed) {
+    throw new Error("PAYOUT_ACCESS_NOT_ALLOWED")
+  }
+
   const [summaryResult, payoutsResult] = await Promise.all([
-    getPayoutSummary(creator.id),
-    listCreatorPayouts({ creatorId: creator.id }),
+    getCreatorPayoutSummary(creator.id),
+    listCreatorPayoutExecutions({ creatorId: creator.id }),
   ])
 
   const summary: PayoutSummary | null = summaryResult
   const payouts: CreatorPayout[] = payoutsResult
 
-const currency = summary?.currency?.toUpperCase() ?? "KRW"
-const requestableBalance = summary?.requestableBalance ?? 0
-const requestedPayoutAmount = summary?.requestedPayoutAmount ?? 0
-const requestEligibility = summary?.requestEligibility ?? {
-  isEligible: false,
-  state: "invalid_amount",
-}
+  const currency = summary?.currency?.toUpperCase() ?? "KRW"
+  const requestableBalance = summary?.requestableBalance ?? 0
+  const requestedPayoutAmount = summary?.requestedPayoutAmount ?? 0
+  const requestEligibility = summary?.requestEligibility ?? {
+    isEligible: false,
+    state: "invalid_amount",
+  }
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
@@ -87,13 +107,13 @@ const requestEligibility = summary?.requestEligibility ?? {
           <p className="text-sm text-white/50">Request payout</p>
           <form action={requestPayoutAction} className="mt-3">
             <input type="hidden" name="currency" value={currency} />
-<button
-  type="submit"
-  disabled={!requestEligibility.isEligible}
-  className="inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:bg-white/40 disabled:text-black/40"
->
-  Request payout
-</button>
+            <button
+              type="submit"
+              disabled={!requestEligibility.isEligible}
+              className="inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:bg-white/40 disabled:text-black/40"
+            >
+              Request payout
+            </button>
           </form>
         </div>
       </section>

@@ -2,6 +2,27 @@
 
 import { useState } from "react"
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk"
+
+type TossPaymentRequest = {
+  method: "CARD"
+  amount: {
+    currency: "KRW"
+    value: number
+  }
+  orderId: string
+  orderName: string
+  successUrl: string
+  failUrl: string
+}
+
+type TossPaymentInstance = {
+  requestPayment(input: TossPaymentRequest): Promise<void>
+}
+
+type TossPaymentsClient = {
+  payment(input: { customerKey: string }): TossPaymentInstance
+}
+
 /**
  * PPV purchase candidate only.
  *
@@ -70,7 +91,7 @@ export function MessagePurchaseButton({
         throw new Error("Missing NEXT_PUBLIC_TOSS_CLIENT_KEY")
       }
 
-      const tossPayments = (await loadTossPayments(clientKey)) as any
+      const tossPayments = (await loadTossPayments(clientKey)) as TossPaymentsClient
 
       const paymentInstance = tossPayments.payment({
         customerKey: payment.id,

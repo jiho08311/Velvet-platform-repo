@@ -1,0 +1,1 @@
+export { createEarning } from "../runtime/create-earning"

@@ -2,7 +2,9 @@ import { NextResponse } from "next/server"
 import {
   readCreatorSearchApiRequest,
   resolveCreatorSearchApiResponse,
-} from "@/modules/search/server/creator-search-api-contract"
+} from "@/modules/search/public/creator-search-api-contract"
+
+export const routeAccess = "public"
 
 export async function GET(request: Request) {
   try {

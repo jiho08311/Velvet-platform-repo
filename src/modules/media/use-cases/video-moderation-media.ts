@@ -1,33 +1,27 @@
-import {
-  findMediaModerationStatusesByPostId,
-  markMediaApprovedForModeration as markMediaApprovedForModerationInRepository,
-  markMediaNeedsReviewForModeration as markMediaNeedsReviewForModerationInRepository,
-  markMediaRejectedForModeration as markMediaRejectedForModerationInRepository,
-} from "@/modules/media/repositories/media-moderation-repository"
+import { listPostMedia } from "@/modules/media/public/list-post-media"
+import { getMediaModerationDecision } from "@/modules/media/public/media-moderation"
 
-export async function markMediaApprovedForModeration(
-  mediaId: string,
-  summary: Record<string, unknown>
-) {
-  return markMediaApprovedForModerationInRepository(mediaId, summary)
-}
-
-export async function markMediaRejectedForModeration(
-  mediaId: string,
-  summary: Record<string, unknown>
-) {
-  return markMediaRejectedForModerationInRepository(mediaId, summary)
-}
-
-export async function markMediaNeedsReviewForModeration(
-  mediaId: string,
-  summary: Record<string, unknown>
-) {
-  return markMediaNeedsReviewForModerationInRepository(mediaId, summary)
-}
+export {
+  applyMediaApprovedForModeration as markMediaApprovedForModeration,
+  applyMediaNeedsReviewForModeration as markMediaNeedsReviewForModeration,
+  applyMediaRejectedForModeration as markMediaRejectedForModeration,
+} from "@/modules/media/runtime/apply-media-moderation-transition"
 
 export async function getMediaModerationStatusesByPostId(
   postId: string
 ): Promise<Array<string | null>> {
-  return findMediaModerationStatusesByPostId(postId)
+  const rows = await listPostMedia({
+    postIds: [postId],
+    requireReadyAsset: false,
+  })
+
+  return Promise.all(
+    rows.map(async (item) => {
+      const decision = await getMediaModerationDecision({
+        mediaId: item.media.id,
+      })
+
+      return decision.decision
+    })
+  )
 }

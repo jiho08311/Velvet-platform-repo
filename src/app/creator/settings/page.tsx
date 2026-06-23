@@ -1,12 +1,13 @@
 import { redirect } from "next/navigation"
 
-import { getSession } from "@/modules/auth/server/get-session"
+import { readSession } from "@/modules/auth/public/read-session"
 import {
   buildPathWithNext,
   SIGN_IN_PATH,
-} from "@/modules/auth/lib/redirect-handoff"
-import { getCreatorById } from "@/modules/creator/server/get-creator-by-id"
-import { getProfileByUserId } from "@/modules/profile/server/get-profile-by-user-id"
+} from "@/modules/auth/utils/redirect-handoff"
+import { getCreatorById } from "@/modules/creator/public/get-creator-by-id"
+
+import { getProfileByUserId } from "@/modules/profile/public/get-profile-by-user-id"
 
 type CreatorSettingsFormData = {
   displayName: string
@@ -14,27 +15,7 @@ type CreatorSettingsFormData = {
   subscriptionPrice: string
 }
 
-function getSessionUserId(session: unknown) {
-  if (!session || typeof session !== "object") {
-    return null
-  }
 
-  if ("userId" in session && typeof session.userId === "string") {
-    return session.userId
-  }
-
-  if (
-    "user" in session &&
-    session.user &&
-    typeof session.user === "object" &&
-    "id" in session.user &&
-    typeof session.user.id === "string"
-  ) {
-    return session.user.id
-  }
-
-  return null
-}
 
 function getStringValue(record: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
@@ -109,7 +90,7 @@ function normalizeCreatorSettings(
 
 export default async function CreatorSettingsPage() {
   const nextPath = "/creator/settings"
-  const session = await getSession()
+  const session = await readSession()
 
   if (!session) {
     redirect(
@@ -120,7 +101,7 @@ export default async function CreatorSettingsPage() {
     )
   }
 
-  const userId = getSessionUserId(session)
+  const userId = session?.userId ?? null
 
   if (!userId) {
     redirect(

@@ -1,6 +1,6 @@
-import { requireAdmin } from "@/modules/admin/server/require-admin"
-import { AdminBadge } from "@/modules/admin/ui/AdminBadge"
-import { listModerationQueue } from "@/modules/moderation/server/list-moderation-queue"
+import { requireAdmin } from "@/modules/admin/public/require-admin"
+import { AdminBadge } from "@/modules/admin/public/admin-ui"
+import { listModerationQueue } from "@/modules/moderation/public/list-moderation-queue"
 
 export default async function AdminModerationPage() {
   await requireAdmin()

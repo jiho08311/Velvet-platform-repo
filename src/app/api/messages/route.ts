@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { requireUser } from "@/modules/auth/server/require-user"
-import { sendMessage } from "@/modules/message/server/send-message"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { sendMessage } from "@/modules/message/public/send-message"
 import {
   createSendMessageResult,
   normalizeSendMessagePayload,
@@ -8,7 +8,7 @@ import {
 
 export async function POST(request: Request) {
   try {
-    const user = await requireUser()
+    const session = await requireSession()
     const body = await request.json()
     const payload = normalizeSendMessagePayload(body ?? {})
 
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
     const message = await sendMessage({
       ...payload,
-      senderId: user.id,
+      senderId: session.userId,
     })
 
     return NextResponse.json(createSendMessageResult(message), { status: 200 })

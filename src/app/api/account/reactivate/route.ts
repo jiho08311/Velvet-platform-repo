@@ -1,37 +1,28 @@
 import { NextResponse } from "next/server"
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { executeAccountReactivation } from "@/modules/identity/public/account-reactivation"
 
 export async function POST(request: Request) {
-  const user = await requireUser()
+  try {
+    const session = await requireSession()
 
-  const { error: profileError } = await supabaseAdmin
-    .from("profiles")
-    .update({
-      is_deactivated: false,
-      is_delete_pending: false,
-      delete_scheduled_for: null,
-      deleted_at: null,
+    await executeAccountReactivation({
+      profileId: session.userId,
     })
-    .eq("id", user.id)
 
-  if (profileError) {
-    throw profileError
+    return NextResponse.redirect(
+      new URL("/", request.url)
+    )
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "ACCOUNT_REACTIVATION_FAILED"
+
+    return NextResponse.json(
+      { error: message },
+      { status: 400 }
+    )
   }
-
-  const { error: creatorError } = await supabaseAdmin
-    .from("creators")
-    .update({
-      status: "active",
-    })
-    .eq("user_id", user.id)
-
-  if (creatorError) {
-    throw creatorError
-  }
-
-  return NextResponse.redirect(new URL("/settings", request.url), {
-    status: 303,
-  })
 }

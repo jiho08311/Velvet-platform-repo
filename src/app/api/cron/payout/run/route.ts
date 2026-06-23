@@ -1,24 +1,35 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { sendPayout } from "@/modules/payout/server/send-payout"
+import {
+  sendPayout,
+  type SendPayoutResult,
+} from "@/modules/commerce/public/payout-contract"
+import { listCronPayoutsToRun } from "@/modules/payout/public/list-cron-payouts-to-run"
+import {
+  isRouteGuardError,
+  requireCronSecret,
+} from "@/shared/security/route-guards"
+import { logger } from "@/shared/observability/structured-logger"
 
-export async function GET() {
-  try {
-    // 1. 처리 대상 payout 조회 (pending + failed)
-    const { data: payouts, error } = await supabaseAdmin
-      .from("payouts")
-      .select("id")
-      .in("status", ["pending", "failed"])
-      .limit(20)
-
-    if (error) {
-      throw error
+type PayoutCronRunResult =
+  | {
+      payoutId: string
+      success: true
+      result: SendPayoutResult
+    }
+  | {
+      payoutId: string
+      success: false
+      error: string
     }
 
-    const results: any[] = []
+export async function GET(request: NextRequest) {
+  try {
+    requireCronSecret(request)
+    const payouts = await listCronPayoutsToRun()
 
-    // 2. 하나씩 처리
+    const results: PayoutCronRunResult[] = []
+
     for (const payout of payouts ?? []) {
       try {
         const result = await sendPayout({
@@ -34,8 +45,7 @@ export async function GET() {
         results.push({
           payoutId: payout.id,
           success: false,
-          error:
-            error instanceof Error ? error.message : "Unknown error",
+          error: error instanceof Error ? error.message : "Unknown error",
         })
       }
     }
@@ -46,7 +56,15 @@ export async function GET() {
       results,
     })
   } catch (error) {
-    console.error("CRON PAYOUT ERROR:", error)
+    if (isRouteGuardError(error)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    logger.error({
+      event: "api.cron.payout.run.failed",
+      message: "Payout cron route failed",
+      error,
+    })
 
     return NextResponse.json(
       { error: "Failed to run payout cron" },

@@ -1,10 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { resolveRedirectTarget } from "@/modules/auth/lib/redirect-handoff";
-import { requireOnboardingReadyUser } from "@/modules/auth/server/require-onboarding-ready-user";
-import { readCreatorReadiness } from "@/modules/creator/server/read-creator-readiness";
-import { createCreatorProfile } from "@/modules/creator/server/create-creator-profile";
+import { resolveRedirectTarget } from "@/modules/auth/utils/redirect-handoff";
+import { requireOnboardingReadyUser } from "@/modules/auth/public/require-onboarding-ready-user";
+import { readCreatorReadiness } from "@/modules/creator/public/read-creator-readiness"
+import { createCreatorProfile } from "@/modules/creator/public/create-creator-profile";
 
 export async function becomeCreatorAction(formData: FormData) {
   const resolvedNext = resolveRedirectTarget({

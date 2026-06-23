@@ -4,7 +4,7 @@ import {
   findCommentForDelete,
   softDeleteComment,
 } from "@/modules/post/public/comment-data"
-import { createSupabaseServerClient } from "@/infrastructure/supabase/server"
+import { getCurrentUser } from "@/modules/auth/public/get-current-user"
 
 type RouteContext = {
   params: Promise<{
@@ -18,14 +18,9 @@ export async function DELETE(
 ) {
   const { commentId } = await context.params
 
-  const supabase = await createSupabaseServerClient()
+  const user = await getCurrentUser()
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 

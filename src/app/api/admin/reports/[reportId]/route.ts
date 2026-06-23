@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
-import { getReportById } from "@/modules/report/server/get-report-by-id"
+import { getReportById } from "@/modules/report/public/get-report-by-id"
+import { requireAdmin } from "@/modules/admin/public/require-admin"
 
 type RouteParams = {
   params: Promise<{
@@ -12,6 +13,7 @@ export async function GET(
   { params }: RouteParams,
 ) {
   try {
+    await requireAdmin()
     const { reportId } = await params
     const report = await getReportById(reportId)
 

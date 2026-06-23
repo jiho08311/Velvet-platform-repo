@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 
+export const routeAccess = "disabled"
+
 export async function POST() {
   return NextResponse.json(
     { error: "This feature is currently unavailable" },

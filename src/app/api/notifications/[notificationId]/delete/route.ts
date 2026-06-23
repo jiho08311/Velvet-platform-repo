@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { deleteNotification } from "@/modules/notification/server/delete-notification"
+import { requireSession } from "@/modules/auth/public/require-session"
+import { deleteNotification } from "@/modules/notification/public/delete-notification"
 
 type DeleteNotificationRouteParams = {
   params: Promise<{
@@ -15,11 +15,11 @@ export async function POST(
 ) {
   try {
     const { notificationId } = await params
-    const user = await requireUser()
+    const session = await requireSession()
 
     const deleted = await deleteNotification({
       notificationId,
-      userId: user.id,
+      userId: session.userId,
     })
 
     if (!deleted) {

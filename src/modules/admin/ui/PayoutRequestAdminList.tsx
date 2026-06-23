@@ -1,5 +1,5 @@
-import type { AdminPayoutAction } from "@/modules/admin/lib/payout-request-admin-policy"
-import type { AdminPayoutRequestListItem } from "@/modules/admin/server/list-payout-requests"
+import type { AdminPayoutAction } from "@/modules/admin/policies/payout-request-admin-policy"
+import type { AdminPayoutRequestListItem } from "@/modules/admin/runtime/list-payout-requests"
 
 import { AdminBadge } from "./AdminBadge"
 import { PayoutMarkAsFailedButton } from "./PayoutMarkAsFailedButton"

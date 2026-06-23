@@ -4,11 +4,11 @@ import { createServerClient } from "@supabase/ssr"
 import {
   assertPassVerified,
   getPassVerificationRedirectPath,
-} from "@/modules/auth/server/assert-pass-verified"
+} from "@/modules/auth/public/assert-pass-verified"
 import {
   buildPathWithNext,
   SIGN_IN_PATH,
-} from "@/modules/auth/lib/redirect-handoff"
+} from "@/modules/auth/utils/redirect-handoff"
 
 export default async function VerifyPassRequiredPage() {
   const nextPath = "/verifiy-pass-required"

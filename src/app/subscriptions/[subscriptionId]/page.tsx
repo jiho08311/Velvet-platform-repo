@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { getSubscriptionById } from "@/modules/subscription/server/get-subscription-by-id"
+import { getSubscriptionById } from "@/modules/subscription/public/get-subscription-by-id"
 
 type SubscriptionDetailPageProps = {
   params: Promise<{

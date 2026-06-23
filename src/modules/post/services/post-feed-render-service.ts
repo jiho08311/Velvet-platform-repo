@@ -1,9 +1,4 @@
-import { createMediaSignedUrl } from "@/modules/media/public/create-media-signed-url"
-
-import { buildPostRenderInput } from "@/modules/post/lib/post-render-input"
 import { getBlockedPostCommerceState } from "@/modules/post/policies/post-commerce-policy"
-import { buildLockedPreviewPolicy } from "@/modules/post/server/locked-preview-policy"
-import { buildPostRenderReadModel } from "@/modules/post/server/post-render-read-model"
 import type {
   PostAccessResult,
   PostCommerceState,
@@ -13,17 +8,12 @@ import type {
 import {
   mapCreatorFeedSurfaceItem,
   mapFeedBlockRowsToRenderBlocks,
-  mapSignedFeedMediaItems,
   mapSubscribedFeedListItem,
-  resolveFeedMediaType,
   type FeedMediaRowLike,
   type FeedPostBlockRowLike,
 } from "@/modules/post/mappers/post-feed-mapper"
 import { createPostLikeCompatibilityFields } from "@/shared/lib/like-interaction-result"
-
-
-
-
+import { assemblePostProjectionRuntime } from "@/modules/post/runtime/post-projection-runtime"
 
 type CreatorFeedPostRowLike = {
   id: string
@@ -67,80 +57,29 @@ export async function buildCreatorFeedSurfaceItem(params: {
   }
   commentsCount: number
 }): Promise<PostRenderSurfaceItem> {
-  const allBlocks = mapFeedBlockRowsToRenderBlocks(params.blockRows)
-  const allMediaRows = params.mediaRows
-
-  const previewPolicy = buildLockedPreviewPolicy({
+  const projectionRuntime = await assemblePostProjectionRuntime({
+    sourceFile: "src/modules/post/services/post-feed-render-service.ts",
+    sourceSymbol: "buildCreatorFeedSurfaceItem",
+    surface: "feed_projection",
+    post: {
+      id: params.post.id,
+      creatorId: params.post.creator_id,
+      content: params.post.content,
+      visibility: params.post.visibility,
+    },
     access: params.post.access,
     publicState: params.post.publicState,
-    text: params.post.content ?? "",
-    blocks: allBlocks,
-    media: allMediaRows.map((item) => ({
-      id: item.id,
-      url: "",
-      type: resolveFeedMediaType(item),
-      mimeType: item.mime_type,
-      sortOrder: item.sort_order,
-    })),
-  })
-
-  const selectedMediaRows = params.post.access.canView
-    ? allMediaRows
-    : allMediaRows.filter((item) =>
-        previewPolicy.previewMedia.some((preview) => preview.id === item.id)
-      )
-
-  const signedMedia = await Promise.all(
-    selectedMediaRows.map(async (item) => {
-      const url = await createMediaSignedUrl({
-        storagePath: item.storage_path,
-        viewerUserId: params.viewerUserId,
-        creatorUserId: params.creatorUserId,
-        visibility: params.post.visibility,
-        canView: params.post.access.canView,
-        isSubscribed: params.post.isSubscribed,
-        hasPurchased: params.post.hasPurchased,
-        allowPreview:
-          !params.post.access.canView &&
-          previewPolicy.allowPreviewMediaSigning,
-      })
-
-      return {
-        id: item.id,
-        url,
-        type: resolveFeedMediaType(item),
-        mimeType: item.mime_type,
-        sortOrder: item.sort_order,
-      }
-    })
-  )
-
-  const media = mapSignedFeedMediaItems(signedMedia)
-
-  const selectedBlocks = params.post.access.canView
-    ? allBlocks
-    : previewPolicy.previewBlocks
-
-  const renderReadModel = buildPostRenderReadModel({
-    blockRows: selectedBlocks.map((block) => ({
-      id: block.id,
-      post_id: block.postId,
-      type: block.type,
-      content: block.content,
-      media_id: block.mediaId,
-      sort_order: block.sortOrder,
-      created_at: block.createdAt,
-      editor_state: block.editorState ?? null,
-    })),
-    mediaItems: media,
-  })
-
-  const renderInput = buildPostRenderInput({
-    text: params.post.access.canView
-      ? (params.post.content ?? "")
-      : previewPolicy.renderTextSeed,
-    blocks: renderReadModel.blocks,
-    media: renderReadModel.media,
+    viewerUserId: params.viewerUserId,
+    creatorUserId: params.creatorUserId,
+    isSubscribed: params.post.isSubscribed,
+    hasPurchased: params.post.hasPurchased,
+    blocks: mapFeedBlockRowsToRenderBlocks(params.blockRows),
+    mediaRows: params.mediaRows,
+    correlationKeys: {
+      postId: params.post.id,
+      creatorId: params.post.creator_id,
+      viewerUserId: params.viewerUserId,
+    },
   })
 
   return mapCreatorFeedSurfaceItem({
@@ -148,12 +87,12 @@ export async function buildCreatorFeedSurfaceItem(params: {
       ...params.post,
       status: params.post.status as PostRenderSurfaceItem["status"],
     },
-    renderInput,
-    media,
-    blocks: renderReadModel.blocks,
+    renderInput: projectionRuntime.renderInput,
+    media: projectionRuntime.selectedMedia,
+    blocks: projectionRuntime.selectedBlocks,
     likeState: params.likeState,
     likeCompatibilityFields: createPostLikeCompatibilityFields(
-      params.likeState
+      params.likeState,
     ),
     commentsCount: params.commentsCount,
   })
@@ -171,41 +110,30 @@ export async function buildSubscribedFeedListItem(params: {
     viewerHasLiked: boolean
   }
 }): Promise<PostRenderListItem> {
-  const selectedMediaRows = params.mediaRows.slice(0, 3)
-
-  const signedMedia = await Promise.all(
-    selectedMediaRows.map(async (item) => {
-      const url = await createMediaSignedUrl({
-        storagePath: item.storage_path,
-        viewerUserId: params.viewerUserId,
-        creatorUserId: params.creatorUserId,
-        visibility: params.post.visibility,
-        canView: params.access.canView,
-        isSubscribed: true,
-        hasPurchased: false,
-      })
-
-      return {
-        id: item.id,
-        url,
-        type: resolveFeedMediaType(item),
-        mimeType: item.mime_type,
-        sortOrder: item.sort_order,
-      }
-    })
-  )
-
-  const media = mapSignedFeedMediaItems(signedMedia)
-
-  const renderReadModel = buildPostRenderReadModel({
-    blockRows: params.blockRows,
-    mediaItems: media,
-  })
-
-  const renderInput = buildPostRenderInput({
-    text: params.post.content ?? "",
-    blocks: renderReadModel.blocks,
-    media: renderReadModel.media,
+  const projectionRuntime = await assemblePostProjectionRuntime({
+    sourceFile: "src/modules/post/services/post-feed-render-service.ts",
+    sourceSymbol: "buildSubscribedFeedListItem",
+    surface: "feed_projection",
+    post: {
+      id: params.post.id,
+      creatorId: params.post.creator_id,
+      content: params.post.content,
+      visibility: params.post.visibility,
+    },
+    access: params.access,
+    publicState: "published",
+    viewerUserId: params.viewerUserId,
+    creatorUserId: params.creatorUserId,
+    isSubscribed: true,
+    hasPurchased: false,
+    blocks: mapFeedBlockRowsToRenderBlocks(params.blockRows),
+    // Preserve the legacy subscribed-feed behavior: only sign/render up to 3 media rows.
+    mediaRows: params.mediaRows.slice(0, 3),
+    correlationKeys: {
+      postId: params.post.id,
+      creatorId: params.post.creator_id,
+      viewerUserId: params.viewerUserId,
+    },
   })
 
   return {
@@ -217,8 +145,8 @@ export async function buildSubscribedFeedListItem(params: {
         hasPurchased: false,
         isSubscribed: true,
       }),
-      renderInput,
-      media,
+      renderInput: projectionRuntime.renderInput,
+      media: projectionRuntime.selectedMedia,
     }),
     ...params.likeState,
     ...createPostLikeCompatibilityFields(params.likeState),

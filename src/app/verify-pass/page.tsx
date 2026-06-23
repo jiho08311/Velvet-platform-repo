@@ -1,17 +1,12 @@
-// src/app/verify-pass/page.tsx
 import { redirect } from "next/navigation"
-import { createClient } from "@/infrastructure/supabase/server"
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
+import { getCurrentUser } from "@/modules/auth/public/get-current-user"
 import {
   getPassVerificationRedirectPath,
   normalizePassVerificationNext,
-} from "@/modules/auth/server/assert-pass-verified"
-import { DEFAULT_AUTH_RESUME_PATH } from "@/modules/auth/lib/redirect-handoff"
-import { VerifyPassPage } from "@/modules/auth/ui/VerifyPassPage"
-
-type ProfileRow = {
-  is_adult_verified: boolean | null
-}
+} from "@/modules/auth/public/assert-pass-verified"
+import { DEFAULT_AUTH_RESUME_PATH } from "@/modules/auth/utils/redirect-handoff"
+import { VerifyPassPage } from "@/modules/auth/public/auth-ui"
+import { readAdultVerificationStatus } from "@/modules/identity/public/adult-verification-status"
 
 type VerifyPassRouteProps = {
   searchParams: Promise<{
@@ -24,11 +19,7 @@ export default async function VerifyPassRoute({
 }: VerifyPassRouteProps) {
   const { next } = await searchParams
   const normalizedNext = next ? normalizePassVerificationNext(next) : null
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
 
   if (!user) {
     const signInParams = new URLSearchParams({
@@ -40,17 +31,11 @@ export default async function VerifyPassRoute({
     redirect(`/sign-in?${signInParams.toString()}`)
   }
 
-  const { data: profile, error } = await supabaseAdmin
-    .from("profiles")
-    .select("is_adult_verified")
-    .eq("id", user.id)
-    .maybeSingle<ProfileRow>()
+  const adultVerification = await readAdultVerificationStatus({
+    profileId: user.id,
+  })
 
-  if (error) {
-    throw error
-  }
-
-  if (profile?.is_adult_verified) {
+  if (adultVerification.isAdultVerified) {
     redirect(normalizedNext ?? DEFAULT_AUTH_RESUME_PATH)
   }
 

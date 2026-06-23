@@ -1,18 +1,12 @@
 import { Suspense } from "react"
 import { redirect } from "next/navigation"
 
-import { SignInForm } from "@/modules/auth/ui/SignInForm"
-import { getCurrentUser } from "@/modules/auth/server/get-current-user"
-import { resolveRedirectTarget } from "@/modules/auth/lib/redirect-handoff"
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { createClient } from "@/infrastructure/supabase/server"
-
-type ProfileStatusRow = {
-  is_deactivated: boolean | null
-  is_delete_pending: boolean | null
-  delete_scheduled_for: string | null
-  deleted_at: string | null
-}
+import { SignInForm } from "@/modules/auth/public/auth-ui"
+import { getCurrentUser } from "@/modules/auth/public/get-current-user"
+import { signOut } from "@/modules/auth/public/sign-out"
+import { resolveRedirectTarget } from "@/modules/auth/utils/redirect-handoff"
+import { readAccountLifecycleState } from "@/modules/identity/public/account-lifecycle"
+import { markExpiredDeletePendingAccountAsDeleted } from "@/modules/identity/public/account-expiration"
 
 type SignInPageProps = {
   searchParams: Promise<{
@@ -26,48 +20,34 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   const user = await getCurrentUser()
 
   if (user) {
-    const supabase = await createClient()
+    const lifecycle = await readAccountLifecycleState({
+      profileId: user.id,
+    })
 
-    const { data: profile, error } = await supabaseAdmin
-      .from("profiles")
-      .select(
-        "is_deactivated, is_delete_pending, delete_scheduled_for, deleted_at"
-      )
-      .eq("id", user.id)
-      .single<ProfileStatusRow>()
-
-    if (error) {
-      throw error
-    }
-
-    if (profile?.deleted_at) {
-      await supabase.auth.signOut()
+    if (lifecycle.state === "deleted") {
+      await signOut()
       redirect("/account-unavailable")
     }
 
     const now = new Date()
     const isDeleteExpired =
-      profile?.is_delete_pending &&
-      profile?.delete_scheduled_for &&
-      new Date(profile.delete_scheduled_for).getTime() <= now.getTime()
+      lifecycle.isDeletePending &&
+      lifecycle.deleteScheduledFor &&
+      new Date(lifecycle.deleteScheduledFor).getTime() <= now.getTime()
 
     if (isDeleteExpired) {
-      const { error: updateError } = await supabaseAdmin
-        .from("profiles")
-        .update({
-          deleted_at: now.toISOString(),
-        })
-        .eq("id", user.id)
+      const deletedAt = now.toISOString()
 
-      if (updateError) {
-        throw updateError
-      }
+ await markExpiredDeletePendingAccountAsDeleted({
+  profileId: user.id,
+  deletedAt,
+})
 
-      await supabase.auth.signOut()
+      await signOut()
       redirect("/account-unavailable")
     }
 
-    if (profile?.is_deactivated || profile?.is_delete_pending) {
+    if (lifecycle.isDeactivated || lifecycle.isDeletePending) {
       redirect("/reactivate-account")
     }
 
@@ -117,8 +97,6 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             <Suspense fallback={null}>
               <SignInForm />
             </Suspense>
-
-        
           </div>
         </section>
       </div>

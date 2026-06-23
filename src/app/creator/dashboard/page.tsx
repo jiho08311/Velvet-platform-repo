@@ -1,38 +1,24 @@
-import { getCreatorAnalyticsSummary } from "@/modules/analytics/server/get-creator-analytics"
-import { requireCreatorReadyUser } from "@/modules/creator/server/require-creator-ready-user"
-import { DashboardStats } from "@/modules/analytics/ui/DashboardStats"
-import {
-  formatCreatorAnalyticsSummaryMetricValue,
-  getCreatorAnalyticsSummaryMetrics,
-  type CreatorAnalyticsSummaryMetricKey,
-} from "@/modules/analytics/lib/creator-analytics-summary-metrics"
+import { notFound } from "next/navigation"
+import { readCreatorDashboard } from "@/modules/analytics/public/read-creator-dashboard"
+import { requireCreatorReadyUser } from "@/modules/creator/public/require-creator-ready-user"
 
-const CREATOR_DASHBOARD_EXTRA_METRICS: CreatorAnalyticsSummaryMetricKey[] = [
-  "posts",
-  "totalRevenue",
-]
+function readNumber(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0
+}
 
 export default async function CreatorDashboardPage() {
   const { creator } = await requireCreatorReadyUser({
     signInNext: "/creator/dashboard",
   })
 
-  /**
-   * /creator/dashboard is the creator analytics dashboard surface.
-   *
-   * Keep this route on getCreatorAnalyticsSummary(), which is the canonical
-   * analytics contract for post count, subscriber counts, subscription count,
-   * revenue metrics, and recent payment analytics.
-   *
-   * Do not replace this with getDashboardMainReadModel(); /dashboard owns the
-   * operational dashboard contract for payout summary, payout history, and
-   * creator subscription settings display.
-   */
-  const summary = await getCreatorAnalyticsSummary(creator.id)
-  const extraMetrics = getCreatorAnalyticsSummaryMetrics(
-    summary,
-    CREATOR_DASHBOARD_EXTRA_METRICS
-  )
+  const analytics = await readCreatorDashboard(creator.id)
+
+  if (!analytics) {
+    notFound()
+  }
+
+  const postCount = readNumber(analytics.content.posts)
+  const totalRevenue = readNumber(analytics.revenue.totalRevenue)
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
@@ -43,20 +29,20 @@ export default async function CreatorDashboardPage() {
         </p>
       </section>
 
-      <DashboardStats summary={summary} />
-
       <section className="grid gap-4 sm:grid-cols-2">
-        {extraMetrics.map((metric) => (
-          <article
-            key={metric.id}
-            className="rounded-2xl border border-white/10 bg-neutral-950 p-5"
-          >
-            <p className="text-sm text-white/60">{metric.label}</p>
-            <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
-              {formatCreatorAnalyticsSummaryMetricValue(metric)}
-            </p>
-          </article>
-        ))}
+        <article className="rounded-2xl border border-white/10 bg-neutral-950 p-5">
+          <p className="text-sm text-white/60">Posts</p>
+          <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
+            {postCount.toLocaleString()}
+          </p>
+        </article>
+
+        <article className="rounded-2xl border border-white/10 bg-neutral-950 p-5">
+          <p className="text-sm text-white/60">Total revenue</p>
+          <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
+            ₩{totalRevenue.toLocaleString()}
+          </p>
+        </article>
       </section>
     </main>
   )

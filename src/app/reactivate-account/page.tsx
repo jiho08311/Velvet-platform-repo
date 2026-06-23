@@ -1,60 +1,41 @@
 import { redirect } from "next/navigation"
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { supabaseAdmin } from "@/infrastructure/supabase/admin"
-import { createClient } from "@/infrastructure/supabase/server"
-
-type ProfileStatusRow = {
-  is_deactivated: boolean | null
-  is_delete_pending: boolean | null
-  delete_scheduled_for: string | null
-  deleted_at: string | null
-}
+import { requireSession } from "@/modules/auth/public/require-session"
+import { signOut } from "@/modules/auth/public/sign-out"
+import { readAccountLifecycleState } from "@/modules/identity/public/account-lifecycle"
+import { markExpiredDeletePendingAccountAsDeleted } from "@/modules/identity/public/account-expiration"
 
 export default async function ReactivateAccountPage() {
-  const user = await requireUser()
-  const supabase = await createClient()
+  const session = await requireSession()
 
-  const { data: profile, error } = await supabaseAdmin
-    .from("profiles")
-    .select(
-      "is_deactivated, is_delete_pending, delete_scheduled_for, deleted_at"
-    )
-    .eq("id", user.id)
-    .single<ProfileStatusRow>()
+  const lifecycle = await readAccountLifecycleState({
+    profileId: session.userId,
+  })
 
-  if (error) {
-    throw error
-  }
-
-  if (profile?.deleted_at) {
-    await supabase.auth.signOut()
+  if (lifecycle.state === "deleted") {
+    await signOut()
     redirect("/account-unavailable")
   }
 
   const now = new Date()
   const isDeleteExpired =
-    profile?.is_delete_pending &&
-    profile?.delete_scheduled_for &&
-    new Date(profile.delete_scheduled_for).getTime() <= now.getTime()
+    lifecycle.isDeletePending &&
+    lifecycle.deleteScheduledFor &&
+    new Date(lifecycle.deleteScheduledFor).getTime() <= now.getTime()
 
   if (isDeleteExpired) {
-    const { error: updateError } = await supabaseAdmin
-      .from("profiles")
-      .update({
-        deleted_at: now.toISOString(),
-      })
-      .eq("id", user.id)
+    const deletedAt = now.toISOString()
 
-    if (updateError) {
-      throw updateError
-    }
+ await markExpiredDeletePendingAccountAsDeleted({
+  profileId: session.userId,
+  deletedAt,
+})
 
-    await supabase.auth.signOut()
+    await signOut()
     redirect("/account-unavailable")
   }
 
-  if (!profile?.is_deactivated && !profile?.is_delete_pending) {
+  if (!lifecycle.isDeactivated && !lifecycle.isDeletePending) {
     redirect("/settings")
   }
 
@@ -69,7 +50,7 @@ export default async function ReactivateAccountPage() {
         <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
           <p className="text-sm text-zinc-300">Signed in as</p>
           <p className="mt-1 text-sm font-medium text-white">
-            {user.email ?? "Unknown user"}
+       {session.userId}
           </p>
         </div>
 

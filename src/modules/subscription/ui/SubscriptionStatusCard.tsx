@@ -2,7 +2,7 @@ import { RestrictedStateShell } from "@/shared/ui/RestrictedStateShell"
 import {
   getCreatorSubscriptionStatusState,
   type CreatorSubscriptionDisplayStatus,
-} from "@/modules/creator/ui/creator-surface-policy"
+} from "@/modules/creator/public/creator-surface-ui"
 
 type SubscriptionStatusCardProps = {
   status: CreatorSubscriptionDisplayStatus

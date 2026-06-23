@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server"
 
-import { requireUser } from "@/modules/auth/server/require-user"
-import { createClient } from "@/infrastructure/supabase/server"
+import { requireSession } from "@/modules/auth/public/require-session"
 
-import { unsubscribe } from "@/modules/subscription/server/unsubscribe"
+
+import {
+  cancelSubscription,
+  getSubscription,
+} from "@/modules/commerce/public/subscription-contract"
+
+
 import { notifySubscriptionCanceledWorkflow } from "@/workflows/subscription/notify-subscription-canceled-workflow"
 
 export async function POST(req: Request) {
-  const user = await requireUser()
-  const supabase = await createClient()
+  const session = await requireSession()
 
   const body = await req.json()
   const subscriptionId = body.subscriptionId as string | undefined
@@ -19,36 +23,36 @@ export async function POST(req: Request) {
       { status: 400 }
     )
   }
+const { subscription } = await getSubscription({
+  subscriptionId,
+})
 
-  const { data: subscription, error } = await supabase
-    .from("subscriptions")
-    .select("id, user_id, creator_id")
-    .eq("id", subscriptionId)
-    .eq("user_id", user.id)
-    .single()
+if (!subscription || subscription.subscriberUserId !== session.userId) {
+  return NextResponse.json(
+    { error: "Subscription not found" },
+    { status: 404 }
+  )
+}
 
-  if (error || !subscription) {
+  if (!subscription) {
     return NextResponse.json(
       { error: "Subscription not found" },
       { status: 404 }
     )
   }
 
-  const updated = await unsubscribe(subscription.id)
+ const { subscription: canceledSubscription } = await cancelSubscription({
+  subscriberUserId: session.userId,
+  creatorId: subscription.creatorId,
+  mode: "immediate",
+})
 
-  if (!updated) {
-    return NextResponse.json(
-      { error: "Failed to unsubscribe" },
-      { status: 500 }
-    )
-  }
-
-  await notifySubscriptionCanceledWorkflow({
-    subscriptionId: subscription.id,
-    creatorId: subscription.creator_id,
-    subscriberId: subscription.user_id,
-    mode: "immediate",
-  })
+await notifySubscriptionCanceledWorkflow({
+  subscriptionId: canceledSubscription.subscriptionId,
+  creatorId: canceledSubscription.creatorId,
+  subscriberId: canceledSubscription.subscriberUserId,
+  mode: "immediate",
+})
 
   return NextResponse.json({ success: true })
 }
