@@ -81,7 +81,14 @@ export async function getCreatorPageRuntime({
           status: creator.status,
           creator_visibility_state: creator.creator_visibility_state,
         },
-        profile,
+       profile: profile
+  ? {
+      is_deactivated: profile.is_deactivated ?? false,
+      is_delete_pending: profile.is_delete_pending ?? false,
+      deleted_at: profile.deleted_at ?? null,
+      is_banned: profile.is_banned ?? false,
+    }
+  : null,
       })
     )
   ) {
@@ -92,10 +99,24 @@ export async function getCreatorPageRuntime({
     return null
   }
 
-  const identity = buildCreatorIdentity({
-    creator,
-    profile,
-  })
+  const normalizedProfile = {
+  id: profile.id,
+  username: profile.username ?? null,
+  display_name: profile.display_name ?? null,
+  avatar_url: profile.avatar_url ?? null,
+  bio: profile.bio ?? null,
+  is_deactivated: profile.is_deactivated ?? false,
+  is_delete_pending: profile.is_delete_pending ?? false,
+  deleted_at: profile.deleted_at ?? null,
+  is_banned: profile.is_banned ?? false,
+  profileLifecycleState: profile.profileLifecycleState ?? null,
+  identityVisibilityState: profile.identityVisibilityState ?? null,
+}
+
+const identity = buildCreatorIdentity({
+  creator,
+  profile: normalizedProfile,
+})
   const isSubscribed = await resolveViewerCreatorAccess({
     viewerUserId,
     creatorId: creator.id,

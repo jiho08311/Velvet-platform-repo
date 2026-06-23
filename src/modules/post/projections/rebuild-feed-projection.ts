@@ -4,7 +4,10 @@ import {
   upsertCanonicalFeedItem,
 } from "@/modules/post/repositories/feed-projection-repository"
 import { logger } from "@/shared/observability/structured-logger"
-
+export {
+  rebuildFeedProjection,
+  rebuildFeedProjectionForPost,
+} from "../projections/rebuild-feed-projection"
 type FeedProjectionSurface = "home_feed" | "discovery"
 
 type PostFeedProjectionSourceRow = {
@@ -161,5 +164,78 @@ export async function rebuildFeedProjection(input?: {
     scannedCount,
     upsertedCount,
     failedCount,
+  }
+}
+
+
+export async function rebuildFeedProjectionForPost(input: {
+  postId: string
+  projectionSurface?: FeedProjectionSurface
+}) {
+  const projectionSurface = input.projectionSurface ?? "home_feed"
+
+  const { data: post, error } = await supabaseAdmin
+    .from("posts")
+    .select(
+      `
+        id,
+        creator_id,
+        title,
+        content,
+        visibility,
+        price,
+        status,
+        visibility_status,
+        moderation_status,
+        published_at,
+        created_at,
+        updated_at,
+        deleted_at
+      `
+    )
+    .eq("id", input.postId)
+    .maybeSingle<PostFeedProjectionSourceRow>()
+
+  if (error) throw error
+  if (!post) {
+    return {
+      projectionSurface,
+      postId: input.postId,
+      upserted: false,
+      reason: "post_not_found" as const,
+    }
+  }
+
+  const row = buildCanonicalFeedItem({
+    post,
+    projectionSurface,
+  })
+
+  const { error: upsertError } = await upsertCanonicalFeedItem({ row })
+
+  if (upsertError) {
+    throw upsertError
+  }
+
+  await recordCanonicalFeedProjectionEvent({
+    row: {
+      post_id: post.id,
+      projection_surface: projectionSurface,
+      event_type: "single_post_upsert",
+      payload: {
+        source: "rebuildFeedProjectionForPost",
+        postId: post.id,
+        projectionSurface,
+        isFeedVisible: row.is_feed_visible,
+      },
+      created_at: new Date().toISOString(),
+    },
+  })
+
+  return {
+    projectionSurface,
+    postId: post.id,
+    upserted: true,
+    isFeedVisible: row.is_feed_visible,
   }
 }

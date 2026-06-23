@@ -7,6 +7,8 @@ export async function getUserById(userId: UserId): Promise<User | null> {
 
   if (!profile) return null
 
+  
+
   return {
     id: profile.id,
     email: "email" in profile && typeof profile.email === "string" ? profile.email : null,

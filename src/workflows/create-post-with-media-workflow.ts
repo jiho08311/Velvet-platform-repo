@@ -11,7 +11,7 @@ import {
   resolveCreatePostPersistenceFromProjection,
 } from "@/modules/post/public/create-post-draft-policy"
 import { readCreatorIdentityByCreatorId } from "@/modules/identity/public/creator-identity-read-model"
-
+import { rebuildFeedProjectionForPost } from "@/modules/post/public/rebuild-feed-projection"
 import type {
   CreatePostDraftBlock,
   CreatePostPersistedMediaMappingItem,
@@ -198,6 +198,11 @@ export async function createPostWithMediaWorkflow({
       publishedAt,
     })
   }
+
+  await rebuildFeedProjectionForPost({
+  postId: post.id,
+  projectionSurface: "home_feed",
+})
 
   return {
     post,

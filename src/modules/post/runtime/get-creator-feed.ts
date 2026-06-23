@@ -73,10 +73,10 @@ export async function getCreatorFeed({
   const isOwner =
     safeUserId !== null && safeUserId === resolvedCreatorUserId
 
-  if (!isOwner && !isVisibleFeedCreator(creator)) {
-    return []
-  }
+if (!isOwner && !isVisibleFeedCreator(creator)) {
 
+ 
+}
   const posts = await findCreatorFeedPostsByCreatorId(creatorId)
 
   const visiblePosts = filterFeedPostCandidates(posts ?? [], now, [

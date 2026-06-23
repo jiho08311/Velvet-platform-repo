@@ -28,14 +28,16 @@ export async function getCreatorByUsername(username?: string) {
         status: creator.status,
         creatorVisibilityState: creator.creator_visibility_state,
       },
-      profile: profile
-        ? {
-            isDeactivated: profile.is_deactivated,
-            isDeletePending: profile.is_delete_pending,
-            deletedAt: profile.deleted_at,
-            isBanned: profile.is_banned,
-          }
-        : null,
+  profile: profile
+  ? {
+      profileLifecycleState: profile.profileLifecycleState,
+      identityVisibilityState: profile.identityVisibilityState,
+      isDeactivated: profile.is_deactivated,
+      isDeletePending: profile.is_delete_pending,
+      deletedAt: profile.deleted_at,
+      isBanned: profile.is_banned,
+    }
+  : null,
     })
   ) {
     return null

@@ -99,17 +99,17 @@ export async function findCreatorFeedCreatorById(
     user_id: creator.user_id,
     status: normalizeCreatorStatus(creator.creator_lifecycle_state),
     creatorVisibilityState: creator.creator_visibility_state,
-    profiles: profile
-      ? {
-          id: profile.profile_id,
-          is_deactivated: null,
-          is_delete_pending: null,
-          deleted_at: null,
-          is_banned: null,
-          profileLifecycleState: profile.profile_lifecycle_state,
-          identityVisibilityState: profile.identity_visibility_state,
-        }
-      : null,
+profiles: profile
+  ? {
+      id: profile.profile_id,
+      is_deactivated: profile.profile_lifecycle_state === "deactivated",
+      is_delete_pending: profile.profile_lifecycle_state === "delete_pending",
+      deleted_at: null,
+      is_banned: profile.identity_visibility_state === "not_visible",
+      profileLifecycleState: profile.profile_lifecycle_state,
+      identityVisibilityState: profile.identity_visibility_state,
+    }
+  : null,
   }
 }
 
@@ -170,17 +170,17 @@ export async function findSubscribedFeedCreatorsByIds(
       user_id: creator.user_id,
       status: normalizeCreatorStatus(creator.creator_lifecycle_state),
       creatorVisibilityState: creator.creator_visibility_state,
-      profiles: profile
-        ? {
-            id: profile.profile_id,
-            is_deactivated: null,
-            is_delete_pending: null,
-            deleted_at: null,
-            is_banned: null,
-            profileLifecycleState: profile.profile_lifecycle_state,
-            identityVisibilityState: profile.identity_visibility_state,
-          }
-        : null,
+profiles: profile
+  ? {
+      id: profile.profile_id,
+      is_deactivated: profile.profile_lifecycle_state === "deactivated",
+      is_delete_pending: profile.profile_lifecycle_state === "delete_pending",
+      deleted_at: null,
+      is_banned: profile.identity_visibility_state === "not_visible",
+      profileLifecycleState: profile.profile_lifecycle_state,
+      identityVisibilityState: profile.identity_visibility_state,
+    }
+  : null,
     }
   })
 }

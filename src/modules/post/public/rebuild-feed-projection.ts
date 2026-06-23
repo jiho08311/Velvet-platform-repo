@@ -1,1 +1,5 @@
-export { rebuildFeedProjection } from "../projections/rebuild-feed-projection"
+
+export {
+  rebuildFeedProjection,
+  rebuildFeedProjectionForPost,
+} from "../projections/rebuild-feed-projection"

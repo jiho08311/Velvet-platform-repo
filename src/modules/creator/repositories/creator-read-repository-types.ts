@@ -52,6 +52,8 @@ export type CreatorProfileByUserIdRow = {
   is_delete_pending?: boolean | null
   deleted_at?: string | null
   is_banned?: boolean | null
+  profileLifecycleState?: string | null
+identityVisibilityState?: string | null
 }
 
 export type CanonicalCreatorReadRow = {

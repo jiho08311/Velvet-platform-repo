@@ -33,6 +33,22 @@ export async function rebuildCreatorPublicCardByUserId(userId: string) {
   const profile = profileResult.data
   const canonicalProfile = canonicalProfileResult.data
 
+const normalizedProfile = profile
+  ? {
+      id: profile.id,
+      username: profile.username ?? null,
+      display_name: profile.display_name ?? null,
+      avatar_url: profile.avatar_url ?? null,
+      bio: profile.bio ?? null,
+      is_deactivated: profile.is_deactivated ?? false,
+      is_delete_pending: profile.is_delete_pending ?? false,
+      deleted_at: profile.deleted_at ?? null,
+      is_banned: profile.is_banned ?? false,
+    }
+  : null
+
+
+
   const card = buildCreatorPublicCard({
     creator: {
       id: creator.id,
@@ -41,7 +57,7 @@ export async function rebuildCreatorPublicCardByUserId(userId: string) {
       display_name: profile?.display_name ?? null,
       status: creator.status ?? null,
     },
-    profile,
+profile: normalizedProfile,
     canonicalCreator: {
       creator_lifecycle_state: creator.status ?? null,
       creator_visibility_state: creator.creator_visibility_state ?? null,

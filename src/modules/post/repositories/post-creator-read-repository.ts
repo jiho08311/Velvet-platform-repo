@@ -22,20 +22,35 @@ function toActiveCreatorStatus(
 async function readCanonicalCreatorRow(
   creatorId: string,
 ): Promise<PostCreatorRow | null> {
-  const creator = await readCreatorIdentityByCreatorId(creatorId)
+  const { data, error } = await supabaseAdmin
+    .from("canonical_creators")
+    .select("creator_id, user_id, username, display_name, status, creator_lifecycle_state")
+    .eq("creator_id", creatorId)
+    .maybeSingle<{
+      creator_id: string | null
+      user_id: string | null
+      username: string | null
+      display_name: string | null
+      status: string | null
+      creator_lifecycle_state: string | null
+    }>()
 
-  if (!creator) {
+  if (error) {
+    throw error
+  }
+
+  if (!data?.creator_id || !data.user_id) {
     return null
   }
 
   return {
-    id: creator.id,
-    user_id: creator.userId,
-    username: creator.username ?? "",
-    display_name: creator.displayName,
-    status: toActiveCreatorStatus(null),
+    id: data.creator_id,
+    user_id: data.user_id,
+    username: data.username ?? "",
+    display_name: data.display_name,
+    status: toActiveCreatorStatus(data.creator_lifecycle_state ?? data.status),
     profiles: {
-      id: creator.userId,
+      id: data.user_id,
       is_deactivated: false,
       is_delete_pending: false,
       deleted_at: null,

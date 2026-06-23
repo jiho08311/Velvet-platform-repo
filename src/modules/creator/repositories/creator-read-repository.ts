@@ -61,7 +61,8 @@ function creatorStatus(row: CanonicalCreatorReadRow): CreatorServingStatus {
 }
 
 function creatorVisibility(row: CanonicalCreatorReadRow): CreatorVisibilityState {
-  return row.creator_visibility_state === "public_candidate"
+  return row.creator_visibility_state === "public_candidate" ||
+    row.creator_visibility_state === "visible"
     ? "public_candidate"
     : "not_public"
 }
@@ -164,7 +165,7 @@ export async function readActiveCreatorRows(limit: number) {
   const { data, error } = await supabaseAdmin
     .from("canonical_creators")
     .select(creatorSelect())
-    .eq("creator_visibility_state", "public_candidate")
+    .in("creator_visibility_state", ["public_candidate", "visible"])
     .eq("serving_authoritative", true)
     .order("created_at", { ascending: false })
     .limit(limit)
@@ -195,7 +196,7 @@ export async function readPublicCreatorRowsByUserIds({
     .from("canonical_creators")
     .select(creatorSelect())
     .in("user_id", uniqueUserIds)
-    .eq("creator_visibility_state", "public_candidate")
+    .in("creator_visibility_state", ["public_candidate", "visible"])
     .eq("serving_authoritative", true)
     .returns<CanonicalCreatorReadRow[]>()
 
@@ -204,7 +205,6 @@ export async function readPublicCreatorRowsByUserIds({
     error,
   }
 }
-
 function toCreatorProfileByUserIdRow(
   row: CanonicalProfileReadRow
 ): CreatorProfileByUserIdRow {
@@ -217,6 +217,8 @@ function toCreatorProfileByUserIdRow(
     display_name: row.display_name,
     avatar_url: stringMetadata(metadata, "avatarUrl"),
     bio: stringMetadata(metadata, "bio"),
+    profileLifecycleState: row.profile_lifecycle_state,
+    identityVisibilityState: row.identity_visibility_state,
     is_deactivated: lifecycle === "deactivated",
     is_delete_pending: lifecycle === "delete_pending",
     deleted_at:
@@ -240,16 +242,7 @@ export async function readBasicCreatorProfileRowByUserId(userId: string) {
 }
 
 export async function readPublicCreatorProfileRowByUserId(userId: string) {
-  const { data, error } = await supabaseAdmin
-    .from("canonical_profiles")
-    .select(profileSelect())
-    .eq("profile_id", userId)
-    .maybeSingle<CanonicalProfileReadRow>()
-
-  return {
-    data: data ? (toCreatorProfileByUserIdRow(data) as Required<CreatorProfileByUserIdRow>) : null,
-    error,
-  }
+  return readBasicCreatorProfileRowByUserId(userId)
 }
 
 export async function readPublicCreatorProfileRowsByUserIds(userIds: string[]) {

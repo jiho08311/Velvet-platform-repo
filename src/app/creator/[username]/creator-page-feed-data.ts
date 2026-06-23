@@ -6,14 +6,17 @@ export async function loadCreatorPageFeedData(input: {
   creatorUserId: string
   userId: string | null
 }) {
-  const [analytics, posts] = await Promise.all([
-    readCreatorDashboard(input.creatorId),
-    getCreatorFeed({
-      creatorId: input.creatorId,
-      creatorUserId: input.creatorUserId,
-      userId: input.userId,
-    }),
-  ])
+const [analytics, posts] = await Promise.all([
+  readCreatorDashboard(input.creatorId),
+  getCreatorFeed({
+    creatorId: input.creatorId,
+    creatorUserId: input.creatorUserId,
+    userId: input.userId,
+  }),
+])
+
+
+
 
   function getPostRenderMediaCount(post: (typeof posts)[number]) {
     return post.renderInput.blockMedia.length || post.media?.length || 0
