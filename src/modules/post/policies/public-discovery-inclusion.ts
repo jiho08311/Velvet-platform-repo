@@ -14,6 +14,8 @@ type PublicDiscoveryCreatorProfile = {
 
 type PublicDiscoveryCreatorStatus = {
   status: "active" | "pending" | "suspended" | "inactive" | null | undefined
+  creatorVisibilityState?: string | null | undefined
+  creator_visibility_state?: string | null | undefined
 } | null
 
 type PublicDiscoveryCreatorRow = {

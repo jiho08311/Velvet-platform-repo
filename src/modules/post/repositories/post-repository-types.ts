@@ -1,3 +1,15 @@
+export type PostCreatorStatus = "active" | "pending" | "suspended" | "inactive"
+
+export type PostCreatorProfileVisibilityRow = {
+  id: string
+  profile_lifecycle_state?: string | null
+  identity_visibility_state?: string | null
+  is_deactivated: boolean | null
+  is_delete_pending: boolean | null
+  deleted_at: string | null
+  is_banned: boolean | null
+}
+
 export type PostRow = {
   id: string
   creator_id: string
@@ -18,27 +30,17 @@ export type PostCreatorRow = {
   user_id: string
   username: string
   display_name: string | null
-  status: "active" | "pending" | "suspended" | "inactive"
-  profiles: {
-    id: string
-    is_deactivated: boolean | null
-    is_delete_pending: boolean | null
-    deleted_at: string | null
-    is_banned: boolean | null
-  } | null
+  status: PostCreatorStatus
+  creator_visibility_state?: string | null
+  profiles: PostCreatorProfileVisibilityRow | null
 }
 
 export type ListCreatorPostsCreatorRow = {
   id: string
   user_id: string
-  status: "active" | "pending" | "suspended" | "inactive"
-  profiles: {
-    id: string
-    is_deactivated: boolean | null
-    is_delete_pending: boolean | null
-    deleted_at: string | null
-    is_banned: boolean | null
-  } | null
+  status: PostCreatorStatus
+  creator_visibility_state?: string | null
+  profiles: PostCreatorProfileVisibilityRow | null
 }
 
 export type ListCreatorPostsPostRow = {
@@ -107,14 +109,9 @@ export type PostMediaAccessPostRow = {
 export type PostMediaCreatorRow = {
   id: string
   user_id: string
-  status: "active" | "pending" | "suspended" | "inactive"
-  profiles: {
-    id: string
-    is_deactivated: boolean | null
-    is_delete_pending: boolean | null
-    deleted_at: string | null
-    is_banned: boolean | null
-  } | null
+  status: PostCreatorStatus
+  creator_visibility_state?: string | null
+  profiles: PostCreatorProfileVisibilityRow | null
 }
 
 export type CurrentPostStatus =
@@ -133,7 +130,13 @@ export type CanonicalPostRow = {
   price: number | null
   lifecycle_state: "draft" | "scheduled" | "published" | "archived"
   visibility_state: "draft" | "processing" | "published" | "rejected" | null
-  moderation_state: "pending" | "approved" | "needs_review" | "rejected" | "archived" | null
+  moderation_state:
+    | "pending"
+    | "approved"
+    | "needs_review"
+    | "rejected"
+    | "archived"
+    | null
   published_at: string | null
   deleted_at: string | null
   created_at: string
